@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "gpt_weights": "D:/VideoSi/models/tts/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
+  "sovits_weights": "D:/VideoSi/models/tts/gsv-v2final-pretrained/s2G2333k.pth",
+  "bert_root": "D:/VideoSi/models/tts/chinese-roberta-wwm-ext-large",
+  "hubert_root": "D:/VideoSi/models/tts/chinese-hubert-base",
+  "reference_audio": "D:/VideoSi/projects/video-ai/inputs/voice_ref.wav",
+  "reference_sha256": "b1db5de3a237c166721a4816cd7c87e9f8b78178f4f77a33d40dde5b891c166e",
+  "reference_text": "夜色渐渐安静下来，微风轻轻吹过树梢。",
+  "text_language": "zh",
+  "prompt_language": "zh",
+  "speed_factor": 1.0,
+  "device": "cpu",
+  "is_half": false,
+  "inference": {
+    "top_k": 15,
+    "top_p": 1,
+    "temperature": 1,
+    "text_split_method": "cut5",
+    "batch_size": 1,
+    "media_type": "wav",
+    "streaming_mode": false,
+    "sample_steps": 32
+  }
+}

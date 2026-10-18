@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "runtime_root": "D:/VideoSi",
+  "project_root": "D:/VideoSi/projects/video-ai",
+  "output_root": "D:/VideoSi/output/video-ai",
+  "cache_root": "D:/VideoSi/cache/video-ai",
+  "voice_config": "voice.example.json",
+  "tools": {
+    "ffmpeg": "D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe",
+    "ffprobe": "D:/VideoSi/tools/ffmpeg/bin/ffprobe.exe",
+    "comfy_python": "D:/VideoSi/tools/ComfyUI_windows_portable/python_embeded/python.exe",
+    "comfy_root": "D:/VideoSi/tools/ComfyUI_windows_portable/ComfyUI",
+    "tts_python": "D:/VideoSi/tools/GPT-SoVITS/runtime/python.exe",
+    "tts_root": "D:/VideoSi/tools/GPT-SoVITS",
+    "ollama_executable": "D:/VideoSi/tools/ollama/ollama.exe"
+  },
+  "services": {
+    "ollama": "http://127.0.0.1:11434",
+    "comfyui": "http://127.0.0.1:8188",
+    "tts": "http://127.0.0.1:9880"
+  },
+  "workflows": {
+    "sdxl": "../workflows/sdxl_api.json",
+    "wan": "../workflows/wan22_i2v_14b_api.json",
+    "wan_mapping": "../workflows/wan22_i2v_14b_api.mapping.json",
+    "upscale": "../workflows/upscale_api.json"
+  },
+  "models": {
+    "sdxl": "D:/VideoSi/models/comfyui/checkpoints/sd_xl_base_1.0.safetensors",
+    "wan_high": "D:/VideoSi/models/comfyui/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+    "wan_low": "D:/VideoSi/models/comfyui/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+    "text_encoder": "D:/VideoSi/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+    "vae": "D:/VideoSi/models/comfyui/vae/wan_2.1_vae.safetensors",
+    "upscale": "D:/VideoSi/models/comfyui/upscale_models/RealESRGAN_x4plus.pth"
+  },
+  "media": {
+    "profile": "fast",
+    "fps": 16,
+    "final_width": 1920,
+    "final_height": 1080,
+    "transition": "cut",
+    "transition_seconds": 0,
+    "timeline": {
+      "sentence_pause_seconds": 0.8,
+      "paragraph_pause_seconds": 2,
+      "opening_seconds": 2,
+      "closing_seconds": 3
+    },
+    "burn_subtitles": true,
+    "music": null,
+    "font_file": "D:/VideoSi/projects/video-ai/inputs/fonts/msyh.ttc"
+  },
+  "timeouts": {
+    "ollama_request": 120,
+    "tts_request": 300,
+    "comfy_request": 600,
+    "service_start": 300,
+    "wan": 7200,
+    "upscale_frame": 180,
+    "upscale_clip": 1200
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "workflow": "wan22_i2v_14b_api.json",
+  "source_sha256": "bb54cf873fb20821086c84b10a6061c446a102814219d892b17eded82698ac9e",
+  "template_sha256": "5f3768f6e83bf6be21287457c7c15e811d8f6949b7b5c5ac5460c267c8f98666",
+  "inputs": {
+    "positive_prompt": {
+      "node_id": "129:93",
+      "input": "text"
+    },
+    "negative_prompt": {
+      "node_id": "129:89",
+      "input": "text"
+    },
+    "start_image": {
+      "node_id": "97",
+      "input": "image"
+    },
+    "width": {
+      "node_id": "129:98",
+      "input": "width"
+    },
+    "height": {
+      "node_id": "129:98",
+      "input": "height"
+    },
+    "length": {
+      "node_id": "129:98",
+      "input": "length"
+    },
+    "fps": {
+      "node_id": "129:162",
+      "input": "value"
+    },
+    "output_prefix": {
+      "node_id": "108",
+      "input": "filename_prefix"
+    },
+    "seed_high": {
+      "node_id": "129:86",
+      "input": "noise_seed"
+    },
+    "seed_low": {
+      "node_id": "129:85",
+      "input": "noise_seed"
+    }
+  },
+  "output": {
+    "node_id": "108",
+    "collection": "images"
+  },
+  "models": {
+    "wan_high": {
+      "node_id": "129:95",
+      "input": "unet_name"
+    },
+    "wan_low": {
+      "node_id": "129:96",
+      "input": "unet_name"
+    },
+    "text_encoder": {
+      "node_id": "129:84",
+      "input": "clip_name"
+    },
+    "vae": {
+      "node_id": "129:90",
+      "input": "vae_name"
+    }
+  },
+  "nodes": {
+    "97": "LoadImage",
+    "108": "SaveVideo",
+    "129:98": "WanImageToVideo",
+    "129:94": "CreateVideo",
+    "129:104": "ModelSamplingSD3",
+    "129:89": "CLIPTextEncode",
+    "129:87": "VAEDecode",
+    "129:131": "PrimitiveBoolean",
+    "129:90": "VAELoader",
+    "129:84": "CLIPLoader",
+    "129:96": "UNETLoader",
+    "129:95": "UNETLoader",
+    "129:126": "PrimitiveFloat",
+    "129:86": "KSamplerAdvanced",
+    "129:85": "KSamplerAdvanced",
+    "129:122": "PrimitiveFloat",
+    "129:124": "PrimitiveInt",
+    "129:118": "PrimitiveInt",
+    "129:116": "ComfySwitchNode",
+    "129:125": "ComfySwitchNode",
+    "129:119": "ComfySwitchNode",
+    "129:120": "ComfySwitchNode",
+    "129:103": "ModelSamplingSD3",
+    "129:117": "ComfySwitchNode",
+    "129:161": "PrimitiveFloat",
+    "129:162": "PrimitiveFloat",
+    "129:163": "ComfyMathExpression",
+    "129:93": "CLIPTextEncode",
+    "129:128": "PrimitiveInt",
+    "129:127": "PrimitiveInt"
+  }
+}

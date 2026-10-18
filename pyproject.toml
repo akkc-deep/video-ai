@@ -1,0 +1,20 @@
+[project]
+name = "video-ai"
+version = "0.1.0"
+description = "Isolated Windows orchestration for multi-shot AI video production"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+video-ai = "video_ai.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

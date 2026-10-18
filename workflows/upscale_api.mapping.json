@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "workflow": "upscale_api.json",
+  "source_sha256": "9841205614df4ed5ea1a8322ab06babb80183096ad8a1274b8d2bb87fb565a32",
+  "template_sha256": "a647f05940ce6b59de9bde8d5d53b9300bfe6b5174d900b3324eb6cd01680533",
+  "inputs": {
+    "image": {
+      "node_id": "1",
+      "input": "image"
+    },
+    "output_prefix": {
+      "node_id": "5",
+      "input": "filename_prefix"
+    }
+  },
+  "output": {
+    "node_id": "5",
+    "collection": "images"
+  },
+  "models": {
+    "upscale": {
+      "node_id": "2",
+      "input": "model_name"
+    }
+  },
+  "nodes": {
+    "1": "LoadImage",
+    "2": "UpscaleModelLoader",
+    "3": "ImageUpscaleWithModel",
+    "4": "ImageScale",
+    "5": "SaveImage"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "font_name": "Microsoft YaHei",
+  "font_size": 54,
+  "margin": 64,
+  "outline": 2,
+  "music_gain": 0.12,
+  "music_fade_seconds": 0.5,
+  "music_loop_crossfade_seconds": 0.05
+}

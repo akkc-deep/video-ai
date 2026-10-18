@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "workflows": [
+    {
+      "kind": "sdxl",
+      "source": "D:/AI/tools/video-demo/workflows/sdxl_api.json",
+      "source_sha256": "f6b37f180c34cba543aadd2139613e99b3d523b0bf294b95d8fd534927538766",
+      "template": "D:\\code\\py\\video-ai\\workflows\\sdxl_api.json",
+      "template_sha256": "78a27a56cb81f2d6e7c35ebeeb55009d993323a25aa6a028c29b9f5a806b2232"
+    },
+    {
+      "kind": "wan",
+      "source": "D:/AI/tools/video-demo/workflows/wan22_i2v_14b_api.json",
+      "source_sha256": "bb54cf873fb20821086c84b10a6061c446a102814219d892b17eded82698ac9e",
+      "template": "D:\\code\\py\\video-ai\\workflows\\wan22_i2v_14b_api.json",
+      "template_sha256": "5f3768f6e83bf6be21287457c7c15e811d8f6949b7b5c5ac5460c267c8f98666"
+    },
+    {
+      "kind": "upscale",
+      "source": "D:/AI/tools/video-demo/scripts/wan14b_upscale_video.ps1",
+      "source_sha256": "9841205614df4ed5ea1a8322ab06babb80183096ad8a1274b8d2bb87fb565a32",
+      "template": "D:\\code\\py\\video-ai\\workflows\\upscale_api.json",
+      "template_sha256": "a647f05940ce6b59de9bde8d5d53b9300bfe6b5174d900b3324eb6cd01680533"
+    }
+  ],
+  "wan_original_mapping": {
+    "workflow": "workflows/wan22_i2v_14b_api.json",
+    "validated_prompt_id": "d49d84b8-2720-4cbc-81e2-023c206b68aa",
+    "history": "docs/wan14b-ship-640-api-history.json",
+    "mapping": {
+      "positive_prompt": {
+        "node_id": "129:93",
+        "input": "text"
+      },
+      "negative_prompt": {
+        "node_id": "129:89",
+        "input": "text"
+      },
+      "start_image": {
+        "node_id": "97",
+        "input": "image"
+      },
+      "seeds": [
+        {
+          "node_id": "129:86",
+          "input": "noise_seed"
+        },
+        {
+          "node_id": "129:85",
+          "input": "noise_seed"
+        }
+      ],
+      "width": {
+        "node_id": "129:98",
+        "input": "width"
+      },
+      "height": {
+        "node_id": "129:98",
+        "input": "height"
+      },
+      "length": {
+        "node_id": "129:98",
+        "input": "length"
+      },
+      "fps": {
+        "node_id": "129:162",
+        "input": "value"
+      },
+      "output_prefix": {
+        "node_id": "108",
+        "input": "filename_prefix"
+      },
+      "output_node_id": "108",
+      "output_collection": "images"
+    },
+    "observed_values": {
+      "positive_prompt": "A single spacecraft flies steadily toward the upper right, moving visibly relative to the fixed starfield and the planet's curved horizon. Its rigid hull, wings and identity remain consistent. The rear engine produces a small blue-white exhaust trail that changes naturally as it accelerates. One continuous five-second shot, locked-off wide camera, stationary background, no camera pan, no zoom, no scene cut, no shape morphing.\n",
+      "negative_prompt": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "start_image": "ship_start_00002_.png",
+      "width": 640,
+      "height": 640,
+      "length": 81,
+      "fps": 16.0,
+      "output_prefix": "wan14b_task06/ship_640_api_check",
+      "seeds": [
+        264244520398999,
+        0
+      ]
+    },
+    "history_output": {
+      "filename": "ship_640_api_check_00001_.mp4",
+      "subfolder": "wan14b_task06",
+      "type": "output"
+    }
+  }
+}

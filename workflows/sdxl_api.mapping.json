@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "workflow": "sdxl_api.json",
+  "source_sha256": "f6b37f180c34cba543aadd2139613e99b3d523b0bf294b95d8fd534927538766",
+  "template_sha256": "78a27a56cb81f2d6e7c35ebeeb55009d993323a25aa6a028c29b9f5a806b2232",
+  "inputs": {
+    "positive_prompt": {
+      "node_id": "10",
+      "input": "text"
+    },
+    "negative_prompt": {
+      "node_id": "11",
+      "input": "text"
+    },
+    "seed": {
+      "node_id": "12",
+      "input": "seed"
+    },
+    "width": {
+      "node_id": "13",
+      "input": "width"
+    },
+    "height": {
+      "node_id": "13",
+      "input": "height"
+    },
+    "output_prefix": {
+      "node_id": "7",
+      "input": "filename_prefix"
+    }
+  },
+  "output": {
+    "node_id": "7",
+    "collection": "images"
+  },
+  "models": {
+    "sdxl": {
+      "node_id": "15",
+      "input": "ckpt_name"
+    }
+  },
+  "nodes": {
+    "7": "SaveImage",
+    "10": "CLIPTextEncode",
+    "11": "CLIPTextEncode",
+    "12": "KSampler",
+    "13": "EmptyLatentImage",
+    "14": "VAEDecode",
+    "15": "CheckpointLoaderSimple"
+  }
+}

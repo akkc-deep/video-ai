@@ -1,0 +1,50 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+build/
+dist/
+*.egg-info/
+
+# Test and coverage reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+junit.xml
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local.json
+/config/production.json
+/config/voice.json
+/config/composition.json
+/config/jimeng.json
+
+# Runtime output (when generated inside this checkout)
+/runs/
+/output/
+/logs/
+/cache/
+/tmp/
+/temp/
+*.log
+*.tmp
+
+# Editor and operating system files
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
