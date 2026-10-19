@@ -181,11 +181,24 @@ def _record_error(run, state, exc):
                             active_stage=active, log_dir=run/'logs/production' if run else None, error=error,technical_checks=checks)
 
 
-def make_video(config=None, *, script=None, text=None, run_dir=None, output_path=None, cpu_planner=None, image_model=None) -> ProductionResult:
+def make_video(config=None, *, script=None, text=None, run_dir=None, output_path=None, cpu_planner=None, image_model=None,
+               image_selection=None) -> ProductionResult:
     run = state = result = None
+    selection_mode = False
+
+    def selection_error(exc):
+        from .runtime.production_image_selection import ImageSelectionResult
+        base=result if isinstance(result,ImageSelectionResult) else ImageSelectionResult(run_id=run.name,run_dir=run,
+            log_dir=run/'logs/production')
+        return replace(base,status='interrupted' if isinstance(exc,KeyboardInterrupt) else
+                       'blocked' if isinstance(exc,ValueError) else 'failed',all_images_accepted=False,
+            error=dict(kind=type(exc).__name__,message='Image selection finalization could not retain run ownership or persist its result.',
+                       evidence_paths=[]))
     try:
         if sum(v is not None for v in (script, text, run_dir)) != 1:
             raise ProductionRefused('provide exactly one of script, text, or run_dir')
+        if image_selection is not None and run_dir is None:
+            raise ProductionRefused('--image-selection requires --run-dir with a prepared Jimeng batch')
         if run_dir is None:
             raw, _ = read_script(script=script, text=text)
             config = config if isinstance(config, ProjectConfig) else load_config(
@@ -212,6 +225,20 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
                     manifest = create_manifest(run, frozen.config, inputs=inputs, models={}, workflows={}, verify_integrity=False)
                 else:
                     frozen = load_frozen_inputs(run, config=config, output_path=output_path, cpu_planner=cpu_planner, image_model=image_model)
+                    if frozen.config.production_strategy == 'paragraph_jimeng_v1':
+                        from .runtime.production_image_selection import resume_image_selection
+                        from .runtime.logging import RunLogger
+                        if image_selection is not None or (run/'production/image-selection/active-batch.json').exists():
+                            selection_mode=True
+                            result=resume_image_selection(frozen,paths=RuntimePaths.from_config(frozen.config),
+                                logger=RunLogger(run,production=True),selection_path=image_selection,lock=run_lock)
+                            from .config import read_json
+                            if not run_lock.path.is_file() or read_json(run_lock.path)!=run_lock.owner:
+                                raise ProductionRefused('cannot record image invocation after losing held run lock')
+                            write_exclusive(run_path(run,run/f'logs/production/invocations/{uuid4().hex}.json'),result.to_dict())
+                            return result
+                    elif image_selection is not None:
+                        raise ProductionRefused('--image-selection requires paragraph_jimeng_v1')
                     state = ProductionStateStore.open(run)
                     manifest = ManifestStore.open(run, verify_integrity=False)
                     state._run_lock_owner=dict(run_lock.owner)
@@ -229,6 +256,9 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
                     raise ProductionRefused('delivery result requires persisted final state')
                 result=expected
             except (Exception, KeyboardInterrupt) as exc:
+                if selection_mode:
+                    result=selection_error(exc)
+                    return result
                 result = _record_error(run, state, exc)
             invocation = run_path(run, run/f'logs/production/invocations/{uuid4().hex}.json')
             from .config import read_json
@@ -237,6 +267,8 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
             write_exclusive(invocation, result.to_dict())
         return result
     except (Exception, KeyboardInterrupt) as exc:
+        if selection_mode:
+            return selection_error(exc)
         if result is not None:
             # The inner invocation has already failed: preserve its cause, evidence and exit code.
             if result.error is None:

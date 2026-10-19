@@ -58,9 +58,22 @@
     "upscale_clip": 1200
   },
   "production_strategy": "paragraph_jimeng_v1",
+  "reference_generation": null,
+  "reference_capabilities": {},
+  "reference_storage": null,
   "scene_planning": {
     "target_scenes_per_paragraph": 3,
     "max_clip_seconds": 6
+  },
+  "selection_email": {
+    "sender": "318575094@qq.com",
+    "recipient": "318575094@qq.com",
+    "smtp_host": "smtp.qq.com",
+    "smtp_port": 465,
+    "smtp_security": "ssl",
+    "smtp_password_env": "VIDEO_AI_SMTP_AUTH_CODE",
+    "max_mime_bytes": 15728640,
+    "timeout_seconds": 60
   },
   "image_generation": {
     "provider": "volcengine_jimeng",

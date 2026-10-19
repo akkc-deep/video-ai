@@ -36,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     automatic.add_argument('--output', metavar='PATH')
     automatic.add_argument('--cpu-planner', action='store_true', default=None)
     automatic.add_argument('--image-model', metavar='REQ_KEY', help='image model for a new Jimeng run')
+    automatic.add_argument('--image-selection', metavar='PATH', help='consume image choices in a prepared Jimeng run')
     automatic.add_argument('--json', action='store_true')
     for name in ('run', 'resume'):
         flow = commands.add_parser(name, help='coordinate stages with fresh recovery and explicit author checkpoints')
@@ -124,12 +125,14 @@ def main(argv: list[str] | None = None) -> int:
         if options.command == 'make-video':
             from .production import make_video
             result = make_video(options.config, script=options.script, text=options.text, run_dir=options.run_dir,
-                                output_path=options.output, cpu_planner=options.cpu_planner, image_model=options.image_model)
+                                output_path=options.output, cpu_planner=options.cpu_planner, image_model=options.image_model,
+                                image_selection=options.image_selection)
             if options.json:
                 print(json.dumps(result.to_dict(), ensure_ascii=False, allow_nan=False))
             else:
                 print(f'{result.status}: stage={result.active_stage}; run={result.run_dir}')
-                if result.movie is not None: print(f'MP4: {result.movie}\nSRT: {result.subtitle}\nReceipt: {result.receipt_path}')
+                if getattr(result,'movie',None) is not None: print(f'MP4: {result.movie}\nSRT: {result.subtitle}\nReceipt: {result.receipt_path}')
+                if getattr(result,'selection_template',None) is not None: print(f'Image selection: {result.selection_template}')
                 if result.error is not None: print(result.error['message'], file=sys.stderr)
                 if result.run_dir is not None:
                     print(f'Resume: video-ai make-video --run-dir "{result.run_dir}"')

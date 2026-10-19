@@ -289,7 +289,8 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     data = read_json(path) if raw is None else raw
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
-                                  'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning'))
+                                  'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage'))
     _exact(data['schema_version'], 1, path, 'schema_version')
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
@@ -297,9 +298,22 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     image = parse_image_generation(data.get('image_generation'), path) if strategy == STRATEGY else None
     if strategy == 'legacy' and 'image_generation' in data:
         _error(path, 'image_generation', 'requires paragraph_jimeng_v1 strategy')
+    if strategy == 'legacy' and any(key in data for key in ('reference_generation', 'reference_capabilities', 'reference_storage')):
+        _error(path, 'reference_generation', 'requires paragraph_jimeng_v1 strategy')
+    if strategy == STRATEGY:
+        # Reject unrecognized credential fields before raw configuration can be frozen.
+        if data.get('reference_generation') is not None:
+            parse_image_generation(data['reference_generation'], path)
+        if data.get('reference_storage') is not None:
+            from .reference_config import STORAGE_REQUIRED, STORAGE_DEFAULTS
+            _object(data['reference_storage'], path, 'reference_storage', (), tuple(STORAGE_REQUIRED)+tuple(STORAGE_DEFAULTS))
     if strategy == 'legacy' and 'scene_planning' in data:
         _error(path, 'scene_planning', 'requires paragraph_jimeng_v1 strategy')
+    if strategy == 'legacy' and 'selection_email' in data:
+        _error(path, 'selection_email', 'requires paragraph_jimeng_v1 strategy')
     if strategy == STRATEGY:
+        from .selection_config import parse_selection_email
+        parse_selection_email(data.get('selection_email'))
         try:
             parse_scene_planning(data.get('scene_planning'))
         except ConfigError as exc:

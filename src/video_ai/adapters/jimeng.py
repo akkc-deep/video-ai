@@ -62,9 +62,10 @@ def _identifier(value, label):
 
 
 class JimengClient:
-    def __init__(self, settings, *, http=None):
+    def __init__(self, settings, *, http=None, ownership_check=None):
         self.settings = settings
         self.http = http or ExternalHttpsClient()
+        self.ownership_check = ownership_check
 
     def check_credentials(self):
         access = os.environ.get(self.settings.access_key_env)
@@ -79,7 +80,8 @@ class JimengClient:
         headers = sign_request(body, action, access, secret)
         response = self.http.request('POST', 'https://'+HOST+'/?'+urlencode(dict(Action=action, Version=VERSION)),
                                      body=body, headers=headers,
-                                     timeout=min(timeout, self.settings.request_timeout_seconds) if timeout is not None else self.settings.request_timeout_seconds)
+                                     timeout=min(timeout, self.settings.request_timeout_seconds) if timeout is not None else self.settings.request_timeout_seconds,
+                                     **({'ownership_check': self.ownership_check} if self.ownership_check is not None else {}))
         try:
             data = strict_json(response.body)
             if not isinstance(data, dict): raise ValueError()
@@ -102,10 +104,18 @@ class JimengClient:
             raise error
         return content, request_id, diagnostic
 
-    def submit(self, prompt, *, timeout=None):
+    def submit(self, prompt, *, timeout=None, image_urls=None):
         if not isinstance(prompt, str) or not prompt.strip(): raise ValueError('nonempty image prompt required')
-        content, request_id, diagnostic = self._request(SUBMIT,
-            dict(thaw(self.settings.model_parameters), req_key=self.settings.req_key, prompt=prompt), timeout)
+        parameters = thaw(self.settings.model_parameters)
+        if any(key in parameters for key in ('prompt', 'req_key', 'image_urls')):
+            raise ValueError('reserved Jimeng model parameter')
+        payload = dict(parameters, req_key=self.settings.req_key, prompt=prompt)
+        if image_urls is not None:
+            if not isinstance(image_urls, list) or not image_urls:
+                raise ValueError('reference image_urls must be a nonempty array')
+            for url in image_urls: validate_https_url(url)
+            payload['image_urls'] = list(image_urls)
+        content, request_id, diagnostic = self._request(SUBMIT, payload, timeout)
         return dict(task_id=_identifier(content.get('task_id'), 'task_id'), request_id=request_id, diagnostic=diagnostic)
 
     def query(self, task_id, *, timeout=None):
@@ -125,4 +135,5 @@ class JimengClient:
 
     def download(self, url, *, timeout=None):
         return self.http.request('GET', url, timeout=min(timeout, self.settings.request_timeout_seconds)
-            if timeout is not None else self.settings.request_timeout_seconds, max_bytes=64*1024*1024).body
+            if timeout is not None else self.settings.request_timeout_seconds, max_bytes=64*1024*1024,
+            **({'ownership_check': self.ownership_check} if self.ownership_check is not None else {})).body

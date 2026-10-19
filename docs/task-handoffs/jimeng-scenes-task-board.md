@@ -26,9 +26,9 @@
 |---:|---|---|---|---|---|---|
 | 1 | JIM-01 | 可配置即梦官方模型接入与候选图持久化 | COMPLETED | None | D:/code/py/video-ai/docs/task-designs/JIM-01-design.md | None |
 | 2 | JIM-02 | 段落关键画面、共享视觉设定与时间预算 | COMPLETED | JIM-01 | D:/code/py/video-ai/docs/task-designs/JIM-02-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-02-handoff.md |
-| 3 | JIM-03 | 候选图邮件、基准选图与等待续作 | READY | JIM-01, JIM-02 | D:/code/py/video-ai/docs/task-designs/JIM-03-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-03-handoff.md |
-| 4 | JIM-04 | 参考图存储与关联画面一致性生成 | NOT_STARTED | JIM-01, JIM-02, JIM-03 | None | None |
-| 5 | JIM-05 | Wan 连续片段、末帧续接与动态观察 | NOT_STARTED | JIM-02, JIM-04 | None | None |
+| 3 | JIM-03 | 候选图邮件、基准选图与等待续作 | COMPLETED | JIM-01, JIM-02 | D:/code/py/video-ai/docs/task-designs/JIM-03-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-03-handoff.md |
+| 4 | JIM-04 | 参考图存储与关联画面一致性生成 | COMPLETED | JIM-01, JIM-02, JIM-03 | D:/code/py/video-ai/docs/task-designs/JIM-04-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-04-handoff.md |
+| 5 | JIM-05 | Wan 连续片段、末帧续接与动态观察 | READY | JIM-02, JIM-04 | D:/code/py/video-ai/docs/task-designs/JIM-05-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-05-handoff.md |
 | 6 | JIM-06 | 新时间轴合成与成片一致性交付验收 | NOT_STARTED | JIM-03, JIM-05 | None | None |
 | 7 | JIM-07 | 跨阶段恢复、修订运行与局部返工 | NOT_STARTED | JIM-04, JIM-05, JIM-06 | None | None |
 | 8 | JIM-08 | 全链路回归、真实样片验收与使用说明 | NOT_STARTED | JIM-07 | None | None |
@@ -59,6 +59,8 @@
 
 ### JIM-03
 
+- **Start evidence:** 2026-10-18 用户明确要求“完成JIM-03”；全文读取设计与交接，记录 `READY -> IN_PROGRESS`；实施计划 `D:/code/py/video-ai/docs/task-designs/JIM-03-plan.md`。
+
 - **Goal:** 基准画面候选能发到用户 QQ 邮箱，用户通过编号作出可验证选择，程序保存进度并安全等待/续作。
 - **Scope:** SMTP SSL、邮件正文与编号、基准/候选/原文对照、整组对照图、实际附件及编码后拆包；稳定 Message-ID、发送意图和回执；基准与普通批次的选择文件、SHA256 接受记录、整组一致性观察绑定；`--image-selection` 入口；`awaiting_image_selection` 和 `email_delivery_unknown` 结果及锁/服务释放。发件和收件均为 `318575094@qq.com`。不自动收信或部署选图网页。
 - **Acceptance:** ① 本地 SMTP 替身收到实际图片、可复制编号、原文和一致性要求；15 MiB 默认上限按完整 MIME 字节计，拆包不丢候选。② 普通续作不重复发送已接受邮件；发送结果不明不会自动重发；修复邮件配置不重新出图。③ 当前批次每画面恰好一张且身份正确才能接受；重复、缺项、跨 run 和变化图片拒绝；部分选择仅作草稿。④ 单纯选编号不自动伪造整组一致性通过；未完全选图并确认整组前无新 Wan 提交。⑤ 等待返回后锁和本次自有服务释放，续作保留候选及已选基准。本任务用测试驱动模拟后续批次，不依赖尚未实现的参考图生成。
@@ -67,15 +69,23 @@
 - **First action:** 按已完成的 JIM-03 设计，在 `tests/unit/test_selection_email.py` 建两 scene、同名局部 candidate ID、真实 PNG、完整原文和基准用途的 fixture，断言实际 MIME 的编号/附件/编码后限额；先观察接口缺失失败，再实现纯邮件构建。
 - **State evidence:** JIM-02 先记录 COMPLETED 后，完成、全文自审并关联 `D:/code/py/video-ai/docs/task-designs/JIM-03-design.md`；设计明确 SMTP/MIME、批次/基准身份、选择/观察精确结构、独立 schema=2 结果、CLI 准备运行分派及恢复/测试。随后写入并关联 `D:/code/py/video-ai/docs/task-handoffs/JIM-03-handoff.md`，由 `NOT_STARTED -> READY`。本次仅后继准备，JIM-03 实现未启动，新测试尚未创建/运行；收发地址已确认，SMTP 授权码/真实投递仍未验证。
 
+- **Completion evidence:** 2026-10-18 完成 SMTP SSL/MIME 编码后拆包、真实原图/预览/对照图、发送意图/回执与显式重发、持锁批次/基准选择、原始提交副本、整组实际观察准入及 prepared-run CLI schema=2，记录 `IN_PROGRESS -> COMPLETED`。验收与独立审查证据见 `D:/code/py/video-ai/docs/task-designs/JIM-03-verification.md`。新专项最终审查前 **129 passed in 155.93s**；CLI 两项 Important 先 RED 后修复，另测锁释放 OSError；相关历史 **114 passed in 225.54s**。144 个模块全量初次 **2886 passed、2 failed、1 error**（1228.41 秒），三个旧测试串行复查 **3 passed in 10.12s**，代码未改，完整覆盖 **2889 个唯一用例均有通过证据**。原并行失败与复查成功均保留，汇总 `D:/VideoSi/cache/video-ai/logs/jim-03-verified-coverage.json`。本地 SMTP/HTTP 替身及真实 ffmpeg，无真实 QQ 邮件、收费生成、上传或 Wan；真实收件与视觉一致性留到后续验收，候选/选图接口可供 JIM-04 消费。
+
 ### JIM-04
+
+- **Start evidence:** 2026-10-19 用户明确要求“JIM-04完成这个任务”；全文读取设计及交接，记录 `READY -> IN_PROGRESS`；实施与验证记录 `D:/code/py/video-ai/docs/task-designs/JIM-04-plan.md`。
 
 - **Goal:** 选定的基准图实际参与关联画面的生成，重复主体和场景有固定视觉参考，而非独立文生图后再碰运气筛选。
 - **Scope:** 新增 `src/video_ai/adapters/reference_storage.py`，使用配置的现有 TOS 私有桶保存选图并签发 HTTPS GET URL；核对模型参考图能力、数量和尺寸；同模型引用或用户明确配置 `reference_generation.req_key`；按依赖批次生成候选并复用 JIM-03 邮件/选择流程；请求绑定共享设定和固定基准。未知/不支持参考的模型不能自动换模或退回纯文字生成。
 - **Acceptance:** ① 替身请求中确有已接受基准的参考输入，且每个输入对应主体/背景用途清楚，同主体跨画面直接引用同一固定基准。② 基准未选、能力不明、配置缺失、参考数量超限或 URL 有效期不足均在关联画面付费提交前停止。③ 本地 SHA256、TOS 对象来源和依赖关系可核验，预签名 URL 不泄露；不创建桶或修改桶权限。④ 未提交请求可刷新 URL，已受理任务只能查询原任务；恢复不重新出图。⑤ 后续候选能按批发邮件，全部选图和整组一致性确认通过后产出精确的 Wan 输入清单。实际服务是否能取图留到 JIM-08 真实验收。
 - **Dependencies:** `JIM-01` 的官方图片任务适配；`JIM-02` 的视觉设定/参考依赖图；`JIM-03` 的已接受基准及分批邮件/选择接口。
 - **Sources:** ① 总体方案 `D:/code/py/video-ai/docs/task-designs/jimeng-email-scene-design.md` 全文，重点“一致性设定与参考图”；② `D:/code/py/video-ai/src/video_ai/runtime/production_visuals.py`；③ `D:/code/py/video-ai/src/video_ai/runtime/production_visual_records.py`；④ `D:/code/py/video-ai/src/video_ai/runtime/production_inputs.py`；⑤ 总体方案末尾的即梦参考输入与 TOS 官方资料；⑥ 已完成 JIM-01 至 JIM-03 时登记的直接输入契约与验证证据。
-- **First action:** 从基准选择记录到模型实际 `image_urls` 的路径定义存储、预签名和请求身份契约，并设计过期 URL、缺参考能力时零生成提交的用例。
+- **First action:** 按 JIM-04 完成设计，在 `tests/unit/test_reference_storage.py` 建固定 UTC/AK/SK 与 GET TTL=3600 的独立 TOS4 签名向量；bootstrap 后先观察缺适配器失败，再实现纯签名和受控 HEAD/GET/PUT。
 - **State evidence:** 初始化为 `NOT_STARTED`；模型选择、TOS 桶与权限待本地配置，没有真实上传或取图验证。
+
+- **Preparation evidence:** JIM-03 先记录 COMPLETED 后按 Order=4 选择本项，完成并全文自审/关联 `D:/code/py/video-ai/docs/task-designs/JIM-04-design.md`；配置补齐但不修改既有冻结/基准、TOS4 协议、模型能力档案、实际 reference 输入/来源与 Wan 首图准入均有具体契约。交接 `D:/code/py/video-ai/docs/task-handoffs/JIM-04-handoff.md` 写入并关联后记录 `NOT_STARTED -> READY`。本次只准备实施入口，没有启动 JIM-04 实现或运行其新测试。
+
+- **Completion evidence:** 2026-10-19 完成固定已选原图的 TOS 内容寻址发布、独立 TOS4 向量、受控参考 URL 实际提交、严格能力及配置冻结/补充、共享设定/多用途来源、单次提交恢复、原任务查询与邮件复用、完整观察后的精确 Wan 首图清单，记录 `IN_PROGRESS -> COMPLETED`。验收 `D:/code/py/video-ai/docs/task-designs/JIM-04-verification.md`；最终新专项 **118 passed in 360.71s**、设计列出的历史回归 **186 passed in 200.44s**、串行全套 **3012 passed in 3840.59s (1:04:00)**，全部退出码 0，日志 `D:/VideoSi/cache/video-ai/logs/jim-04-{targeted,historical,full}-final.txt`。独立审查复现并修复备用配置凭证落盘、能力验证/复制不同读、同字节多基准对象冲突、实际发送时 TTL 与身份、提交证据摘要绑定问题，另修复真实 JPEG 格式映射；审查及 scoped re-review 无剩余 Critical/Important。20 个实现/测试/示例/说明文件的 SHA256 在验证后完全匹配，`D:/VideoSi/cache/video-ai/logs/jim-04-verified-files.json`。本地真实 PNG/JPEG/ffmpeg 与 HTTP/SMTP/socket 替身；没有真实云上传、收费生成、QQ 收信、Wan 或视觉质量验收，真实服务留 JIM-08。后继依次消费完整图片准入接口，不复用旧纯文字模拟作为参考证据。
 
 ### JIM-05
 
@@ -84,8 +94,10 @@
 - **Acceptance:** ① 首片输入与用户选择精确关联，未经完整图片准入不请求 Wan。② 续片输入来自父片最后一个实际保留原生帧，不能取裁掉的补帧；父片未观察或不一致时不提交其续片。③ 续片申请衔接余量并丢首帧，最终映射按原文时间轴准确覆盖，不循环、冻结或截短旁白补时。④ 视频提示词保留固定主体/环境；过程观察不能仅用首尾截图或相似度代替。⑤ 中断恢复使用原 Comfy 提交，父片身份改变拒绝复用续片；独立场景等待和失败状态不混淆。
 - **Dependencies:** `JIM-02` 的 scene/clip 时间预算；`JIM-04` 的完整已接受图片清单、基准及共享视觉设定。
 - **Sources:** ① 总体方案 `D:/code/py/video-ai/docs/task-designs/jimeng-email-scene-design.md` 全文，重点“动态视频的延续与验收”；② `D:/code/py/video-ai/src/video_ai/planning/production_visual_plan.py`；③ `D:/code/py/video-ai/src/video_ai/runtime/production_visuals.py`；④ `D:/code/py/video-ai/src/video_ai/media/frames.py`；⑤ `D:/code/py/video-ai/workflows/wan22_i2v_14b_api.mapping.json`；⑥ `D:/code/py/video-ai/src/video_ai/runtime/_source_clip_review.py`；⑦ `D:/code/py/video-ai/src/video_ai/planning/final_review.py`。
-- **First action:** 为一个跨两段的连续画面确定父片末帧选择、续片首帧丢弃和总帧预算的数值契约，先建立可观察的帧映射验收例。
+- **First action:** 按已完成 JIM-05 设计，在 `tests/unit/test_scene_clip_continuation.py` 建立 `test_200_frame_retained_native_mapping`，由既有 plan_scene_clips 生成 200 帧预算，断言保留/生成 `[93,92,15]`/`[93,93,17]`、末保留索引 `[92,92,15]`、head/tail null 和全局恰好一次覆盖；bootstrap 后先运行观察缺新接口 RED，再实现纯规则，不修改 JIM-02 预算。
 - **State evidence:** 初始化为 `NOT_STARTED`；尚无动态生成或续接观察结果。
+
+- **Preparation evidence:** 2026-10-19 JIM-04 先记录 COMPLETED 后按 Order=5 选择本项，观察到 NOT_STARTED/Design=None；完成并全文审阅 `D:/code/py/video-ai/docs/task-designs/JIM-05-design.md` 后仅回填 Design document，再写入并关联 `D:/code/py/video-ai/docs/task-handoffs/JIM-05-handoff.md`，最后记录 `NOT_STARTED -> READY`。设计明确 prepared-run API、独立 schema=2 原生帧/样本映射、父末保留帧、每片实际过程观察、独立 scene 推进及 Comfy 单次提交/原 ID 恢复；JIM-02/JIM-04 直接输入无已知未解决冲突。本次只准备后继，JIM-05 实现、新测试和真实动态观看均未启动。
 
 ### JIM-06
 

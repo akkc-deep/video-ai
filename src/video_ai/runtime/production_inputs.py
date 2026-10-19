@@ -59,7 +59,7 @@ def read_script(*, script=None, text=None, raw_bytes=None):
     return raw, SegmentedScript(decoded, raw.startswith(b'\xef\xbb\xbf'), spans)
 
 
-def _copy_small(source, destination):
+def _copy_small(source, destination, *, validate=None):
     source = Path(source).resolve(strict=True)
     with source.open('rb') as file:
         before = os.fstat(file.fileno()); raw = file.read(); after = os.fstat(file.fileno())
@@ -67,6 +67,7 @@ def _copy_small(source, destination):
     def stable(stat): return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns
     if stable(before) != stable(after) or stable(current) != stable(after):
         raise ProductionRefused(f'input changed while freezing: {source}')
+    if validate is not None: validate(raw)
     _save_bytes(destination, raw)
     digest = hashlib.sha256(raw).hexdigest()
     return FileIdentity(str(source), len(raw), before.st_mtime_ns, digest, now()), hash_file(destination)
@@ -124,6 +125,13 @@ def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, 
     canonical = load_config(config.config_file, raw=read_json(Path(config_copy.path)), voice=voice)
     if not _same_json(canonical, config): raise ProductionRefused('effective configuration differs from source raw/resolved configuration')
     identities.update(config=thaw(config_copy), voice=thaw(voice_copy))
+    if config.production_strategy == STRATEGY and config.raw.get('reference_capabilities') is not None:
+        from ..reference_config import parse_capability_paths, parse_capability
+        from ..adapters.common import strict_json
+        for req_key, source in parse_capability_paths(thaw(config.raw['reference_capabilities'])).items():
+            _, copied = _copy_small(source, run_path(run, directory/'reference-capabilities'/(req_key+'.json')),
+                                   validate=lambda raw, key=req_key: parse_capability(strict_json(raw), req_key=key))
+            identities['reference_capability/'+req_key] = thaw(copied)
     resolved, resolved_voice = _resolved(config)
     workflows = {}
     originals = active_workflows(config)
@@ -202,6 +210,13 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     records = policy['input_identities']
     roles = ('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping')
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
+    if modern and options['config_snapshot']['raw'].get('reference_capabilities') is not None:
+        from ..reference_config import parse_capability_paths
+        for req_key in parse_capability_paths(options['config_snapshot']['raw']['reference_capabilities']):
+            role = 'reference_capability/'+req_key
+            required.add(role)
+            if records.get(role, {}).get('path') != str(run/'production/reference-capabilities'/(req_key+'.json')):
+                raise ProductionRefused('frozen reference capability path differs')
     object_fields(records, required, 'frozen input identities')
     for record in records.values(): _verify_identity(record, run)
     if records['script']['path'] != str(script_path): raise ProductionRefused('script identity path differs')
