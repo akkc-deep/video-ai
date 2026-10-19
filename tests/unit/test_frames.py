@@ -73,6 +73,67 @@ def assert_file_identity(identity,path):
     assert all(identity[key]==getattr(fresh,key) for key in ('path','bytes','mtime_ns','sha256'))
 
 
+@pytest.mark.parametrize('generated,index,filename', [(93,92,'frame_000093.png'),(17,15,'frame_000016.png')])
+def test_native_frame_exact_generated_pixels_and_retained_filename(media_context, generated, index, filename):
+    from video_ai.media.frames import extract_native_frame
+    run, kwargs = media_context
+    source = make_video(media_context, frames=generated)
+    before = source.read_bytes()
+    target = run/'scene-clips/scene_0001_clip_0003/last-frame'/filename
+    info, evidence = extract_native_frame(source,target,source_frame_index=index,
+        expected_frames=generated,width=128,height=72,timeout=30,**kwargs)
+    assert_file_identity(info['identity'],target)
+    assert (info['format'],info['pixel_format'],info['width'],info['height']) == ('png','rgb24',128,72)
+    # Independently decode the entire generated video and PNG to raw RGB bytes.
+    base = [kwargs['config'].tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i']
+    tail = ['-map','0:v:0','-pix_fmt','rgb24','-fps_mode','passthrough','-f','rawvideo','-']
+    native = fixture_command(media_context,[*base,source,*tail]).stdout_path.read_bytes()
+    actual = fixture_command(media_context,[*base,target,*tail]).stdout_path.read_bytes()
+    size = 128*72*3
+    assert len(native)==generated*size and len(actual)==size
+    assert actual == native[index*size:(index+1)*size]
+    if generated==17: assert actual != native[16*size:17*size]
+    assert source.read_bytes() == before and all(path.is_file() for path in evidence)
+    record = json.loads(evidence[0].read_text()); args = record['command']['args']
+    assert record['source_frame_index']==index
+    assert record['filter']==f'select=eq(n\\,{index}),format=rgb24'
+    assert '-ss' not in args and '-r' not in args and 'fps=' not in record['filter']
+    assert args[args.index('-vf')+1]==record['filter']
+    assert_file_identity(record['source']['identity'],source)
+    events = [json.loads(line) for line in (run/'logs/events.jsonl').read_text().splitlines()]
+    assert {e['stage'] for e in events} == {'source_clips','test_fixture'}
+
+
+@pytest.mark.parametrize('index,expected,name', [(True,17,'frame_000002.png'),(-1,17,'frame_000000.png'),
+    (17,17,'frame_000018.png'),(15,True,'frame_000016.png'),(15,16,'frame_000016.png'),
+    (15,18,'frame_000016.png'),(15,17,'frame_000017.png')])
+def test_native_extraction_refuses_bad_index_count_or_name(media_context,index,expected,name):
+    from video_ai.media.frames import extract_native_frame
+    run,kwargs=media_context;source=make_video(media_context,frames=17)
+    target=run/'last-frame'/name
+    with pytest.raises(ValueError): extract_native_frame(source,target,source_frame_index=index,
+        expected_frames=expected,width=128,height=72,timeout=30,**kwargs)
+    assert not target.exists()
+
+
+def test_native_extraction_refuses_preexisting_target_and_source_drift(media_context,monkeypatch):
+    from video_ai.media import frames, video
+    run,kwargs=media_context;source=make_video(media_context,frames=17)
+    target=run/'frame_000016.png';target.write_bytes(b'preserve')
+    with pytest.raises(FileExistsError): frames.extract_native_frame(source,target,source_frame_index=15,
+        expected_frames=17,width=128,height=72,timeout=30,**kwargs)
+    assert target.read_bytes()==b'preserve'
+    target=run/'last-frame/frame_000016.png'
+    original=video._command
+    def drift(args,**options):
+        result=original(args,**options)
+        if '-vf' in args: source.write_bytes(source.read_bytes()+b'changed')
+        return result
+    monkeypatch.setattr(video,'_command',drift)
+    with pytest.raises(OSError): frames.extract_native_frame(source,target,source_frame_index=15,
+        expected_frames=17,width=128,height=72,timeout=30,**kwargs)
+
+
 def test_real_frame_content_order_survives_extraction_and_encoding(media_context):
     """Catch content reversal even when names, counts and timestamps remain valid."""
     from video_ai.media.video import inspect_video

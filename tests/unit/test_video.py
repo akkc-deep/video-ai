@@ -97,6 +97,76 @@ def test_real_69_frames_trim_to_68_with_complete_evidence(media_context):
     assert all(0 < e['details']['timeout'] <= 300 for e in media_events)
 
 
+@pytest.mark.parametrize('generated,start,end', [(93,1,93),(17,1,16),(1,0,1)])
+def test_scene_video_trim_exact_native_range_pts_and_content(media_context,generated,start,end):
+    from fractions import Fraction
+    from unit.test_frames import fixture_command
+    from video_ai.media.video import inspect_video,trim_scene_video
+    run,kwargs=media_context;source=make_video(media_context,frames=generated)
+    source_info,_=inspect_video(source,width=128,height=72,**kwargs)
+    before=source.read_bytes();target=run/'retained.mp4'
+    info,evidence=trim_scene_video(source,target,source_info=source_info,start_frame=start,end_frame=end,
+        width=128,height=72,timeout=30,**kwargs)
+    assert (info['frames'],info['fps'],info['width'],info['height'],info['codec'],info['pixel_format']) == (end-start,16,128,72,'h264','yuv420p')
+    record=json.loads(evidence[0].read_text());args=record['command']['args']
+    assert record['filter']==f'trim=start_frame={start}:end_frame={end},setpts=N/(16*TB)'
+    assert '-an' in args and '-r' not in args and 'fps=' not in record['filter']
+    checked=[json.loads(p.read_text()) for p in evidence if p.name.startswith('video-')][-1]
+    stream=checked['probe']['streams'][0];tb=Fraction(stream['time_base'])
+    assert len(checked['probe']['streams'])==1
+    assert [r['best_effort_timestamp']*tb for r in checked['frames']['frames']] == [Fraction(i,16) for i in range(end-start)]
+    # A lossless independent RGB decode verifies content position despite re-encoding.
+    base=[kwargs['config'].tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i']
+    tail=['-map','0:v:0','-pix_fmt','rgb24','-fps_mode','passthrough','-f','rawvideo','-']
+    native=fixture_command(media_context,[*base,source,*tail]).stdout_path.read_bytes()
+    retained=fixture_command(media_context,[*base,target,*tail]).stdout_path.read_bytes()
+    size=128*72*3
+    assert len(retained)==(end-start)*size
+    # Compare mean absolute error of each retained frame with its intended native frame.
+    for k in range(end-start):
+        actual=retained[k*size:(k+1)*size];expected=native[(start+k)*size:(start+k+1)*size]
+        assert sum(abs(a-b) for a,b in zip(actual,expected))/size < 5
+    assert source.read_bytes()==before and all(p.is_file() for p in evidence)
+
+
+@pytest.mark.parametrize('field,value', [('frames', True),('frames', 100),('fps',16.0),
+    ('width',144),('duration',float('nan')),('pixel_format','rgb24'),('codec','hevc'),('extra',1)])
+def test_scene_trim_revalidates_all_supplied_source_metadata(media_context,field,value):
+    from video_ai.media.video import inspect_video,trim_scene_video
+    run,kwargs=media_context;source=make_video(media_context,frames=17)
+    info,_=inspect_video(source,width=128,height=72,**kwargs);info[field]=value
+    target=run/'retained.mp4'
+    with pytest.raises(ValueError): trim_scene_video(source,target,source_info=info,start_frame=1,end_frame=16,
+        width=128,height=72,timeout=30,**kwargs)
+    assert not target.exists()
+
+
+@pytest.mark.parametrize('start,end', [(True,16),(1,True),(-1,16),(1,18),(1,1),(1,16.0)])
+def test_scene_trim_refuses_invalid_half_open_native_ranges(media_context,start,end):
+    from video_ai.media.video import inspect_video,trim_scene_video
+    run,kwargs=media_context;source=make_video(media_context,frames=17)
+    info,_=inspect_video(source,width=128,height=72,**kwargs);target=run/'retained.mp4'
+    with pytest.raises(ValueError): trim_scene_video(source,target,source_info=info,start_frame=start,end_frame=end,
+        width=128,height=72,timeout=30,**kwargs)
+    assert not target.exists()
+
+
+@pytest.mark.parametrize('fault', ['path', 'sha256', 'bytes_float', 'mtime_float', 'missing_hash'])
+def test_scene_trim_rejects_forged_source_identity(media_context,fault):
+    from video_ai.media.video import inspect_video,trim_scene_video
+    run,kwargs=media_context;source=make_video(media_context,frames=17)
+    info,_=inspect_video(source,width=128,height=72,**kwargs);identity=info['identity']
+    if fault=='path': identity['path']=str(run/'other.mp4')
+    elif fault=='sha256': identity['sha256']='f'*64
+    elif fault=='bytes_float': identity['bytes']=float(identity['bytes'])
+    elif fault=='mtime_float': identity['mtime_ns']=float(identity['mtime_ns'])
+    else: identity['sha256']=None
+    target=run/'retained.mp4'
+    with pytest.raises(ValueError): trim_scene_video(source,target,source_info=info,start_frame=1,end_frame=16,
+        width=128,height=72,timeout=30,**kwargs)
+    assert not target.exists()
+
+
 @pytest.mark.parametrize('frames', [1, 65, 73])
 def test_valid_short_or_long_media_has_its_actual_count(media_context, frames):
     from video_ai.media import video

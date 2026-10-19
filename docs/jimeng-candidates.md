@@ -178,3 +178,104 @@ print(result.to_dict())
 `production/reference-images/settings.json` 绑定参考模型、能力档案和存储位置；`reference-storage/<sha256>/intent.json` 与 `object.json` 绑定原图、内容寻址对象及实际字节验证；每个关联 scene 的 `provenance.json` 绑定用途、共享提示词和请求。每请求的 `submit-evidence.json` 绑定完整 intent 的规范摘要，读取时拒绝单独改动请求体、URL 摘要或时间证据。预签名 URL 仅在内存使用，持久记录只保存其 SHA256 和时间。已有生成 intent 却没有 task_id 时停止为 `submit_unknown`；已有 task_id 只查询原任务；邮件失败只恢复通知，不重新出图。
 
 完整选择和整组实际观察通过后，`production/reference-images/wan-inputs.json` 按 scene 顺序列出确切已选原图、模型/task/request、单位和基准绑定。`require_reference_image_acceptance(frozen, units, timeline)` 每次重验原图、接受记录、能力与参考来源；旧纯文字模拟候选不能充当参考生成。该清单仅供下一阶段读取首图，不会提交 Wan，也不证明真实画面质量已通过；真实 TOS 取图、账号能力及视觉效果仍需 JIM-08 联调。
+
+## Wan 源片和逐片动态观察
+
+已准备运行的原文、units、完整 PCM timeline、scene plan 和全部原图准入齐备后，可调用 JIM-05 的 Python API。此调用会使用冻结的 Wan 工作流运行推理；先确保本机模型和运行配置已准备好。
+
+```python
+from video_ai.runtime.production_scene_clips import (
+    produce_scene_clips, consume_scene_clip_observation,
+)
+from video_ai.runtime.scene_clip_records import require_scene_clip_acceptance
+
+result = produce_scene_clips(
+    frozen, units, timeline,
+    paths=RuntimePaths.from_config(frozen.config),
+    logger=RunLogger(run, production=True),
+)
+print(result.to_dict())
+```
+
+首片使用用户所选原图的比例适配 PNG，16:9 原图按 fast 768×432 或 quality 1280×720 转换，保留原始图片。每个 scene 独立推进到下一个等待观察的片段。`awaiting_continuity_review`（退出码 3）表示已有可看的技术源片，自有服务和运行锁已释放；不是动态一致性已经通过。
+
+`result.observation_templates` 提供每个待观察片段的绝对模板路径。复制模板后，实际连续播放其绑定的完整 `source`；有父片时还须播放父片完整 source，并比较固定所选原图、每张基准和确切末帧 PNG。填写 `human_video` 或实际具备播放查看能力的 `agent_video`、观察者、带时区的观看时间、五段观察文字和理由，以及全部 checks/verdict/issues。模板中的空值和 unverified 不会自动变成通过；首尾截图、哈希或编码检查不能替代连续播放。
+
+```python
+review = consume_scene_clip_observation(
+    frozen, units, timeline, authored_observation_path,
+    paths=RuntimePaths.from_config(frozen.config),
+    logger=RunLogger(run, production=True),
+)
+# 此入口仅保存并核验观察。有效观察后显式再次调用 produce_scene_clips 推进续片。
+```
+
+每片（包括叶片）都须过程观察通过。unverified 可补充新的实际观察；明确 failed 会阻断该连续链，需要后续修订运行，不能原地覆盖接受、改种子重试或自动返工。另一独立 scene 可继续生成。续片直接按字节使用父片 generated 中最后一个实际保留 native 帧的 PNG；丢弃续片首帧，裁去预算之外的尾帧。例如 200 帧长画面生成 93/93/17 帧，分别保留 93/92/15 帧，末保留 native 零基索引为 92/92/15，最终贡献恰好 200 帧。
+
+观察原文保存后发生中断，也会保留其中的明确 failed 结论；续作从确切原文恢复拒绝收据，不能用新的 passed 绕过。已接受观察不可替换，原文或父观察变化也会阻止后续提交。
+
+`production/scene-clips/` 保存全局输入、每片 graph/request/intent、原始 HTTP、原 prompt UUID、原生成视频、裁片、帧映射、媒体准备收据、末帧和原始观察副本。提交结果不明时普通续作仅查询原任务；不存在自动第二次 POST。已受理任务的输出或关键来源丢失会停止，不能以重新推理恢复。`blocked/failed/interrupted` 的退出码分别为 2/1/130，错误包含可查证据路径。完整本地证据回放及仅观察入口不启动服务或重新编码。
+
+所有片段和观察通过后返回 `source_clips_ready`（退出码 0），`source_clips` 指向 `production/scene-clips/complete.json`。下游须调用 `require_scene_clip_acceptance(frozen, units, timeline)` 只读重验原图、原事务、实际媒体、父链、逐帧/样本覆盖和观察；不能仅凭文件存在使用。此结果是源片就绪，随后使用下列 prepared-run API 进行超分、合成与交付。这里未新增 CLI 参数，完整新文案协调仍留给 JIM-07。
+
+## 保留帧超分与候选合成
+
+以下入口消费同一已准备运行的 `frozen/units/timeline`。全部已选原图和每个源片的实际动态观察必须已接受，包括没有续片的叶片。超分调用会使用冻结的 RealESRGAN 工作流进行本机推理。
+
+```python
+from video_ai.runtime.production_scene_upscale import produce_scene_upscaled_clips
+from video_ai.runtime.production_scene_composition import produce_scene_composition
+
+kwargs = dict(paths=RuntimePaths.from_config(frozen.config),
+              logger=RunLogger(run, production=True))
+upscaled = produce_scene_upscaled_clips(frozen, units, timeline, **kwargs)
+print(upscaled.to_dict())
+# 仅 upscale_ready 后继续；blocked/failed/interrupted 的错误保留证据路径。
+candidate = produce_scene_composition(frozen, units, timeline, **kwargs)
+print(candidate.to_dict())
+```
+
+超分只处理源片中已经保留的帧，不再丢续片首帧。例如 200 帧链只超分 93+92+15=200 帧。输出固定 1920×1080、16fps、cut；原文 PCM、字幕、规范停顿和末尾帧对齐完整保留。候选位于 `production/scene-composition/candidate.mp4`，技术提交和正式输出路径分开保存。
+
+`upscale_ready`（退出码 0）提供超分 `complete.json`。候选技术完成默认 `awaiting_final_review`（退出码 3），结果中的 `candidate` 可直接查看，`final_observation_template` 指向待填写模板。技术通过不能代替完整观看结论；此时冻结的正式 movie/subtitle/receipt 尚未发布。
+
+## 最终连续观看与正式交付
+
+复制最终观察模板后，实际连续播放绑定的整部候选视频、听完整配音并检查全部字幕，同时比较绑定的原图、固定基准及动态片段。填写完整 frame/sample 播放区间、每个 scene 的身份/外观/环境/风格/运动观察、每个相邻 clip 边界的续接或切镜观察，以及每个原旁白单元的音频/字幕/语义/同步观察。
+
+`review_method` 只允许 `human_video` 或具备完整音视频查看能力的 `agent_video`；观察者、带时区的真实观看时间、整体依据、全部检查及结论必须齐备。空模板、首尾截图、部分播放或一次总通过描述不能获得准入。
+
+```python
+from video_ai.runtime.production_scene_delivery import (
+    consume_scene_final_observation, produce_scene_delivery,
+)
+
+review = consume_scene_final_observation(
+    frozen, units, timeline, authored_final_observation_path, **kwargs,
+)
+print(review.to_dict())
+# 仅实际观察 final_review_ready 后，显式调用正式交付：
+delivery = produce_scene_delivery(frozen, units, timeline, **kwargs)
+print(delivery.to_dict())
+```
+
+`consume_scene_final_observation` 只接受观察，不启动推理、不编码、不自动交付。`unverified` 保持 `awaiting_final_review`；明确 `failed` 返回 `final_review_failed`（退出码 2），保留候选并阻断该版本，不能用后来的 passed 覆盖失败历史。有效通过返回 `final_review_ready`（退出码 0），仍需显式交付。
+
+正式交付按字节复制已接受的 MP4/SRT 到冻结路径，拒绝覆盖他人已有输出，最后发布 schema=2 正式收据。只有全部输出和原始接受证据核验一致才返回 `delivered`（退出码 0）。候选、编码、字幕、PCM、单帧、原图或观察身份改变都会使下游接受失效；修订和局部返工由后续 JIM-07 提供。
+
+## 媒体阶段恢复与只读核验
+
+新记录分别位于 `production/scene-upscale/`、`scene-composition/`、`scene-delivery/`，不会替换旧 shot/schema=1 记录。超分提交结果不明时只查询原 UUID/graph，不能自动第二次 POST；本地已有有效准备收据或命令成功证据时复用原媒体。输出发布中断可能保留本次自有的部分输出，恢复会核对原 file ID 和字节，未完成时不报告 delivered。
+
+```python
+from video_ai.runtime.scene_media_records import (
+    load_scene_media_progress, require_scene_upscale_acceptance,
+    require_scene_composition, require_scene_final_acceptance, require_scene_delivery,
+)
+from video_ai.runtime.scene_completed import validate_scene_completed_prefix
+
+progress = load_scene_media_progress(frozen, units, timeline)
+prefix = validate_scene_completed_prefix(frozen, units, timeline)
+```
+
+四个 `require_*` 每次重新验证对应原证据；缺少门槛或发现冲突会拒绝。进度和完成前缀接口只读，不补写收据、不启动服务或重新提取、编码、复制。写入口自动持有同运行 RunLock；已有协调器持锁时传 `lock=held_run_lock`，由调用方负责释放。其他错误状态 `blocked/failed/interrupted` 的退出码为 2/1/130。真实模型效果和最终实际影片质量仍需 JIM-08 的真实服务与观看验收。

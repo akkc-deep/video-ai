@@ -12,6 +12,8 @@ JIM-05 已先记录 COMPLETED；其最终字节全套为 3206 passed、21 个文
 
 不重新生成图片或 Wan，不修改选图、Bible、scene/clip 预算、原文、PCM 或字幕文本；不增加插帧、转场、变速、循环、冻结、背景音乐或新模型。沿本策略既有 native16/cut、1920×1080、烧录字幕约束；不接通全流程协调/新 CLI，不实现重选/修订/自动返工（JIM-07），不执行真实收费或视觉质量验收（JIM-08）。旧 shot/schema=1 消费者与正式交付规则保持原样。
 
+用户后续澄清：“视频的长度帧不限制，帧率也不变”。因此保留原生 16 fps 和完整时间轴，不增加 30 帧或 200 帧的视频总长度上限。本文的 200 帧仅是续接映射回归样例，不能用于截短实际视频。
+
 ## Approach
 
 ### 复用与版本边界
@@ -53,7 +55,7 @@ require_scene_delivery(frozen, units, timeline) -> dict
 
 ### 全局准入和记录规范
 
-所有新写入口先加载冻结输入、`load_committed_plan`、`require_complete_image_acceptance` 与 `require_scene_clip_acceptance`；JIM-05 准入继续追溯 JIM-04 原图/参考来源。全部图片/基准/每个父片和叶片过程观察通过前，零超分 POST、零超分服务启动、零候选编码/交付。完整验证 timeline、units 与 frozen script 原文范围、PCM 身份/样本数、原字体/工具/模型戳、frozen upscale workflow/mapping、空间及已有所有未完成超分事务，后面帧有本地冲突时不得先提交前面帧。
+所有新写入口先加载冻结输入、`load_committed_plan`、`require_complete_image_acceptance` 与 `require_scene_clip_acceptance`；JIM-05 准入继续追溯 JIM-04 原图/参考来源。全部图片/基准/每个父片和叶片过程观察通过前，零超分 POST、零超分服务启动、零候选编码/交付。完整验证 timeline、units 与 frozen script 原文范围、PCM 身份/样本数、原字体和模型戳、冻结工具路径及本次调用的工具 stat 戳、frozen upscale workflow/mapping、空间及已有所有未完成超分事务，后面帧有本地冲突时不得先提交前面帧。现存 FrozenInputs 没有历史工具二进制戳，不能虚构已核对原冻结二进制；工具本次调用前后使用现有 ArtifactStamp 语义核验，原编码身份由保存的命令及媒体证据绑定，不改旧冻结格式。
 
 媒体/原始文件 Artifact 使用 JIM-05 精确 `path/bytes/sha256`，严格正 bytes、64 位小写 SHA；JSON 绑定用 canonical_digest；时间带时区，bool 不充当数字，额外字段拒绝。HTTP 原始 body 唯一允许 bytes=0，沿 HTTP 专用验证。运行内路径经 run_path/PathPolicy，拒绝符号链接/junction/目录逃逸；最终外部输出另按冻结 output_paths 和 output_root 校验，不能套用 run 内路径约束。
 
@@ -105,7 +107,7 @@ require_scene_composition 只读重建并核对全部原数据/receipts/实际�
 
 ### 最终连续影片的实际观察
 
-新增纯接口 `scene_final_observations.py:build_scene_final_observation_template(frozen,units,timeline,candidate,scene_clips,upscaled,image_acceptance,clip_requests) -> dict` 与 `validate_scene_final_observation(value,expected,*,now) -> dict`。candidate 是已验 candidate-commit，scene_clips/upscaled/image_acceptance 是对应已验原清单，clip_requests 为按 committed clips 顺序的完整已验 request 字典列表；expected 是由它们重建的模板。validate 成功返回原观察的深副本，失败抛 ValueError，不写盘。模板保存为 scene-composition/final-observation-template.json；文本为空、检查/结论为 unverified、review_method/reviewer/viewed_at=null。程序不能自动写 passed 或伪造观看。
+新增纯接口 `scene_final_observations.py:build_scene_final_observation_template(frozen,units,timeline,candidate,scene_clips,upscaled,image_acceptance,clip_requests) -> dict` 与 `validate_scene_final_observation(value,expected,*,now) -> dict`。candidate 是已验 candidate-commit，scene_clips/upscaled/image_acceptance 是对应已验原清单，clip_requests 为按 committed clips 顺序的完整已验 request 字典列表；expected 精确为 `{template: 重建模板, created_at: candidate.created_at}`，沿既有 clip 观察协议携带观看时间的可信下界，不向观察原文增加字段。validate 成功返回原观察的深副本，失败抛 ValueError，不写盘。模板保存为 scene-composition/final-observation-template.json；文本为空、检查/结论为 unverified、review_method/reviewer/viewed_at=null。程序不能自动写 passed 或伪造观看。
 
 观察精确字段 `schema_version/production_strategy/run_id/scope/composition_sha256/candidate/subtitle/scene_clips_sha256/upscale_sha256/image_acceptance_sha256/visual_bible_sha256/selected_images/comparison_images/clip_acceptances/playback/review_method/reviewer/viewed_at/full_film_watched/full_audio_listened/subtitle_checked/overall_observation/scene_observations/join_observations/narration_observations/checks/verdict/issues/reason`。scope=scene_final_film；candidate/subtitle 为确切 Artifact；selected_images 是 JIM-05 scenes 的 scene_id/selected_image 行；comparison_images 按 plan.clips 顺序为 clip_id/comparison_images（从对应已验 request 读取）；clip_acceptances 按 plan.clips 为 clip_id/clip_sha256/observation_acceptance_sha256。三个 full_* 为严格 bool，模板为 false；issues 模板为空，join.verdict 模板也为 unverified。整体文本和 reason 必须非空才是可消费观察。
 

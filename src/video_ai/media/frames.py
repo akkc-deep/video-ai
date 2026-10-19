@@ -103,3 +103,43 @@ def encode_video_frames(directory,target, *, frames,config,paths,logger,unit_id,
     record=logger.save_json(name,dict(frames=rows,target=info,command=thaw(command)))
     _remaining(deadline,monotonic())
     return info,[record,*evidence,command.stdout_path,command.stderr_path,*more]
+
+
+def extract_native_frame(source, target, *, source_frame_index, expected_frames, width, height,
+                         config, paths, logger, unit_id, timeout=300):
+    """Extract one exact zero-based generated frame after full native16 validation."""
+    from .video import _command as video_command
+
+    deadline = _deadline(timeout, monotonic())
+    _count(expected_frames); _dimensions(width, height)
+    if type(source_frame_index) is not int or not 0 <= source_frame_index < expected_frames:
+        raise ValueError('source_frame_index must be within exact generated frames')
+    source = _video_path(source, logger, paths)
+    target = _local(logger.run_dir, Path(target))
+    paths.policy.validate_write(target, 'run')
+    if target.name != f'frame_{source_frame_index+1:06d}.png':
+        raise ValueError('native frame target must use exact one-based numeric PNG name')
+    if target.exists() or target.is_symlink(): raise FileExistsError(target)
+    kwargs = dict(config=config, paths=paths, logger=logger, unit_id=unit_id, stage='source_clips')
+    source_info, evidence = inspect_video(source, width=width, height=height,
+        timeout=_remaining(deadline, monotonic()), **kwargs)
+    if source_info['frames'] != expected_frames:
+        raise ValueError('generated video must contain exactly expected_frames')
+    identity = FileIdentity(**source_info['identity'])
+    _again({'source': identity})
+    target.parent.mkdir(parents=True, exist_ok=True)
+    filter_value = f'select=eq(n\\,{source_frame_index}),format=rgb24'
+    command = video_command((config.tools['ffmpeg'], '-nostdin', '-n', '-v', 'error', '-xerror',
+        '-i', source, '-map', '0:v:0', '-vf', filter_value, '-frames:v', '1',
+        '-fps_mode', 'passthrough', target), paths=paths, logger=logger, unit_id=unit_id,
+        timeout=_remaining(deadline, monotonic()))
+    _again({'source': identity})
+    info, more = inspect_image(target, timeout=_remaining(deadline, monotonic()), **kwargs)
+    if (info['width'], info['height'], info['format'], info['pixel_format']) != (width, height, 'png', 'rgb24'):
+        raise ValueError('native extracted frame must be target-size single RGB24 PNG')
+    _again({'source': identity, 'target': FileIdentity(**info['identity'])})
+    record = logger.save_json(_record_name(logger, 'extract-native', unit_id, 'source_clips'),
+        dict(source=source_info, target=info, source_frame_index=source_frame_index,
+             expected_frames=expected_frames, filter=filter_value, command=thaw(command)))
+    _remaining(deadline, monotonic())
+    return info, [record, *evidence, command.stdout_path, command.stderr_path, *more]

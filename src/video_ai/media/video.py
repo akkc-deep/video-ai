@@ -220,3 +220,57 @@ def trim_production_video(source,target,*,source_info,frames,width,height,config
     if info['frames']!=frames or info['pixel_format']!='yuv420p':raise ValueError('trim target frame count/pixel format differs')
     record=logger.save_json(_record_name(logger,'trim',unit_id,stage),dict(source=source_info,target=info,frames=frames,filter=filter_value,command=thaw(command)))
     return info,[record,command.stdout_path,command.stderr_path,*evidence]
+
+
+def trim_scene_video(source, target, *, source_info, start_frame, end_frame, width, height,
+                     config, paths, logger, unit_id, timeout=300):
+    """Trim an exact native interval, verifying the caller's complete source info."""
+    from ..planning.source_clips import _same
+    from ..runtime.manifest import FileIdentity, _identity
+
+    deadline = _deadline(timeout, monotonic())
+    _dimensions(width, height)
+    if (type(start_frame) is not int or type(end_frame) is not int
+            or start_frame < 0 or end_frame <= start_frame):
+        raise ValueError('nonempty half-open integer native frame range required')
+    source = _video_path(source, logger, paths); target = _video_path(target, logger, paths)
+    if target.exists() or target.is_symlink(): raise FileExistsError(target)
+    fields = {'identity', 'width', 'height', 'codec', 'pixel_format', 'fps', 'frames', 'duration'}
+    if not isinstance(source_info, dict) or set(source_info) != fields:
+        raise ValueError('complete inspected source_info required')
+    try:
+        _identity(source_info['identity'])
+        supplied_identity = FileIdentity(**source_info['identity'])
+    except (TypeError, ValueError) as exc: raise ValueError('complete source identity required') from exc
+    if supplied_identity.path != str(source):
+        raise ValueError('source_info must identify the same source path')
+    kwargs = dict(config=config, paths=paths, logger=logger, unit_id=unit_id, stage='source_clips')
+    checked, evidence = inspect_video(source, width=width, height=height,
+        timeout=_remaining(deadline, monotonic()), **kwargs)
+    if not _same({k: source_info[k] for k in fields-{'identity'}},
+                 {k: checked[k] for k in fields-{'identity'}}):
+        raise ValueError('source_info media metadata differs from complete inspection')
+    identity = FileIdentity(**checked['identity'])
+    if any(getattr(identity, k) != getattr(supplied_identity, k)
+           for k in ('path', 'bytes', 'mtime_ns', 'sha256')):
+        raise ValueError('source_info identity differs from inspected source')
+    if end_frame > checked['frames']:
+        raise ValueError('native trim range exceeds exact source frames')
+    _again({'source': identity})
+    target.parent.mkdir(parents=True, exist_ok=True)
+    filter_value = f'trim=start_frame={start_frame}:end_frame={end_frame},setpts=N/(16*TB)'
+    command = _command((config.tools['ffmpeg'], '-nostdin', '-n', '-v', 'error', '-xerror',
+        '-i', source, '-vf', filter_value, '-an', '-c:v', 'libx264', '-preset', 'medium',
+        '-crf', '18', '-pix_fmt', 'yuv420p', '-fps_mode', 'passthrough', target),
+        paths=paths, logger=logger, unit_id=unit_id, timeout=_remaining(deadline, monotonic()))
+    _again({'source': identity})
+    info, more = inspect_video(target, width=width, height=height,
+        timeout=_remaining(deadline, monotonic()), **kwargs)
+    if info['frames'] != end_frame-start_frame or info['pixel_format'] != 'yuv420p':
+        raise ValueError('scene trim target differs from exact retained native interval')
+    _again({'source': identity, 'target': FileIdentity(**info['identity'])})
+    record = logger.save_json(_record_name(logger, 'trim-scene', unit_id),
+        dict(source=checked, target=info, start_frame=start_frame, end_frame=end_frame,
+             filter=filter_value, command=thaw(command)))
+    _remaining(deadline, monotonic())
+    return info, [record, *evidence, command.stdout_path, command.stderr_path, *more]

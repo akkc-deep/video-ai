@@ -90,6 +90,9 @@ def adapt_image(source,target, *, width,height,**kwargs):
     result,more=validate_start_png(target,width=width,height=height,**kwargs)
     _again({'source':hash_file(source)})
     if hash_file(source).sha256!=info['identity']['sha256']:raise OSError('user source changed during conversion')
-    record=kwargs['logger'].save_json(f'start-images/convert-{kwargs["unit_id"]}.json',
+    stage=kwargs.get('stage','start_images')
+    name=(_record_name(kwargs['logger'],'convert',kwargs['unit_id'],stage) if stage=='source_clips'
+          else f'start-images/convert-{kwargs["unit_id"]}.json')
+    record=kwargs['logger'].save_json(name,
         dict(source=info,target=result,filter=filter_value,command=thaw(command)))
     return result,evidence+[record,command.stdout_path,command.stderr_path]+more

@@ -28,9 +28,9 @@
 | 2 | JIM-02 | 段落关键画面、共享视觉设定与时间预算 | COMPLETED | JIM-01 | D:/code/py/video-ai/docs/task-designs/JIM-02-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-02-handoff.md |
 | 3 | JIM-03 | 候选图邮件、基准选图与等待续作 | COMPLETED | JIM-01, JIM-02 | D:/code/py/video-ai/docs/task-designs/JIM-03-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-03-handoff.md |
 | 4 | JIM-04 | 参考图存储与关联画面一致性生成 | COMPLETED | JIM-01, JIM-02, JIM-03 | D:/code/py/video-ai/docs/task-designs/JIM-04-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-04-handoff.md |
-| 5 | JIM-05 | Wan 连续片段、末帧续接与动态观察 | READY | JIM-02, JIM-04 | D:/code/py/video-ai/docs/task-designs/JIM-05-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-05-handoff.md |
-| 6 | JIM-06 | 新时间轴合成与成片一致性交付验收 | NOT_STARTED | JIM-03, JIM-05 | None | None |
-| 7 | JIM-07 | 跨阶段恢复、修订运行与局部返工 | NOT_STARTED | JIM-04, JIM-05, JIM-06 | None | None |
+| 5 | JIM-05 | Wan 连续片段、末帧续接与动态观察 | COMPLETED | JIM-02, JIM-04 | D:/code/py/video-ai/docs/task-designs/JIM-05-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-05-handoff.md |
+| 6 | JIM-06 | 新时间轴合成与成片一致性交付验收 | COMPLETED | JIM-03, JIM-05 | D:/code/py/video-ai/docs/task-designs/JIM-06-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-06-handoff.md |
+| 7 | JIM-07 | 跨阶段恢复、修订运行与局部返工 | READY | JIM-04, JIM-05, JIM-06 | D:/code/py/video-ai/docs/task-designs/JIM-07-design.md | D:/code/py/video-ai/docs/task-handoffs/JIM-07-handoff.md |
 | 8 | JIM-08 | 全链路回归、真实样片验收与使用说明 | NOT_STARTED | JIM-07 | None | None |
 
 ## Task Details
@@ -89,6 +89,8 @@
 
 ### JIM-05
 
+- **Start evidence:** 2026-10-19 用户明确要求“完成任务JIM-05”；完整读取设计和交接，记录 `READY -> IN_PROGRESS`。实施计划 `docs/task-designs/JIM-05-plan.md`；初始 PATH 未发现 Git，后通过 `C:/Program Files/Git/cmd/git.exe` 只读检查；.git 只读，在提供的 checkout 保留实现与验证证据。
+
 - **Goal:** 用户选中的图片进入 Wan；同一长画面的动态片段沿实际保留末帧续接，并在漂移或未观察时阻止继续传播。
 - **Scope:** 修改 `src/video_ai/planning/production_visual_plan.py`、`src/video_ai/runtime/production_visuals.py` 与 `src/video_ai/media/frames.py`；首片读取选图副本，续片使用父片实际保留末帧；保存父片/输入图/帧索引身份、衔接帧丢弃和逐帧映射；实现父片动态过程观察与 `awaiting_continuity_review`，明确连续续接和有意切镜两种边界。复用 Wan 模型与工作流，不改成即梦视频。
 - **Acceptance:** ① 首片输入与用户选择精确关联，未经完整图片准入不请求 Wan。② 续片输入来自父片最后一个实际保留原生帧，不能取裁掉的补帧；父片未观察或不一致时不提交其续片。③ 续片申请衔接余量并丢首帧，最终映射按原文时间轴准确覆盖，不循环、冻结或截短旁白补时。④ 视频提示词保留固定主体/环境；过程观察不能仅用首尾截图或相似度代替。⑤ 中断恢复使用原 Comfy 提交，父片身份改变拒绝复用续片；独立场景等待和失败状态不混淆。
@@ -99,15 +101,23 @@
 
 - **Preparation evidence:** 2026-10-19 JIM-04 先记录 COMPLETED 后按 Order=5 选择本项，观察到 NOT_STARTED/Design=None；完成并全文审阅 `D:/code/py/video-ai/docs/task-designs/JIM-05-design.md` 后仅回填 Design document，再写入并关联 `D:/code/py/video-ai/docs/task-handoffs/JIM-05-handoff.md`，最后记录 `NOT_STARTED -> READY`。设计明确 prepared-run API、独立 schema=2 原生帧/样本映射、父末保留帧、每片实际过程观察、独立 scene 推进及 Comfy 单次提交/原 ID 恢复；JIM-02/JIM-04 直接输入无已知未解决冲突。本次只准备后继，JIM-05 实现、新测试和真实动态观看均未启动。
 
+- **Completion evidence:** 2026-10-19 完成独立 schema=2 prepared-run Wan 源片、固定共享提示词、父末保留原生帧字节续接、区间裁片/完整样本和帧映射、每片过程观察准入、独立 scene 推进及原 Comfy UUID/graph 恢复，记录 `IN_PROGRESS -> COMPLETED`。五项验收见 `D:/code/py/video-ai/docs/task-designs/JIM-05-verification.md`；独立审查和修复见 `JIM-05-review.md`。原导入版本专项 **269 passed in 3343.84s**；最终字节历史回归 **212 passed in 838.51s**；全新进程全套 **3206 passed in 7302.90s (2:01:42)**，均退出 0。全套包含最后补充的未知 run、失败观察原文中断及临时裁片恢复；**21 个文件 SHA256 全部匹配**。日志 `D:/VideoSi/cache/video-ai/logs/jim-05-full-final.txt`，哈希核对 `jim-05-verified-files-check.json`。本地替身及真实媒体验证，没有真实 Wan、云请求或邮件；真实视觉效果留待后续验收。旧 shot/schema=1 契约保留，超分/合成/交付和全流程协调未在本项实现。
+
 ### JIM-06
+
+- **Start evidence:** 2026-10-19 用户明确要求“完成JIM-06”；全文读取已关联设计与入口交接，记录 `READY -> IN_PROGRESS`。实施计划 `D:/code/py/video-ai/docs/task-designs/JIM-06-plan.md`；保留当前 checkout 前序成果及只读 Git 元数据。按既有详细契约实施独立 schema=2，不执行真实模型/云服务或伪造实际观看结论。
 
 - **Goal:** 新画面/片段时间轴能复用超分与合成输出完整候选片，只有整片一致性实际验收后才正式交付。
 - **Scope:** 将 scene/clip 映射接入超分、完整 PCM/字幕合成、完成前缀与交付消费者；新策略识别原文完整性、整组图片观察、动态观察及最终连续视频观察；候选输出与正式交付分离。保留现有输出规格和历史策略契约，不把编码技术检查当作画面一致性通过。
 - **Acceptance:** ① 多句共用画面和跨片续接均保持完整配音、字幕及总帧数；首尾和停顿覆盖不丢失。② 最终观察绑定确切候选、选图、基准及动态片段身份；未核实或不一致不产生正式交付收据。③ 有效实际验收后才复制确切已验收版本，重新编码或文件变化使观察失效。④ 历史运行仍按原审核/交付逻辑恢复，未被新策略替换。⑤ 候选片可以保留供检查，不伪报已正式交付。
 - **Dependencies:** `JIM-03` 的选择/一致性观察记录；`JIM-05` 的源片、连续链、动态观察及精确帧映射。
 - **Sources:** ① 总体方案 `D:/code/py/video-ai/docs/task-designs/jimeng-email-scene-design.md` 全文，重点最终验收和版本兼容要求；② `D:/code/py/video-ai/src/video_ai/runtime/production_upscale.py`；③ `D:/code/py/video-ai/src/video_ai/runtime/production_composition.py`；④ `D:/code/py/video-ai/src/video_ai/runtime/production_delivery.py`；⑤ `D:/code/py/video-ai/src/video_ai/runtime/production_completed.py`；⑥ `D:/code/py/video-ai/src/video_ai/media/production_composition.py`；⑦ `D:/code/py/video-ai/src/video_ai/planning/final_review.py`。
-- **First action:** 对照当前超分/合成消费者，定义 scene/clip 到最终帧贡献的接入方式及新策略正式交付所需的完整观察绑定。
+- **First action:** 按已完成 JIM-06 设计，在 `tests/unit/test_scene_media.py` 建 `test_200_retained_frames_upscale_once_without_second_head_drop`，由既有 200 帧预算及 JIM-05 mapping 调用新纯计划，断言仅 200 个贡献、93/92/15、generated 第三片 1..15、child retained=0 映到 generated=1 和 global=0..199；bootstrap 后先观察缺接口 RED，再实现独立 scene 超分计划，不修改上游预算。
 - **State evidence:** 初始化为 `NOT_STARTED`；尚无新策略候选片、整片观察或交付证据。
+
+- **Preparation evidence:** 2026-10-19 JIM-05 先以新鲜全套 3206 passed、退出 0 及 21 个 SHA256 匹配记录 COMPLETED 后，按 Order=6 选择本项，观察到 NOT_STARTED/Design=None。完成并全文审阅 `D:/code/py/video-ai/docs/task-designs/JIM-06-design.md`，先仅回填 Design document，再写入并关联 `D:/code/py/video-ai/docs/task-handoffs/JIM-06-handoff.md`，最后记录 `NOT_STARTED -> READY`。设计确定独立 schema=2 单帧超分/原任务恢复、200 帧一一贡献、完整 PCM/SRT/ASS、技术候选与实际最终观察、收据最后的不覆盖交付、只读完成前缀和具体 RED/回归命令；JIM-03/JIM-05 直接输入无已知未解决冲突。本次仅后继准备，JIM-06 实现、新测试和真实影片观看未启动。
+
+- **Completion evidence:** 2026-10-20 完成独立 schema=2 原生保留帧逐帧 RealESRGAN 超分、完整原文 PCM/SRT/ASS/font 候选合成、确切候选的最终连续影片观察准入、不覆盖且收据最后的 file-ID+SHA 交付、阶段内原任务/媒体恢复及只读完成前缀，记录 `IN_PROGRESS -> COMPLETED`。五项验收见 `D:/code/py/video-ai/docs/task-designs/JIM-06-verification.md`。初次专项 **189 passed、1 failed**（测试局部 10 秒预算提前耗尽），仅修正测试为生产冻结预算后，受影响 authentic 用例 **1 passed in 269.18s**；原失败证据保留。最终历史 **456 passed in 3866.66s**，fresh 全套 **3396 passed in 15981.10s (4:26:21)**，均退出 0，全套覆盖全部 190 个新用例。脚本和协调者独立重算均为 **342/342 文件 SHA256 匹配**；全库日志 `D:/VideoSi/cache/video-ai/logs/jim-06-full-final.txt`，独立核对 `jim-06-root-final-identity-check.json`。独立复审无剩余 Critical/Important，13 个生产文件在最终测试预算修正前后不变。真实 200 帧链 93/92/15、完整非零 PCM/字幕/媒体、完整交付恢复与两次只读重放均通过；使用本地替身和真实媒体工具，没有真实模型推理、云操作、邮件或实际观看质量声明。用户最终澄清“视频的长度帧不限制，帧率也不变”，保留原生 16 fps 与完整时长；没有截为 30 帧或改变帧率。全流程协调/修订留 JIM-07，真实服务和观看验收留 JIM-08。
 
 ### JIM-07
 
@@ -116,8 +126,10 @@
 - **Acceptance:** ① 在出图、TOS、邮件、选择接受、Wan、超分、合成及交付边界注入中断，续作消费原 ID/接受记录，不能重复收费或发送邮件。② 重选基准/重做父片建立新修订，受影响的图片、视频、超分、观察与候选失效，无关且身份核实的输入可复用。③ 原运行和旧接受记录不被覆盖；模型变更不能原地改已冻结 run。④ 已完成前缀重放不启动新推理或重新编码；未知提交保留诊断并等待核对。⑤ `awaiting_image_selection`、`awaiting_image_model_configuration`、`email_delivery_unknown` 和 `awaiting_continuity_review` 的恢复方式清楚且互不混淆。
 - **Dependencies:** `JIM-04` 的图片依赖与选择闭环；`JIM-05` 的片段父子链及观察；`JIM-06` 的最终候选、交付和证据消费者。
 - **Sources:** ① 总体方案 `D:/code/py/video-ai/docs/task-designs/jimeng-email-scene-design.md` 全文，重点返工、版本和恢复约束；② `D:/code/py/video-ai/src/video_ai/production.py`；③ `D:/code/py/video-ai/src/video_ai/runtime/production_state.py`；④ `D:/code/py/video-ai/src/video_ai/runtime/production_inputs.py`；⑤ `D:/code/py/video-ai/src/video_ai/runtime/production_completed.py`；⑥ `D:/code/py/video-ai/tests/integration/test_make_video_recovery_contract.py`；⑦ JIM-04 至 JIM-06 完成后登记的依赖契约及恢复证据。
-- **First action:** 列出已实现各阶段的持久化提交边界，绘制变更到失效产物的依赖表，明确修订运行的只读继承与重新接受规则。
+- **First action:** 按已完成的 JIM-07 设计，在 `tests/unit/test_scene_revision.py` 创建 `test_reselected_baseline_invalidates_reference_descendants_but_preserves_unrelated_scene`：S1→S2→S3 参考链与独立 S4，重选 S1 原候选，断言候选可复用、choice/参考后继及对应媒体失效，全组重新观察但 S4 内容可复用；bootstrap、Python -B 先观察缺新纯接口 RED，再实现 `planning/scene_revision.py`。
 - **State evidence:** 初始化为 `NOT_STARTED`；尚无跨阶段故障注入或修订复用验证。
+
+- **Preparation evidence:** 2026-10-20 JIM-06 先以最终全库 3396 passed、退出 0 及 342 项身份匹配记录 COMPLETED 后，按 Order=7 选择本项，观察到 NOT_STARTED/Design=None。完成并全文自审 `D:/code/py/video-ai/docs/task-designs/JIM-07-design.md` 后先回填 Design document；设计明确阶段结果兼容、消费与显式发布、跨阶段原任务恢复、内容/准入双图、来源只读与新修订冻结、继承视图/RevisionGuard、Windows 安全路径、逐边界故障注入及具体 RED/回归命令。再写入、全文核对并关联 `D:/code/py/video-ai/docs/task-handoffs/JIM-07-handoff.md`，33 个引用路径均存在，直接依赖无未解决冲突，最后记录 `NOT_STARTED -> READY`。本次仅后继准备；JIM-07 实现及新测试尚未启动，无新增外部模型/云/邮件操作。
 
 ### JIM-08
 
