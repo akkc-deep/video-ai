@@ -490,11 +490,16 @@ def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
     return result
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def produce_scene_clips(frozen,units,timeline,*,paths,logger,client_factory=None,service_factory=None,lock=None):
     return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
         operation=lambda context:_produce(context,paths=paths,logger=logger,client_factory=client_factory,service_factory=service_factory))
 
 
+@revision_validation
 def consume_scene_clip_observation(frozen,units,timeline,observation_path,*,paths,logger,lock=None):
     return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
         operation=lambda context:_consume(context,observation_path))

@@ -73,11 +73,12 @@ class ImageSelectionResult:
 
 
 class _Records:
-    def __init__(self,run,lock): self.run,self.lock=run,lock
+    def __init__(self,run,lock): self.run,self.lock=run,lock;self.revision_guard=None
     def owned(self):
         if (not isinstance(self.lock,RunLock) or self.lock.run_dir != self.run
                 or not self.lock.path.is_file() or read_json(self.lock.path) != self.lock.owner):
             raise ProductionRefused('image selection lost held run lock')
+        if self.revision_guard is not None:self.revision_guard.verify_captured_bytes()
     def bytes(self,path,raw,*,replace=False):
         self.owned(); path=run_path(self.run,path)
         if path.exists() and not replace:
@@ -109,6 +110,10 @@ def _folder(run,batch_id):
     return run_path(run,run/'production/image-selection'/batch_id)
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def _invoke(frozen,logger,lock,operation):
     run=None
     try:
@@ -118,6 +123,9 @@ def _invoke(frozen,logger,lock,operation):
         store=_Records(run,lock); store.owned()
         if frozen.config.production_strategy!=STRATEGY or not _same_json(load_frozen_inputs(run),frozen):
             raise ProductionRefused('image selection frozen input/run identity differs')
+        if 'scene_revision' in frozen.options:
+            from .scene_revision_records import require_scene_revision
+            store.revision_guard=require_scene_revision(frozen)['guard']
         if logger.run_dir!=run or not logger.production: raise ProductionRefused('matching production logger required')
         return operation(store)
     except (Exception,KeyboardInterrupt) as exc:
@@ -138,9 +146,13 @@ def _transport_settings(frozen,batch,override):
     return settings
 
 
-def _activate(store,batch):
+def _activation_value(store,frozen,units,timeline,batch):
     run=store.run; root=run/'production/image-selection'; path=root/'active-batch.json'
     value=dict(schema_version=2,run_id=run.name,batch_id=batch['batch_id'],batch_sha256=canonical_digest(batch))
+    bible,plan=records.load_committed_plan(frozen,units,timeline)
+    accepted=records._load_accepted(frozen,units,timeline,bible,plan,before=batch['batch_index'])
+    accepted_ids={row['batch_id'] for row in accepted}
+    inherited_ids={bid for bid in accepted_ids if not (_folder(run,bid)/'accepted.json').exists()}
     if path.exists():
         previous=read_json(path)
         object_fields(previous,('schema_version','run_id','batch_id','batch_sha256'),'active image batch')
@@ -148,10 +160,21 @@ def _activate(store,batch):
             raise ProductionRefused('active image batch schema/run differs')
         old=read_json(_folder(run,previous['batch_id'])/'batch.json')
         if previous['batch_sha256']!=canonical_digest(old): raise ProductionRefused('active batch SHA256 differs')
-        if previous==value: return
-        if old['batch_index']+1!=batch['batch_index'] or not (_folder(run,old['batch_id'])/'accepted.json').exists():
+        if previous==value:return value
+        required={f'image_batch_{i:04d}' for i in range(old['batch_index'],batch['batch_index'])}
+        skipped=required-{old['batch_id']}
+        if old['batch_index']>=batch['batch_index'] or not required<=accepted_ids or not skipped<=inherited_ids:
             raise ProductionRefused('active image batch cannot regress or skip unaccepted batches')
-    elif batch['batch_index']!=1: raise ProductionRefused('first image batch must be batch 1')
+    elif batch['batch_index']!=1:
+        required={f'image_batch_{i:04d}' for i in range(1,batch['batch_index'])}
+        if not required<=inherited_ids:raise ProductionRefused('first image batch must be batch 1')
+    return value
+
+
+def _activate(store,frozen,units,timeline,batch):
+    value=_activation_value(store,frozen,units,timeline,batch)
+    root=store.run/'production/image-selection';path=root/'active-batch.json'
+    if path.exists() and read_json(path)==value:return
     store.save(root/f"active-batch-{batch['batch_index']:04d}.json",value)
     store.save(path,value,replace=True); boundary('active-batch')
 
@@ -208,7 +231,9 @@ def _notification(store,frozen,batch,*,paths,logger):
         stamp=read_json(stamp_path); object_fields(stamp,('created_at',),'notification creation')
     else:
         stamp=dict(created_at=now()); store.save(stamp_path,stamp)
-    bible=read_json(store.run/'production/visual-bible.json')
+    from ._scene_revision_origins import inherited
+    imported=inherited(frozen,'plan','all')
+    bible=imported['bible'] if imported is not None else read_json(store.run/'production/visual-bible.json')
     messages=build_messages(batch,media,created_at=stamp['created_at'],baseline_roles=bible['baselines'],**batch['delivery'])
     parts=[]
     for row in messages:
@@ -357,17 +382,10 @@ def prepare_image_batch(frozen,units,timeline,candidate_manifests,*,batch_index,
         batch=records.build_batch(frozen,units,timeline,candidate_manifests,batch_index=batch_index)
         folder=_folder(store.run,batch['batch_id'])
         # Validate forward movement before exposing any new batch records.
-        active=store.run/'production/image-selection/active-batch.json'
-        if active.exists():
-            prior=read_json(active)
-            if prior['batch_id']!=batch['batch_id']:
-                old=read_json(_folder(store.run,prior['batch_id'])/'batch.json')
-                if old['batch_index']+1!=batch_index or not (_folder(store.run,old['batch_id'])/'accepted.json').exists():
-                    raise ProductionRefused('active image batch cannot regress or skip')
-        elif batch_index!=1: raise ProductionRefused('first image batch must be batch 1')
+        _activation_value(store,frozen,units,timeline,batch)
         store.save(folder/'batch.json',batch); boundary('batch')
         store.save(folder/'selection-template.json',records.selection_template(batch)); boundary('selection-template')
-        _activate(store,batch)
+        _activate(store,frozen,units,timeline,batch)
         notification=_notification(store,frozen,batch,paths=paths,logger=logger)
         state=_deliver(store,frozen,batch,notification,email_settings=email_settings,smtp_factory=smtp_factory)
         if state=='unknown': return _result(store.run,'email_delivery_unknown',batch,error=dict(
@@ -433,6 +451,14 @@ def consume_image_selection(frozen,units,timeline,selection_path,*,paths,logger,
 
 
 def load_prepared_inputs(frozen):
+    if 'scene_revision' in frozen.options:
+        from .scene_revision_records import require_scene_revision,require_revision_import
+        proof=require_scene_revision(frozen)
+        if 'common:all' in proof['imports']:
+            view=require_revision_import(frozen,'common','all',context=proof)
+            timeline=ProductionTimeline.from_dict(view['timeline'])
+            records.load_committed_plan(frozen,view['units'],timeline)
+            return view['units'],timeline
     run=validate_run_dir(Path(frozen.options['script_path']).parent.parent)
     payloads=[]
     for stage in ('units','timeline'):

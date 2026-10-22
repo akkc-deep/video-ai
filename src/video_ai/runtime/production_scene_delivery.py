@@ -62,8 +62,8 @@ def _observation_context(context,candidate=None):
         folder=store.path(directory);inventory={str(p) for p in folder.rglob('*.json')}
         _remember_inventory(context['store'],folder,inventory)
         for record in inventory:_remember_artifact(context['store'],store.artifact(record))
-    requests=[read_json(run_path(store.run_dir,store.run_dir/'production/scene-clips'/c['clip_id']/'request.json'))
-              for c in context['scene_clips']['clips']]
+    from ._scene_revision_readers import final_comparison_request
+    requests=[final_comparison_request(context,c['clip_id']) for c in context['scene_clips']['clips']]
     template=build_scene_final_observation_template(context['frozen'],context['units'],context['timeline'],candidate,
         context['scene_clips'],upscaled,context['image_acceptance'],requests)
     saved=store.read('final-observation-template.json')
@@ -208,6 +208,8 @@ def require_scene_delivery_record(context):
     acceptance=require_scene_final_acceptance_record(context)
     from .production_scene_composition import require_scene_composition_record
     candidate=require_scene_composition_record(context)
+    context['validated_final_acceptance']=acceptance
+    context['validated_candidate']=candidate
     return validate_completed(context,candidate,acceptance)
 
 
@@ -240,6 +242,10 @@ def _result(context,status,stage,*,candidate=None,error=None):
         log_dir=run/'logs/production' if run else None,error=error)
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def _entry(frozen,units,timeline,*,paths,logger,lock,stage,operation):
     from .scene_media_records import scene_media_context
     from .image_selection_records import _run

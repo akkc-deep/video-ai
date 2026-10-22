@@ -1,10 +1,61 @@
 # 配置样例
 
-即梦官方候选图片接入见 [jimeng.example.json](jimeng.example.json) 和 [候选图片说明](../docs/jimeng-candidates.md)。该新策略目前提供 JIM-01 候选 Python API，段落规划/邮件/视频协调器仍由后续任务实现；旧配置缺省行为保留。
+即梦段落视频配置见 [jimeng.example.json](jimeng.example.json) 和 [候选图片说明](../docs/jimeng-candidates.md)。`make-video` 已接通段落规划、官方出图、邮件选择、Wan 连续观察、超分、候选合成和显式发布。省略 `production_strategy` 时仍使用 `legacy`；[production.example.json](production.example.json) 保留历史默认策略，已有冻结运行不迁移。
 
-## make-video 自动制作配置
+## 即梦策略实际配置
 
-普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `D:/VideoSi/projects/video-ai/config/production.json`，也可用 `--config PATH` 指定现有配置。配置复用已安装 Ollama/qwen3:8b、GPT-SoVITS v2/CPU/非半精度声音、SDXL、Wan、RealESRGAN_x4plus 和 FFmpeg；无需新增模型或审查文件。默认配置路径属于运行环境，源码中的 `production.example.json` 仅为配置样例。
+本地分镜模型可用可选顶层字段 `"scene_planner_model": "qwen3:14b"` 显式选择，当前仅允许 `qwen3:8b` 和 `qwen3:14b`；省略时为8B。须先把所选模型安装到本机Ollama模型目录。此字段只影响即梦策略的scene规划；原语音单元规划和旧storyboard仍使用8B。它随运行配置冻结，请求与响应模型必须精确匹配，旧run继续使用其原模型；切换模型须创建新run。图片模型仍由 `image_generation` 配置。更大模型的规划质量与显存需求须实际验证，预检通过不等于分镜或影片通过。
+
+使用独立配置启用 `production_strategy="paragraph_jimeng_v1"`，保留已经确认的 voice、Wan/RealESRGAN 权重、workflow、工具和媒体设置。复制样例到 `D:/VideoSi/projects/video-ai/config/` 后，将 `voice_config` 和各 workflow 改为真实绝对路径；相对路径以配置文件所在目录解析。不要覆盖默认 `production.json` 或已冻结 run。
+
+样例提供合法的字段结构，不包含账号凭证或真实模型能力声明。`image_generation.req_key="jimeng_t2i_v40"` 仅为示例，真实运行使用用户选择的 req_key 和完整参数；只支持既有智能视觉异步协议，未知模型不能由名称推断能力。`model_parameters.width/height` 是发送给服务端的尺寸，`output_width/output_height` 是下载后核验的预期尺寸，两者必须一致且横向 16:9。`candidates_per_scene=2` 表示每画面提交两次，各次返回的全部图都会保存。
+
+新运行可显式 `--image-model jimeng_t2i_v31` 使用该模型自己的预设；未知模型需在独立配置中提供完整参数及输出尺寸。已有运行只能按冻结模型恢复；变更模型使用新 run 或显式 `--revision PATH` 的 `reconfigure` 请求。
+
+### 凭证和 QQ 邮件
+
+在启动命令的同一进程环境设置配置所声明的变量；使用系统环境设置后须重新启动终端或应用使其生效。实际值不要写进 JSON、命令参数、聊天或日志。
+
+| 配置字段 | 样例环境变量名 | 内容 |
+| --- | --- | --- |
+| `image_generation.access_key_env` | `VIDEO_AI_VOLC_ACCESS_KEY` | 智能视觉 AK |
+| `image_generation.secret_key_env` | `VIDEO_AI_VOLC_SECRET_KEY` | 智能视觉 SK |
+| `selection_email.smtp_password_env` | `VIDEO_AI_SMTP_AUTH_CODE` | QQ 邮箱启用 SMTP 后取得的授权码 |
+| `reference_storage.access_key_env/secret_key_env` | 使用者填写变量名 | 对已有 TOS 桶有相应权限的 AK/SK，可与前两项同名 |
+
+智能视觉 AK/SK 使用现有签名协议。QQ SMTP 使用授权码，发件/收件固定为 `318575094@qq.com`、`smtp.qq.com:465`、SSL；MIME 默认上限 15 MiB，超限按页发送。SMTP 2xx 不代表已进入收件箱，须实际核对收到的基准、候选编号与附件。
+
+### 参考能力档案及已有 TOS 桶
+
+`reference_generation=null`、`reference_capabilities={}`、`reference_storage=null` 表示尚未配置；关联生成返回 `awaiting_image_model_configuration`。程序先用主模型的已核验参考能力；主模型无有效档案时必须显式配置 `reference_generation`，不自动选择别的模型。
+
+`reference_capabilities` 将实际 req_key 映射到绝对本地 JSON 路径。档案须按 [参考配置解析器](../src/video_ai/reference_config.py) 精确提供：
+
+| 字段 | 要求 |
+| --- | --- |
+| `schema_version/req_key/input_field` | `1`、确切模型标识、`image_urls` |
+| `max_images/max_image_bytes` | 核验过的正整数限额 |
+| `min_width/min_height/max_width/max_height` | 核验过的正整数尺寸范围 |
+| `formats/max_prompt_bytes` | 无重复的 png/jpeg/webp 子集；核验过的正整数提示词字节上限 |
+| `evidence` | `source_url` 为官方 HTTPS 文档；`source_sha256` 为实际材料原字节小写 SHA256；`verified_by` 为实际核对者；`verified_at` 带时区 |
+
+不要复制测试 fixture 的限额、摘要或审核者充当真实能力证据。模型仅支持文字输入时可用于基准，但关联画面必须使用明确支持参考图的已核验模型。
+
+`reference_storage` 精确填写 `provider="volcengine_tos"`、已有 `bucket`、`region`、对应的 `endpoint="https://tos-<region>.volces.com"`、`access_key_env` 和 `secret_key_env`。可选 `key_prefix/url_ttl_seconds/download_margin_seconds/clock_skew_seconds/request_timeout_seconds` 默认分别为 `video-ai-references/3600/120/60/60`。URL TTL 不超过 604800 秒，且须覆盖模型任务等待、下载余量和时钟偏差。程序不创建桶或改变权限；真实服务读取参考图还需实际请求确认。
+
+初始配置缺少参考设置时，另存仅含 `reference_generation/reference_capabilities/reference_storage` 三个根字段的 JSON，通过 `make-video --run-dir RUN --reference-settings PATH --json` 补齐。只能补原冻结配置中缺失/null 的设置，已绑定内容不可替换。凭证变量的值可轮换。
+
+### 选图、观察、等待和返工
+
+按 [完整操作流程](../docs/jimeng-candidates.md#完整-cli-流程) 使用实际返回的选择/逐片观察/最终观察模板。选择和观察命令只消费输入，再普通续作推进。完整原文、PCM、字幕和原生 16 fps 时长保持，不设视频总帧上限。最终候选实际观看、试听和字幕核对通过后显式 `--publish`。
+
+`awaiting_image_selection/awaiting_image_model_configuration/email_delivery_unknown/awaiting_continuity_review/awaiting_final_review` 均退出 3；阶段 accepted/ready 为 0 不代表正式交付。配置或准入 blocked/final_review_failed 为 2，failed 为 1，中断为 130。SMTP 未知先核对原 Message-ID，确需重发时显式 `--retry-email PATH`；选择文件不能解除未知发送。图片/Wan 未知提交核对原 ID，不补单。
+
+`--revision PATH` 的 `reselect_images/regenerate_images/regenerate_clips/reconfigure` 建立新冻结 run；源 run 只读，无关且可核验的内容可以继承。`revision_ready` 后需对返回的新 run 普通续作，观察接受和正式发布仍按新身份验证。详细请求 schema、邮件修复及失败恢复见 [候选图片说明](../docs/jimeng-candidates.md#显式重发与修订)。
+
+## make-video 历史默认制作配置
+
+普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `D:/VideoSi/projects/video-ai/config/production.json`，也可用 `--config PATH` 指定现有配置。历史策略配置复用已安装 Ollama/qwen3:8b、GPT-SoVITS v2/CPU/非半精度声音、SDXL、Wan、RealESRGAN_x4plus 和 FFmpeg；Wan 前仍需实际图片审核。默认配置路径属于运行环境，源码中的 `production.example.json` 仅为配置样例。
 
 首版支持单版 fast（768×432）或 quality（1280×720）源镜头，最终固定 1920×1080/native16、硬切、烧录字幕、无背景音乐。`media.fps` 非 16、最终尺寸非 1920×1080、transition 非 cut、burn_subtitles 为 false 或 music 非 null 会在预检指出确切字段并拒绝，不自动改配置。旧流程支持范围见后文。
 

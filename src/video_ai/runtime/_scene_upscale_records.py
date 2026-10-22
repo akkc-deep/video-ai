@@ -22,7 +22,8 @@ def extraction_recipe(context,clip):
         width=p.width,height=p.height,filter='format=rgb24',start_number=1,fps_mode='passthrough'))
 
 
-def validate_extraction(context,clip,*,promote=False):
+def validate_extraction(context,clip,*,promote=False,media=True):
+    if not media and promote:raise ProductionRefused('declared extraction cannot be promoted')
     store=context['store']; folder=store.clip_dir(clip['clip_id']); ready=store.read(folder/'extraction-ready.json')
     value=store.read(folder/'extraction.json')
     if ready is None:
@@ -32,7 +33,9 @@ def validate_extraction(context,clip,*,promote=False):
     timestamp(ready['created_at']); rows=clip_rows(context,clip['clip_id']); recipe=extraction_recipe(context,clip)
     equal({k:ready[k] for k in ('schema_version','run_id','clip_id','source','recipe')},
         dict(schema_version=2,run_id=store.run_dir.name,clip_id=clip['clip_id'],source=clip['source'],recipe=recipe),'extraction identity')
-    store.validate_artifact(clip['source'])
+    from ._scene_revision_origin_clips import declared_artifact
+    check=store.validate_artifact if media else lambda value:declared_artifact(store,value)
+    check(clip['source'])
     stage=run_path(store.run_dir,ready['staging_directory']); target=run_path(store.run_dir,ready['target_directory'])
     if target!=folder/'input-frames' or stage.parent!=folder or not stage.name.startswith('extraction-'):
         raise ProductionRefused('extraction directory ownership differs')
@@ -49,19 +52,19 @@ def validate_extraction(context,clip,*,promote=False):
     for a,b in zip(ready['staging_frames'],ready['target_frames']):
         equal({k:a['image'][k] for k in ('bytes','sha256')},{k:b['image'][k] for k in ('bytes','sha256')},'extraction staging bytes')
     for directory,items in ((stage,ready['staging_frames']),(target,ready['target_frames'])):
-        if directory.exists():
+        if media and directory.exists():
             if {str(p) for p in directory.iterdir()}!={r['image']['path'] for r in items}: raise ProductionRefused('extraction extra or missing file')
             for row in items: store.validate_artifact(row['image'])
-    if not stage.exists() and not target.exists(): raise ProductionRefused('prepared extraction bytes missing')
-    if not target.exists():
+    if media and not stage.exists() and not target.exists(): raise ProductionRefused('prepared extraction bytes missing')
+    if media and not target.exists():
         if value is not None: raise ProductionRefused('committed extraction target missing')
         if promote:
             store.verify_global(); os.rename(stage,target); store.assert_owned()
     p=context['frozen'].config.media.profile
-    _decode_video(store,clip['source'],frames=len(rows),width=p.width,height=p.height)
+    if media:_decode_video(store,clip['source'],frames=len(rows),width=p.width,height=p.height)
     active=ready['target_frames'] if target.exists() else ready['staging_frames']
     key=('scene-native',canonical_digest(clip['source']),canonical_digest(active))
-    if key not in store.media_cache:
+    if media and key not in store.media_cache:
         verify_scene_frame_pixels(clip['source']['path'],[r['image']['path'] for r in active],
             expected_frames=len(rows),width=p.width,height=p.height,config=context['frozen'].config)
         store.media_cache.add(key)
@@ -98,7 +101,8 @@ def validate_png(store,artifact,*,width,height):
     store.verify_tools()
 
 
-def validate_png_receipt(context,row,operation,*,source=None,promote=False):
+def validate_png_receipt(context,row,operation,*,source=None,promote=False,media=True):
+    if not media and promote:raise ProductionRefused('declared PNG cannot be promoted')
     store=context['store']; folder=store.frame_dir(row['frame_id']); value=store.read(folder/'media-ready'/(operation+'.json'))
     if value is None: return None
     object_fields(value,'schema_version run_id frame_id operation source staging target recipe evidence created_at'.split(),'PNG media ready')
@@ -108,24 +112,32 @@ def validate_png_receipt(context,row,operation,*,source=None,promote=False):
         recipe=dict(algorithm='identity_png_copy_v1',parameters={})),'PNG copy recipe')
     if operation not in ('input_copy','output'): raise ProductionRefused('unknown PNG operation')
     if source is not None: equal(value['source'],source,'PNG source')
-    store.validate_artifact(value['source'])
+    from ._scene_revision_origin_clips import declared_artifact
+    check=store.validate_artifact if media else lambda value:declared_artifact(store,value)
+    check(value['source'])
     stage=run_path(store.run_dir,value['staging']['path']); target=run_path(store.run_dir,value['target']['path'])
     expected=store.run_dir/'comfy/input'/store.run_dir.name/'scene_upscale'/row['clip_id']/f'frame_{row["retained_frame_index"]+1:06d}.png' if operation=='input_copy' else folder/'output.png'
     if target!=expected or stage.parent!=folder/'staging': raise ProductionRefused('PNG copy target/staging differs')
     for artifact in (value['staging'],value['target']):
+        if not media:check(artifact)
         equal({k:artifact[k] for k in ('bytes','sha256')},{k:value['source'][k] for k in ('bytes','sha256')},'identity PNG copy bytes')
-    if stage.exists(): store.validate_artifact(value['staging'])
-    if target.exists(): store.validate_artifact(value['target'])
-    elif promote and stage.exists():
-        store.verify_global(); target.parent.mkdir(parents=True,exist_ok=True); os.rename(stage,target); store.assert_owned()
-    elif not stage.exists(): raise ProductionRefused('prepared PNG promotion missing')
+    if media:
+        if stage.exists():store.validate_artifact(value['staging'])
+        if target.exists(): store.validate_artifact(value['target'])
+        elif promote and stage.exists():
+            store.verify_global(); target.parent.mkdir(parents=True,exist_ok=True); os.rename(stage,target); store.assert_owned()
+        elif not stage.exists(): raise ProductionRefused('prepared PNG promotion missing')
     for artifact in value['evidence']: store.validate_artifact(artifact)
     p=context['frozen'].config.media.profile
-    validate_png(store,value['target'] if target.exists() else value['staging'],width=p.width if operation=='input_copy' else 1920,height=p.height if operation=='input_copy' else 1080)
+    if media:validate_png(store,value['target'] if target.exists() else value['staging'],width=p.width if operation=='input_copy' else 1920,height=p.height if operation=='input_copy' else 1080)
     return value
 
 
-def validate_frame(context,row,extraction,*,promote=False):
+def validate_frame(context,row,extraction,*,promote=False,media=True):
+    if not media and promote:raise ProductionRefused('declared frame cannot be promoted')
+    from ._scene_revision_readers import inherited_frame
+    imported = inherited_frame(context,row)
+    if imported is not None:return imported
     from .scene_upscale_transactions import validate_scene_frame_submission,_pending_scene_frame_output
     store=context['store']; folder=store.frame_dir(row['frame_id']); value=store.read(folder/'frame.json')
     request=store.read(folder/'request.json'); graph=graph_for(context,row)
@@ -148,14 +160,14 @@ def validate_frame(context,row,extraction,*,promote=False):
         return None
     if extraction is None: raise ProductionRefused('frame request lacks extraction')
     image=extraction['frames'][row['retained_frame_index']]['image']
-    copy=validate_png_receipt(context,row,'input_copy',source=image,promote=promote)
+    copy=validate_png_receipt(context,row,'input_copy',source=image,promote=promote,media=media)
     if copy is None: raise ProductionRefused('request lacks PNG copy preparation')
-    if not Path(copy['target']['path']).exists():
+    if media and not Path(copy['target']['path']).exists():
         if value is not None: raise ProductionRefused('technical frame input copy missing')
         return None
     equal(request,expected_request(context,row,image,copy['target']),'frame request')
     equal(store.read(folder/'graph.json'),graph,'frame graph')
-    submission=validate_scene_frame_submission(store,request,graph,template=context['template'])
+    submission=validate_scene_frame_submission(store,request,graph,template=context['template'],media=media)
     if submission is None:
         owned=_pending_scene_frame_output(store,request,graph,template=context['template'])
         if owned is not None: validate_png(store,owned,width=1920,height=1080)
@@ -163,12 +175,12 @@ def validate_frame(context,row,extraction,*,promote=False):
         return None
     # Batch preflight must reject a known bad later model result before any
     # earlier new POST, including the prefix preceding output preparation.
-    validate_png(store,submission['output'],width=1920,height=1080)
-    output=validate_png_receipt(context,row,'output',source=submission['output'],promote=promote)
+    if media:validate_png(store,submission['output'],width=1920,height=1080)
+    output=validate_png_receipt(context,row,'output',source=submission['output'],promote=promote,media=media)
     if output is None:
         if value is not None: raise ProductionRefused('technical frame lacks output preparation')
         return None
-    if not Path(output['target']['path']).exists():
+    if media and not Path(output['target']['path']).exists():
         if value is not None: raise ProductionRefused('technical frame output missing')
         return None
     expected=dict(schema_version=2,production_strategy=STRATEGY,run_id=store.run_dir.name,frame_id=row['frame_id'],

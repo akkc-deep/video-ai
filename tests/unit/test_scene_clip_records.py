@@ -91,7 +91,8 @@ def test_media_preparation_resumes_only_bound_staging_and_recipe(runtime_run):
     with RunLock(run) as held:
         store=SceneClipStore(SimpleNamespace(options={'run_id':run.name}),run,paths=paths,lock=held,clip_ids=[cid])
         folder=store.clip_dir(cid)
-        source=store.artifact(store.write_bytes('original.bin',b'actual source'))
+        # identity_copy_v1 preserves the original bytes before promotion.
+        source=store.artifact(store.write_bytes('original.bin',b'exact derived media'))
         staging=store.artifact(store.write_bytes(folder/'staging/unique/generated.mp4',b'exact derived media'))
         target=folder/'generated.mp4';recipe=dict(algorithm='identity_copy_v1',parameters={})
         receipt=dict(schema_version=2,run_id=run.name,clip_id=cid,operation='generated',source=source,staging=staging,

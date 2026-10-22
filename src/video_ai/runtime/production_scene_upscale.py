@@ -92,6 +92,9 @@ def _produce(context,logger,client_factory,service_factory):
         service.ensure(); store.verify_global()
     try:
         for clip in context['scene_clips']['clips']:
+            from ._scene_revision_readers import inherited_frame
+            needed = [r for r in clip_rows(context,clip['clip_id']) if inherited_frame(context,r) is None]
+            if not needed: continue
             extraction=_extract(context,clip,logger)
             for row in clip_rows(context,clip['clip_id']):
                 old=validate_frame(context,row,extraction,promote=True)
@@ -126,6 +129,10 @@ def _produce(context,logger,client_factory,service_factory):
                 else: raise
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def produce_scene_upscaled_clips(frozen,units,timeline,*,paths,logger,client_factory=None,service_factory=None,lock=None):
     from .image_selection_records import _run
     from .scene_upscale_transactions import SceneSubmitUnknown,SceneFrameTerminal

@@ -20,6 +20,7 @@ from .production_state import (ArtifactStamp, ProductionRefused, absolute_path, 
                                object_fields, run_path, timestamp, write_exclusive)
 from .services import port_listening
 from .workflows import validate_workflow
+from ._scene_revision_freeze import revision_freeze_scope
 
 DEFAULT_CONFIG = Path('D:/VideoSi/projects/video-ai/config/production.json')
 GIB = 1024**3
@@ -74,6 +75,8 @@ def _copy_small(source, destination, *, validate=None):
 
 
 def _save_bytes(path, raw):
+    from ._scene_revision_freeze import save_frozen_file
+    if save_frozen_file(path, raw): return
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('xb') as file:
         file.write(raw); file.flush(); os.fsync(file.fileno())
@@ -102,7 +105,25 @@ def output_paths(config, run, output_path=None, *, check_existing=True):
     return targets
 
 
-def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, cpu_planner=None, raw_script_bytes=None, image_model=None):
+def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, cpu_planner=None, raw_script_bytes=None, image_model=None, scene_revision=None):
+    if scene_revision is not None:
+        from ._scene_revision_freeze import _store, recover_options
+        from .scene_revision_records import validate_revision_structure
+        store = _store.get()
+        if store is None or store.run != Path(run_dir): raise ProductionRefused('revision freeze requires held target scope')
+        store.owned()
+        if config.production_strategy != STRATEGY: raise ProductionRefused('revision requires schema=2')
+        validate_revision_structure(dict(scene_revision=scene_revision), Path(run_dir))
+        path = Path(run_dir)/'production/options.json'
+        if path.exists() or recover_options(store,path):
+            frozen = load_frozen_inputs(run_dir,config=config,output_path=output_path,cpu_planner=cpu_planner,image_model=image_model)
+            if frozen.options.get('scene_revision') != scene_revision: raise ProductionRefused('revision freeze commit differs')
+            return frozen
+    return _freeze_inputs(config,run_dir,script=script,text=text,output_path=output_path,cpu_planner=cpu_planner,
+        raw_script_bytes=raw_script_bytes,image_model=image_model,scene_revision=scene_revision)
+
+
+def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, cpu_planner=None, raw_script_bytes=None, image_model=None, scene_revision=None):
     run = validate_run_dir(run_dir)
     validate_supported(config)
     image = override_image_model(config.image_generation, image_model)
@@ -155,7 +176,8 @@ def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, 
     custom = dict(version='v2', device='cpu', is_half=False, t2s_weights_path=str(config.voice.gpt_weights),
                   vits_weights_path=str(config.voice.sovits_weights), bert_base_path=str(config.voice.bert_root),
                   cnhuhbert_base_path=str(config.voice.hubert_root))
-    write_exclusive(yaml_path, dict(custom=custom, v2=custom))
+    from .production_state import json_bytes
+    _save_bytes(yaml_path, json_bytes(dict(custom=custom, v2=custom)))
     identities['tts_yaml'] = thaw(hash_file(yaml_path))
     models = {role: ArtifactStamp.read(path).to_dict() for role, path in active_models(config).items()}
     models.update({role: ArtifactStamp.read(getattr(config.voice, role)).to_dict() for role in ('gpt_weights', 'sovits_weights')})
@@ -175,7 +197,8 @@ def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, 
     if config.production_strategy == STRATEGY:
         options.update(schema_version=2, production_strategy=STRATEGY,
                        image_model_override=image_model, image_generation=thaw(image))
-    write_exclusive(run_path(run, directory/'options.json'), options)
+    if scene_revision is not None: options['scene_revision'] = thaw(scene_revision)
+    _save_bytes(run_path(run, directory/'options.json'), json_bytes(options))
     return load_frozen_inputs(run)
 
 
@@ -193,6 +216,7 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     run = validate_run_dir(run_dir); options = read_json(run_path(run, run/'production/options.json'))
     modern = type(options.get('schema_version')) is int and options['schema_version'] == 2
     fields = OPTION_FIELDS + ('production_strategy', 'image_model_override', 'image_generation') if modern else OPTION_FIELDS
+    if modern and 'scene_revision' in options: fields += ('scene_revision',)
     object_fields(options, fields, 'production options')
     if type(options['schema_version']) is not int or options['schema_version'] not in (1, 2) or options['execution_mode'] != 'automatic' or options['run_id'] != run.name:
         raise ProductionRefused('invalid automatic options identity')
@@ -269,6 +293,13 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     if modern and not _same_json(thaw(image), options['image_generation']): raise ProductionRefused('frozen image model configuration differs')
     if image_model is not None and (image is None or image_model != image.req_key):
         raise ProductionRefused('image model differs from frozen model; create a new run')
+    if 'scene_revision' in options:
+        from .scene_revision_records import validate_revision_structure
+        from ..planning.scene_revision import identity_from_options
+        revision = validate_revision_structure(options,run)
+        target = revision['commit']['target_identity']
+        if identity_from_options(options,reference_settings_sha256=target['reference_settings_sha256']) != target:
+            raise ProductionRefused('frozen revision target identity differs')
     effective = replace(frozen, workflows=MappingProxyType({role: Path(workflows[role]['path']) for role in active_workflows(frozen)}),
                         image_generation=image,
                         voice=replace(voice, reference_audio=Path(records['reference']['path'])),

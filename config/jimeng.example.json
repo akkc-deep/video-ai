@@ -85,6 +85,8 @@
       "height": 1440,
       "force_single": true
     },
+    "output_width": 2560,
+    "output_height": 1440,
     "candidates_per_scene": 2,
     "request_timeout_seconds": 60,
     "task_timeout_seconds": 600,

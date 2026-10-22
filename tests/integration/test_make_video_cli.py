@@ -131,7 +131,7 @@ def test_resume_live_lock_refused_without_mutation(runtime_run):
     with RunLock(run):
         before = (run/'.make-video.lock').read_bytes()
         result = make_video(run_dir=run)
-        assert result.status == 'blocked'
+        assert result.status == 'blocked', result.error
         assert result.exit_code == 2
         assert (run/'.make-video.lock').read_bytes() == before
 

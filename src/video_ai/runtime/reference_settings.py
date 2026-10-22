@@ -64,6 +64,12 @@ def _bytes(store, path, raw):
 
 
 def load_reference_settings(frozen):
+    from ._scene_revision_origins import inherited,run_of
+    imported = inherited(frozen,'reference_settings','all')
+    if imported is not None:
+        if (run_of(frozen)/'production/reference-images/settings.json').exists():
+            raise ProductionRefused('owned reference settings competes with import')
+        return imported
     run = _run(frozen); folder = run/'production/reference-images'
     marker = read_json(run_path(run, folder/'settings.json'))
     object_fields(marker, SETTINGS_FIELDS, 'reference settings')
@@ -93,6 +99,14 @@ def load_reference_settings(frozen):
 
 
 def bind_reference_settings(frozen, *, store, reference_settings_path=None):
+    from ._scene_revision_origins import inherited
+    imported = inherited(frozen,'reference_settings','all')
+    if imported is not None:
+        if reference_settings_path is not None:
+            raw = Path(reference_settings_path).read_bytes()
+            if _digest(raw)!=imported['config_source_sha256']: raise ProductionRefused('reference settings import cannot be replaced')
+        store.owned()
+        return load_reference_settings(frozen)
     run = _run(frozen); folder = run/'production/reference-images'
     store.owned()
     if (folder/'settings.json').exists():

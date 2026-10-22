@@ -173,7 +173,7 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
         raise ProductionRefused('required reference baseline is not accepted')
     marker = bind_reference_settings(frozen, store=store, reference_settings_path=reference_settings_path)
     boundary('reference-settings')
-    from .reference_image_records import (resolve_reference_bindings, build_reference_prompt,
+    from .reference_image_records import (resolve_reference_bindings, resolve_reference_prompt,
                                           build_reference_image_acceptance, require_reference_image_acceptance)
     from .jimeng_reference_candidates import generate_reference_candidates
     from ..adapters.reference_storage import ReferenceStorage
@@ -183,7 +183,7 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
     # Validate the entire batch before the first upload or paid submission.
     for scene in scenes:
         sources = resolve_reference_bindings(frozen, bible, plan, scene, accepted)
-        prompt = build_reference_prompt(scene, bible)
+        prompt = resolve_reference_prompt(frozen, scene, bible, cap)
         if not sources or len(sources) > cap['max_images']:
             raise ReferenceConfigurationRequired('reference image count exceeds verified model capability')
         if len(prompt.encode('utf-8')) > cap['max_prompt_bytes']:
@@ -233,6 +233,10 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
     return _result(store.run, selection.status, batch_id=batch_id, selection=selection)
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logger, reference_settings_path=None,
                             storage=None, client_factory=None, smtp_factory=None, email_settings=None, lock=None):
     run = None
@@ -248,6 +252,9 @@ def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logg
                     reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
                     smtp_factory=smtp_factory, email_settings=email_settings, lock=held)
         store = _Records(run, lock); store.owned()
+        if 'scene_revision' in frozen.options:
+            from .scene_revision_records import require_scene_revision
+            store.revision_guard=require_scene_revision(frozen)['guard']
         return _operate(frozen, units, timeline, store, batch_index=batch_index, paths=paths, logger=logger,
             reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
             smtp_factory=smtp_factory, email_settings=email_settings)

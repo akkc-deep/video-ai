@@ -15,6 +15,7 @@ from .manifest import hash_file, now, thaw
 from .production_state import (ArtifactStamp, ProductionRefused, RunLock, integer,
                                object_fields, run_path, timestamp)
 from . import image_selection_records as images
+from .verification import verified_read
 
 
 def equal(actual, expected, label):
@@ -31,6 +32,16 @@ class SceneClipStore:
         self.guard_paths = {}
         self.guard_directories = {}
         self.media_cache = set()  # Invocation-local, keyed by verified bytes; never mtime or cross-call state.
+        from .scene_revision_records import _context
+        scope=_context.get()
+        if scope is not None:
+            tools={role:ArtifactStamp.read(frozen.config.tools[role]).to_dict() for role in ('ffmpeg','ffprobe')}
+            cache_key=canonical_digest(dict(options=thaw(frozen.options),tools=tools))
+            self.media_cache=scope.setdefault('scene_media_decode_cache',{}).setdefault(cache_key,set())
+        self.revision_context = None
+        if 'scene_revision' in getattr(frozen,'options',{}):
+            from .scene_revision_records import require_scene_revision
+            self.revision_context = require_scene_revision(frozen)
 
     def assert_owned(self):
         if (not isinstance(self.lock, RunLock) or self.lock.run_dir != self.run_dir
@@ -70,6 +81,9 @@ class SceneClipStore:
 
     def artifact(self, path):
         path = run_path(self.run_dir, path)
+        from ._scene_revision_origin_clips import media_declaration
+        declared=media_declaration(self.frozen,path)
+        if declared is not None:return declared
         identity = hash_file(path)
         integer(identity.bytes, 'artifact bytes', 1)
         return {key: getattr(identity, key) for key in ('path', 'bytes', 'sha256')}
@@ -77,6 +91,9 @@ class SceneClipStore:
     def validate_artifact(self, value):
         object_fields(value, ('path', 'bytes', 'sha256'), 'scene Artifact')
         integer(value['bytes'], 'artifact bytes', 1); images._sha(value['sha256'])
+        from ._scene_revision_origin_images import source_image_artifact
+        declared=source_image_artifact(self.frozen,value)
+        if declared is not None:return declared
         path = run_path(self.run_dir, value['path'])
         equal(self.artifact(path), value, 'artifact '+str(path))
         return path
@@ -88,6 +105,7 @@ class SceneClipStore:
     def verify_global(self):
         """Rehash the full already-admitted dependency set without repeating decoding."""
         self.assert_owned()
+        if self.revision_context is not None: self.revision_context['guard'].verify_captured_bytes()
         for value in self.guard_paths.values(): self.validate_artifact(value)
         for directory,inventory in self.guard_directories.items():
             if {str(path) for path in Path(directory).rglob('*.json')}!=inventory:
@@ -102,6 +120,8 @@ class SceneClipStore:
         for path in (self.root/'inputs.json', folder/'input.json', folder/'request.json', folder/'graph.json'):
             paths[str(path)] = self.artifact(path)
         def capture(value):
+            if self.revision_context is not None and self.revision_context['guard'].is_registered(value):
+                self.revision_context['guard'].verify_captured_bytes(); return
             if isinstance(value, dict):
                 if set(value) == {'path','bytes','sha256'}:
                     self.validate_artifact(value); paths[value['path']] = deepcopy(value)
@@ -116,12 +136,15 @@ class SceneClipStore:
         parent = request['parent']
         if parent:
             pf = self.clip_dir(parent['clip_id'])
-            for name in ('clip.json','last-frame.json','observation-accepted.json'):
-                path = pf/name; paths[str(path)] = self.artifact(path)
-            capture(self.read(pf/'observation-accepted.json'))
-            directory=pf/'observations'
-            inventories[directory]={str(path) for path in directory.glob('*.json')}
-            for path in inventories[directory]: paths[path]=self.artifact(path)
+            if self.revision_context is not None and 'clip:'+parent['clip_id'] in self.revision_context['imports']:
+                self.revision_context['guard'].verify_captured_bytes()
+            else:
+                for name in ('clip.json','last-frame.json','observation-accepted.json'):
+                    path = pf/name; paths[str(path)] = self.artifact(path)
+                capture(self.read(pf/'observation-accepted.json'))
+                directory=pf/'observations'
+                inventories[directory]={str(path) for path in directory.glob('*.json')}
+                for path in inventories[directory]: paths[path]=self.artifact(path)
         expected_request, expected_graph = canonical_digest(request), canonical_digest(graph)
         def guard():
             self.verify_global()
@@ -135,6 +158,7 @@ class SceneClipStore:
         return guard
 
 
+@verified_read
 def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     """Full batch preflight, also used by both read-only public entrypoints."""
     from ..planning.scene_clip_continuation import build_scene_wan_plan
@@ -152,6 +176,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     store = SceneClipStore(frozen, run, paths=paths, lock=lock, clip_ids=[c['clip_id'] for c in plan['clips']])
     rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan)
     for selected in wan['scenes']:
+        from ._scene_revision_origin_images import source_image_required
+        if not source_image_required(frozen,selected['scene_id']):continue
         artifact = {k:selected[k] for k in ('path','bytes','sha256')}
         path = store.validate_artifact(artifact)
         info = images._inspect_original(frozen, path)
@@ -179,6 +205,7 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         store.guard_directories[str(run/directory)]=inventory
         for path in inventory: store.guard_paths[path] = store.artifact(path)
     for selected in wan['scenes']:
+        if not source_image_required(frozen,selected['scene_id']):continue
         value={k:selected[k] for k in ('path','bytes','sha256')}
         store.guard_paths[value['path']]=value
     return dict(frozen=frozen, units=units, timeline=timeline, store=store, bible=bible, plan=plan,
@@ -234,7 +261,8 @@ def _decode_video(store, value, *, frames, width, height):
     """Read-only complete probe/decode; no logger, temporary files or encoding."""
     from ..media.video import validate_video_probe
     path = store.validate_artifact(value)
-    key=('video',canonical_digest(value),frames,width,height)
+    tool_identity=canonical_digest({k:ArtifactStamp.read(store.frozen.config.tools[k]).to_dict() for k in ('ffmpeg','ffprobe')})
+    key=('video',canonical_digest(value),frames,width,height,tool_identity)
     if key in store.media_cache: return
     def execute(args):
         proc = subprocess.run([str(x) for x in args], stdin=subprocess.DEVNULL, capture_output=True,
@@ -251,7 +279,7 @@ def _decode_video(store, value, *, frames, width, height):
     store.media_cache.add(key)
 
 
-def validate_media_receipt(store, folder, operation, *, source=None, target=None, recipe=None, promote=False, required=False):
+def validate_media_receipt(store, folder, operation, *, source=None, target=None, recipe=None, promote=False, required=False, media=True):
     value=store.read(folder/'media-ready'/(operation+'.json'))
     if value is None:
         if required: raise ProductionRefused('required media preparation receipt missing: '+operation)
@@ -261,21 +289,29 @@ def validate_media_receipt(store, folder, operation, *, source=None, target=None
     if operation not in ('input','generated','source','last_frame'): raise ProductionRefused('unknown media operation')
     equal({k:value[k] for k in ('schema_version','run_id','clip_id','operation')},
         dict(schema_version=2,run_id=store.run_dir.name,clip_id=folder.name,operation=operation),'media ready identity')
-    store.validate_artifact(value['source'])
+    from ._scene_revision_origin_clips import declared_artifact
+    if media:store.validate_artifact(value['source'])
+    else:declared_artifact(store,value['source'])
     if source is not None: equal(value['source'],source,'media source')
     if recipe is not None: equal(value['recipe'],recipe,'media recipe')
     object_fields(value['recipe'],('algorithm','parameters'),'media recipe')
     if target is not None and value['target']['path'] != str(target): raise ProductionRefused('media target path differs')
     equal({k:value['target'][k] for k in ('bytes','sha256')},
           {k:value['staging'][k] for k in ('bytes','sha256')},'media staging identity')
+    if value['recipe']['algorithm'] in ('identity_copy_v1','identity_png_copy_v1'):
+        equal({k:value['source'][k] for k in ('bytes','sha256')},{k:value['target'][k] for k in ('bytes','sha256')},'identity copy bytes')
     staging=run_path(store.run_dir,value['staging']['path']); final=run_path(store.run_dir,value['target']['path'])
     if not staging.is_relative_to(folder/'staging'): raise ProductionRefused('media staging escapes clip')
-    if not staging.exists() and not final.exists(): raise ProductionRefused('prepared media bytes missing')
-    if staging.exists(): store.validate_artifact(value['staging'])
-    if final.exists(): store.validate_artifact(value['target'])
-    elif promote:
-        store.assert_owned(); final.parent.mkdir(parents=True,exist_ok=True); os.rename(staging,final); store.assert_owned()
-    else: raise ProductionRefused('media promotion incomplete')
+    if media:
+        if not staging.exists() and not final.exists(): raise ProductionRefused('prepared media bytes missing')
+        if staging.exists(): store.validate_artifact(value['staging'])
+        if final.exists(): store.validate_artifact(value['target'])
+        elif promote:
+            store.assert_owned(); final.parent.mkdir(parents=True,exist_ok=True); os.rename(staging,final); store.assert_owned()
+        else: raise ProductionRefused('media promotion incomplete')
+    else:
+        if promote:raise ProductionRefused('source metadata cannot promote media')
+        declared_artifact(store,value['staging']);declared_artifact(store,value['target'])
     if not isinstance(value['evidence'],list): raise ProductionRefused('media evidence list required')
     for artifact in value['evidence']: store.validate_artifact(artifact)
     return value
@@ -295,7 +331,8 @@ def _verify_native_pixels(store,generated,image,index,width,height):
     """Read-only native decode comparison prevents a different PNG posing as the retained frame."""
     ffmpeg=store.frozen.config.tools['ffmpeg']
     store.validate_artifact(generated);store.validate_artifact(image)
-    key=('native_pixels',canonical_digest(generated),canonical_digest(image),index,width,height)
+    key=('native_pixels',canonical_digest(generated),canonical_digest(image),index,width,height,
+        canonical_digest(ArtifactStamp.read(ffmpeg).to_dict()))
     if key in store.media_cache: return
     def decode(path,filter_value):
         args=[str(ffmpeg),'-nostdin','-v','error','-xerror','-i',str(path),'-map','0:v:0',
@@ -310,7 +347,7 @@ def _verify_native_pixels(store,generated,image,index,width,height):
     store.media_cache.add(key)
 
 
-def _validate_input(context,row,parent):
+def _validate_input(context,row,parent,*,media=True):
     from ..media.images import contain_filter
     store=context['store']; b=row['budget']; folder=store.clip_dir(b['clip_id']); value=store.read(folder/'input.json')
     if value is None: return None
@@ -322,23 +359,32 @@ def _validate_input(context,row,parent):
     filter_value=contain_filter(w,h) if parent is None else None
     target=store.run_dir/'comfy/input'/store.run_dir.name/'scene_clips'/b['clip_id']/'start.png'
     expected=dict(schema_version=2,run_id=store.run_dir.name,clip_id=b['clip_id'],kind=b['input_kind'],source=source,
-        target=store.artifact(target),rule=rule,filter=filter_value,width=w,height=h,pixel_format='rgb24')
-    equal(value,expected,'input'); store.validate_artifact(source)
-    info=images._inspect_original(store.frozen,target)
-    if (info['width'],info['height'],info['format']) != (w,h,'png'): raise ProductionRefused('invalid native start PNG')
+        target=store.artifact(target) if media else value['target'],rule=rule,filter=filter_value,width=w,height=h,pixel_format='rgb24')
+    equal(value,expected,'input')
+    if value['target']['path']!=str(target):raise ProductionRefused('original input target differs')
+    if media:
+        store.validate_artifact(source)
+        info=images._inspect_original(store.frozen,target)
+        if (info['width'],info['height'],info['format']) != (w,h,'png'): raise ProductionRefused('invalid native start PNG')
     if parent is not None and value['target']['sha256']!=source['sha256']: raise ProductionRefused('child input must copy parent PNG bytes')
     validate_media_receipt(store,folder,'input',source=source,target=target,
-        recipe=dict(algorithm=rule,parameters=dict(filter=filter_value,width=w,height=h) if parent is None else {}),required=True)
+        recipe=dict(algorithm=rule,parameters=dict(filter=filter_value,width=w,height=h) if parent is None else {}),required=True,media=media)
     return value
 
 
 def validate_clip(context,row,parent=None):
     """Reconstruct one original technical clip and its observation, without mutation."""
+    from ._scene_revision_readers import inherited_clip_record
+    imported = inherited_clip_record(context['frozen'],row['budget']['clip_id'],
+        context=context['store'].revision_context,row=row,parent=parent)
+    if imported is not None:return imported
     from ..planning.scene_clip_continuation import scene_clip_frame_mapping
     from .scene_comfy_transactions import validate_scene_submission,validate_scene_terminal
     from .scene_clip_observations import build_observation_template,validate_scene_clip_observation
     store=context['store']; b=row['budget']; folder=store.clip_dir(b['clip_id'])
-    input_record=_validate_input(context,row,parent)
+    from ._scene_revision_origin_clips import source_clip_required,declared_artifact
+    media=source_clip_required(context['frozen'],b['clip_id'])
+    input_record=_validate_input(context,row,parent,media=media)
     request=store.read(folder/'request.json'); graph=store.read(folder/'graph.json')
     if request is not None:
         if input_record is None: raise ProductionRefused('request lacks original input')
@@ -353,7 +399,7 @@ def validate_clip(context,row,parent=None):
         if terminal is not None:
             if clip is not None: raise ProductionRefused('terminal transaction has completed technical clip')
             return None
-        submission=validate_scene_submission(store,request,graph)
+        submission=validate_scene_submission(store,request,graph,media=media)
     else:
         if any(store.read(folder/name) is not None for name in ('intent.json','accepted.json','submission.json','terminal.json')):
             raise ProductionRefused('transaction evidence lacks original request')
@@ -370,21 +416,25 @@ def validate_clip(context,row,parent=None):
     for name,frames in (('generated',b['generated_frames']),('source',b['retained_frames'])):
         value=clip[name]
         if value['path']!=str(folder/(name+'.mp4')): raise ProductionRefused('clip media path differs')
-        _decode_video(store,value,frames=frames,width=row['parameters']['width'],height=row['parameters']['height'])
+        if media:_decode_video(store,value,frames=frames,width=row['parameters']['width'],height=row['parameters']['height'])
+        else:declared_artifact(store,value)
     object_fields(last,'schema_version run_id clip_id generated source_frame_index global_output_frame_index image extraction_rule evidence'.split(),'last frame')
     last_path=folder/f"frame_{b['retained_source_end']:06d}.png"
-    image=store.artifact(last_path); info=images._inspect_original(store.frozen,last_path)
-    if (info['width'],info['height'],info['format']) != (row['parameters']['width'],row['parameters']['height'],'png'):
-        raise ProductionRefused('invalid last native PNG')
+    image=store.artifact(last_path) if media else last['image']
+    if image['path']!=str(last_path):raise ProductionRefused('last native PNG path differs')
+    if media:
+        info=images._inspect_original(store.frozen,last_path)
+        if (info['width'],info['height'],info['format']) != (row['parameters']['width'],row['parameters']['height'],'png'):
+            raise ProductionRefused('invalid last native PNG')
     equal(last,dict(schema_version=2,run_id=store.run_dir.name,clip_id=b['clip_id'],generated=clip['generated'],
         source_frame_index=b['retained_source_end']-1,global_output_frame_index=b['end_frame']-1,image=image,
         extraction_rule='native_index_rgb24_v1',evidence=last['evidence']),'last frame')
     for evidence in clip['technical_evidence']+last['evidence']: store.validate_artifact(evidence)
     recipes=technical_recipes(row); receipts={}
     for op,source,target in (('generated',submission['output'],clip['generated']),('source',clip['generated'],clip['source']),('last_frame',clip['generated'],image)):
-        receipts[op]=validate_media_receipt(store,folder,op,source=source,target=Path(target['path']),recipe=recipes[op],required=True)
+        receipts[op]=validate_media_receipt(store,folder,op,source=source,target=Path(target['path']),recipe=recipes[op],required=True,media=media)
     equal(last['evidence'],receipts['last_frame']['evidence'],'native extraction evidence')
-    _verify_native_pixels(store,clip['generated'],image,b['retained_source_end']-1,row['parameters']['width'],row['parameters']['height'])
+    if media:_verify_native_pixels(store,clip['generated'],image,b['retained_source_end']-1,row['parameters']['width'],row['parameters']['height'])
     expected=dict(schema_version=2,production_strategy=STRATEGY,run_id=store.run_dir.name,scene_id=b['scene_id'],clip_id=b['clip_id'],
         request_sha256=canonical_digest(request),submission_sha256=canonical_digest(submission),generated=clip['generated'],source=clip['source'],
         frame_mapping_sha256=canonical_digest(mapping),last_frame_sha256=canonical_digest(last),
@@ -422,6 +472,7 @@ def validate_clip(context,row,parent=None):
     return result
 
 
+@verified_read
 def collect_progress(context):
     store=context['store']; scenes=[]; records={}
     for scene in context['plan']['scenes']:

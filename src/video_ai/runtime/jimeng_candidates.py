@@ -27,10 +27,12 @@ def _digest(value):
 class _Records:
     def __init__(self, run, lock):
         self.run, self.lock = run, lock
+        self.revision_guard = None
 
     def owned(self):
         if self.lock.run_dir != self.run or read_json(self.lock.path) != self.lock.owner:
             raise ProductionRefused('candidate generation lost held run lock')
+        if self.revision_guard is not None:self.revision_guard.verify_captured_bytes()
 
     def save(self, path, value):
         self.owned(); path = run_path(self.run, path)
@@ -198,10 +200,15 @@ def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, 
     store = _Records(run, lock); store.owned()
     fresh = load_frozen_inputs(run)
     if not _same_json(fresh, frozen): raise ProductionRefused('candidate frozen input/model identity differs')
+    if 'scene_revision' in frozen.options:
+        from .scene_revision_records import require_scene_revision
+        proof=require_scene_revision(frozen);store.revision_guard=proof['guard']
+        if 'image:'+scene_id in proof['imports']:raise ProductionRefused('imported image must be read through its registered view')
     if frozen.config.production_strategy != STRATEGY: raise ProductionRefused('candidate API requires paragraph_jimeng_v1')
     settings = frozen.config.image_generation
     if client is not None and not _same_json(client.settings, settings): raise ProductionRefused('candidate client model differs')
     client = client or JimengClient(settings)
+    if isinstance(client,JimengClient):client.ownership_check=store.owned
     if inspect is None:
         from ..media.images import inspect_image
         from .logging import RunLogger

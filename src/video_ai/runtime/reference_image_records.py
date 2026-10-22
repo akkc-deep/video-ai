@@ -6,6 +6,7 @@ reference back through accepted selection, decoded original and object receipt.
 from copy import deepcopy
 from datetime import datetime
 import hashlib
+import re
 
 from ..adapters.jimeng import encode_body
 from ..jimeng_config import STRATEGY, parse_image_generation
@@ -34,8 +35,104 @@ def build_reference_prompt(scene, bible):
     return scene['image_prompt']+'\nVISUAL_BIBLE_JSON\n'+encode_body(context).decode('utf-8')
 
 
+def resolve_reference_prompt(frozen, scene, bible, capability):
+    """Choose once before submission; recover only a fully known saved format."""
+    from .reference_visual_prompt import compact_reference_prompt
+    full = build_reference_prompt(scene, bible)
+    compact = compact_reference_prompt(scene, bible)
+    run = images._run(frozen)
+    root = run/'production/jimeng'/scene['scene_id']
+    settings = load_reference_settings(frozen)
+    model = parse_image_generation(settings['model_settings'], 'bound reference model')
+    request_ids = {f'request_{i:02d}' for i in range(1, model.candidates_per_scene+1)}
+    saved = []
+    originals = {}
+    for folder in sorted(root.glob('request_*')):
+        if not folder.is_dir():
+            continue
+        if folder.name not in request_ids:
+            if any(folder.iterdir()):
+                raise ProductionRefused('unexpected reference request evidence')
+            continue
+        path = folder/'request.json'
+        if path.exists():
+            value = images._read(path)
+            prompt = value.get('prompt') if isinstance(value, dict) else None
+            if prompt not in (full, compact):
+                raise ProductionRefused('reference request prompt is not a known exact representation')
+            saved.append(prompt)
+            originals[folder.name] = value
+        elif any(folder.iterdir()):
+            raise ProductionRefused('reference request evidence lacks original logical request')
+    provenance = run/'production/reference-images'/scene['scene_id']/'provenance.json'
+    if (root/'candidates.json').exists() and not provenance.exists():
+        raise ProductionRefused('reference candidates lack original provenance')
+    if (provenance.exists() or (root/'candidates.json').exists()) and not saved:
+        raise ProductionRefused('reference provenance lacks original logical requests')
+    if saved:
+        if any(prompt != saved[0] for prompt in saved):
+            raise ProductionRefused('reference requests use different prompt representations')
+        prompt = saved[0]
+        if provenance.exists():
+            value = images._read(provenance)
+            object_fields(value, PROVENANCE_FIELDS, 'reference provenance')
+            if value['prompt_sha256'] != hashlib.sha256(prompt.encode('utf-8')).hexdigest():
+                raise ProductionRefused('reference provenance prompt differs from original requests')
+            if not isinstance(value['requests'], list):
+                raise ProductionRefused('invalid reference provenance request coverage')
+            declared = {}
+            for row in value['requests']:
+                object_fields(row, ('request_id', 'logical_request_sha256'), 'reference provenance request')
+                rid = row['request_id']
+                if not isinstance(rid, str) or rid not in request_ids or rid in declared:
+                    raise ProductionRefused('invalid reference provenance request identity')
+                declared[rid] = row['logical_request_sha256']
+            if set(declared) != request_ids or set(originals) != request_ids:
+                raise ProductionRefused('reference provenance lacks complete original logical requests')
+            if any(canonical_digest(originals[rid]) != declared[rid] for rid in request_ids):
+                raise ProductionRefused('reference provenance original logical request digest differs')
+            for rid in request_ids:
+                _completed_reference_evidence(root/rid, originals[rid], settings,
+                                              require_result=(root/'candidates.json').exists())
+        return prompt
+    return full if len(full.encode('utf-8')) <= capability['max_prompt_bytes'] else compact
+
+
+def _completed_reference_evidence(folder, request, settings, *, require_result):
+    """A durable provenance cannot re-enter the new-submission branch."""
+    intent = images._read(folder/'intent.json')
+    validate_reference_intent(intent, request, settings)
+    validate_submit_evidence(folder, request, intent)
+    records = {}
+    identity = canonical_digest(request)
+    for name, fields in (('accepted', 'schema_version identity task_id request_id diagnostic'),
+                         ('result', 'schema_version identity task_id candidates')):
+        path = folder/(name+'.json')
+        if name == 'result' and not require_result and not path.exists():
+            continue  # Recover by querying the accepted task, even after its input URLs expire.
+        value = images._read(path)
+        object_fields(value, fields.split(), 'completed reference '+name)
+        if type(value['schema_version']) is not int or value['schema_version'] != 2 or value['identity'] != identity:
+            raise ProductionRefused('completed reference evidence schema or identity differs')
+        records[name] = value
+    task_id = records['accepted']['task_id']
+    if not isinstance(task_id, str) or re.fullmatch(r'[A-Za-z0-9_.:-]{1,256}', task_id) is None:
+        raise ProductionRefused('completed reference original task differs')
+    result = records.get('result')
+    if result is not None and (result['task_id'] != task_id
+            or not isinstance(result['candidates'], list) or not result['candidates']):
+        raise ProductionRefused('completed reference original task/result differs')
+
+
 def _committed(frozen, scene, bible, plan):
     run = images._run(frozen)
+    from ._scene_revision_origins import inherited
+    imported = inherited(frozen,'plan','all')
+    if imported is not None:
+        images._equal(bible,imported['bible'],'inherited reference bible')
+        images._equal(plan,imported['scene_plan'],'inherited reference plan')
+        images._equal(scene,next((s for s in plan['scenes'] if s['scene_id']==scene['scene_id']),None),'inherited reference scene')
+        return run
     commit = images._read(run/'production/scene-plan-commit.json')
     fields = ('schema_version run_id source_sha256 units_sha256 timeline_sha256 settings '
               'visual_bible_sha256 scene_plan_sha256').split()
@@ -118,9 +215,11 @@ def _object(frozen, candidate, record, storage, accepted_sources):
     if not any(source == {k: selected[k] for k in ('path', 'bytes', 'sha256')}
                for selected in accepted_sources):
         raise ProductionRefused('object upload source is not a previously accepted original')
-    fresh = images.hash_file(source_path)
-    if (source['bytes'], source['sha256']) != (candidate['bytes'], candidate['sha256']) or (
-            fresh.bytes, fresh.sha256) != (source['bytes'], source['sha256']):
+    from ._scene_revision_origin_images import source_image_required
+    required=source_image_required(frozen,candidate['scene_id'])
+    fresh = images.hash_file(source_path) if required else None
+    if (source['bytes'], source['sha256']) != (candidate['bytes'], candidate['sha256']) or (required and (
+            fresh.bytes, fresh.sha256) != (source['bytes'], source['sha256'])):
         raise ProductionRefused('object upload source original identity differs')
     images._equal(intent, dict(schema_version=2, run_id=run.name, object=expected,
         source=source, created_at=intent['created_at']), 'object upload intent')
@@ -154,7 +253,7 @@ def validate_reference_inputs(frozen, scene, bible, plan, references, settings):
                 or not cap['min_height'] <= row['height'] <= cap['max_height']):
             raise ProductionRefused('reference image exceeds verified model capability')
         _object(frozen, candidate, row['object'], storage, accepted_sources)
-    prompt = build_reference_prompt(scene, bible)
+    prompt = resolve_reference_prompt(frozen, scene, bible, cap)
     if len(prompt.encode('utf-8')) > cap['max_prompt_bytes']:
         raise ProductionRefused('reference prompt exceeds verified capability')
     return model, prompt
@@ -201,6 +300,18 @@ def validate_submit_evidence(folder, request, intent):
 
 
 def verify_reference_provenance(frozen, scene, bible, plan):
+    from ._scene_revision_readers import proof_for
+    proof = proof_for(frozen,'image',scene['scene_id'])
+    if proof is not None:
+        from .production_inputs import load_frozen_inputs
+        from ._scene_revision_origins import common
+        from ..planning.production_timeline import ProductionTimeline
+        source = load_frozen_inputs(proof['source_run']); prefix = common(source)
+        old_bible,old_plan = images.load_committed_plan(source,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
+        old_scene = next(s for s in old_plan['scenes'] if s['scene_id']==scene['scene_id'])
+        provenance = verify_reference_provenance(source,old_scene,old_bible,old_plan)
+        proof['guard'].verify_captured_bytes()
+        return provenance
     run = _committed(frozen, scene, bible, plan)
     provenance = images._read(run/'production/reference-images'/scene['scene_id']/'provenance.json')
     object_fields(provenance, PROVENANCE_FIELDS, 'reference provenance')
@@ -223,12 +334,17 @@ def verify_reference_provenance(frozen, scene, bible, plan):
 
 
 def reference_candidates(frozen, scene, manifest_path):
+    from ._scene_revision_origins import inherited
+    if inherited(frozen,'image',scene['scene_id']) is not None:
+        return images._candidates(frozen,scene,manifest_path)
     run = images._run(frozen)
-    bible, plan = (images._read(run/'production'/name) for name in ('visual-bible.json', 'scene-plan.json'))
+    imported=inherited(frozen,'plan','all')
+    if imported is not None:bible,plan=imported['bible'],imported['scene_plan']
+    else:bible, plan = (images._read(run/'production'/name) for name in ('visual-bible.json', 'scene-plan.json'))
     provenance = verify_reference_provenance(frozen, scene, bible, plan)
     settings = load_reference_settings(frozen)
     model = parse_image_generation(settings['model_settings'], 'reference_generation')
-    requests = reference_requests(frozen, scene, build_reference_prompt(scene, bible), provenance['references'], model)
+    requests = reference_requests(frozen, scene, resolve_reference_prompt(frozen, scene, bible, settings['capability']), provenance['references'], model)
     return images._candidates(frozen, scene, manifest_path, _reference=(model, requests, settings))
 
 

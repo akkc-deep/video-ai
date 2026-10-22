@@ -73,6 +73,16 @@ def batch_directory(frozen, batch_id):
 
 def load_committed_plan(frozen, units, timeline):
     """Require all three JIM-02 outputs, then rederive the committed plan."""
+    from ._scene_revision_origins import inherited,run_of
+    inherited_plan = inherited(frozen,'plan','all')
+    if inherited_plan is not None:
+        run = run_of(frozen)
+        if any((run/'production'/name).exists() for name in ('visual-bible.json','scene-plan.json','scene-plan-commit.json')):
+            raise ProductionRefused('owned scene plan competes with revision import')
+        prefix = inherited(frozen,'common','all')
+        if prefix is None or canonical_digest(units)!=canonical_digest(prefix['units']) or canonical_digest(timeline.as_dict())!=canonical_digest(prefix['timeline']):
+            raise ProductionRefused('inherited scene plan common inputs differ')
+        return inherited_plan['bible'],inherited_plan['scene_plan']
     run = _run(frozen); folder = run/'production'
     bible = _read(folder/'visual-bible.json'); plan = _read(folder/'scene-plan.json')
     commit = _read(folder/'scene-plan-commit.json')
@@ -103,6 +113,18 @@ def load_committed_plan(frozen, units, timeline):
 
 def _inspect_original(frozen, path):
     """Full local decode with bounded commands and no log or media writes."""
+    from .scene_revision_records import _context
+    scope=_context.get();cache=None;cache_key=None
+    if scope is not None:
+        from .production_state import ArtifactStamp
+        try:
+            before=hash_file(path)
+            tools=tuple((str(frozen.config.tools[k]),tuple(ArtifactStamp.read(frozen.config.tools[k]).to_dict().values()))
+                        for k in ('ffmpeg','ffprobe'))
+        except OSError as exc:raise ProductionRefused('original image decode unavailable') from exc
+        cache=scope.setdefault('image_decode_cache',{})
+        cache_key=(before.bytes,before.sha256,tools)
+        if cache_key in cache:return deepcopy(cache[cache_key])
     flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
     def execute(args):
         try:
@@ -124,7 +146,12 @@ def _inspect_original(frozen, path):
             raise ValueError()
         for field in ('width', 'height'): integer(stream.get(field), 'decoded '+field, 1)
         execute((frozen.config.tools['ffmpeg'], '-nostdin', '-v', 'error', '-xerror', '-i', path, '-f', 'null', '-'))
-        return dict(width=stream['width'], height=stream['height'], format=stream['codec_name'])
+        value=dict(width=stream['width'], height=stream['height'], format=stream['codec_name'])
+        if cache is not None:
+            after=hash_file(path)
+            if (after.bytes,after.sha256)!=(before.bytes,before.sha256):raise ProductionRefused('original changed during decode')
+            cache[cache_key]=deepcopy(value)
+        return value
     except (KeyError, TypeError, ValueError) as exc:
         raise ProductionRefused('invalid original still image') from exc
 
@@ -137,6 +164,21 @@ def _bound(path, fields, identity):
 
 
 def _candidates(frozen, scene, manifest_path, *, _reference=None):
+    from ._scene_revision_origins import inherited,run_of
+    imported = inherited(frozen,'image',scene['scene_id'])
+    if imported is not None:
+        from .scene_revision_records import require_scene_revision
+        proof = require_scene_revision(frozen)
+        sidecar,_ = proof['imports']['image:'+scene['scene_id']]
+        run = run_of(frozen)
+        canonical = run/'production/jimeng'/scene['scene_id']/'candidates.json'
+        if Path(manifest_path) not in (canonical,Path(sidecar['view_artifact']['path'])):
+            raise ProductionRefused('candidate path is not the registered inherited view')
+        if canonical.parent.exists() and any(canonical.parent.iterdir()): raise ProductionRefused('owned image competes with import')
+        return deepcopy(sidecar['view_artifact']),imported['candidates']
+    from ._scene_revision_origin_images import source_candidate_metadata
+    metadata=source_candidate_metadata(frozen,scene,manifest_path)
+    if metadata is not None:return metadata
     run = _run(frozen); settings = frozen.config.image_generation
     folder = run/'production/jimeng'/scene['scene_id']
     expected_path = run_path(run, folder/'candidates.json')
@@ -354,6 +396,10 @@ def validate_selection(frozen, bible, plan, batch, value, *, accepted_batches):
                 raise ProductionRefused('unknown candidate or changed original SHA256')
             if sid in existing:
                 _equal(choice, {k: existing[sid][k] for k in CHOICE_FIELDS}, 'immutable accepted selection')
+            from ._scene_revision_origins import inherited
+            imported = inherited(frozen,'choice',sid)
+            if imported is not None:
+                _equal(choice, {k: imported[k] for k in CHOICE_FIELDS}, 'immutable inherited selection')
     all_choices = dict(existing); all_choices.update(selected)
     ordered = {s['scene_id']: all_choices[s['scene_id']] for s in plan['scenes'] if s['scene_id'] in all_choices}
     current = {sid: selected[sid] for sid in ids if sid in selected}
@@ -401,7 +447,13 @@ def _load_accepted(frozen, units, timeline, bible, plan, *, before=None):
         if before is not None and index >= before: break
         folder = run/'production/image-selection'/f'image_batch_{index:04d}'
         path = folder/'accepted.json'
-        if not path.exists(): missing = True; continue
+        if not path.exists():
+            from ._scene_revision_readers import inherited_batch
+            imported = inherited_batch(frozen,bible,plan,index,result)
+            if imported is not None:
+                if missing: raise ProductionRefused('inherited accepted batches contain a gap')
+                result.append(imported); continue
+            missing = True; continue
         if missing: raise ProductionRefused('accepted batches contain a gap')
         accepted = _read(path); object_fields(accepted, ACCEPTED_FIELDS, 'accepted image batch')
         batch = _read(folder/'batch.json'); object_fields(batch, BATCH_FIELDS, 'accepted image batch manifest')
@@ -455,6 +507,9 @@ def build_complete_acceptance(frozen, bible, plan, accepted_batches, observation
 
 def require_complete_image_acceptance(frozen, units, timeline):
     bible, plan = load_committed_plan(frozen, units, timeline)
+    from ._scene_revision_readers import inherited_image_group
+    imported = inherited_image_group(frozen,units,timeline,bible,plan)
+    if imported is not None:return imported
     run = _run(frozen); receipt = _read(run/'production/image-selection/complete-acceptance.json')
     object_fields(receipt, COMPLETE_FIELDS, 'complete image acceptance')
     accepted = _load_accepted(frozen, units, timeline, bible, plan)

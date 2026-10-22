@@ -7,8 +7,9 @@ from pathlib import Path
 from uuid import uuid4
 
 from ..adapters.common import AdapterError, HttpClient, strict_json
-from ..adapters.ollama import OllamaFormatError, OllamaPlanner, ollama_body, parse_completed_response
-from ..config import parse_scene_planning, read_json
+from ..adapters.ollama import OllamaFormatError, OllamaPlanner, SceneCapacityError, ollama_body, parse_completed_response
+from ..adapters.ollama_scenes import is_environment_transport
+from ..config import parse_scene_planner_model, parse_scene_planning, read_json
 from ..jimeng_config import STRATEGY
 from ..planning.production_scenes import (build_scene_plan, canonical_digest, make_scene_schema,
                                           paragraphs_from_script, validate_scene_plan)
@@ -133,9 +134,10 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
     identity = dict(base, settings=asdict(settings), schema_sha256=canonical_digest(schema),
                     prompt_sha256=hashlib.sha256(prompt.encode('utf-8')).hexdigest())
     manager = None; handle = None
+    model = parse_scene_planner_model(frozen.config.raw.get('scene_planner_model', 'qwen3:8b'))
     if planner is not None and (not isinstance(planner, OllamaPlanner)
             or planner.http.logger is not logger or planner.http.base_url != frozen.config.services['ollama'].rstrip('/')
-            or planner.cpu_only != frozen.options['cpu_planner']):
+            or planner.cpu_only != frozen.options['cpu_planner'] or planner.model != model):
         raise ProductionRefused('scene planner differs from frozen local binding')
     try:
         last_error = None
@@ -148,9 +150,22 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                 object_fields(intent, ('identity','request_id','prompt','schema','body','context'), 'scene intent')
                 context = intent['context']
                 object_fields(context, ('client_id','scene_identity'), 'scene intent context')
+                original_body = None
+                for grounded,reasoning,keys,environment in ((False,False,False,False),(True,False,False,False),(True,True,False,False),(True,True,True,False),(True,True,True,True)):
+                    try:
+                        candidate=ollama_body(current,schema,cpu_only=frozen.options['cpu_planner'],
+                            scene_planning=True,scene_source_constraints=grounded,scene_reasoning=reasoning,model=model,
+                            scene_key_constraints=keys,scene_environment_constraints=environment)
+                    except SceneCapacityError:
+                        # An unused legacy representation can be larger than
+                        # the durable compact request. It cannot match here.
+                        continue
+                    if _same_json(intent['body'],candidate):
+                        original_body = candidate
+                        break
                 expected = dict(identity=identity, request_id=uid, prompt=current, schema=schema,
-                    body=ollama_body(current,schema,cpu_only=frozen.options['cpu_planner'],scene_planning=True), context=context)
-                if (not _same_json(intent,expected) or not _same_json(context['scene_identity'],identity)
+                    body=original_body, context=context)
+                if (original_body is None or not _same_json(intent,expected) or not _same_json(context['scene_identity'],identity)
                         or not isinstance(context['client_id'],str) or len(context['client_id']) != 32):
                     raise ProductionRefused('original scene planning intent/prompt differs')
             else:
@@ -158,7 +173,7 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                     raise ProductionRefused('committed scene plan lacks original intent')
                 context = dict(client_id=uuid4().hex, scene_identity=identity)
                 intent = dict(identity=identity, request_id=uid, prompt=current, schema=schema,
-                    body=ollama_body(current,schema,cpu_only=frozen.options['cpu_planner'],scene_planning=True), context=context)
+                    body=ollama_body(current,schema,cpu_only=frozen.options['cpu_planner'],scene_planning=True,model=model), context=context)
                 store.save(intent_path,intent)
                 boundary('intent'); store.owned()
                 if planner is None:
@@ -181,7 +196,7 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                         raise ProductionRefused('external Ollama service at '+handle.url)
                     planner = OllamaPlanner(HttpClient(frozen.config.services['ollama'],
                         frozen.options['execution_policy']['ollama_request_seconds'],logger),
-                        cpu_only=frozen.options['cpu_planner'])
+                        cpu_only=frozen.options['cpu_planner'],model=model)
                 def on_intent(path, body):
                     store.owned()
                     if not _same_json(body,intent['body']):
@@ -209,13 +224,22 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
             if outer.get('done_reason') == 'length':
                 raise ProductionRefused('scene planning response truncated; full context/output required, no automatic retry')
             try:
-                content = parse_completed_response(outer,schema=schema,request_id=uid,evidence_paths=evidence)
+                content = parse_completed_response(outer,schema=schema,request_id=uid,evidence_paths=evidence,expected_model=model,
+                    scene_prompt=current if is_environment_transport(intent['body']) else None,wire_schema=intent['body']['format'])
                 bible, plan = build_scene_plan(script,bound_units,timeline,content,settings=settings)
                 validate_scene_plan(script,bound_units,timeline,bible,plan,settings=settings)
             except (OllamaFormatError,ValueError) as exc:
                 last_error = str(exc)
                 if suffix == 'correction':
                     raise ProductionRefused('second completed scene proposal invalid: '+last_error) from exc
+                notes=getattr(exc,'__notes__',())
+                if notes:
+                    detailed=last_error+'\n'+'\n'.join(notes)
+                    saved=folder/'correction.intent.json'
+                    # Reconstruct either historical generic feedback or current
+                    # exact source feedback; the complete intent/body is checked above.
+                    if not saved.exists() or read_json(saved).get('prompt')!=prompt+'\nCORRECTION\n'+last_error:
+                        last_error=detailed
                 continue
             proposal = dict(schema_version=2, identity=identity, request_id=uid,
                             response_sha256=response['response_sha256'], proposal=content)

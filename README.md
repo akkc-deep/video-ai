@@ -1,6 +1,50 @@
 # video-ai
 
-# 带画面核验的自动制作
+## 即梦段落视频：邮件选图、连续观察与发布
+
+`paragraph_jimeng_v1` 已接通官方候选图片、固定基准参考、QQ 邮件选图、Wan 连续片段、逐帧 RealESRGAN 超分和成片。每批图片、每个动态片段及最终影片都需实际查看并提交观察；最终观察通过后显式 `--publish` 才正式交付。完整操作和故障恢复见 [候选图片说明](docs/jimeng-candidates.md)，配置字段见 [配置说明](config/README.md)。
+
+先依据 [jimeng.example.json](config/jimeng.example.json) 准备自己的运行配置，保留已确认的声音、工具、权重及工作流绝对路径，并设置 `production_strategy=paragraph_jimeng_v1`。样例中的 `jimeng_t2i_v40` 仅演示参数，不代表已选择或验证该账号模型。关联画面还需要经核验的参考能力档案和已有 TOS 桶；样例留空的参考设置会返回配置等待。
+
+AK/SK 和 QQ SMTP 授权码只通过运行进程的环境变量提供。样例变量名为 `VIDEO_AI_VOLC_ACCESS_KEY`、`VIDEO_AI_VOLC_SECRET_KEY`、`VIDEO_AI_SMTP_AUTH_CODE`；QQ 发件及收件均为 `318575094@qq.com`，SSL 465。配置只存变量名。将完整 UTF-8 文案保存为独立文件后启动：
+
+```powershell
+.\scripts\start_windows.ps1 make-video --config D:/VideoSi/projects/video-ai/config/jimeng-acceptance.json --script D:/VideoSi/projects/video-ai/inputs/jimeng-acceptance.txt --json
+```
+
+上述两个文件须先由使用者准备。首次调用可能已经生成基准候选并发送邮件。收到结果后，以返回的实际 `run_dir` 续作；选择和观察文件均按返回的模板、身份及路径填写。
+
+```powershell
+$sceneRun = 'D:/VideoSi/projects/video-ai/runs/<返回的实际运行编号>'
+# 查看本批图片后，提交自己的选择文件；每批重复处理。
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --image-selection D:/VideoSi/projects/video-ai/inputs/selection.json --json
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --json
+# 每片完整连续播放后提交观察，普通续作才生成后继片段。
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --clip-observation D:/VideoSi/projects/video-ai/inputs/clip-observation.json --json
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --json
+# 候选整片观看、试听并核对字幕后，提交最终观察。
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --final-observation D:/VideoSi/projects/video-ai/inputs/final-observation.json --json
+# 只有返回 final_review_ready 后执行。
+.\scripts\start_windows.ps1 make-video --run-dir $sceneRun --publish --json
+```
+
+选择及观察命令只消费输入；普通续作推进生成。图片编号选择还须配合完整的整组一致性观察；静帧不能代替动态观看。`failed/unverified` 结论保留问题，不会正式发布。输出保留完整原文、PCM、字幕、原生 16 fps 和完整时长，最终为 1920×1080、硬切；不限制视频总帧数。
+
+| 状态 | 操作 |
+| --- | --- |
+| `awaiting_image_model_configuration` | 补齐参考模型、真实能力档案和 TOS 设置，通过 `--reference-settings PATH` 续作 |
+| `awaiting_image_selection` | 查看实际邮件及图片，填写返回的选择和整组观察模板 |
+| `email_delivery_unknown` | 核对原 Message-ID；需要重发时按说明显式 `--retry-email PATH` |
+| `awaiting_continuity_review` | 完整连续播放片段，对照固定基准，提交 `--clip-observation PATH` |
+| `awaiting_final_review` | 完整观看候选、试听旁白并核对字幕，提交 `--final-observation PATH` |
+| `final_review_ready` | 显式 `--publish` |
+| `delivered` | 使用返回收据核验的 MP4/SRT 路径；同 run 完成续作及重复 publish 只读核验 |
+
+等待退出码为 3；阶段 accepted/ready 或 delivered 为 0，正式完成以 `delivered` 及有效收据为准；blocked/final_review_failed 为 2，failed 为 1，中断为 130。SMTP 接受只证明服务器接受，实际 QQ 收信需使用者确认。未知图片/Wan 提交仅恢复原任务，不自动补单。
+
+换模型、重选基准或重做父片使用 `--revision PATH` 建立独立冻结运行，格式见 [修订说明](docs/jimeng-candidates.md#显式重发与修订)。`revision_ready` 只准备新运行；普通续作新 run 才推进。不原地编辑旧 run 配置或接受记录。省略 `production_strategy` 的配置仍使用下述历史策略。
+
+## 带画面核验的自动制作（历史默认策略）
 
 在 PowerShell 中进入 `D:/code/py/video-ai`，直接提供文案：
 

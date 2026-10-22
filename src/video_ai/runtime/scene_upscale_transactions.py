@@ -290,7 +290,7 @@ def validate_scene_terminal(store,request,graph):
     return terminal
 
 
-def validate_scene_frame_submission(store,request,graph,*,template=None):
+def validate_scene_frame_submission(store,request,graph,*,template=None,media=True):
     """Reconstruct a complete submission from raw evidence without writing or GET."""
     directory,intent,accepted,rows=_load(store,request,graph)
     submission=store.read(directory/'submission.json')
@@ -300,7 +300,11 @@ def validate_scene_frame_submission(store,request,graph,*,template=None):
     if intent is None or accepted is None: raise ProductionRefused('submission lacks accepted intent')
     _identity(submission,_SUBMISSION,request,'submission')
     if submission['intent_sha256']!=canonical_digest(intent) or submission['accepted_sha256']!=canonical_digest(accepted) or submission['prompt_id']!=accepted['prompt_id']: raise ProductionRefused('submission binding differs')
-    store.validate_artifact(submission['history_evidence']); store.validate_artifact(submission['output'])
+    store.validate_artifact(submission['history_evidence'])
+    if media:store.validate_artifact(submission['output'])
+    else:
+        from ._scene_revision_origin_clips import declared_artifact
+        declared_artifact(store,submission['output'])
     selected=[row for row in rows if row['evidence']==submission['history_evidence'] and row['request']['method']=='GET' and row['request']['route'].startswith('/history')]
     if len(selected)!=1: raise ProductionRefused('submission history evidence differs')
     pid,candidate,_=_history_candidates(rows,intent,accepted,graph)
@@ -313,7 +317,7 @@ def validate_scene_frame_submission(store,request,graph,*,template=None):
     from types import SimpleNamespace
     template=template or SimpleNamespace(mapping={'output':{'node_id':'5','collection':'images'}})
     target=_output(store,request,graph,intent,accepted,entry,template)
-    if target is None or store.artifact(target)!=submission['output']: raise ProductionRefused('submission output differs')
+    if target is None or (store.artifact(target)!=submission['output'] if media else str(target)!=submission['output']['path']): raise ProductionRefused('submission output differs')
     return submission
 
 

@@ -135,6 +135,13 @@ def parse_scene_planning(value) -> ScenePlanningSettings:
         raise ConfigError(f'scene_planning: {exc}') from exc
 
 
+def parse_scene_planner_model(value='qwen3:8b') -> str:
+    """Only verified Qwen3 models share the existing scene token budget."""
+    if type(value) is not str or value not in ('qwen3:8b', 'qwen3:14b'):
+        raise ConfigError('scene_planner_model: expected qwen3:8b or qwen3:14b')
+    return value
+
+
 @dataclass(frozen=True)
 class Profile:
     name: str
@@ -290,7 +297,7 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
                                   'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
-                                                       'reference_generation', 'reference_capabilities', 'reference_storage'))
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model'))
     _exact(data['schema_version'], 1, path, 'schema_version')
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
@@ -309,6 +316,10 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
             _object(data['reference_storage'], path, 'reference_storage', (), tuple(STORAGE_REQUIRED)+tuple(STORAGE_DEFAULTS))
     if strategy == 'legacy' and 'scene_planning' in data:
         _error(path, 'scene_planning', 'requires paragraph_jimeng_v1 strategy')
+    if 'scene_planner_model' in data:
+        if strategy != STRATEGY:
+            _error(path, 'scene_planner_model', 'requires paragraph_jimeng_v1 strategy')
+        parse_scene_planner_model(data['scene_planner_model'])
     if strategy == 'legacy' and 'selection_email' in data:
         _error(path, 'selection_email', 'requires paragraph_jimeng_v1 strategy')
     if strategy == STRATEGY:

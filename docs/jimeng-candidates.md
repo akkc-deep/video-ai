@@ -1,8 +1,52 @@
-# 即梦候选图片、段落规划与邮件选图（JIM-01 至 JIM-03）
+# 即梦段落视频、选图、观察与修订
 
 `config/jimeng.example.json` 显式启用 `paragraph_jimeng_v1`。它只保存 AK/SK 的环境变量名；真实值从运行进程环境读取，不能写进 JSON。模型使用智能视觉 AK/SK，不能填方舟 API Key。
 
-JIM-01 提供可恢复的候选图片 Python 接口，JIM-02 增加独立段落画面规划 API，JIM-03 提供准备运行的邮件通知与选图续作。新文案的完整视频协调器仍待后续任务；对尚未准备批次的新策略调用 `make-video` 会在进入历史 SDXL 流程前明确返回 blocked。旧配置默认制作行为保留。
+`make-video` 现已接通新文案、配音、段落画面、邮件选图、Wan 源片、超分和候选合成。每次遇到人工选择或观察门槛就返回；只有最终观察通过后显式发布才产生正式交付。旧配置默认制作行为保留。
+
+## 完整 CLI 流程
+
+先依据 [配置说明](../config/README.md#即梦策略实际配置) 准备自己的配置及 UTF-8 原文，保留声音、权重和工作流的实际绝对路径，并在执行进程设置凭证环境变量。示例 req_key 不代表用户已选择的真实模型，空参考设置表示等待。实际运行会使用配置中的账号和模型；首次调用可能已生成首批基准候选，不是纯规划预览。以下 `$sceneRun` 填命令输出的运行目录，观察和选择文件须由实际查看后填写，并逐批、逐片重复处理。
+
+```powershell
+. ./scripts/bootstrap.ps1
+Initialize-VideoAiEnvironment 'scene-production'
+& $VideoAiPython -B -m video_ai make-video --config D:/VideoSi/projects/video-ai/config/jimeng-acceptance.json --script D:/VideoSi/projects/video-ai/inputs/jimeng-acceptance.txt --json
+$sceneRun = 'D:/VideoSi/projects/video-ai/runs/<命令返回的运行编号>'
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --image-selection D:/VideoSi/input/selection.json
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --clip-observation D:/VideoSi/input/clip-observation.json
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --final-observation D:/VideoSi/input/final-observation.json
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --publish
+```
+
+选择或观察命令只消费该文件；再运行普通续作才继续生成。每个批次、父片和叶片都按返回模板分别处理。参考配置未齐时，可在普通续作追加 `--reference-settings D:/VideoSi/input/reference-settings.json`。凭证只通过环境变量提供。最终观察返回 `final_review_ready` 后才执行示例最后的 `--publish`；以结果和收据给出的实际 MP4/SRT 路径为准，不猜路径。
+
+| 返回状态 | 下一步 |
+| --- | --- |
+| `awaiting_image_model_configuration` | 补齐参考模型/能力/存储设置后续作 |
+| `awaiting_image_selection` | 查看邮件候选，填写返回的选择/整组观察模板 |
+| `email_delivery_unknown` | 核对原 SMTP 尝试；需要重发时用显式 retry |
+| `awaiting_continuity_review` | 完整播放返回片段，提交逐片观察后续作 |
+| `awaiting_final_review` | 完整播放候选并听配音、查字幕，提交最终观察 |
+| `final_review_ready` | 显式 `--publish` |
+| `delivered` | 使用收据验证的 MP4/SRT 路径；重复续作只读核验 |
+
+等待退出码为 3；阶段 ready/accepted 和 delivered 为 0，阶段成功不代表已交付。blocked/final_review_failed 为 2、failed 为 1、interrupted 为 130。失败或未知的付费任务不会自动补单。
+
+## 显式重发与修订
+
+SMTP retry JSON 精确包含 `schema_version=2/run_id/batch_id/part/expected_attempt_sha256/reason`；摘要为原 `attempt_*/intent.json` 文件的 SHA256。仅核对后执行：
+
+```powershell
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --retry-email D:/VideoSi/input/retry-email.json
+& $VideoAiPython -B -m video_ai make-video --run-dir $sceneRun --revision D:/VideoSi/input/revision.json
+```
+
+修订请求格式见 [JIM-07 设计](task-designs/JIM-07-design.md) 的“修订请求和内容依赖图”。`kind` 支持 `reselect_images/regenerate_images/regenerate_clips/reconfigure`；绑定原 run、原 options 文件 SHA、完整 revision UUID、带时区请求时间和理由。目标配置只在 `reconfigure` 请求中指定。
+
+`revision_ready` 只准备并冻结新目录，尚未产生新推理或邮件；随后对返回的新 run 普通续作。重选图片需要在新批次中再次确认，图片改变需要新的整组观察；仅片段返工也会重新合成候选并要求新的最终观察。未受影响的已接受媒体通过显式证明和字节副本继承，来源保持只读。未知原付费任务或仍需处理的未知邮件必须先回原运行核对。
 
 ## 配置
 
@@ -45,7 +89,7 @@ result = generate_candidates(frozen, 'scene_0001', '横向构图，湖水边的�
 
 - 有 task_id：只查原任务。查询失败或下载失败后再次调用相同入口；已核验原图不重复下载。
 - 有 intent 但无 task_id：返回 `submit_unknown`，普通续作不再提交。先依据请求时间、场景和服务端记录人工核对；本阶段没有自动补单或手填 task_id 的入口，不要删除意图强行重跑。
-- `expired/not_found/failed`：保存明确终态，不自动补图。需要新的尝试时另建 run，保留原运行证据。
+- `expired/not_found/failed`：保存明确终态，不自动补图。需要新的尝试时显式准备修订运行，保留原运行证据。
 - 图片或冻结输入变化、跨 run/scene/prompt/model：明确拒绝复用。
 - 下载 URL 到期：续作从原任务重新查询 URL；若服务端已过期，保留已有图片及终态。
 
@@ -79,7 +123,7 @@ bible, plan = produce_scene_plan(
 
 scene 请求固定 32768 token 上下文、8192 输出预算及 2048 模板余量，用完整 prompt/schema 的 UTF-8 字节数作保守输入上界，超限在请求前明确停止。该检查可能比实际 tokenizer 更严格，长材料也不会被偷偷裁短。实际本机模型启动及硬件容量仍需部署时验证。
 
-共享实体、外观变体与环境组各自绑定最早实际画面的固定基准；scene 记录引用用途、依赖和稳定拓扑批次。服装与场景事实不能提前引用未来剧情。规划结构校验不构成图片或视频一致性验收。长 scene 只增加 clip，不增加图片；6 秒上限下，200 帧画面保留 `[93,92,15]` 帧，分别生成 `[93,93,17]` 帧，续片丢首衔接帧、尾片裁掉多余帧。父片末帧输入与实际观察由后续 JIM-05 实施。
+共享实体、外观变体与环境组各自绑定最早实际画面的固定基准；scene 记录引用用途、依赖和稳定拓扑批次。服装与场景事实不能提前引用未来剧情。规划结构校验不构成图片或视频一致性验收。长 scene 只增加 clip，不增加图片；6 秒上限下，200 帧画面保留 `[93,92,15]` 帧，分别生成 `[93,93,17]` 帧，续片丢首衔接帧、尾片裁掉多余帧。父片实际保留末帧续接与逐片过程观察已接入公共流程，完整视频无总帧上限。
 
 ## 邮件通知与选择续作
 
@@ -109,7 +153,7 @@ video-ai make-video --run-dir "D:/VideoSi/projects/video-ai/runs/RUN" --image-se
 video-ai make-video --run-dir "D:/VideoSi/projects/video-ai/runs/RUN" --json
 ```
 
-将 `RUN` 替换为实际运行名。入口要求持久 `production/units.json`、`timeline.json` 的有效同运行报告及 scene commit；缺少输入时停止，不隐式重新配音、规划或出图。新文案或旧策略不能组合 `--image-selection`。返回独立 schema=2 JSON：`awaiting_image_selection`、`email_delivery_unknown` 退出码 3，`image_batch_accepted` 为 0，`blocked` 为 2，`failed` 为 1，`interrupted` 为 130。单批接受不代表正式视频交付。
+将 `RUN` 替换为实际运行名。选择消费入口要求持久 `production/units.json`、`timeline.json` 的有效同运行报告及 scene commit；缺少输入时停止，不隐式重新配音、规划或出图。`--image-selection` 须与新策略已有 `--run-dir` 组合，不能与新文案组合。返回独立 schema=2 JSON：`awaiting_image_selection`、`email_delivery_unknown` 退出码 3，`image_batch_accepted` 为 0，`blocked` 为 2，`failed` 为 1，`interrupted` 为 130。单批接受不代表正式视频交付。
 
 `production/image-selection/<batch_id>/` 保存批次、选择骨架、邮件原文 `.eml`、发送意图/回执、按原始字节 SHA256 保存的用户提交副本和不可变 `accepted.json`。只接受当前计划/批次/候选/原图的确切身份。已经接受的选择不能换图；需要重选基准时创建新修订运行，保留历史证据。
 
@@ -135,7 +179,7 @@ video-ai make-video --run-dir "D:/VideoSi/projects/video-ai/runs/RUN" --json
 
 凭证缺失、连接/认证或收件人拒绝发生在 DATA 意图之前时，可以修复后普通续作。修复 host/port/密码环境变量名时，显式传入 `email_settings` 的完整或默认补全设置到 `prepare_image_batch`；收发地址、SSL 和 MIME 限额必须保持。邮件修复不会调用出图接口。
 
-已有成功回执的页不会重发；有意图而结果不明时返回 `email_delivery_unknown`，普通续作和选择文件都不能解除它。核对原尝试后，只有显式 Python `retry_notification` 可以再发送该页：
+已有成功回执的页不会重发；有意图而结果不明时返回 `email_delivery_unknown`，普通续作和选择文件都不能解除它。核对原尝试后，可使用上面的 CLI `--retry-email PATH`，或显式 Python `retry_notification` 再发送该页：
 
 ```python
 from video_ai.runtime.production_image_selection import retry_notification
@@ -159,6 +203,8 @@ result = retry_notification(
 
 `reference_storage` 必填 `provider="volcengine_tos"`、实际 `bucket`、`region`、对应的 `https://tos-<region>.volces.com` endpoint、`access_key_env`、`secret_key_env`。最后两项填写环境变量名，AK/SK 的实际值仅在进程环境设置。可选 `key_prefix` 默认 `video-ai-references`，`url_ttl_seconds/download_margin_seconds/clock_skew_seconds/request_timeout_seconds` 默认 `3600/120/60/60`。TTL 最大 604800 秒，必须覆盖模型 task timeout、下载余量和时钟偏差；原图数量、格式、字节、尺寸和最终提示词长度都在付费请求前校验。程序不创建桶或修改访问权限。
 
+`max_prompt_bytes` 按 UTF-8 字节检查。首次参考请求若完整追溯 JSON 超限，会尝试保留全部视觉描述、事实和创作选择的紧凑表示；重复值保留各自归属，原始引用仍完整保存在视觉设定文件中。仍超限就等待配置，不截断字段或提高冻结上限。已有请求始终恢复原提示词；已完成来源记录缺失时停止，不重新出图。
+
 已有 JIM-03 运行缺少这些字段时，可以写一份只含三个根字段的本地 JSON：`reference_generation`、`reference_capabilities`、`reference_storage`，然后显式传入 `reference_settings_path`。只能补原冻结配置中缺失/null 的字段，不能修改已冻结模型、基准或已有设置。首次有效配置和能力原始字节保存于运行内，随后恢复无需原外部档案；再次提供不同配置将拒绝。凭证环境变量的值可以轮换。
 
 ```python
@@ -173,7 +219,7 @@ result = produce_reference_batch(
 print(result.to_dict())
 ```
 
-此调用会访问 TOS、付费生成关联候选并发送选图邮件；在准备真实配置和基准接受后使用。所有更早批次必须已经接受。缺配置返回 `awaiting_image_model_configuration`（退出码 3），候选邮件发出后仍为 `awaiting_image_selection`。继续使用前述选择文件/CLI 提交编号及实际整组观察，再调用参考批次入口复核；全部通过后返回 `images_ready`（退出码 0）和 `wan_inputs` 路径。其他等待、失败和中断码沿用本阶段结果定义。完整新文案协调入口留给 JIM-07，此处是准备运行的 Python API。
+此调用会访问 TOS、付费生成关联候选并发送选图邮件；在准备真实配置和基准接受后使用。所有更早批次必须已经接受。缺配置返回 `awaiting_image_model_configuration`（退出码 3），候选邮件发出后仍为 `awaiting_image_selection`。继续使用前述选择文件/CLI 提交编号及实际整组观察，再调用参考批次入口复核；全部通过后返回 `images_ready`（退出码 0）和 `wan_inputs` 路径。其他等待、失败和中断码沿用本阶段结果定义。普通 CLI 续作会按相同门槛调用此阶段。
 
 `production/reference-images/settings.json` 绑定参考模型、能力档案和存储位置；`reference-storage/<sha256>/intent.json` 与 `object.json` 绑定原图、内容寻址对象及实际字节验证；每个关联 scene 的 `provenance.json` 绑定用途、共享提示词和请求。每请求的 `submit-evidence.json` 绑定完整 intent 的规范摘要，读取时拒绝单独改动请求体、URL 摘要或时间证据。预签名 URL 仅在内存使用，持久记录只保存其 SHA256 和时间。已有生成 intent 却没有 task_id 时停止为 `submit_unknown`；已有 task_id 只查询原任务；邮件失败只恢复通知，不重新出图。
 
@@ -216,7 +262,7 @@ review = consume_scene_clip_observation(
 
 `production/scene-clips/` 保存全局输入、每片 graph/request/intent、原始 HTTP、原 prompt UUID、原生成视频、裁片、帧映射、媒体准备收据、末帧和原始观察副本。提交结果不明时普通续作仅查询原任务；不存在自动第二次 POST。已受理任务的输出或关键来源丢失会停止，不能以重新推理恢复。`blocked/failed/interrupted` 的退出码分别为 2/1/130，错误包含可查证据路径。完整本地证据回放及仅观察入口不启动服务或重新编码。
 
-所有片段和观察通过后返回 `source_clips_ready`（退出码 0），`source_clips` 指向 `production/scene-clips/complete.json`。下游须调用 `require_scene_clip_acceptance(frozen, units, timeline)` 只读重验原图、原事务、实际媒体、父链、逐帧/样本覆盖和观察；不能仅凭文件存在使用。此结果是源片就绪，随后使用下列 prepared-run API 进行超分、合成与交付。这里未新增 CLI 参数，完整新文案协调仍留给 JIM-07。
+所有片段和观察通过后返回 `source_clips_ready`（退出码 0），`source_clips` 指向 `production/scene-clips/complete.json`。下游须调用 `require_scene_clip_acceptance(frozen, units, timeline)` 只读重验原图、原事务、实际媒体、父链、逐帧/样本覆盖和观察；不能仅凭文件存在使用。此结果是源片就绪，普通 CLI 续作会继续超分与候选合成，也可使用下列 prepared-run API。
 
 ## 保留帧超分与候选合成
 
@@ -261,7 +307,7 @@ print(delivery.to_dict())
 
 `consume_scene_final_observation` 只接受观察，不启动推理、不编码、不自动交付。`unverified` 保持 `awaiting_final_review`；明确 `failed` 返回 `final_review_failed`（退出码 2），保留候选并阻断该版本，不能用后来的 passed 覆盖失败历史。有效通过返回 `final_review_ready`（退出码 0），仍需显式交付。
 
-正式交付按字节复制已接受的 MP4/SRT 到冻结路径，拒绝覆盖他人已有输出，最后发布 schema=2 正式收据。只有全部输出和原始接受证据核验一致才返回 `delivered`（退出码 0）。候选、编码、字幕、PCM、单帧、原图或观察身份改变都会使下游接受失效；修订和局部返工由后续 JIM-07 提供。
+正式交付按字节复制已接受的 MP4/SRT 到冻结路径，拒绝覆盖他人已有输出，最后发布 schema=2 正式收据。只有全部输出和原始接受证据核验一致才返回 `delivered`（退出码 0）。候选、编码、字幕、PCM、单帧、原图或观察身份改变都会使下游接受失效；修订和局部返工使用上文的显式 `--revision` 流程。
 
 ## 媒体阶段恢复与只读核验
 

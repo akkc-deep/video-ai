@@ -105,10 +105,8 @@ def _capture_composition_guard(context,candidate):
         directory=store.path(relative); inventory={str(path) for path in directory.rglob('*.json')}
         _bind_inventory(store,directory,inventory)
         for path in inventory: store.bind_artifact(store.artifact(path))
-    for artifact in store.guard_paths.values(): base.bind_artifact(artifact)
-    for directory,inventory in store.guard_directories.items(): _bind_inventory(base,directory,inventory)
-    base.guard_empty_paths.update(store.guard_empty_paths)
-    base.guard_absent_paths.update(store.guard_absent_paths)
+    from .scene_read_admission import merge_bound_guards
+    merge_bound_guards(base,store)
     for key,stamp in store.guard_tool_stamps.items():
         if key in base.guard_tool_stamps and base.guard_tool_stamps[key]!=stamp:
             raise ProductionRefused('previous composition tool stamp changed')
@@ -244,6 +242,9 @@ def _commit(context,*,write,logger=None):
 def require_scene_composition_record(context):
     """Rebuild every original binding without writing missing records or media."""
     try:
+        from .scene_read_admission import cached_admission,remember_admission
+        cached=cached_admission(context,'composition')
+        if cached is not None:return cached
         _prepare(context)
         store=context['composition_store']
         snapshot=store.snapshot_json(files=tuple(store.path(name) for name in COMPOSITION_RECORDS),
@@ -253,6 +254,7 @@ def require_scene_composition_record(context):
         store.adopt_json_snapshot(snapshot)
         _capture_composition_guard(context,candidate)
         store.verify_admission_snapshot(snapshot)
+        remember_admission(context,'composition',candidate)
         return candidate
     except ProductionRefused: raise
     except (OSError,ValueError,TypeError,KeyError,AttributeError,subprocess.SubprocessError) as exc:
@@ -333,7 +335,8 @@ def _produce(context,logger):
     _capture_composition_guard(context,candidate)
     from .scene_final_observations import build_scene_final_observation_template
     clips=context['scene_clips']['clips']
-    requests=[json.loads((store.run_dir/'production/scene-clips'/c['clip_id']/'request.json').read_text(encoding='utf-8')) for c in clips]
+    from ._scene_revision_readers import final_comparison_request
+    requests=[final_comparison_request(context,c['clip_id']) for c in clips]
     template=build_scene_final_observation_template(context['frozen'],context['units'],timeline,candidate,
         context['scene_clips'],context['upscaled'],context['image_acceptance'],requests)
     store.verify_global(); path=store.write('final-observation-template.json',template)
@@ -345,6 +348,10 @@ def _produce(context,logger):
         candidate=Path(candidate['candidate']['path']),final_observation_template=path,log_dir=logger.root)
 
 
+from .scene_revision_records import revision_validation
+
+
+@revision_validation
 def produce_scene_composition(frozen,units,timeline,*,paths,logger,lock=None):
     run=None; acquired=None; result=None; status='failed'; error=None
     try:

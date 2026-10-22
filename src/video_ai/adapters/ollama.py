@@ -3,9 +3,15 @@ from copy import deepcopy
 import json
 import os
 import re
+from ..config import parse_scene_planner_model
 from .common import AdapterError, FailureKind, HttpClient, JSON_LIMIT, strict_json
 from .ollama_units import project_units_schema, restore_units_content, UNITS_COVERAGE_NOTE
 from .ollama_visuals import is_model_visual,project as project_visuals,restore as restore_visuals
+from .ollama_scenes import is_environment_transport, project_scene_environment, restore_scene_content
+
+
+class SceneCapacityError(ValueError):
+    """The complete scene request cannot fit the fixed context budget."""
 
 
 def _tuple_keys(schema):
@@ -158,18 +164,68 @@ def ollama_schema(schema, *, units_coverage=False):
     return _project_schema(schema,True)
 
 
-def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False):
+def _scene_source_constraints(prompt, schema, *, key_constraints=True):
+    """Constrain scene citations to real complete units without rewriting input."""
+    marker='\nSCENE_INPUT_JSON\n'
+    if marker not in prompt:return prompt,schema
+    payload,_=json.JSONDecoder().raw_decode(prompt.split(marker,1)[1])
+    text=payload['decoded_text']
+    sources=[]
+    for span in payload['finalized_units']['spans']:
+        if span['kind']!='speech':continue
+        start,end=span['start'],span['end']
+        if (type(start) is not int or type(end) is not int or not 0<=start<end<=len(text)
+                or span['text']!=text[start:end]):
+            raise ValueError('scene source catalog differs from complete original text')
+        sources.append(dict(unit_id=span['unit_id'],text_start=start,text_end=end,quote=span['text']))
+    if not sources:raise ValueError('scene source catalog has no speech units')
+    fields={'unit_id','text_start','text_end','quote'}
+    def constrain(node):
+        if isinstance(node,list):return [constrain(item) for item in node]
+        if not isinstance(node,dict):return node
+        if node.get('type')=='object' and set(node.get('properties',{}))==fields:
+            return dict(deepcopy(node),enum=deepcopy(sources))
+        result={key:constrain(value) for key,value in node.items()}
+        if key_constraints and result.get('type')=='object':
+            props=result.get('properties',{})
+            for key in ('key','entity_key','scene_group_id'):
+                if props.get(key,{}).get('type')=='string':
+                    props[key].update(pattern='^[A-Za-z][A-Za-z0-9_]{0,63}$',maxLength=64)
+            for key in ('entity_ids','variant_ids'):
+                item=props.get(key,{}).get('items',{})
+                if item.get('type')=='string':
+                    item.update(pattern='^[A-Za-z][A-Za-z0-9_]{0,63}$',maxLength=64)
+        return result
+    note=('\nSOURCE_CITATION_RULES\nChoose complete original-unit citations from the grammar; '
+          'offsets are absolute. Shared fixed appearance and environment facts must already '
+          'be supported at their FIRST scene of use; cite that scene or earlier units. '
+          'Later actions belong to their scene, not to shared fixed attributes.\n')
+    if key_constraints:
+        note+=('Use short ASCII identifiers for keys and references. Each entity/variant/group '
+               'reference must exactly match a declared key; explanations belong in description fields.\n')
+    return prompt+note,constrain(schema)
+
+
+def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False,scene_source_constraints=True,scene_reasoning=True,model='qwen3:8b',scene_key_constraints=True,scene_environment_constraints=True):
+    model=parse_scene_planner_model(model)
+    if not scene_planning and model!='qwen3:8b':
+        raise ValueError('alternate planner model requires scene planning')
     note=UNITS_COVERAGE_NOTE if units_coverage and project_units_schema(schema) is not None else ''
     if note:
         marker='\nINPUT_JSON\n'
         if marker in prompt:
             prefix,payload=prompt.split(marker,1);prompt=prefix+note+marker+payload
         else:prompt=note+'\n'+prompt
-    body=dict(model='qwen3:8b',prompt=prompt+(_GROUNDING_NOTE if _has_shared_grounding(schema) else ''),
+    body=dict(model=model,prompt=prompt+(_GROUNDING_NOTE if _has_shared_grounding(schema) else ''),
         stream=False,format=ollama_schema(schema,units_coverage=units_coverage),keep_alive=0,
         think=False,options=dict(temperature=0,num_predict=8192))
     if cpu_only:body['options']['num_gpu']=0
     if scene_planning:
+        body['think']=scene_reasoning
+        if scene_source_constraints:
+            body['prompt'],body['format']=_scene_source_constraints(body['prompt'],body['format'],key_constraints=scene_key_constraints)
+        if scene_environment_constraints:
+            body['prompt'],body['format']=project_scene_environment(body['prompt'],body['format'])
         # qwen3 byte-level tokenization cannot exceed one token per UTF-8
         # byte. Count schema bytes too, even though grammar need not enter
         # the prompt, and reserve template/system plus the entire output.
@@ -179,7 +235,7 @@ def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planni
         upper=(len(body['prompt'].encode('utf-8'))+
                len(json.dumps(body['format'],ensure_ascii=False,allow_nan=False).encode('utf-8'))+2048)
         if upper+body['options']['num_predict']>body['options']['num_ctx']:
-            raise ValueError('scene planning context exceeds full-input capacity; no truncation or automatic retry')
+            raise SceneCapacityError('scene planning context exceeds full-input capacity; no truncation or automatic retry')
     return body
 
 
@@ -264,8 +320,8 @@ def _validate_request_id(request_id):
         raise ValueError('invalid structured generation request ID')
 
 
-def _completed_wire(outer, evidence_paths, *, production=False,reject_truncated=False):
-    if (not isinstance(outer,dict) or outer.get('done') is not True or outer.get('model')!='qwen3:8b'
+def _completed_wire(outer, evidence_paths, *, production=False,reject_truncated=False,expected_model='qwen3:8b'):
+    if (not isinstance(outer,dict) or outer.get('done') is not True or outer.get('model')!=expected_model
             or not isinstance(outer.get('response'),str) or not production and not outer['response'].strip()):
         raise AdapterError(FailureKind.ambiguous,'unconfirmed Ollama completion/model/response',evidence_paths)
     if reject_truncated and outer.get('done_reason')=='length':
@@ -278,8 +334,11 @@ def _completed_wire(outer, evidence_paths, *, production=False,reject_truncated=
         raise OllamaFormatError(str(exc),evidence_paths) from exc
 
 
-def _completed_content(content, schema, evidence_paths):
+def _completed_content(content, schema, evidence_paths, *, scene_prompt=None, wire_schema=None):
     try:
+        if scene_prompt is not None:
+            _response_schema_check(content,wire_schema)
+            content=restore_scene_content(content,scene_prompt)
         content=ollama_content(content,schema)
         _response_schema_check(content,schema)
         if _has_shared_grounding(schema,bounded=True) or is_model_visual(schema):_reject_repeated_visuals(content,schema)
@@ -347,18 +406,23 @@ def _response_schema_check(value,schema):
         for i,item in enumerate(value): _response_schema_check(item,prefix[i] if i<len(prefix) else schema.get('items',True))
 
 
-def parse_completed_response(outer, *, schema, request_id, evidence_paths):
+def parse_completed_response(outer, *, schema, request_id, evidence_paths, expected_model='qwen3:8b', scene_prompt=None, wire_schema=None):
     """Parse confirmed durable evidence without issuing a model request."""
     _validate_request_id(request_id)
+    expected_model=parse_scene_planner_model(expected_model)
+    if not request_id.startswith('scene_plan_') and expected_model!='qwen3:8b':
+        raise ValueError('alternate planner model requires scene planning')
     if not isinstance(schema,dict): raise ValueError('schema must be an object')
     return _completed_content(_completed_wire(outer,evidence_paths,production=request_id.startswith(('units_batch_','storyboard_batch_','scene_plan_')),
-        reject_truncated=_has_shared_grounding(schema,bounded=True) or is_model_visual(schema)),schema,evidence_paths)
+        reject_truncated=_has_shared_grounding(schema,bounded=True) or is_model_visual(schema),expected_model=expected_model),schema,evidence_paths,
+        scene_prompt=scene_prompt,wire_schema=wire_schema)
 
 
 class OllamaPlanner:
-    def __init__(self,http: HttpClient, *, cpu_only=False):
+    def __init__(self,http: HttpClient, *, cpu_only=False, model='qwen3:8b'):
         if type(cpu_only) is not bool:raise ValueError('cpu_only must be boolean')
         self.http=http;self.cpu_only=cpu_only
+        self.model=parse_scene_planner_model(model)
 
     def _save(self,name,data):
         path=self.http.logger.save_json(name,data)
@@ -378,7 +442,7 @@ class OllamaPlanner:
         evidence=[]
         body=ollama_body(prompt,schema,cpu_only=self.cpu_only,
             units_coverage=intent_context is not None and request_id.startswith('units_batch_'),
-            scene_planning=request_id.startswith('scene_plan_'))
+            scene_planning=request_id.startswith('scene_plan_'),model=self.model)
         try:
             intent=dict(request_id=request_id,body=body)
             if intent_context is not None:
@@ -390,12 +454,13 @@ class OllamaPlanner:
             outer=self.http.parse_json(response,method='POST',stage='storyboard',unit_id=request_id)
             evidence.append(self._save(f'storyboard/{request_id}.outer.json',outer))
             try:
-                content=_completed_wire(outer,evidence,production=intent_context is not None,reject_truncated=_has_shared_grounding(schema,bounded=True) or is_model_visual(schema))
+                content=_completed_wire(outer,evidence,production=intent_context is not None,reject_truncated=_has_shared_grounding(schema,bounded=True) or is_model_visual(schema),expected_model=self.model)
             except OllamaFormatError as exc:
                 evidence.append(self._save(f'storyboard/{request_id}.format-error.json',dict(message=str(exc))))
                 raise OllamaFormatError(str(exc),evidence) from exc
             evidence.append(self._save(f'storyboard/{request_id}.wire-content.json',content))
-            try:content=_completed_content(content,schema,evidence)
+            try:content=_completed_content(content,schema,evidence,
+                scene_prompt=prompt if is_environment_transport(body) else None,wire_schema=body['format'])
             except OllamaFormatError as exc:
                 evidence.append(self._save(f'storyboard/{request_id}.format-error.json',dict(message=str(exc))))
                 raise OllamaFormatError(str(exc),evidence) from exc

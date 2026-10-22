@@ -61,10 +61,12 @@ class _Media:
         self.config = config
         self.lock = self.run/'.make-video.lock'
         self.owner = read_json(self.lock) if self.lock.exists() else None
+        self.revision_guard = None
 
     def owned(self):
         if self.owner is not None and (not self.lock.is_file() or read_json(self.lock) != self.owner):
             raise ProductionRefused('selection media lost held run lock ownership')
+        if self.revision_guard is not None:self.revision_guard.verify_captured_bytes()
 
     def local(self, path):
         return run_path(self.run, path)
@@ -127,7 +129,36 @@ class _Media:
         return self.inspect(target)
 
 
+def _inherited_sources(batch,store):
+    options=store.run/'production/options.json'
+    if not batch['baseline_bindings'] or not options.is_file():return {}
+    saved=read_json(options)
+    if not isinstance(saved,dict) or 'scene_revision' not in saved:return {}
+    from ..runtime.production_inputs import load_frozen_inputs
+    from ..runtime.scene_revision_records import require_scene_revision,require_revision_import
+    from ..runtime.scene_pipeline_records import common_inputs
+    from ..runtime import image_selection_records as records
+    from ..runtime._scene_revision_readers import canonical_choice
+    frozen=load_frozen_inputs(store.run);proof=require_scene_revision(frozen)
+    units,timeline,_=common_inputs(frozen)
+    bible,plan=records.load_committed_plan(frozen,units,timeline)
+    records.validate_batch(frozen,units,timeline,bible,plan,batch)
+    store.revision_guard=proof['guard'];result={}
+    for binding in batch['baseline_bindings']:
+        sid=binding['scene_id']
+        if 'choice:'+sid not in proof['imports']:continue
+        choice=canonical_choice(frozen,sid,proof)
+        if (choice['candidate_id'],choice['sha256'])!=(binding['candidate_id'],binding['sha256']):
+            raise ProductionRefused('inherited mail baseline choice differs')
+        image=require_revision_import(frozen,'image',sid,context=proof)
+        candidate=next(c for c in image['candidates'] if (c['candidate_id'],c['sha256'])==(choice['candidate_id'],choice['sha256']))
+        result[sid]=dict(candidate,scene_id=sid)
+    proof['guard'].verify_captured_bytes()
+    return result
+
+
 def _sources(batch, store):
+    inherited=_inherited_sources(batch,store)
     current = []
     for scene in batch['scenes']:
         sid = _safe(scene['scene_id'], 'scene ID')
@@ -163,6 +194,7 @@ def _sources(batch, store):
                                          for k in ('path', 'bytes', 'sha256', 'req_key', 'request_id', 'task_id')):
                     raise ProductionRefused('accepted baseline candidate identity differs')
                 matches.append(dict(rows[0], scene_id=sid))
+        if not matches and sid in inherited:matches.append(inherited[sid])
         if len(matches) != 1:
             raise ProductionRefused('baseline has no unique accepted original identity')
         baseline.append(matches[0])

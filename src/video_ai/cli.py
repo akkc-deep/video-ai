@@ -36,7 +36,13 @@ def main(argv: list[str] | None = None) -> int:
     automatic.add_argument('--output', metavar='PATH')
     automatic.add_argument('--cpu-planner', action='store_true', default=None)
     automatic.add_argument('--image-model', metavar='REQ_KEY', help='image model for a new Jimeng run')
-    automatic.add_argument('--image-selection', metavar='PATH', help='consume image choices in a prepared Jimeng run')
+    action_group=automatic.add_mutually_exclusive_group()
+    action_group.add_argument('--image-selection', metavar='PATH', help='consume image choices in a prepared Jimeng run')
+    for name in ('clip-observation','final-observation','retry-email','revision'):
+        action_group.add_argument('--'+name,metavar='PATH')
+    action_group.add_argument('--publish',action='store_true',help='publish only the exact accepted scene candidate')
+    automatic.add_argument('--reference-settings',metavar='PATH')
+    automatic.add_argument('--email-settings',metavar='PATH')
     automatic.add_argument('--json', action='store_true')
     for name in ('run', 'resume'):
         flow = commands.add_parser(name, help='coordinate stages with fresh recovery and explicit author checkpoints')
@@ -126,13 +132,25 @@ def main(argv: list[str] | None = None) -> int:
             from .production import make_video
             result = make_video(options.config, script=options.script, text=options.text, run_dir=options.run_dir,
                                 output_path=options.output, cpu_planner=options.cpu_planner, image_model=options.image_model,
-                                image_selection=options.image_selection)
+                                image_selection=options.image_selection,reference_settings=options.reference_settings,
+                                email_settings=options.email_settings,clip_observation=options.clip_observation,
+                                final_observation=options.final_observation,retry_email=options.retry_email,
+                                revision=options.revision,publish=options.publish)
             if options.json:
                 print(json.dumps(result.to_dict(), ensure_ascii=False, allow_nan=False))
             else:
-                print(f'{result.status}: stage={result.active_stage}; run={result.run_dir}')
+                print(f'{result.status}: stage={getattr(result,"active_stage",None)}; run={result.run_dir}')
                 if getattr(result,'movie',None) is not None: print(f'MP4: {result.movie}\nSRT: {result.subtitle}\nReceipt: {result.receipt_path}')
                 if getattr(result,'selection_template',None) is not None: print(f'Image selection: {result.selection_template}')
+                if getattr(result,'selection_result',None) is not None and result.selection_result.get('selection_template'):
+                    print(f'Image selection: {result.selection_result["selection_template"]}')
+                for template in getattr(result,'observation_templates',[]):print(f'Clip observation: {template}')
+                if getattr(result,'candidate',None) is not None:print(f'Candidate: {result.candidate}')
+                if getattr(result,'final_observation_template',None) is not None:print(f'Final observation: {result.final_observation_template}')
+                if result.status=='delivered' and getattr(result,'delivery_receipt',None) is not None:
+                    from .config import read_json
+                    receipt=read_json(result.delivery_receipt)
+                    print(f'MP4: {receipt["movie"]["path"]}\nSRT: {receipt["subtitle"]["path"]}\nReceipt: {result.delivery_receipt}')
                 if result.error is not None: print(result.error['message'], file=sys.stderr)
                 if result.run_dir is not None:
                     print(f'Resume: video-ai make-video --run-dir "{result.run_dir}"')

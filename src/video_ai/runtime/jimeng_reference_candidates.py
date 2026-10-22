@@ -69,10 +69,9 @@ def _submission_guard(store, request, evidence, model, settings):
         folder = store.run/'production/reference-storage'/reference['sha256']
         intent = images._read(folder/'intent.json')
         source = intent['source']
+        if any(source[k]!=reference[k] for k in ('bytes','sha256')):
+            raise ProductionRefused('reference storage source differs from selected original')
         snapshots.append((run_path(store.run, source['path']), source['bytes'], source['sha256']))
-        cid = reference['candidate_id']; rid = cid.rsplit('_image_', 1)[0]
-        selected = run_path(store.run, store.run/'production/jimeng'/reference['scene_id']/rid/(cid+'.original'))
-        snapshots.append((selected, reference['bytes'], reference['sha256']))
         for path in (folder/'intent.json', folder/'object.json'):
             stamp = hash_file(path); snapshots.append((path, stamp.bytes, stamp.sha256))
     root = store.run/'production/reference-images'
@@ -205,7 +204,12 @@ def generate_reference_candidates(frozen, scene, bible, references, *, settings,
             return generate_reference_candidates(frozen, scene, bible, references, settings=settings,
                 capability=capability, client=client, paths=paths, logger=logger, lock=held, storage=storage)
     store = _Records(run, lock); store.owned()
-    plan = images._read(run/'production/scene-plan.json')
+    from ._scene_revision_origins import inherited
+    imported=inherited(frozen,'plan','all')
+    plan=imported['scene_plan'] if imported is not None else images._read(run/'production/scene-plan.json')
+    if 'scene_revision' in frozen.options:
+        from .scene_revision_records import require_scene_revision
+        store.revision_guard=require_scene_revision(frozen)['guard']
     model, prompt = validate_reference_inputs(frozen, scene, bible, plan, references, settings)
     images._equal(capability, settings['capability'], 'supplied reference capability')
     if client is None: client = JimengClient(model)

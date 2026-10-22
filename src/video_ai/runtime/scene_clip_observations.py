@@ -76,6 +76,8 @@ def _artifact(value, run):
                                      & stat.FILE_ATTRIBUTE_REPARSE_POINT):
                 raise ProductionRefused('redirected observation artifact forbidden')
         path = run_path(run, value['path'])
+        from ._scene_revision_origin_clips import declared_observation_media
+        if declared_observation_media(run,value):return
         digest = hashlib.sha256()
         size = 0
         with path.open('rb') as source:

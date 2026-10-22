@@ -117,6 +117,7 @@ class SceneMediaStore(SceneClipStore):
 
     def verify_captured_bytes(self):
         """Read-only guard audit, also valid while performing lock-free acceptance."""
+        if self.revision_context is not None:self.revision_context['guard'].verify_captured_bytes()
         for artifact in self.guard_paths.values(): self.validate_artifact(artifact)
         for directory,expected in self.guard_directories.items():
             folder=self._lexical(directory)
@@ -210,6 +211,8 @@ class SceneMediaStore(SceneClipStore):
 
     def capture_admitted(self,value):
         """Capture all raw bytes referenced by an already-validated JSON object."""
+        if self.revision_context is not None and self.revision_context['guard'].is_registered(value):
+            self.revision_context['guard'].verify_captured_bytes(); return
         if isinstance(value,dict):
             from .production_composition_records import COMMAND_FIELDS,command
             if set(value)==set(COMMAND_FIELDS):
@@ -304,6 +307,7 @@ class SceneMediaStore(SceneClipStore):
         other.caller_thread = self.caller_thread
         other.captured_evidence_json = self.captured_evidence_json.copy()
         other.media_cache = self.media_cache
+        other.revision_context = self.revision_context
         return other
 
     def frame_dir(self,frame_id):
@@ -334,6 +338,10 @@ class SceneMediaStore(SceneClipStore):
         return guard
 
 
+from .verification import verified_read
+
+
+@verified_read
 def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
     from .scene_clip_records import require_scene_clip_acceptance
     from .image_selection_records import require_complete_image_acceptance,load_committed_plan
@@ -343,8 +351,11 @@ def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
     run=_run(frozen)
     tool_stamps={role:ArtifactStamp.read(frozen.config.tools[role]) for role in ('ffmpeg','ffprobe')}
     store=SceneMediaStore(frozen,run,paths=paths,lock=lock)
-    snapshot=store.snapshot_json(files=('production/options.json','production/scene-plan.json','production/visual-bible.json',
-        'production/scene-plan-commit.json','production/reference-images/wan-inputs.json'),directories=(
+    plan_files = ['production/scene-plan.json','production/visual-bible.json','production/scene-plan-commit.json']
+    if store.revision_context is not None and 'plan:all' in store.revision_context['imports']:
+        plan_files = [store.revision_context['imports']['plan:all'][0]['view_artifact']['path']]
+    snapshot=store.snapshot_json(files=('production/options.json',*plan_files,
+        'production/reference-images/wan-inputs.json'),directories=(
         'production/image-selection','production/reference-images','production/reference-storage','production/jimeng','production/scene-clips'))
     store.guard_tool_stamps=tool_stamps
     store.capture_unhashed_inputs(snapshot,pcm_paths=(c.pcm.path for c in timeline.clips))
@@ -412,8 +423,13 @@ def require_scene_delivery(frozen,units,timeline):
 
 
 def load_scene_media_progress(frozen,units,timeline):
+    return _load_scene_media_progress(scene_media_context(frozen,units,timeline))
+
+
+@verified_read
+def _load_scene_media_progress(context):
     from ._scene_upscale_records import validate_upscale_frames, require_upscale_record
-    context = scene_media_context(frozen,units,timeline); store = context['store']
+    frozen=context['frozen'];store = context['store']
     terminals=[]; frames = validate_upscale_frames(context,terminal_errors=terminals)
     def row(status='pending',record=None,completed=0,total=1,error=None):
         return dict(status=status,record=str(record) if record else None,completed_items=completed,total_items=total,error=error)
@@ -435,7 +451,7 @@ def load_scene_media_progress(frozen,units,timeline):
             raise ProductionRefused('final observation lacks candidate commit')
     if (composition/'candidate-commit.json').exists():
         from .production_scene_composition import require_scene_composition_record
-        require_scene_composition_record(context)
+        context['validated_candidate']=require_scene_composition_record(context)
         result['composition'] = row('ready',composition/'candidate-commit.json',1)
         result['final_review']['status'] = 'awaiting_final_review'
     if (composition/'candidate-commit.json').exists():
@@ -455,6 +471,7 @@ def load_scene_media_progress(frozen,units,timeline):
         tx = validate_delivery_state(context)
         if tx is not None and tx.get('status') == 'completed':
             receipt = require_scene_delivery_record(context)
+            context['validated_delivery']=receipt
             result['delivery'] = row('delivered',frozen.options['output_paths']['receipt'],1)
         elif tx is not None: result['delivery']['status'] = 'running'
     return result

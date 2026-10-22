@@ -68,7 +68,7 @@ def mark_request_error(state, stage, uid, exc):
     raise exc
 
 
-def recover_http(logger, *, uid, url, payload, evidence_paths=None):
+def recover_http(logger, *, uid, url, payload, evidence_paths=None, durable=True):
     """Match original POST+body, complete metadata and body; never perform a network call."""
     matches = []
     paths = logger.path('http').glob('*.request.json') if evidence_paths is None else (Path(p) for p in evidence_paths if str(p).endswith('.request.json'))
@@ -98,7 +98,8 @@ def recover_http(logger, *, uid, url, payload, evidence_paths=None):
         raise MissingHttpEvidence(f'{uid}: original response acceptance unknown; no POST retry')
     raw = body_path.read_bytes()
     if type(meta.get('bytes')) is not int or meta['bytes'] != len(raw): raise ProductionRefused(f'{uid}: response byte count differs')
-    for path in (req_path, meta_path, body_path): sync_file(path)
+    if durable:
+        for path in (req_path, meta_path, body_path): sync_file(path)
     return raw, meta, [str(req_path), str(meta_path), str(body_path)]
 
 

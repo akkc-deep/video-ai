@@ -111,7 +111,13 @@ def _source(source, script, catalog, *, latest=None):
     start,end = source['text_start'],source['text_end']
     if (not unit.start <= start < end <= unit.end or source['quote'] != script.text[start:end]
             or (latest is not None and end > latest)):
-        raise ValueError('inexact or future source span/quote')
+        error=ValueError('inexact or future source span/quote')
+        eligible=[dict(unit_id=row.unit_id,text_start=row.start,text_end=row.end,quote=row.text)
+                  for row in catalog.values() if latest is None or row.end<=latest]
+        error.add_note('SOURCE_REPAIR_JSON\n'+json.dumps(dict(rejected_source=source,
+            latest_allowed_end=latest,eligible_sources=eligible),ensure_ascii=False,
+            sort_keys=True,separators=(',',':')))
+        raise error
 
 
 def _grounding(row, script, catalog, *, latest=None):
@@ -176,13 +182,19 @@ def _build_scene_plan(script,units,timeline,proposal,*,settings):
     output_rows = [[],[],[]]
     scenes = []
     previous_group = None
+    group_first_use = {}
     previous_variants = {}
     for index,row in enumerate(proposal['scenes'],1):
         first,last = catalog[row['unit_ids'][0]],catalog[row['unit_ids'][-1]]
         latest = last.end
         for source in row['change_sources']: _source(source,script,catalog,latest=latest)
         if any(key not in entities for key in row['entity_ids']) or any(key not in variants for key in row['variant_ids']) or row['scene_group_id'] not in groups:
-            raise ValueError('unknown scene entity/variant/group key')
+            error=ValueError('unknown scene entity/variant/group key')
+            error.add_note('SCENE_LINK_REPAIR_JSON\n'+json.dumps(dict(scene_index=index,
+                rejected_references={key:row[key] for key in ('entity_ids','variant_ids','scene_group_id')},
+                available_keys=dict(entity_ids=list(entities),variant_ids=list(variants),scene_group_ids=list(groups))),
+                ensure_ascii=False,sort_keys=True,separators=(',',':')))
+            raise error
         if any(variants[key]['entity_key'] not in row['entity_ids'] for key in row['variant_ids']):
             raise ValueError('variant entity must appear in scene entity_ids')
         current_by_entity = {}
@@ -196,10 +208,24 @@ def _build_scene_plan(script,units,timeline,proposal,*,settings):
                 if not evidence: raise ValueError('appearance change requires source evidence')
             previous_variants[owner] = keys
         group = groups[row['scene_group_id']]
+        group_first_use.setdefault(row['scene_group_id'], latest)
         _grounding(group,script,catalog,latest=latest)
         if previous_group is not None and previous_group != row['scene_group_id']:
             if not group['change_sources'] and not row['change_sources']:
-                raise ValueError('scene group change requires source evidence')
+                reuse_latest=group_first_use[previous_group]
+                error=ValueError('scene group change requires source evidence')
+                error.add_note('SCENE_GROUP_REPAIR_JSON\n'+json.dumps(dict(scene_index=index,
+                    previous_group=previous_group,proposed_group=row['scene_group_id'],
+                    previous_environment=groups[previous_group]['environment'],current_environment=group['environment'],
+                    current_unit_ids=row['unit_ids'],reuse_latest_end=reuse_latest,
+                    eligible_reuse_source_ids=[unit.unit_id for unit in catalog.values() if unit.end<=reuse_latest],
+                    instruction='An action change alone does not change the environment group. '
+                        'For unchanged location/time, reuse the previous group; its shared facts may cite only '
+                        'first-use-or-earlier units. Later actions belong in scene prompts. For an actual '
+                        'environment change, cite current/prior evidence in change_sources. '
+                        'Environment fields contain descriptions, not entity keys.'),
+                    ensure_ascii=False,sort_keys=True,separators=(',',':')))
+                raise error
         previous_group = row['scene_group_id']
         for category,keys,items,prefix,id_field in (
                 (0,row['entity_ids'],entities,'entity','entity_id'),
