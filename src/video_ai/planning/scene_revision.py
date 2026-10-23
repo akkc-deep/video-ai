@@ -34,6 +34,23 @@ def _ids(value, known):
     return [v for v in known if v in value]
 
 
+def validate_rendering_identity(value):
+    """Old identities have exactly the original fields; v2 is explicit and complete."""
+    modern = 'schema_version' in value or 'rendering' in value
+    _fields(value, IDENTITY_FIELDS+(['schema_version','rendering'] if modern else []), 'target identity')
+    if modern:
+        if type(value['schema_version']) is not int or value['schema_version'] != 2:
+            raise ValueError('unknown rendering identity schema')
+        rendering = value['rendering']
+        _fields(rendering, ('prompt_policy','prompt_contract_sha256'), 'rendering identity')
+        if rendering['prompt_policy'] != 'visual_v2': raise ValueError('unknown rendering identity policy')
+        _sha(rendering['prompt_contract_sha256'])
+    for key in ('config_sha256','voice_sha256','font_sha256','planning_sha256'): _sha(value[key])
+    if value['reference_settings_sha256'] is not None: _sha(value['reference_settings_sha256'])
+    for key in ('image_generation','model_stamps','workflows'):
+        if type(value[key]) is not dict: raise ValueError('identity mapping required')
+
+
 def identity_from_options(options, *, reference_settings_sha256=None):
     """Describe already-validated frozen content without stat/path IO."""
     raw = options['config_snapshot']['raw']
@@ -45,11 +62,13 @@ def identity_from_options(options, *, reference_settings_sha256=None):
                 'reference_storage', 'models', 'workflows', 'email_notification', 'selection_email',
                 'output_root', 'project_root', 'cache_root', 'runtime_root', 'voice_config'):
         common.pop(key, None)
+    if 'scene_rendering' in raw:
+        common.pop('scene_rendering',None)
     voice=deepcopy(options['voice_snapshot']['raw'])
     for key in ('reference_audio','gpt_weights','sovits_weights','bert_root','hubert_root'):voice.pop(key,None)
     # Profile affects Wan; other media settings affect the common timeline/render.
     if isinstance(common.get('media'), dict): common['media'].pop('profile', None)
-    return dict(config_sha256=canonical_digest(raw), image_generation=deepcopy(options['image_generation']),
+    result = dict(config_sha256=canonical_digest(raw), image_generation=deepcopy(options['image_generation']),
         reference_settings_sha256=reference_settings_sha256,
         model_stamps=deepcopy(options['model_stamps']),
         workflows={k: content(v.get('source_identity',inputs.get('workflow/'+k)))
@@ -60,6 +79,15 @@ def identity_from_options(options, *, reference_settings_sha256=None):
                     if k in ('reference', 'tts_yaml_source')})),
         font_sha256=inputs['font']['sha256'] if 'font' in inputs else canonical_digest(None),
         planning_sha256=canonical_digest(common))
+    if 'scene_rendering' in raw:
+        from .scene_video_prompts import parse_scene_rendering
+        settings = parse_scene_rendering(raw['scene_rendering'])
+        stamp = inputs.get('scene_video_prompts')
+        if not isinstance(stamp,dict): raise ValueError('rendering identity requires frozen prompt SHA')
+        _sha(stamp.get('sha256'))
+        result.update(schema_version=2,rendering=dict(prompt_policy=settings['prompt_policy'],
+            prompt_contract_sha256=stamp['sha256']))
+    return result
 
 
 def _validate_request(request, snapshot, target):
@@ -105,11 +133,7 @@ def _validate_request(request, snapshot, target):
         elif kind == 'regenerate_clips':
             if not cids or sids or chosen: raise ValueError('clip regeneration targets differ')
         else: raise ValueError('unknown revision kind')
-    _fields(target, IDENTITY_FIELDS, 'target identity')
-    for key in ('config_sha256', 'voice_sha256', 'font_sha256', 'planning_sha256'): _sha(target[key])
-    if target['reference_settings_sha256'] is not None: _sha(target['reference_settings_sha256'])
-    for key in ('image_generation', 'model_stamps', 'workflows'):
-        if type(target[key]) is not dict: raise ValueError('identity mapping required')
+    validate_rendering_identity(target)
     return sids, cids
 
 
@@ -122,7 +146,7 @@ def plan_scene_revision(snapshot, request, target_identity):
     classification=snapshot['source_options'].get('_scene_revision_planning')
     if classification is not None:
         _fields(classification,('identity','completed_image_ids','image_group_accepted','target_config'),'validated planning context')
-        _fields(classification['identity'],IDENTITY_FIELDS,'validated source identity')
+        validate_rendering_identity(classification['identity'])
         completed_images=_ids(classification['completed_image_ids'],scenes)
         if type(classification['image_group_accepted']) is not bool:raise ValueError('image group acceptance must be bool')
         if classification['target_config'] is not None and canonical_digest(classification['target_config'])!=target_identity['config_sha256']:
@@ -196,6 +220,8 @@ def plan_scene_revision(snapshot, request, target_identity):
     else:
         source = classification['identity'] if classification is not None else identity_from_options(snapshot['source_options'])
         if source == target_identity: raise ValueError('reconfigure makes no effective change')
+        if source.get('rendering') != target_identity.get('rendering'):
+            roots += [node('clips',cid) for cid in clips]
         if any(source[k] != target_identity[k] for k in ('voice_sha256','font_sha256','planning_sha256')):
             roots.append('common:all')
         if source['image_generation'] != target_identity['image_generation']:

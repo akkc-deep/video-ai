@@ -146,6 +146,11 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
     canonical = load_config(config.config_file, raw=read_json(Path(config_copy.path)), voice=voice)
     if not _same_json(canonical, config): raise ProductionRefused('effective configuration differs from source raw/resolved configuration')
     identities.update(config=thaw(config_copy), voice=thaw(voice_copy))
+    if 'scene_rendering' in config.raw:
+        from .scene_video_prompt_records import contract_source,parse_contract_bytes
+        _, copied = _copy_small(contract_source(config), run_path(run,directory/'scene-video-prompts.json'),
+                                validate=parse_contract_bytes)
+        identities['scene_video_prompts'] = thaw(copied)
     if config.production_strategy == STRATEGY and config.raw.get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths, parse_capability
         from ..adapters.common import strict_json
@@ -234,6 +239,10 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     records = policy['input_identities']
     roles = ('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping')
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
+    if modern and 'scene_rendering' in options['config_snapshot']['raw']:
+        required.add('scene_video_prompts')
+        if records.get('scene_video_prompts',{}).get('path') != str(run/'production/scene-video-prompts.json'):
+            raise ProductionRefused('frozen visual prompt path differs')
     if modern and options['config_snapshot']['raw'].get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths
         for req_key in parse_capability_paths(options['config_snapshot']['raw']['reference_capabilities']):
@@ -256,6 +265,9 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     if not _same_json(_resolved(frozen), (options['config_snapshot']['resolved'], options['voice_snapshot']['resolved'])):
         raise ProductionRefused('frozen raw/resolved configuration differs')
     validate_supported(frozen)
+    if 'scene_rendering' in frozen.raw:
+        from .scene_video_prompt_records import parse_contract_bytes
+        parse_contract_bytes(Path(records['scene_video_prompts']['path']).read_bytes())
     if modern != (frozen.production_strategy == STRATEGY): raise ProductionRefused('strategy/schema mismatch')
     expected_timeout = max(frozen.timeouts['ollama_request'], 1800) if options['cpu_planner'] else frozen.timeouts['ollama_request']
     if type(policy['ollama_request_seconds']) not in (int, float) or policy['ollama_request_seconds'] != expected_timeout:

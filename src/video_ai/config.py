@@ -297,11 +297,16 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
                                   'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
-                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model'))
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_rendering'))
     _exact(data['schema_version'], 1, path, 'schema_version')
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
     if strategy not in ('legacy', STRATEGY): _error(path, 'production_strategy', 'unsupported strategy')
+    if 'scene_rendering' in data:
+        if strategy != STRATEGY: _error(path, 'scene_rendering', 'requires paragraph_jimeng_v1 strategy')
+        from .planning.scene_video_prompts import parse_scene_rendering
+        try: parse_scene_rendering(data['scene_rendering'])
+        except ValueError as exc: _error(path, 'scene_rendering', str(exc))
     image = parse_image_generation(data.get('image_generation'), path) if strategy == STRATEGY else None
     if strategy == 'legacy' and 'image_generation' in data:
         _error(path, 'image_generation', 'requires paragraph_jimeng_v1 strategy')

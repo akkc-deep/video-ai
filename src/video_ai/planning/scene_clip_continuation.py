@@ -136,11 +136,25 @@ def _artifact(image):
     return result
 
 
-def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs):
+def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_contract=None, prompt_binding_context=None):
     """Keep fixed shared visual context, original narration and every baseline use."""
     clips = _budgets(plan, timeline)
     _narration(plan, timeline)
     validate_reference_graph(thaw(plan['scenes']), thaw(bible))
+    from .scene_video_prompts import (parse_scene_rendering,
+        validate_scene_video_prompt_contract, render_scene_video_prompt)
+    raw = getattr(frozen.config, 'raw', {})
+    visual = 'scene_rendering' in raw
+    if visual:
+        parse_scene_rendering(raw['scene_rendering'])
+        binding = prompt_binding_context if prompt_binding_context is not None else dict(
+            bible=bible,plan=plan,wan_inputs=wan_inputs,script=frozen.script)
+        _fields(binding, ('bible','plan','wan_inputs','script'), 'prompt binding context')
+        validate_scene_video_prompt_contract(prompt_contract, **binding)
+        if [c['clip_id'] for c in prompt_contract['clips']] != [c['clip_id'] for c in clips]:
+            raise ValueError('visual prompt coverage differs from target plan')
+    elif prompt_contract is not None:
+        raise ValueError('prompt contract requires explicit visual_v2 policy')
     profile = frozen.config.media.profile
     if (type(profile.native_fps) is not int or profile.native_fps != 16
             or {'fast': (768, 432), 'quality': (1280, 720)}.get(profile.name) != (profile.width, profile.height)
@@ -175,7 +189,8 @@ def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs):
     result = []
     for index, clip in enumerate(clips):
         sid = clip['scene_id']; scene = scenes[sid]
-        parameters = dict(positive=contexts[sid], negative=WAN_NEGATIVE,
+        positive = render_scene_video_prompt(prompt_contract, bible, scene, clip['clip_id']) if visual else contexts[sid]
+        parameters = dict(positive=positive, negative=WAN_NEGATIVE,
             seed_high=264244520398999+index, seed_low=0, width=profile.width, height=profile.height,
             length=clip['generated_frames'], fps=16, batch=1, steps=40, cfg=3.5, sampler='euler',
             scheduler='simple', split_step=15, shift_high=5.000000000000001,

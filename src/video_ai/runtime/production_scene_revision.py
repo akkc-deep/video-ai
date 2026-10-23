@@ -68,6 +68,9 @@ def configuration_identity(config, *, image_model=None, reference_sha=None):
         workflow_snapshots={k:{'source_identity':artifact(p)} for k,p in workflows.items()},
         execution_policy={'input_identities':dict(inputs,**{'workflow/'+k:artifact(p) for k,p in workflows.items()}),
             'model_roots':{k:str(getattr(config.voice,k)) for k in ('bert_root','hubert_root')}})
+    if 'scene_rendering' in config.raw:
+        from .scene_video_prompt_records import source_contract_identity
+        options['execution_policy']['input_identities']['scene_video_prompts'] = source_contract_identity(config)
     return identity_from_options(options,reference_settings_sha256=reference_sha)
 
 
@@ -86,6 +89,8 @@ def _target_configuration(source,target,request):
     raw.update(voice_config=str(voice_path),tools=thaw(source.config.tools),models=thaw(source.config.models),
                workflows=thaw(source.config.workflows))
     raw['media']['font_file'] = str(source.config.media.font_file)
+    if 'scene_rendering' in raw:
+        raw['scene_rendering']['prompt_contract'] = source.options['execution_policy']['input_identities']['scene_video_prompts']['path']
     if raw.get('reference_capabilities') is not None:
         # Preserve validated capability bytes already frozen by the source.
         for key in raw['reference_capabilities']:

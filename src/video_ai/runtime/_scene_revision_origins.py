@@ -407,6 +407,10 @@ def capture_origin(frozen,domain,key):
                         sha=selected.get(binding['source_scene_id'])
                         if sha is not None:directories.add(run/'production/reference-storage'/_sha(sha))
     if domain in ('clip','upscale'):
+        if 'scene_rendering' in frozen.config.raw:
+            # A cached import proof must keep guarding the exact prompt bytes
+            # that produced this source, not only its options/request digests.
+            files.add(Path(frozen.options['execution_policy']['input_identities']['scene_video_prompts']['path']))
         files.add(run/'production/reference-images/wan-inputs.json')
         files.add(run/'production/scene-clips/inputs.json')
         if domain=='upscale': relevant = plan['clips']

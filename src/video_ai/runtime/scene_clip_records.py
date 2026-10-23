@@ -174,7 +174,11 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         Path(frozen.options['workflow_snapshots']['wan_mapping']['path']), frozen.config.models)
     validate_fixed_visual_template(template, 'wan')
     store = SceneClipStore(frozen, run, paths=paths, lock=lock, clip_ids=[c['clip_id'] for c in plan['clips']])
-    rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan)
+    from .scene_video_prompt_records import load_prompt_contract,prompt_binding_context
+    contract,prompt_artifact = load_prompt_contract(frozen)
+    binding = prompt_binding_context(frozen,contract,bible,plan,wan) if contract is not None else None
+    rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan,
+        prompt_contract=contract,prompt_binding_context=binding)
     for selected in wan['scenes']:
         from ._scene_revision_origin_images import source_image_required
         if not source_image_required(frozen,selected['scene_id']):continue
@@ -193,6 +197,9 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         workflow=store.artifact(frozen.options['workflow_snapshots']['wan']['path']),
         mapping=store.artifact(frozen.options['workflow_snapshots']['wan_mapping']['path']),
         model_stamps={k:thaw(frozen.options['model_stamps'][k]) for k in ('wan_high','wan_low','text_encoder','vae')})
+    if prompt_artifact is not None:
+        inputs.update(prompt_policy='visual_v2',prompt_contract=prompt_artifact)
+        store.guard_paths[prompt_artifact['path']] = prompt_artifact
     old = store.read('inputs.json')
     if old is not None: equal(old, inputs, 'inputs')
     for path in (run/'production/options.json', run/'production/scene-plan.json', run/'production/visual-bible.json',

@@ -10,7 +10,7 @@ from uuid import UUID
 
 from ..adapters.common import strict_json
 from ..planning.production_scenes import canonical_digest
-from ..planning.scene_revision import IDENTITY_FIELDS, DOMAINS, STRATEGY
+from ..planning.scene_revision import validate_rendering_identity, DOMAINS, STRATEGY
 from .manifest import thaw, validate_run_dir
 from .verification import verified_read
 from .production_state import (ArtifactStamp, ProductionRefused, RunLock, integer,
@@ -174,7 +174,7 @@ def validate_revision_structure(options, run):
             or commit['production_strategy'] != STRATEGY or commit['run_id'] != Path(run).name
             or str(UUID(commit['revision_id'])) != commit['revision_id']):
         raise ProductionRefused('revision commit identity differs')
-    timestamp(commit['created_at']); object_fields(commit['target_identity'],IDENTITY_FIELDS,'revision target identity')
+    timestamp(commit['created_at']); validate_rendering_identity(commit['target_identity'])
     source = validate_run_dir(commit['source_run_dir'])
     if source.name != commit['source_run_id'] or source == Path(run): raise ProductionRefused('revision source identity differs')
     if Path(commit['source_options']['path']) != source/'production/options.json': raise ProductionRefused('revision source options path differs')

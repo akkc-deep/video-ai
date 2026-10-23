@@ -293,3 +293,36 @@ def test_voice_identity_binds_reference_content_and_not_the_frozen_copy_filename
     assert identity_from_options(source)['voice_sha256']==identity_from_options(target)['voice_sha256']
     target['voice_snapshot']['raw']['prompt_text']='另一声线参考'
     assert identity_from_options(source)['voice_sha256']!=identity_from_options(target)['voice_sha256']
+
+
+def test_prompt_content_identity_invalidates_only_videos_and_descendants():
+    from video_ai.planning.scene_revision import identity_from_options,plan_scene_revision
+    snapshot,request,old=configure_revision(lambda i:None)
+    options=deepcopy(snapshot['source_options'])
+    options['config_snapshot']['raw']['scene_rendering']=dict(prompt_policy='visual_v2',prompt_contract='D:/prompts.json')
+    options['execution_policy']['input_identities']['scene_video_prompts']=dict(path='D:/prompts.json',bytes=42,sha256='e'*64)
+    target=identity_from_options(options)
+    assert target['schema_version']==2
+    assert target['rendering']==dict(prompt_policy='visual_v2',prompt_contract_sha256='e'*64)
+    assert old['planning_sha256']==target['planning_sha256']
+    result=plan_scene_revision(snapshot,request,target)
+    for domain in ('common','plan','images','choices','image_group'):assert result['dirty'][domain]==[]
+    for domain in ('clips','clip_reviews','upscale','composition','final_review','delivery'):assert result['dirty'][domain]
+    snapshot['source_options']=options
+    changed=deepcopy(target);changed['rendering']['prompt_contract_sha256']='f'*64
+    assert plan_scene_revision(snapshot,request,changed)['dirty']['clips']
+    back=plan_scene_revision(snapshot,request,old)
+    assert back['dirty']['clips'] and back['dirty']['images']==[]
+
+
+@pytest.mark.parametrize('fault',['missing_rendering','missing_schema','unknown_schema','partial','extra'])
+def test_versioned_rendering_identity_cannot_be_partial_or_downgraded(fault):
+    from video_ai.planning.scene_revision import plan_scene_revision
+    snapshot,request,target=configure_revision(lambda i:None)
+    target.update(schema_version=2,rendering=dict(prompt_policy='visual_v2',prompt_contract_sha256='f'*64))
+    if fault=='missing_rendering':del target['rendering']
+    elif fault=='missing_schema':del target['schema_version']
+    elif fault=='unknown_schema':target['schema_version']=3
+    elif fault=='partial':del target['rendering']['prompt_contract_sha256']
+    else:target['rendering']['extra']=1
+    with pytest.raises(ValueError):plan_scene_revision(snapshot,request,target)
