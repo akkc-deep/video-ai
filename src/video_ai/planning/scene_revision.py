@@ -34,21 +34,79 @@ def _ids(value, known):
     return [v for v in known if v in value]
 
 
+def snapshot_execution_clips(snapshot):
+    """Use the validated source execution, even when target mode changes."""
+    options = snapshot['source_options']
+    settings = options['config_snapshot']['raw'].get('scene_rendering', {})
+    mode = settings.get('mode')
+    if mode is None:
+        if 'scene_execution' in snapshot: raise ValueError('legacy snapshot cannot carry execution')
+        return snapshot['scene_plan']['clips']
+    from types import SimpleNamespace
+    from .scene_execution import derive_scene_execution_clips
+    execution = snapshot.get('scene_execution')
+    fields = ('schema_version algorithm production_strategy run_id mode scene_plan_sha256 timeline_sha256 '
+              'rendering_identity_sha256 admission clips').split()
+    _fields(execution, fields, 'source scene execution')
+    classification = options.get('_scene_revision_planning')
+    identity = classification['identity'] if classification is not None else identity_from_options(options)
+    plan = snapshot['scene_plan']
+    clips = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode=mode)
+    if (type(execution['schema_version']) is not int or execution['schema_version'] != 1
+            or execution['algorithm'] != 'scene_execution_v1' or execution['production_strategy'] != STRATEGY
+            or execution['mode'] != mode or execution['run_id'] != options['run_id']
+            or execution['scene_plan_sha256'] != canonical_digest(plan)
+            or execution['rendering_identity_sha256'] != canonical_digest(identity_from_options(options))
+            or canonical_digest(execution['clips']) != canonical_digest(clips)):
+        raise ValueError('source execution differs from source plan/rendering')
+    _sha(execution['timeline_sha256'])
+    evidence = execution['admission']
+    from .scene_execution import _identity
+    _identity({key:execution[key] for key in ('run_id','mode','rendering_identity_sha256','admission')})
+    if mode == 'whole_scene_v1':
+        _fields(evidence, ['path','bytes','sha256'], 'source execution admission')
+        if evidence['sha256'] != identity['rendering']['whole_scene_evidence_sha256']:
+            raise ValueError('source execution admission differs')
+    elif evidence is not None: raise ValueError('segmented execution has whole admission')
+    return clips
+
+
 def validate_rendering_identity(value):
     """Old identities have exactly the original fields; v2 is explicit and complete."""
     modern = 'schema_version' in value or 'rendering' in value
     _fields(value, IDENTITY_FIELDS+(['schema_version','rendering'] if modern else []), 'target identity')
     if modern:
-        if type(value['schema_version']) is not int or value['schema_version'] != 2:
+        if type(value['schema_version']) is not int or value['schema_version'] not in (2, 3):
             raise ValueError('unknown rendering identity schema')
         rendering = value['rendering']
-        _fields(rendering, ('prompt_policy','prompt_contract_sha256'), 'rendering identity')
+        fields = ['prompt_policy','prompt_contract_sha256']
+        if value['schema_version'] == 3: fields += ['mode','whole_scene_evidence_sha256','execution_algorithm']
+        _fields(rendering, fields, 'rendering identity')
         if rendering['prompt_policy'] != 'visual_v2': raise ValueError('unknown rendering identity policy')
         _sha(rendering['prompt_contract_sha256'])
+        if value['schema_version'] == 3:
+            if rendering['mode'] not in ('segmented_v1', 'whole_scene_v1') or rendering['execution_algorithm'] != 'scene_execution_v1':
+                raise ValueError('unknown versioned execution identity')
+            if rendering['mode'] == 'whole_scene_v1': _sha(rendering['whole_scene_evidence_sha256'])
+            elif rendering['whole_scene_evidence_sha256'] is not None:
+                raise ValueError('segmented rendering cannot carry whole admission')
     for key in ('config_sha256','voice_sha256','font_sha256','planning_sha256'): _sha(value[key])
     if value['reference_settings_sha256'] is not None: _sha(value['reference_settings_sha256'])
     for key in ('image_generation','model_stamps','workflows'):
         if type(value[key]) is not dict: raise ValueError('identity mapping required')
+
+
+def _planning_digest(raw, *, ignore_admission=False):
+    common = deepcopy(raw)
+    for key in ('image_generation', 'reference_generation', 'reference_capabilities',
+                'reference_storage', 'models', 'workflows', 'email_notification', 'selection_email',
+                'output_root', 'project_root', 'cache_root', 'runtime_root', 'voice_config'):
+        common.pop(key, None)
+    if 'scene_rendering' in raw:
+        common.pop('scene_rendering',None)
+    if ignore_admission: common.pop('scene_continuity',None)
+    if isinstance(common.get('media'), dict): common['media'].pop('profile', None)
+    return canonical_digest(common)
 
 
 def identity_from_options(options, *, reference_settings_sha256=None):
@@ -57,17 +115,8 @@ def identity_from_options(options, *, reference_settings_sha256=None):
     inputs = options['execution_policy']['input_identities']
     def content(stamp):
         return {k: deepcopy(stamp[k]) for k in ('path', 'bytes', 'sha256')}
-    common = deepcopy(raw)
-    for key in ('image_generation', 'reference_generation', 'reference_capabilities',
-                'reference_storage', 'models', 'workflows', 'email_notification', 'selection_email',
-                'output_root', 'project_root', 'cache_root', 'runtime_root', 'voice_config'):
-        common.pop(key, None)
-    if 'scene_rendering' in raw:
-        common.pop('scene_rendering',None)
     voice=deepcopy(options['voice_snapshot']['raw'])
     for key in ('reference_audio','gpt_weights','sovits_weights','bert_root','hubert_root'):voice.pop(key,None)
-    # Profile affects Wan; other media settings affect the common timeline/render.
-    if isinstance(common.get('media'), dict): common['media'].pop('profile', None)
     result = dict(config_sha256=canonical_digest(raw), image_generation=deepcopy(options['image_generation']),
         reference_settings_sha256=reference_settings_sha256,
         model_stamps=deepcopy(options['model_stamps']),
@@ -78,7 +127,7 @@ def identity_from_options(options, *, reference_settings_sha256=None):
             inputs={k:{name:v[name] for name in ('bytes','sha256')} for k,v in inputs.items()
                     if k in ('reference', 'tts_yaml_source')})),
         font_sha256=inputs['font']['sha256'] if 'font' in inputs else canonical_digest(None),
-        planning_sha256=canonical_digest(common))
+        planning_sha256=_planning_digest(raw,ignore_admission='mode' in raw.get('scene_rendering',{})))
     if 'scene_rendering' in raw:
         from .scene_video_prompts import parse_scene_rendering
         settings = parse_scene_rendering(raw['scene_rendering'])
@@ -87,6 +136,13 @@ def identity_from_options(options, *, reference_settings_sha256=None):
         _sha(stamp.get('sha256'))
         result.update(schema_version=2,rendering=dict(prompt_policy=settings['prompt_policy'],
             prompt_contract_sha256=stamp['sha256']))
+        if 'mode' in settings:
+            evidence = inputs.get('whole_scene_evidence')
+            if settings['mode'] == 'whole_scene_v1' and not isinstance(evidence, dict):
+                raise ValueError('whole rendering identity requires frozen evidence SHA')
+            result.update(schema_version=3, rendering=dict(result['rendering'], mode=settings['mode'],
+                whole_scene_evidence_sha256=evidence['sha256'] if settings['mode'] == 'whole_scene_v1' else None,
+                execution_algorithm='scene_execution_v1'))
     return result
 
 
@@ -101,7 +157,7 @@ def _validate_request(request, snapshot, target):
     if date.tzinfo is None or date > datetime.now(timezone.utc): raise ValueError('revision time must be past and timezone aware')
     if type(request['reason']) is not str or not request['reason'].strip(): raise ValueError('reason required')
     scenes = [s['scene_id'] for s in snapshot['scene_plan']['scenes']]
-    clips = [c['clip_id'] for c in snapshot['scene_plan']['clips']]
+    clips = [c['clip_id'] for c in snapshot_execution_clips(snapshot)]
     sids, cids = _ids(request['scene_ids'], scenes), _ids(request['clip_ids'], clips)
     if type(request['choices']) is not list: raise ValueError('choices array required')
     chosen = {}
@@ -139,7 +195,9 @@ def _validate_request(request, snapshot, target):
 
 def plan_scene_revision(snapshot, request, target_identity):
     """Return deterministic dirty/reusable nodes; no effects or source mutation."""
-    _fields(snapshot, SNAPSHOT_FIELDS, 'revision snapshot')
+    settings = snapshot.get('source_options', {}).get('config_snapshot', {}).get('raw', {}).get('scene_rendering', {})
+    _fields(snapshot, SNAPSHOT_FIELDS+(['scene_execution'] if 'mode' in settings else []), 'revision snapshot')
+    execution_clips = snapshot_execution_clips(snapshot)
     sids, cids = _validate_request(request, snapshot, target_identity)
     plan = snapshot['scene_plan']
     scenes = [s['scene_id'] for s in plan['scenes']]
@@ -152,7 +210,7 @@ def plan_scene_revision(snapshot, request, target_identity):
         if classification['target_config'] is not None and canonical_digest(classification['target_config'])!=target_identity['config_sha256']:
             raise ValueError('validated target configuration digest differs')
     else:completed_images=[r['scene_id'] for r in snapshot['image_choices']]
-    clips = [c['clip_id'] for c in plan['clips']]
+    clips = [c['clip_id'] for c in execution_clips]
     clip_nodes = {}
     for row in snapshot['clip_nodes']:
         _fields(row, ('clip_id', 'record', 'acceptance', 'status'), 'clip node')
@@ -162,7 +220,7 @@ def plan_scene_revision(snapshot, request, target_identity):
         clip_nodes[key] = row
     frames = []
     frame_clip = {}
-    for clip in plan['clips']:
+    for clip in execution_clips:
         for i in range(clip['retained_frames']):
             fid = f'{clip["clip_id"]}:frame_{i+1:06d}'
             frames.append(fid); frame_clip[fid] = clip['clip_id']
@@ -191,12 +249,12 @@ def plan_scene_revision(snapshot, request, target_identity):
         edge('common:all', 'plan:all'); edge('plan:all', node('images', sid))
         edge(node('images', sid), node('choices', sid))
         edge(node('choices', sid), 'image_group:all')
-    for clip in plan['clips']:
+    for clip in execution_clips:
         cid, sid, parent = clip['clip_id'], clip['scene_id'], clip['parent_clip_id']
         if sid not in scenes: raise ValueError('unknown clip scene')
         edge(node('choices', sid), node('clips', cid))
         if parent:
-            ancestors = [c for c in plan['clips'] if c['clip_id'] == parent]
+            ancestors = [c for c in execution_clips if c['clip_id'] == parent]
             if len(ancestors) != 1 or ancestors[0]['scene_id'] != sid or clips.index(parent) >= clips.index(cid):
                 raise ValueError('invalid continuation ancestry')
             edge(node('clips', parent), node('clips', cid))
@@ -222,7 +280,14 @@ def plan_scene_revision(snapshot, request, target_identity):
         if source == target_identity: raise ValueError('reconfigure makes no effective change')
         if source.get('rendering') != target_identity.get('rendering'):
             roots += [node('clips',cid) for cid in clips]
-        if any(source[k] != target_identity[k] for k in ('voice_sha256','font_sha256','planning_sha256')):
+        planning_changed = source['planning_sha256'] != target_identity['planning_sha256']
+        if (classification is not None and classification['target_config'] is not None
+                and (source.get('schema_version') == 3 or target_identity.get('schema_version') == 3)):
+            # Versioned mode adoption may add an advisory policy. It changes
+            # admission, not narration, semantic planning or accepted images.
+            planning_changed = (_planning_digest(snapshot['source_options']['config_snapshot']['raw'],ignore_admission=True)
+                != _planning_digest(classification['target_config'],ignore_admission=True))
+        if source['voice_sha256'] != target_identity['voice_sha256'] or source['font_sha256'] != target_identity['font_sha256'] or planning_changed:
             roots.append('common:all')
         if source['image_generation'] != target_identity['image_generation']:
             roots += [node('images', sid) for sid in scenes]

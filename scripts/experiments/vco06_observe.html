@@ -1,0 +1,166 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>VCO-06 新素材完整播放观察</title>
+<style>
+body{font:16px/1.6 system-ui;background:#f2f3f0;color:#202b27;margin:0}main{max-width:1200px;margin:auto;padding:30px}
+h1{font-size:27px}section{background:white;border-radius:12px;padding:22px;margin:18px 0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+video,img{width:100%;background:#171d1a;aspect-ratio:16/9;object-fit:contain}label{display:block;margin:12px 0}
+input,select,textarea,button{font:inherit;padding:8px;border:1px solid #b8c3bb;border-radius:6px}textarea{width:95%;height:80px}
+button{background:#244d3e;color:white;cursor:pointer;margin-right:12px}small{color:#58665d}.status{font-weight:600;color:#2e6450}
+@media(max-width:700px){.pair{grid-template-columns:1fr}main{padding:14px}}</style>
+<main><h1>新素材完整播放观察</h1>
+<p>对照原参考图观看整段视频，记录您实际看见的结果。无法确定时保留“未确认”。播放记录只记录浏览器报告的展示过程，颜色和动作结论由观察者填写。</p>
+<section><label>素材 <select id="cases"></select></label><div class="pair"><div><small>生成前参考图</small><img id="ref" alt="生成前参考图"></div><div><small>原生完整原片 · 49帧 / 16fps</small><video id="video" playsinline preload="auto"></video></div></div>
+<p><button id="start">从头完整播放</button><span id="progress" class="status" role="status" aria-live="polite">尚未播放</span></p><small>播放中请保持页面可见并使用原速。远控可正常观看，无需打开实体屏幕。浏览器逐帧回调不齐时，会保留实际记录；完整时间范围和本人确认另行保存。</small>
+<label><input type="checkbox" id="viewerComplete" disabled> 我通过远程画面以原速看清了整段的开始、过程和结尾</label><small>仅在本人确实完整观看后勾选。此确认不会补写缺失帧，也不代表校色或资格验收通过。</small></section>
+<section><label>观察者 <input id="reviewer" autocomplete="name" placeholder="实际观看者姓名或署名"></label>
+<label>整体判断 <select id="label"><option value="unverified">未确认 / 看不出</option><option value="neutral">确认颜色中性，与参考图目标一致</option><option value="mild_color_bias">确认轻微、恒定、单轴整体色偏</option><option value="unsafe">存在结构、动作、变光或其他不安全问题</option><option value="not_comparable">无法与原图完整比较</option></select></label>
+<label>若确认色偏，选择所需的修正 <select id="axis"><option value="">未确定 / 不适用</option><option value="exposure:negative">整体降低曝光</option><option value="wb_r:negative">减弱红轴</option><option value="wb_g:positive">增强绿轴</option><option value="wb_g:negative">减弱绿轴</option></select></label>
+<label><input type="checkbox" id="target"> 我确认原参考图的颜色和照明是这段视频的目标</label>
+<label>主体结构完整 <select id="structure"><option value="">未确认</option><option value="true">是</option><option value="false">否</option></select></label>
+<label>动作过程完整 <select id="motion"><option value="">未确认</option><option value="true">是</option><option value="false">否</option></select></label>
+<label>生成目标是否要求灯光或曝光随时间变化 <select id="lighting"><option value="">未确认</option><option value="false">否，目标是保持光照稳定</option><option value="true">是，目标本来就包含变光</option></select></label>
+<small>这里填写原本的目标。仅在视频里看到了意外变光或变色，请选“否”，并在下方描述实际变化。</small>
+<label>实际观察：请描述开始、过程、结尾，以及色偏或无法确认之处<textarea id="description"></textarea></label>
+<button id="save">保存填写结果</button><p id="message" role="status" aria-live="polite"></p>
+<small>随时可以保存。条件未齐或选择有冲突时保存为草稿，保留原答案；完整、一致的记录才用于确认观察。切换素材会暂存本段填写。</small>
+<details id="exportPanel"><summary>没有收到下载文件？展开复制记录</summary><textarea id="exportText" readonly aria-label="可复制的完整记录"></textarea><button id="copy">复制完整记录</button></details>
+<small>草稿不是已通过观察，不会生成资格、修复候选或生产通过记录。测试演示和程序代填不可作为实际观看。</small></section></main>
+<script>
+'use strict';
+const DATA=/*COLLECTION_DATA*/null;
+const $=id=>document.getElementById(id), v=$('video');
+let current=null, recording=false, playback=null, remotePlayback=null, started=0, last=-1, shown=null, sessionNumber=0;
+const drafts=new Map();
+function formValues(){return {reviewer:$('reviewer').value,description:$('description').value,natural_label:$('label').value,
+  axis:$('axis').value,target_reference_confirmed:$('target').checked,subject_structure_intact:nullable('structure'),
+  motion_intact:nullable('motion'),intentional_lighting_change:nullable('lighting'),viewer_confirmed_complete:$('viewerComplete').checked};}
+function draftKey(){return 'vco06-observer-draft-v2:'+JSON.stringify([DATA.collection,current.case_id,current.video,current.reference]);}
+function remember(){if(!current||!playback)return;const value={form:formValues(),playback:JSON.parse(JSON.stringify(playback)),remote_playback:JSON.parse(JSON.stringify(remotePlayback))};
+  drafts.set(draftKey(),value);try{globalThis.localStorage?.setItem(draftKey(),JSON.stringify(value));}catch(e){/* Export still works without browser storage. */}}
+function restore(){let value=drafts.get(draftKey());if(!value){try{value=JSON.parse(globalThis.localStorage?.getItem(draftKey())||'null');}catch(e){value=null;}}
+  if(!value||!value.form)return false;const f=value.form;
+  for(const [id,key] of [['reviewer','reviewer'],['description','description'],['label','natural_label'],['axis','axis']])
+    if(typeof f[key]==='string')$(id).value=f[key];
+  $('target').checked=f.target_reference_confirmed===true;
+  for(const [id,key] of [['structure','subject_structure_intact'],['motion','motion_intact'],['lighting','intentional_lighting_change']])
+    $(id).value=typeof f[key]==='boolean'?String(f[key]):'';
+  if(value.playback&&typeof value.playback==='object')playback=value.playback;
+  if(value.remote_playback&&typeof value.remote_playback==='object')remotePlayback=value.remote_playback;
+  $('viewerComplete').checked=f.viewer_confirmed_complete===true;
+  $('viewerComplete').disabled=!remotePlayback?.ended_event;
+  return true;}
+function defaults(){return {completed:false,frames:49,fps:'16/1',covered_frames:[],frame_times:[],started_at:null,ended_at:null,elapsed_seconds:0,playback_rate:1,visible:true,interruptions:[]};}
+function remoteDefaults(){return {ended_event:false,media_duration:null,end_media_time:null,played_ranges:[],video_sha256:current?.video?.sha256??null,viewer_confirmed_complete:false};}
+function invalidate(reason){if(recording&&!remotePlayback?.ended_event){playback.interruptions.push(reason);playback.completed=false;$('progress').textContent='本次记录不完整：'+reason;remember();}}
+function load(){remember();sessionNumber++;recording=false;v.pause();current=DATA.cases[Number($('cases').value)];playback=defaults();remotePlayback=remoteDefaults();last=-1;shown=null;
+  $('start').disabled=false;
+  v.src=current.video_url;$('ref').src=current.reference_url;$('progress').textContent='尚未播放';
+  for(const id of ['label','axis','structure','motion','lighting']) $(id).value=id==='label'?'unverified':'';
+  $('target').checked=false;$('viewerComplete').checked=false;$('viewerComplete').disabled=true;$('description').value='';$('message').textContent='';$('exportText').value='';
+  if(restore()){$('message').textContent='已恢复本段填写，答案未改动。';$('progress').textContent=playback.completed?'已恢复此前完整播放记录':'已恢复草稿，完整播放尚未确认';}}
+if(!DATA||!DATA.cases.length){$('progress').textContent='尚无可播放的新视频';$('start').disabled=true;$('save').disabled=true;}
+else{DATA.cases.forEach((c,i)=>{let o=document.createElement('option');o.value=i;o.textContent=(c.split==='development'?'开发集':'留出集')+' · '+c.case_id;$('cases').append(o);});load();}
+$('cases').onchange=load;
+for(const id of ['reviewer','description','label','axis','target','structure','motion','lighting','viewerComplete']){
+  $(id).addEventListener('input',remember);$(id).addEventListener('change',remember);}
+globalThis.addEventListener?.('beforeunload',remember);
+if('requestVideoFrameCallback' in v){const tick=(now,meta)=>{shown={source:v.currentSrc,time:meta.mediaTime};if(recording){let i=Math.round(meta.mediaTime*16);
+  if(i>=0&&i<49&&i!==last){if(i<last)invalidate('帧时间倒退');playback.covered_frames.push(i);playback.frame_times.push(meta.mediaTime);last=i;
+    $('progress').textContent='实际展示 '+playback.covered_frames.length+' / 49帧';}}
+  v.requestVideoFrameCallback(tick);};v.requestVideoFrameCallback(tick);}
+else{$('progress').textContent='当前浏览器未提供逐帧回调；完整观看后可使用本人远程观看确认';}
+$('start').onclick=async()=>{const attempt=++sessionNumber,caseAtStart=current;recording=false;v.pause();v.playbackRate=1;$('start').disabled=true;
+  try{
+  if(v.readyState<3){await new Promise((resolve,reject)=>{v.addEventListener('canplay',resolve,{once:true});v.addEventListener('error',()=>reject(Error('视频加载失败')),{once:true});});}
+  if(attempt!==sessionNumber||current!==caseAtStart)return;
+  if(v.currentTime!==0){await new Promise(resolve=>{v.addEventListener('seeked',resolve,{once:true});v.currentTime=0;});}
+  if(attempt!==sessionNumber||current!==caseAtStart)return;
+  playback=defaults();remotePlayback=remoteDefaults();$('viewerComplete').checked=false;$('viewerComplete').disabled=true;
+  last=-1;started=performance.now();playback.started_at=new Date().toISOString();recording=true;
+  // A preloaded paused frame may already have been presented. Keep its actual
+  // callback evidence instead of requiring the compositor to present it twice.
+  if(shown&&shown.source===v.currentSrc&&v.currentTime===0&&Math.abs(shown.time)<.01&&!document.hidden){
+    playback.covered_frames.push(0);playback.frame_times.push(shown.time);last=0;}
+  if(document.hidden){playback.visible=false;invalidate('页面不可见');}remember();await v.play();
+  }catch(e){if(attempt!==sessionNumber||current!==caseAtStart)return;invalidate('播放失败');recording=false;$('progress').textContent=String(e);remember();}
+  finally{if(attempt===sessionNumber&&current===caseAtStart)$('start').disabled=false;}};
+v.addEventListener('seeking',()=>invalidate('跳转'));
+v.addEventListener('pause',()=>{if(!v.ended&&v.paused!==false)invalidate('暂停');});
+for(const event of ['waiting','stalled','error'])v.addEventListener(event,()=>invalidate(event));
+v.addEventListener('ratechange',()=>{if(recording&&!remotePlayback?.ended_event)playback.playback_rate=v.playbackRate;if(v.playbackRate!==1)invalidate('倍速');});
+document.addEventListener('visibilitychange',()=>{if(recording&&!remotePlayback?.ended_event&&document.hidden){playback.visible=false;invalidate('页面隐藏');}});
+function strictComplete(){return playback.covered_frames.length===49&&playback.covered_frames.every((x,i)=>x===i)&&
+  playback.frame_times.length===49&&playback.frame_times.every((t,i)=>Number.isFinite(t)&&Math.abs(t-i/16)<=.01)&&
+  !playback.interruptions.length&&playback.visible&&playback.playback_rate===1&&playback.elapsed_seconds>=49/16-.03;}
+function remoteErrors(f){const errors=[],r=remotePlayback,p=playback,finite=x=>typeof x==='number'&&Number.isFinite(x);
+  if(!r?.ended_event)errors.push('尚无本段播放结束记录');
+  if(!r||!finite(r.media_duration)||Math.abs(r.media_duration-49/16)>.01||!finite(r.end_media_time)||Math.abs(r.end_media_time-49/16)>.01)
+    errors.push('原速完整时长尚未成立');
+  const ranges=r?.played_ranges;
+  if(!Array.isArray(ranges)||ranges.length!==1||!Array.isArray(ranges[0])||ranges[0].length!==2||
+      !ranges[0].every(finite)||ranges[0][0]<0||ranges[0][0]>.01||ranges[0][1]<49/16-.01||ranges[0][1]>49/16+.01)
+    errors.push('浏览器实际播放时间范围未连续覆盖整段');
+  const wall=(Date.parse(p.ended_at)-Date.parse(p.started_at))/1000;
+  if(!finite(p.elapsed_seconds)||p.elapsed_seconds<49/16-.03||!finite(wall)||wall<49/16-.03||Math.abs(wall-p.elapsed_seconds)>.25)
+    errors.push('实际观看经过时间不足或不一致');
+  // stalled reports network fetch progress, not a presentation pause. Preserve
+  // it verbatim; waiting/pause/seeking/error still reject remote confirmation.
+  const interruptions=p.interruptions.filter(event=>event!=='stalled');
+  if(!p.visible||p.playback_rate!==1||interruptions.length)errors.push('本次存在播放中断：'+(interruptions.join('、')||'不可见或非原速'));
+  if(r?.video_sha256!==current?.video?.sha256)errors.push('观看记录与本段视频不匹配');
+  if(!f.viewer_confirmed_complete)errors.push('请在确实看清整段后勾选本人远程观看确认；否则可先保存草稿');
+  return errors;}
+function playbackSummary(){const missing=Array.from({length:49},(_,i)=>i).filter(i=>!playback.covered_frames.includes(i));
+  if(playback.completed)return '整段49帧播放记录完成';
+  return '播放结束，实际逐帧回调 '+playback.covered_frames.length+' / 49；'+(missing.length?'未记录帧（从0起）：'+missing.join('、')+'。':'')+
+    (playback.interruptions.length?'浏览器事件：'+playback.interruptions.join('、')+'。':'')+
+    (remoteErrors({viewer_confirmed_complete:true}).length?'完整时间范围尚未成立，可保存草稿查看具体原因。':'完整时间范围已记录；若本人看清整段，可勾选远程观看确认后保存。');}
+v.addEventListener('ended',()=>{if(!recording||remotePlayback.ended_event)return;
+  const session=playback,caseAtEnd=current,proof=remotePlayback,deadline=performance.now()+1000;
+  // Capture the actual native end event, not the later callback settlement time.
+  playback.ended_at=new Date().toISOString();playback.elapsed_seconds=(performance.now()-started)/1000;
+  remotePlayback.ended_event=true;remotePlayback.media_duration=v.duration;remotePlayback.end_media_time=v.currentTime;
+  try{remotePlayback.played_ranges=Array.from({length:v.played.length},(_,i)=>[v.played.start(i),v.played.end(i)]);}catch(e){remotePlayback.played_ranges=[];}
+  remember();$('progress').textContent='播放结束，正在汇总实际逐帧回调…';
+  const settle=()=>{if(!recording||playback!==session||current!==caseAtEnd||remotePlayback!==proof)return;
+    if(!strictComplete()&&performance.now()<deadline){setTimeout(settle,50);return;}
+    recording=false;playback.completed=strictComplete();$('viewerComplete').disabled=false;
+    $('progress').textContent=playbackSummary();remember();};settle();});
+function nullable(id){return $(id).value===''?null:$(id).value==='true';}
+function confirmationErrors(f){const errors=[];
+  if(recording)errors.push('本段仍在播放');if(!f.reviewer.trim())errors.push('观察者署名尚未填写');if(!f.description.trim())errors.push('观察文字尚未填写');
+  if(f.natural_label!=='unverified'&&!playback.completed)errors.push(...remoteErrors(f));
+  if(f.natural_label==='mild_color_bias'&&!['exposure:negative','wb_r:negative','wb_g:positive','wb_g:negative'].includes(f.axis))errors.push('色偏修正轴尚未确定');
+  if(f.natural_label!=='mild_color_bias'&&f.axis!=='')errors.push('整体判断与修正轴选择不一致，原选择保留在草稿中');
+  if(['neutral','mild_color_bias'].includes(f.natural_label)){
+    if(!f.target_reference_confirmed)errors.push('目标颜色：尚未确认原参考图为目标');
+    if(f.subject_structure_intact!==true)errors.push('主体结构：当前选择为'+(f.subject_structure_intact===false?'不完整':'未确认'));
+    if(f.motion_intact!==true)errors.push('动作过程：当前选择为'+(f.motion_intact===false?'不完整':'未确认'));
+    if(f.intentional_lighting_change!==false)errors.push('光照意图：当前选择为'+(f.intentional_lighting_change===true?'存在合理光照变化':'未确认'));}
+  return errors;}
+function downloadRecord(raw,name){let a=null,url=null;try{
+  const blob=new Blob([raw],{type:'application/json'});url=URL.createObjectURL(blob);a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();return true;
+  }catch(e){return false;}finally{a?.remove();if(url)setTimeout(()=>URL.revokeObjectURL(url),60000);}}
+$('save').onclick=()=>{try{remember();const f=formValues(),errors=confirmationErrors(f),label=f.natural_label,pair=f.axis.split(':');
+  const row={schema_version:1,kind:'natural_material_observation_v1',case_id:current.case_id,collection:DATA.collection,video:current.video,reference:current.reference,
+    reviewer:f.reviewer.trim(),review_method:'human_video',reviewed_at:new Date().toISOString(),playback,
+    natural_label:label,operation:label==='mild_color_bias'?pair[0]:null,correction_direction:label==='mild_color_bias'?pair[1]:null,
+    target_reference_confirmed:f.target_reference_confirmed,subject_structure_intact:f.subject_structure_intact,motion_intact:f.motion_intact,
+    intentional_lighting_change:f.intentional_lighting_change,description:f.description.trim()};
+  const useRemote=label!=='unverified'&&!playback.completed&&!errors.length;
+  if(useRemote){row.schema_version=2;row.kind='natural_material_observation_remote_v2';row.review_method='human_remote_video';
+    row.remote_playback={...remotePlayback,viewer_confirmed_complete:f.viewer_confirmed_complete};}
+  const saved=errors.length?{schema_version:1,kind:'natural_material_observation_draft_v1',case_id:current.case_id,
+    collection:DATA.collection,video:current.video,reference:current.reference,saved_at:new Date().toISOString(),
+    form:f,playback,remote_playback:{...remotePlayback,viewer_confirmed_complete:f.viewer_confirmed_complete},validation_errors:errors,ready_for_propose:false}:row;
+  const raw=JSON.stringify(saved,null,2)+'\n';$('exportText').value=raw;$('exportPanel').open=true;
+  const requested=downloadRecord(raw,current.case_id+(errors.length?'-draft-':'-observation-')+Date.now()+'.json');
+  $('message').textContent=(errors.length?'已导出填写草稿，原答案未改动。未满足确认条件：'+errors.join('；')+'。':
+    useRemote?'本人远程观看声明与实际时间记录已导出；逐帧缺项保留，尚未通过资格验收。':'完整观察记录已导出。')+
+    (requested?'已请求下载；也可复制下方完整记录。':'浏览器未启动下载，请复制下方完整记录。');
+}catch(e){$('message').textContent=e.message;}};
+$('copy').onclick=async()=>{const text=$('exportText').value;if(!text){$('message').textContent='请先保存填写结果以生成记录。';return;}
+  try{if(!globalThis.navigator?.clipboard?.writeText)throw Error('clipboard unavailable');await navigator.clipboard.writeText(text);$('message').textContent='已复制完整记录。';}
+  catch(e){$('exportText').focus();$('exportText').select();$('message').textContent='已选中完整记录，请按 Ctrl+C 复制。';}};
+</script></html>

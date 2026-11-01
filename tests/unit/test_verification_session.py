@@ -7,6 +7,19 @@ import pytest
 from video_ai.runtime import manifest
 
 
+def test_validation_memo_is_namespaced_nested_and_cleared_after_exception():
+    from video_ai.runtime.verification import validation_memo
+    assert validation_memo('admission') is None
+    with pytest.raises(RuntimeError,match='end memo operation'):
+        with session():
+            memo=validation_memo('admission');memo['authenticated']='captured bytes'
+            assert validation_memo('different')=={} and validation_memo('different') is not memo
+            with session():assert validation_memo('admission') is memo
+            raise RuntimeError('end memo operation')
+    assert validation_memo('admission') is None
+    with session():assert validation_memo('admission')=={}
+
+
 def session():
     # The missing boundary is itself the initial regression.
     assert hasattr(manifest, 'validation_session'), 'operation-scoped protected verification is missing'
@@ -186,3 +199,60 @@ def test_every_windows_digest_blocks_writers_even_without_cache(tmp_path, monkey
         monkeypatch.setattr(hashlib, 'file_digest', guarded)
         assert manifest.hash_file(path).sha256 == hashlib.sha256(b'original').hexdigest()
     path.write_bytes(b'changed!')
+
+
+def test_writable_validation_rehashes_owned_bytes_and_locks_only_during_each_digest(tmp_path,monkeypatch):
+    from video_ai.runtime.verification import writable_validation_session
+    from video_ai.runtime.timeline_checks import _again
+    from video_ai.runtime._whole_scene_admission import EvidenceReader
+    from video_ai.runtime.production_state import ProductionRefused
+    root=tmp_path/'run';root.mkdir()
+    path=root/'owned.bin';path.write_bytes(b'original')
+    calls=[];digest=hashlib.file_digest
+    def counted(file,algorithm):
+        calls.append(1)
+        if os.name=='nt':
+            with pytest.raises(OSError):path.write_bytes(b'during!!')
+        return digest(file,algorithm)
+    monkeypatch.setattr(hashlib,'file_digest',counted)
+    with writable_validation_session(root):
+        original=manifest.hash_file(path);stamp=path.stat()
+        assert manifest.hash_file(path).sha256==original.sha256 and len(calls)==2
+        guard=EvidenceReader();guard.capture(path)
+        assert len(calls)==3
+        path.write_bytes(b'changed!');os.utime(path,ns=(stamp.st_atime_ns,stamp.st_mtime_ns))
+        with pytest.raises(OSError,match='changed'):_again({'owned':original})
+        with pytest.raises(ProductionRefused,match='captured bytes'):guard.verify()
+        assert len(calls)==5
+
+
+@pytest.mark.skipif(os.name!='nt',reason='Windows mandatory sharing')
+def test_nested_writable_roots_release_only_owned_handles_and_restore_after_exception(tmp_path):
+    from video_ai.runtime.verification import writable_validation_session
+    first_root=tmp_path/'first';second_root=tmp_path/'second'
+    first_root.mkdir();second_root.mkdir()
+    first=first_root/'staging.bin';first.write_bytes(b'first')
+    second=second_root/'staging.bin';second.write_bytes(b'second')
+    external=tmp_path/'external.safetensors';external.write_bytes(b'external')
+    with session():
+        # Entering a writer from an outer read safely releases an already-held
+        # owned handle, without releasing any external immutable input.
+        manifest.hash_file(first);manifest.hash_file(second);manifest.hash_file(external)
+        with writable_validation_session(first_root):
+            manifest.hash_file(first)
+            first_target=first.with_name('promoted.bin');os.rename(first,first_target)
+            with pytest.raises(RuntimeError,match='nested failure'):
+                with writable_validation_session(second_root):
+                    manifest.hash_file(second)
+                    second.write_bytes(b'edited')
+                    raise RuntimeError('nested failure')
+            # The nested exclusion has ended; the parent root still permits
+            # its own promotion, while the other root is read-protected again.
+            manifest.hash_file(second)
+            with pytest.raises(OSError):second.write_bytes(b'blocked')
+            manifest.hash_file(first_target)
+            final=first_target.with_name('final.bin');os.rename(first_target,final)
+            with pytest.raises(OSError):external.write_bytes(b'blocked')
+        manifest.hash_file(final)
+        with pytest.raises(OSError):final.write_bytes(b'blocked')
+    final.write_bytes(b'after');second.write_bytes(b'after');external.write_bytes(b'after')

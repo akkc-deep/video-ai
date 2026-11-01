@@ -1,0 +1,287 @@
+Task1 fix round1/5; diff against original reviewed54-test file snapshots; .git read-only.
+git : warning: in the working copy of 'D:\VideoSi\projects\video-ai\vco07-diagnostics\core-review-base-54\core.py.bin',
+ LF will be replaced by CRLF the next time Git touches it
+所在位置 行:2 字符: 670
++ ... reFixDiff = git --no-pager diff --no-index --text --unified=10 -- $co ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'D:\code\py\video-ai\src\video_ai\runtime\_continuity_byte_guard.py', LF will be replac
+ed by CRLF the next time Git touches it
+diff --git "a/D:\\VideoSi\\projects\\video-ai\\vco07-diagnostics\\core-review-base-54\\core.py.bin" "b/D:\\code\\py\\video-ai\\src\\video_ai\\runtime\\_continuity_byte_guard.py"
+index 4561e53..d6e486a 100644
+--- "a/D:\\VideoSi\\projects\\video-ai\\vco07-diagnostics\\core-review-base-54\\core.py.bin"
++++ "b/D:\\code\\py\\video-ai\\src\\video_ai\\runtime\\_continuity_byte_guard.py"
+@@ -66,43 +66,57 @@ def _check_time(deadline):
+         raise ValueError('byte proof verification interval exceeded')
+ 
+ 
+ def _assessment_paths(root, deadline):
+     # glob('*/assessment.json') can enter a junction before yielding a match.
+     # Check the first level before asking pathlib to enumerate the second.
+     from .scene_revision_records import safe_path
+     for directory in root.glob('*'):
+         _check_time(deadline)
+         safe_path(directory, root)
+-        if directory.is_dir():
++        _check_time(deadline)
++        is_directory = directory.is_dir()
++        _check_time(deadline)
++        if is_directory:
+             yield from directory.glob('assessment.json')
++    _check_time(deadline)
+ 
+ 
+ def _reject_redirected_descendants(root, deadline):
+     # EvidenceReader checks matching files and their ancestors, but an empty
+-    # redirected directory has no matching file. Check each entry's own lstat
+-    # before rglob can descend; do not repeat every ancestor check per sibling.
+-    for path in root.rglob('*'):
+-        _check_time(deadline)
+-        metadata = path.lstat()
+-        if (stat.S_ISLNK(metadata.st_mode)
+-                or getattr(metadata, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT):
+-            raise ValueError('redirected byte proof inventory path')
++    # redirected directory has no matching file. Prune exclusions before the
++    # top-down walk descends, and check each included entry before descent.
++    excluded = {'.git', '__pycache__'}
++    if not excluded.intersection(root.parts):
++        for directory, folders, files in root.walk():
++            _check_time(deadline)
++            folders[:] = [name for name in folders if name not in excluded]
++            for name in (*folders, *files):
++                if name in excluded:
++                    continue
++                _check_time(deadline)
++                metadata = (directory / name).lstat()
++                _check_time(deadline)
++                if (stat.S_ISLNK(metadata.st_mode)
++                        or getattr(metadata, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT):
++                    raise ValueError('redirected byte proof inventory path')
++    _check_time(deadline)
+ 
+ 
+ def _scan(spec, deadline):
+     from .scene_revision_records import safe_path
+     root = _safe(spec.path)
+     _check_time(deadline)
+     if spec.kind == 'whole_files':
+         from ._whole_scene_admission import EvidenceReader
+         _reject_redirected_descendants(root, deadline)
++        _check_time(deadline)
+         # Preserve the admission scanner's exclusions, matching, and same-scan
+         # ancestor optimization. The temporary reader never enters the proof.
+         paths = EvidenceReader().inventory(root, spec.pattern or '*')
+     elif spec.kind == 'children':
+         paths = root.iterdir()
+     elif spec.kind == 'json_direct':
+         paths = root.glob('*.json')
+     elif spec.kind == 'assessment_paths':
+         paths = _assessment_paths(root, deadline)
+     elif spec.kind == 'continuity_sources':
+@@ -110,30 +124,38 @@ def _scan(spec, deadline):
+     else:
+         paths = root.rglob('*')
+     items = []
+     for path in paths:
+         _check_time(deadline)
+         path = Path(path)
+         # EvidenceReader already checks matched files and distinct ancestors
+         # within its scan; do not undo that optimization with repeated walks.
+         if spec.kind != 'whole_files':
+             safe_path(path, root)
++            _check_time(deadline)
+         if spec.kind == 'nonempty_files':
+-            if not path.is_file() or path.stat().st_size <= 0:
++            is_file = path.is_file()
++            _check_time(deadline)
++            if not is_file:
++                continue
++            size = path.stat().st_size
++            _check_time(deadline)
++            if size <= 0:
+                 continue
+         elif spec.kind == 'revision_json' and not path.match('*.json'):
+             continue
+         items.append(str(path))
+         if len(items) > len(spec.expected):
+             raise ValueError('byte proof directory inventory changed: ' + spec.path)
+     _check_time(deadline)
+     _safe(root)
++    _check_time(deadline)
+     return tuple(sorted(items))
+ 
+ 
+ @dataclass(frozen=True, slots=True)
+ class ByteGuard:
+     """A data-only snapshot; verify never changes its original baseline."""
+     files: tuple[_File, ...]
+     inventories: tuple[_Inventory, ...]
+     absences: tuple[str, ...]
+ 
+@@ -154,41 +176,47 @@ class ByteGuard:
+         return len(self.absences)
+ 
+     def verify(self):
+         from .manifest import hash_file
+         deadline = monotonic() + 300.0
+         token = _captures.set(())
+         try:
+             for baseline in self.files:
+                 _check_time(deadline)
+                 path = _safe(baseline.path)
++                _check_time(deadline)
+                 before = path.stat()
+                 if (not stat.S_ISREG(before.st_mode)
+                         or _ownership(before) != baseline.ownership
+                         or (before.st_size, before.st_mtime_ns) != (baseline.bytes, baseline.mtime_ns)):
+                     raise ValueError('byte proof file ownership or metadata changed: ' + baseline.path)
++                _check_time(deadline)
+                 actual = hash_file(path)
+                 _check_time(deadline)
+-                after = _safe(path).stat()
++                path = _safe(path)
++                _check_time(deadline)
++                after = path.stat()
+                 if ((actual.path, actual.bytes, actual.mtime_ns, actual.sha256)
+                         != (baseline.path, baseline.bytes, baseline.mtime_ns, baseline.sha256)
+                         or _ownership(after) != baseline.ownership
+                         or (after.st_size, after.st_mtime_ns) != (baseline.bytes, baseline.mtime_ns)):
+                     raise ValueError('byte proof file changed: ' + baseline.path)
+             for spec in self.inventories:
+                 _check_time(deadline)
+                 if _scan(spec, deadline) != spec.expected:
+                     raise ValueError('byte proof directory inventory changed: ' + spec.path)
+                 _check_time(deadline)
+             for name in self.absences:
+                 _check_time(deadline)
+-                if _safe(name).exists():
++                path = _safe(name)
++                _check_time(deadline)
++                if path.exists():
+                     raise ValueError('byte proof absent path appeared: ' + name)
+             _check_time(deadline)
+         finally:
+             _captures.reset(token)
+ 
+ 
+ class Capture:
+     """Synchronized, bounded builder, inaccessible from the emitted proof."""
+     def __init__(self, maximum_files, maximum_inventory_entries):
+         self._maximum_files = maximum_files
+
+git : warning: in the working copy of 'D:\VideoSi\projects\video-ai\vco07-diagnostics\core-review-base-54\tests.py.bin'
+, LF will be replaced by CRLF the next time Git touches it
+所在位置 行:2 字符: 670
++ ... reFixDiff = git --no-pager diff --no-index --text --unified=10 -- $co ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'D:\code\py\video-ai\tests\unit\test_continuity_byte_guard.py', LF will be replaced by 
+CRLF the next time Git touches it
+diff --git "a/D:\\VideoSi\\projects\\video-ai\\vco07-diagnostics\\core-review-base-54\\tests.py.bin" "b/D:\\code\\py\\video-ai\\tests\\unit\\test_continuity_byte_guard.py"
+index b915039..0dcb2b8 100644
+--- "a/D:\\VideoSi\\projects\\video-ai\\vco07-diagnostics\\core-review-base-54\\tests.py.bin"
++++ "b/D:\\code\\py\\video-ai\\tests\\unit\\test_continuity_byte_guard.py"
+@@ -382,10 +382,98 @@ def test_glob_inventory_accepts_nonexistent_root(tmp_path, kind):
+         module.observe_inventory(tmp_path / 'nonexistent', kind, [])
+     capture.finish().verify()
+ 
+ 
+ def test_nonempty_inventory_ignores_new_empty_regular_file(tmp_path):
+     module = importlib.import_module('video_ai.runtime._continuity_byte_guard')
+     with module.capture_reads() as capture:
+         module.observe_inventory(tmp_path, 'nonempty_files', [])
+     (tmp_path / 'empty').touch()
+     capture.finish().verify()
++
++
++@pytest.mark.parametrize('excluded', ['.git', '__pycache__'])
++def test_whole_inventory_ignores_redirects_below_excluded_subtrees(tmp_path, excluded):
++    module = importlib.import_module('video_ai.runtime._continuity_byte_guard')
++    root, target = tmp_path / 'inventory', tmp_path / 'elsewhere'
++    root.mkdir()
++    target.mkdir()
++    keep = root / 'keep.json'
++    keep.write_bytes(b'unchanged')
++    with module.capture_reads() as capture:
++        module.observe_inventory(root, 'whole_files', [keep])
++    excluded_root = root / 'nested' / excluded
++    excluded_root.mkdir(parents=True)
++    directory_link(excluded_root / 'redirect', target)
++    capture.finish().verify()
++
++
++@pytest.mark.parametrize('stage', ['path', 'stat'])
++def test_expired_pre_hash_metadata_does_not_start_hash(evidence, monkeypatch, stage):
++    module = importlib.import_module('video_ai.runtime._continuity_byte_guard')
++    import video_ai.runtime.manifest as manifest
++    guard = proof(module, evidence)
++    ticks = [0.0]
++    monkeypatch.setattr(module, 'monotonic', lambda: ticks[0])
++    original_safe, original_stat = module._safe, Path.stat
++    if stage == 'path':
++        def slow_safe(path):
++            result = original_safe(path)
++            ticks[0] += 301.0
++            return result
++        monkeypatch.setattr(module, '_safe', slow_safe)
++    else:
++        def slow_stat(path, *args, **kwargs):
++            result = original_stat(path, *args, **kwargs)
++            if path == evidence:
++                ticks[0] += 301.0
++            return result
++        monkeypatch.setattr(Path, 'stat', slow_stat)
++    original_hash, hashes = manifest.hash_file, []
++    def record_hash(path):
++        hashes.append(path)
++        return original_hash(path)
++    monkeypatch.setattr(manifest, 'hash_file', record_hash)
++    with pytest.raises(ValueError, match='interval'):
++        guard.verify()
++    assert hashes == []
++
++
++@pytest.mark.parametrize('stage', ['last_metadata', 'empty_scan'])
++def test_expired_whole_prepass_does_not_start_inventory(tmp_path, monkeypatch, stage):
++    module = importlib.import_module('video_ai.runtime._continuity_byte_guard')
++    from video_ai.runtime._whole_scene_admission import EvidenceReader
++    root = tmp_path / 'inventory'
++    root.mkdir()
++    leaf = root / 'last.json'
++    expected = []
++    if stage == 'last_metadata':
++        leaf.write_bytes(b'unchanged')
++        expected.append(leaf)
++    with module.capture_reads() as capture:
++        module.observe_inventory(root, 'whole_files', expected)
++    ticks = [0.0]
++    monkeypatch.setattr(module, 'monotonic', lambda: ticks[0])
++    if stage == 'last_metadata':
++        original_lstat = Path.lstat
++        def slow_lstat(path, *args, **kwargs):
++            result = original_lstat(path, *args, **kwargs)
++            if path == leaf:
++                ticks[0] += 301.0
++            return result
++        monkeypatch.setattr(Path, 'lstat', slow_lstat)
++    else:
++        original_scandir = os.scandir
++        def slow_scandir(path):
++            result = original_scandir(path)
++            if Path(path) == root:
++                ticks[0] += 301.0
++            return result
++        monkeypatch.setattr(os, 'scandir', slow_scandir)
++    original_inventory, inventories = EvidenceReader.inventory, []
++    def record_inventory(self, folder, pattern='*'):
++        inventories.append(folder)
++        return original_inventory(self, folder, pattern)
++    monkeypatch.setattr(EvidenceReader, 'inventory', record_inventory)
++    with pytest.raises(ValueError, match='interval'):
++        capture.finish().verify()
++    assert inventories == []
+

@@ -1,8 +1,10 @@
-"""Task-4-only desktop exceptions explicitly approved by the user on 2026-10-04."""
+"""Verified desktop exceptions, including explicit run-scoped user approvals."""
+from contextlib import contextmanager
+from contextvars import ContextVar
 import ctypes
 from ctypes import wintypes
 from fnmatch import fnmatchcase
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import subprocess
 import xml.etree.ElementTree as ET
 from uuid import uuid4
@@ -39,6 +41,28 @@ APPROVED_PATHS=(
     'c:/program files (x86)/msi/*/ledkeeper2.exe',
 )
 PROTECTED_DESKTOP_NAMES={'dwm.exe','applicationframehost.exe','msedgewebview2.exe','code.exe'}
+_desktop_approval=ContextVar('video_ai_desktop_approval',default=None)
+
+
+@contextmanager
+def desktop_approval_scope(run, paths, authorization):
+    """Allow exact observed desktop executables only within this run invocation."""
+    if not isinstance(authorization,str) or not authorization.strip():
+        raise ValueError('explicit desktop authorization is required')
+    if not isinstance(paths,(list,tuple)) or not paths:
+        raise ValueError('exact desktop executable paths are required')
+    normalized=[]
+    for value in paths:
+        if not isinstance(value,str):raise ValueError('desktop path must be text')
+        spelling=value.replace('\\','/').casefold()
+        path=PureWindowsPath(spelling)
+        if (not path.is_absolute() or path.suffix!='.exe' or '..' in path.parts
+                or any(c in spelling for c in '*?[]')):
+            raise ValueError('desktop approval requires exact absolute executable paths')
+        normalized.append(spelling)
+    token=_desktop_approval.set(dict(run=str(Path(run).resolve()),paths=sorted(set(normalized)),authorization=authorization))
+    try:yield
+    finally:_desktop_approval.reset(token)
 
 
 def approved_desktop(path, process_type):
@@ -113,6 +137,8 @@ def process_names():
 def desktop_policy(run, sample):
     sample=dict(sample)
     if sample.get('status')!='verified':return sample
+    approval=_desktop_approval.get()
+    if approval is not None and approval['run']!=str(Path(run).resolve()):approval=None
     approved=[]
     evidence=[]
     try:
@@ -124,6 +150,8 @@ def desktop_policy(run, sample):
             try:
                 path=process_image(pid)
                 allowed=approved_desktop(path,process_type)
+                if not allowed and approval is not None:
+                    allowed=process_type in ('G','C+G') and path.replace('\\','/').casefold() in approval['paths']
             except PermissionError:
                 name=process_names().get(pid)
                 allowed=name in PROTECTED_DESKTOP_NAMES and process_type in ('G','C+G')
@@ -137,5 +165,7 @@ def desktop_policy(run, sample):
     sample['external_pids']=sorted(set(sample.get('external_pids',[]))-set(approved))
     sample['external_gpu_task']=bool(sample['external_pids'])
     sample['gpu_free_mib']=sample.get('gpu_total_mib',0)-sample.get('gpu_used_mib',0)
-    RunLogger(run).save_json('resources/desktop-policy-'+uuid4().hex+'.json',dict(identities=evidence,result=sample,approval='User 2026-10-04: allow verified observed desktop applications'))
+    record=dict(identities=evidence,result=sample,approval='User 2026-10-04: allow verified observed desktop applications')
+    if approval is not None:record['additional_approval']=approval
+    RunLogger(run).save_json('resources/desktop-policy-'+uuid4().hex+'.json',record)
     return sample

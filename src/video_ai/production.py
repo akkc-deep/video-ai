@@ -289,7 +289,7 @@ def _make_legacy_video(config=None, *, script=None, text=None, run_dir=None, out
 
 def make_video(config=None, *, script=None, text=None, run_dir=None, output_path=None, cpu_planner=None, image_model=None,
                image_selection=None, reference_settings=None, email_settings=None, clip_observation=None,
-               final_observation=None, retry_email=None, revision=None, publish=False):
+               final_observation=None, retry_email=None, revision=None, publish=False, continuity_review=None):
     """Dispatch by frozen strategy; explicit consumption never advances generation."""
     from .runtime.scene_pipeline_records import ScenePipelineResult,error
     from .runtime.scene_revision_records import revision_scope
@@ -298,7 +298,7 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
         if type(publish) is not bool:raise ProductionRefused('publish must be bool')
         if sum(v is not None for v in (script,text,run_dir))!=1:raise ProductionRefused('provide exactly one of script, text, or run_dir')
         actions={k:v for k,v in dict(image_selection=image_selection,clip_observation=clip_observation,
-            final_observation=final_observation,retry_email=retry_email,revision=revision).items() if v is not None}
+            continuity_review=continuity_review,final_observation=final_observation,retry_email=retry_email,revision=revision).items() if v is not None}
         if publish:actions['publish']=True
         if len(actions)>1:raise ProductionRefused('selection, observations, email retry, revision and publish are mutually exclusive')
         if actions and run_dir is None:raise ProductionRefused('explicit scene action requires run_dir')
@@ -323,7 +323,7 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
             chosen=config if isinstance(config,ProjectConfig) else load_config(resolve_cli_path(str(config),Path.cwd()) if config is not None else DEFAULT_CONFIG)
             modern=chosen.production_strategy=='paragraph_jimeng_v1'
         if not modern:
-            if any(v is not None for v in (reference_settings,email_settings,clip_observation,final_observation,retry_email)) or publish:
+            if any(v is not None for v in (reference_settings,email_settings,clip_observation,continuity_review,final_observation,retry_email)) or publish:
                 raise ProductionRefused('new scene actions require paragraph_jimeng_v1')
             return _make_legacy_video(config,script=script,text=text,run_dir=run_dir,output_path=output_path,
                 cpu_planner=cpu_planner,image_model=image_model,image_selection=image_selection)
@@ -361,7 +361,7 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
                 raw=raw if frozen is None else None,output_path=output_path,cpu_planner=cpu_planner,image_model=image_model,
                 actions=actions,reference_settings=reference_settings,email_settings=email_settings)
     except (Exception,KeyboardInterrupt) as exc:
-        if not modern and not any(v is not None for v in (reference_settings,email_settings,clip_observation,final_observation,retry_email,revision)) and publish is False:
+        if not modern and not any(v is not None for v in (reference_settings,email_settings,clip_observation,continuity_review,final_observation,retry_email,revision)) and publish is False:
             if isinstance(exc,ConfigError) and isinstance(exc.__cause__ or exc.__context__,OSError):exc=OSError(str(exc))
             return ProductionResult(run_id=run.name if run else None,run_dir=run,
                 status='interrupted' if isinstance(exc,KeyboardInterrupt) else 'blocked' if isinstance(exc,ValueError) else 'failed',error=error(exc))
@@ -386,10 +386,14 @@ def _scene_completed_fast(frozen,actions,reference_settings,email_settings):
         tx=read_json(transaction)
         object_fields(tx,TX_FIELDS,'scene delivery transaction')
         if tx['status'] not in ('publishing','completed'):raise ProductionRefused('invalid delivery transaction status')
+        if set(actions)=={'continuity_review'}:return None
         if actions and set(actions)!={'publish'}:raise ProductionRefused('completed scene run cannot accept new selections or observations')
         if reference_settings is not None or email_settings is not None:raise ProductionRefused('completed scene run cannot change stage settings')
         units,timeline,mode=common_inputs(frozen)
         progress=validate_scene_completed_prefix(frozen,units,timeline)
+        from .runtime.production_scene_pipeline import _continuity_wait
+        waiting=_continuity_wait(frozen,units,timeline)
+        if waiting is not None:return waiting
         if progress['delivery']['status']!='delivered':
             if progress['delivery']['status']=='running' and set(actions)=={'publish'}:return None
             raise ProductionRefused('partial delivery requires explicit publish')
@@ -467,6 +471,9 @@ def _make_scene_video(run,frozen,*,config,script,text,raw,output_path,cpu_planne
                     from .runtime.production_scene_clips import consume_scene_clip_observation
                     result=consume_scene_clip_observation(frozen,units,timeline,saved,paths=paths,logger=logger,lock=held)
                     if result.status=='source_clips_ready':boundary('clip-accepted')
+                elif action=='continuity_review':
+                    from .runtime.production_scene_continuity import consume_scene_continuity_review
+                    result=consume_scene_continuity_review(frozen,units,timeline,saved,paths=paths,logger=logger,lock=held)
                 elif action=='final_observation':
                     from .runtime.production_scene_delivery import consume_scene_final_observation
                     result=consume_scene_final_observation(frozen,units,timeline,saved,paths=paths,logger=logger,lock=held)

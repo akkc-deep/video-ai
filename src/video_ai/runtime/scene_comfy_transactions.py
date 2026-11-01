@@ -360,6 +360,10 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
     completed=validate_scene_submission(store,request,graph)
     if completed is not None: return completed
+    whole=getattr(store,'execution_mode',None)=='whole_scene_v1'
+    if whole and intent is not None:
+        available=datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time()
+        end=min(end,time.monotonic()+available)
     if intent is None:
         prompt_payload(graph,str(uuid4()))
         store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
@@ -382,6 +386,10 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                 input_sha256=request['input_sha256'],parent_sha256=canonical_digest(request['parent']) if request['parent'] is not None else None,
                 attempt_id=str(uuid4()),client_id=cid,output_prefix=_prefix(request),created_at=now())
             store.write(directory/'intent.json',intent); guard()
+            if whole:
+                # The inference clock begins at the durable original intent;
+                # startup has its separate bound and recovery never resets it.
+                end=time.monotonic()+max(0,datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time())
             row=_record_http(store,request,intent,'POST','/prompt',lambda t:client.submit(graph,client_id=cid,timeout=t),remaining(),graph)
             rows.append(row); value=_parse(row)
             if _post_rejected(row):
@@ -413,6 +421,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                     if target is not None:
                         if candidate.get('queue_needs_refresh'):
                             if not service_ready:
+                                if whole: remaining()
                                 guard(); ensure_service(); guard(); service_ready=True
                             if network_failed: time.sleep(min(2,remaining()))
                             try:
@@ -434,6 +443,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                 time.sleep(min(2,remaining()))
             else:
                 if not service_ready:
+                    if whole: remaining()
                     guard(); ensure_service(); guard(); service_ready=True
                 fetched=True
             # Every view is retained. A later success cannot erase a contradiction.

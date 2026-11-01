@@ -7,6 +7,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
+continuity = ["numpy==2.2.6", "opencv-python-headless==4.12.0.88"]
 
 [project.scripts]
 video-ai = "video_ai.cli:main"

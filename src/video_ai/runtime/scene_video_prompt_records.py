@@ -23,9 +23,17 @@ def source_contract_identity(config):
     from .scene_revision_records import stable_bytes
     path = contract_source(config).resolve(strict=True)
     raw = stable_bytes(path,root=path.parent)
-    parse_contract_bytes(raw)
+    contract = parse_contract_bytes(raw)
+    validate_contract_mode(contract, config.raw['scene_rendering'])
     import hashlib
     return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+
+def validate_contract_mode(contract, settings):
+    settings = parse_scene_rendering(settings)
+    if (contract['schema_version'] == 2) != (settings.get('mode') == 'whole_scene_v1'):
+        raise ProductionRefused('prompt schema differs from frozen rendering mode')
+    return contract
 
 
 def load_prompt_contract(frozen):
@@ -48,6 +56,7 @@ def load_prompt_contract(frozen):
     artifact = dict(path=str(path),bytes=len(content),sha256=hashlib.sha256(content).hexdigest())
     if any(artifact[k] != bound[k] for k in artifact): raise ProductionRefused('frozen visual prompt bytes changed')
     value = parse_contract_bytes(content)
+    validate_contract_mode(value, raw['scene_rendering'])
     fresh = hash_file(path)
     if (fresh.bytes,fresh.sha256) != (artifact['bytes'],artifact['sha256']):
         raise ProductionRefused('visual prompt changed while reading')
@@ -64,6 +73,11 @@ def prompt_binding_context(frozen,contract,bible,plan,wan_inputs):
     while True:
         expected = dict(scene_plan_sha256=canonical_digest(thaw(plan)),
             visual_bible_sha256=canonical_digest(thaw(bible)),wan_inputs_sha256=canonical_digest(thaw(wan_inputs)))
+        if contract.get('schema_version') == 2:
+            from types import SimpleNamespace
+            from ..planning.scene_execution import derive_scene_execution_clips
+            clips = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode='whole_scene_v1')
+            expected.update(rendering_mode='whole_scene_v1', execution_clips_sha256=canonical_digest(clips))
         if thaw(contract['binding']) == expected:
             context = dict(bible=bible,plan=plan,wan_inputs=wan_inputs,script=current.script)
             validate_scene_video_prompt_contract(contract,**context)

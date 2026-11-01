@@ -4,7 +4,7 @@
 
 为模型原始输出、原生尾帧、裁片、超分帧和最终成片生成独立、可复算的色彩证据，支持逐阶段检查颜色解释与编码差异。信息不足时明确保留 unknown，不能把元数据一致、像素接近或一次解码成功解释为视频质量通过。
 
-任务身份与范围以 `docs/task-handoffs/video-continuity-optimization-task-board.md` 的 VCO-02 为准，直接任务依赖为 None。本文件是后继实施设计；本次没有实现本模块或运行下述色彩样例。
+任务身份与范围以 `docs/task-handoffs/video-continuity-optimization-task-board.md` 的 VCO-02 为准，直接任务依赖为 None。实现、实测结果和限制分别记录于 `VCO-02-plan.md` 与 `VCO-02-verification.md`；以下为实施契约，不以设计文字替代实测证据。
 
 ## Scope
 
@@ -105,6 +105,14 @@ YUV 使用实际 CPU zscale 转换，输入 matrix/transfer/primaries/range 从�
 
 ## Files
 
+### 实施中确认的解释与证据细节
+
+- `srgb_rgb24_v1` 对 BT.709 使用 zscale 的显示端 BT.1886 理想显示 EOTF（指数 2.4），随后转换为 sRGB；不声称重建摄像机的 scene-referred 逆 OETF。实测独立公式使用此明确约定。sRGB transfer 保持 IEC 61966-2-1 解释，全部转换参数仍显式写入命令。
+- 对已核验原记录的规范化 mapping 导出，可提供精确 `{source, rows}` JSON 作为 mapping.evidence：source 为该资产 FileIdentity，rows 必须与 entry 完全一致，source 的 path/bytes/SHA 必须匹配。导出是调用者已核验映射的显式记录，诊断不从目录或像素猜测对应关系，也不创建/修改源 run 的导出。视频 rows 的 PTS/time_base 必须与本资产完整逐帧 probe 一致；PNG 仅使用已记录来源时间。任意无绑定 JSON 不构成证明。
+- 直接识别的历史映射包括 clip 的 `frame_mapping_sha256` 与原 mapping.json，以及 last-frame 的 image/generated/原视频逐帧时间和 clip mapping 联合证明。缺少完整绑定则保留 unverified_mapping，不用单个 last-frame 字段推算保留索引或时间。
+- processing 只从带原 source、target/output 和成功 CommandResult 的直接命令记录提取规则；核验输入/输出字节身份并冻结原 stdout/stderr。生产 media-ready 的 staging→target promotion、超分模型 graph 和其他复合证据未提供完整适配证明时保留 unknown；不能把源码默认参数或成功-looking 标签当成真实命令。
+- chain edge 仅在双方映射已绑定、目标坐标由来源覆盖、且原成功命令绑定双方源 SHA 时为 recorded，否则为 unknown。coverage 仍仅为五阶段覆盖率。
+
 - 新增 `src/video_ai/media/colorimetry.py`：纯解析、schema、PNG 标签读取、只读 probe、显式分析帧解码及独立链 sidecar。
 - 新增 `tests/unit/test_colorimetry.py`：精确结构、unknown/conflict、颜色参数映射、输入不可变、失败/漂移和旧 probe 字段。
 - 新增 `tests/integration/test_colorimetry_flow.py`：真实 CPU FFmpeg 控制样例和五阶段只读诊断，basename 与单元文件不同。
@@ -113,6 +121,8 @@ YUV 使用实际 CPU zscale 转换，输入 matrix/transfer/primaries/range 从�
 前述 video/frames/composition/runtime 文件是审查及回归输入，本方案不要求修改其生产实现。无需新增 NumPy/OpenCV、模型或配置字段。
 
 ## Tests
+
+**验证安排更新（2026-10-24，用户明确指示）：** 用户要求“最后一个任务再做全库回归，这个任务完成的话收尾吧”。本任务以定向单元/集成、必要旧媒体兼容回归及审查证据收尾；裸全库统一后移至本项目最后一个任务 VCO-08 的最终收尾阶段，不再作为 VCO-02 本轮完成的前置条件。中断或主动停止的全库记录不算通过。此指示覆盖本设计先前要求本任务立即执行全库的安排。
 
 RED 先运行新增精确 schema/unknown/旧 probe 契约用例，确认因缺接口或目标行为失败，再实现；不能以工具不存在或 import basename 冲突代替行为 RED。以下命令都从仓库根运行，先 bootstrap，每一阶段使用独立名称和运行缓存：
 
@@ -123,16 +133,16 @@ Invoke-VideoAiNative $VideoAiPython @('-B','-m','pytest','-v','tests/unit/test_c
 exit $VideoAiExitCode
 ```
 
-集成完成后运行裸全库，不能用定向检查代替：
+以下裸全库命令保留为项目最后一个任务统一执行的参考，本轮 VCO-02 不再执行：
 
 ```powershell
 . ./scripts/bootstrap.ps1
-Initialize-VideoAiEnvironment 'vco02-full'
-Invoke-VideoAiNative $VideoAiPython @('-B','-m','pytest','-v','-o',"cache_dir=D:/VideoSi/cache/video-ai/temp/vco02-cache-$VideoAiCommandId",'--basetemp',"D:/VideoSi/cache/video-ai/temp/vco02-full-$VideoAiCommandId")
+Initialize-VideoAiEnvironment 'vco-project-final-full'
+Invoke-VideoAiNative $VideoAiPython @('-B','-m','pytest','-v','-o',"cache_dir=D:/VideoSi/cache/video-ai/temp/vco-final-cache-$VideoAiCommandId",'--basetemp',"D:/VideoSi/cache/video-ai/temp/vco-final-full-$VideoAiCommandId")
 exit $VideoAiExitCode
 ```
 
-预期最终命令全部退出 0；`tests/unit/test_frames.py` 已确认存在。测试均为本地合成媒体和 CPU 命令；不调用生成模型。
+本任务定向命令预期退出 0；全库结果由项目最后一个任务另行登记。`tests/unit/test_frames.py` 已确认存在。测试均为本地合成媒体和 CPU 命令；不调用生成模型。
 
 必须覆盖：
 
@@ -149,7 +159,7 @@ exit $VideoAiExitCode
 - 任务板四项验收逐条映射到以上测试和带 SHA 的日志/sidecar；五阶段和真实解码证据可定位到准确资产、转换步骤及帧编号。
 - 只有已支持且声明一致的输入产生 srgb_rgb24_v1 实际 raw RGB；缺失、冲突及 unsupported 情况保留原始字段、unknown/unverified 和风险，不能推断矩阵/范围。
 - 控制样例覆盖 Rec.709、不同标记、full/limited、未标记及解码/编码往返，能区分实验控制变量；不自动推断真实视频差异的原因。
-- 源 run 和旧媒体/请求契约不变，原生 16fps、PTS、帧数、尺寸和精确映射的回归实际通过；定向及裸全库退出 0。软件证据不替代完整动态观看，不新增视频质量通过结论。
+- 源 run 和旧媒体/请求契约不变，原生 16fps、PTS、帧数、尺寸和精确映射的回归实际通过；本任务定向回归退出 0，全库按用户最新指示后移至最后一个任务统一执行。软件证据不替代完整动态观看，不新增视频质量通过结论。
 
 ## Risks
 

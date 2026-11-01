@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 import json
 import re
+from pathlib import PureWindowsPath
 
 from .production_scenes import canonical_digest
 from ..runtime.manifest import thaw
@@ -26,22 +27,42 @@ def _sha(value):
 
 def parse_scene_rendering(value):
     """Parse an explicitly present object; null is never a legacy fallback."""
-    _fields(value, 'prompt_policy prompt_contract', 'scene_rendering')
+    explicit = isinstance(value, Mapping) and 'mode' in value
+    fields = 'prompt_policy prompt_contract'
+    if explicit:
+        if value['mode'] not in ('segmented_v1', 'whole_scene_v1'):
+            raise ValueError('unknown scene rendering mode')
+        fields += ' mode'
+        if value['mode'] == 'whole_scene_v1': fields += ' whole_scene_evidence'
+    _fields(value, fields, 'scene_rendering')
     if value['prompt_policy'] != 'visual_v2':
         raise ValueError('scene_rendering.prompt_policy must be visual_v2')
     _text(value['prompt_contract'])
+    if explicit and value['mode'] == 'whole_scene_v1':
+        name = _text(value['whole_scene_evidence'])
+        path = PureWindowsPath(name)
+        if (not path.is_absolute() or not path.is_relative_to(PureWindowsPath('D:/VideoSi'))
+                or '..' in path.parts or any(c in name for c in '*?')
+                or path.suffix.lower() != '.json' or ':' in name[2:]):
+            raise ValueError('whole_scene_evidence requires an exact absolute D:/VideoSi JSON file')
     return deepcopy(thaw(value))
 
 
-def validate_scene_video_prompt_contract(contract, *, bible=None, plan=None, wan_inputs=None, script=None):
+def validate_scene_video_prompt_contract(contract, *, bible=None, plan=None, wan_inputs=None, script=None, execution=None):
     """Validate structure/review first, then the complete admitted context if supplied."""
     _fields(contract, 'schema_version production_strategy binding style clips review', 'prompt contract')
-    if type(contract['schema_version']) is not int or contract['schema_version'] != 1:
-        raise ValueError('prompt contract schema_version must be 1')
+    if type(contract['schema_version']) is not int or contract['schema_version'] not in (1, 2):
+        raise ValueError('unknown prompt contract schema_version')
+    whole = contract['schema_version'] == 2
     if contract['production_strategy'] != 'paragraph_jimeng_v1':
         raise ValueError('prompt contract production_strategy differs')
-    _fields(contract['binding'], 'scene_plan_sha256 visual_bible_sha256 wan_inputs_sha256', 'prompt binding')
-    for value in contract['binding'].values(): _sha(value)
+    binding_fields = 'scene_plan_sha256 visual_bible_sha256 wan_inputs_sha256'
+    if whole: binding_fields += ' rendering_mode execution_clips_sha256'
+    _fields(contract['binding'], binding_fields, 'prompt binding')
+    for key, value in contract['binding'].items():
+        if key != 'rendering_mode': _sha(value)
+    if whole and contract['binding']['rendering_mode'] != 'whole_scene_v1':
+        raise ValueError('schema2 prompt requires whole_scene_v1')
     _text(contract['style'])
     clips = contract['clips']
     if not isinstance(clips, (list, tuple)) or not clips:
@@ -79,12 +100,22 @@ def validate_scene_video_prompt_contract(contract, *, bible=None, plan=None, wan
         if any(v is None for v in context): raise ValueError('complete prompt binding context required')
         expected = dict(scene_plan_sha256=canonical_digest(thaw(plan)),visual_bible_sha256=canonical_digest(thaw(bible)),
                         wan_inputs_sha256=canonical_digest(thaw(wan_inputs)))
+        budgets = plan['clips']
+        if whole:
+            from types import SimpleNamespace
+            from .scene_execution import derive_scene_execution_clips
+            budgets = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode='whole_scene_v1')
+            expected.update(rendering_mode='whole_scene_v1', execution_clips_sha256=canonical_digest(budgets))
+        if execution is not None:
+            if ((execution.get('mode') == 'whole_scene_v1') != whole
+                    or thaw(execution.get('clips')) != thaw(budgets)):
+                raise ValueError('prompt execution mode or clips differ')
         if thaw(contract['binding']) != expected: raise ValueError('prompt contract binding differs from admitted inputs')
-        if [c['clip_id'] for c in clips] != [c['clip_id'] for c in plan['clips']]:
+        if [c['clip_id'] for c in clips] != [c['clip_id'] for c in budgets]:
             raise ValueError('prompt clips must completely follow committed clip order')
         catalog = {s.unit_id:s for s in script.spans if s.kind == 'speech'}
         scenes = {s['scene_id']:s for s in plan['scenes']}
-        for clip,budget in zip(clips,plan['clips']):
+        for clip,budget in zip(clips,budgets):
             scene = scenes[budget['scene_id']]
             latest = max(catalog[uid].end for uid in scene['unit_ids'])
             for change in clip['changes']:

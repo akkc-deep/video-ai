@@ -1,0 +1,34 @@
+# VCO-07 Tasks 1 and 2 pure-layer review
+
+Reviewed on 2026-10-30 against `VCO-07-design.md`, Tasks 1 and 2 of `VCO-07-plan.md`, the Task 1 implementation report, and `D:/VideoSi/projects/video-ai/vco07-implementation/review-pure.txt`. Inspection was limited to `config.py`, `planning/scene_execution.py`, `planning/scene_clip_continuation.py`, `planning/scene_video_prompts.py`, `planning/scene_revision.py`, `planning/scene_media.py`, and `runtime/scene_video_prompt_records.py`. The package includes inherited changes; findings below concern the VCO-07 behavior in those files.
+
+No implementation files, Git metadata, model/network services, or test artifacts were changed. Per the review assignment, tests were not rerun. The parent reports the new contract batch (186 passing) and media/contracts batch (43 passing); these are supplied verification evidence, not independently executed results from this review. Runtime integration outside the scoped prompt-record module is not covered by the verdict.
+
+## Important and Critical findings
+
+None found in the reviewed scope.
+
+## Minor findings
+
+1. **Malformed `media` can escape the configuration error boundary.** `src/video_ai/config.py:328` calls `.get('profile')` on the raw `media` value before the normal `_object` validation at line 383. With otherwise valid whole-mode rendering/continuity fields and `media: null`, a list, or a string, this raises `AttributeError`; the surrounding handler catches only `ValueError`. Valid configurations and rejection of unsupported profiles are unaffected, but invalid configuration can produce an internal traceback instead of the usual field-specific `ConfigError`. Validate the media object before this check, or guard its mapping type and use the standard configuration error helper. This conclusion comes from direct control-flow inspection; no extra test was run.
+
+## Spec-compliance verdict
+
+**PASS for the reviewed Tasks 1 and 2 scope**, with the minor malformed-input issue above.
+
+- **Four configuration branches:** absent rendering remains the original path; the exact historical two-field object remains schema-compatible; explicit segmented requires exactly mode/policy/contract; explicit whole adds exactly the evidence path. Unknown/null/partial/mixed forms fail. Whole requires explicit advisory continuity and the admitted fast profile. Relative prompt paths continue to resolve against the config directory. Evidence paths are constrained lexically to absolute local JSON paths beneath `D:/VideoSi`; real identity and containment remain the evidence reader's responsibility.
+- **Execution derivation:** `scene_execution.py:64` preserves segmented derivation through the existing committed-budget check and 96-generated-frame limit. Whole creates one clip per original ordered scene, validates positive integer frame ranges including bool rejection, requires continuous complete coverage from zero, and rejects retained lengths above 320. It uses `_wan_frames(F)` directly, including F=1, so F=320 produces 321 requested frames. No whole parent/conditioning head is introduced, and only tail padding is discarded. Inputs are not rewritten.
+- **Budget identity:** `scene_execution.py:102` hashes the complete original semantic plan and serialized timeline and emits the exact versioned schema. Validation rebuilds and compares every field against the caller's expected frozen identity, with no file/model access.
+- **Requests and mappings:** `scene_clip_continuation.py:144` requires explicit mode and execution to agree, retains the existing narration/reference/profile checks, and dispatches schema2 prompts only for whole. Whole seeds use the scene's first original semantic clip's global index (`:208` through `:221`), preserving the required original seed schedule. The original fixed sampling values remain intact. Mapping validation consumes the supplied execution and still enforces once-only full timeline coverage.
+- **Prompt binding:** `scene_video_prompts.py:51` keeps the original top-level fields, exact review-content digest, visual fields, and source rules. Schema2 adds only whole mode plus the canonical digest of pure execution clips to binding. Full context validation derives one whole clip per scene and requires exact ordered prompt coverage. Future budget/rendering SHA fields fail exact-field validation. Schema1 retains complete semantic clip coverage; request and frozen-record dispatch prevent it from being used for whole. Rendered whole text comes from the whole contract rather than concatenated segmented motion.
+- **Frozen prompts and revision bindings:** `scene_video_prompt_records.py:32` enforces the prompt-schema/rendering-mode pairing. The inherited-binding path recomputes whole execution digests and retains the existing complete plan/choice import proof and byte guards, without changing or re-signing review content.
+- **Rendering identity and source snapshots:** `scene_revision.py:74` preserves historical identity layouts and validates the exact schema3 rendering fields, including null whole admission for explicit segmented. Explicit source snapshots require their own execution; clip selection, clip/frame nodes, continuation ancestry, and invalidation use that source execution. Mode/prompt/evidence rendering changes invalidate all source clips and downstream reviews/frames/composition/delivery, including same-name clips. Target execution is not substituted into source enumeration.
+- **Media enumeration:** `scene_media.py:9` explicitly admits schema3 indices only with the execution Artifact field, keeps schema2's existing field set, and enumerates retained native mappings once in global order without rebuilding segmented budgets.
+
+## Code-quality verdict and boundaries
+
+**Acceptable with minor follow-up.** The change keeps semantic plans separate from execution, reuses the original budget and mapping primitives, and makes version dispatch explicit. Strict field sets and canonical comparisons make identity drift visible. Scoped legacy paths retain their original behavior.
+
+The pure consumers deliberately do not authenticate files: `_budgets(..., execution=...)` checks consistency using identity metadata supplied on the budget, and `snapshot_execution_clips()` checks the source timeline SHA's syntax rather than independently reconstructing the source timeline. The design supplies these values through previously validated frozen runtime records; callers must preserve that boundary. Likewise, the media planner validates the execution Artifact's shape but cannot verify its bytes. These are integration obligations, not independently confirmed runtime guarantees in this review.
+
+This verdict does not claim VCO-07 production completion, successful real inference, observation acceptance, recovery correctness, or publishing readiness.

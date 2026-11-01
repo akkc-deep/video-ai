@@ -71,6 +71,12 @@ def configuration_identity(config, *, image_model=None, reference_sha=None):
     if 'scene_rendering' in config.raw:
         from .scene_video_prompt_records import source_contract_identity
         options['execution_policy']['input_identities']['scene_video_prompts'] = source_contract_identity(config)
+        if config.raw['scene_rendering'].get('mode') == 'whole_scene_v1':
+            from types import SimpleNamespace
+            from .scene_execution_records import load_whole_scene_evidence, verify_current_environment
+            evidence=load_whole_scene_evidence(config.raw['scene_rendering']['whole_scene_evidence'])
+            options['execution_policy']['input_identities']['whole_scene_evidence']=evidence['root']
+            verify_current_environment(SimpleNamespace(config=config,options=options),evidence)
     return identity_from_options(options,reference_settings_sha256=reference_sha)
 
 
@@ -91,6 +97,8 @@ def _target_configuration(source,target,request):
     raw['media']['font_file'] = str(source.config.media.font_file)
     if 'scene_rendering' in raw:
         raw['scene_rendering']['prompt_contract'] = source.options['execution_policy']['input_identities']['scene_video_prompts']['path']
+        if raw['scene_rendering'].get('mode') == 'whole_scene_v1':
+            raw['scene_rendering']['whole_scene_evidence'] = source.options['execution_policy']['input_identities']['whole_scene_evidence']['path']
     if raw.get('reference_capabilities') is not None:
         # Preserve validated capability bytes already frozen by the source.
         for key in raw['reference_capabilities']:
@@ -108,6 +116,8 @@ def _snapshot(source,*,target_config=None,reference_sha=None,request=None,target
     from ._scene_revision_origin_images import origin_image_scope
     prefix=common(source);units=prefix['units'];timeline=ProductionTimeline.from_dict(prefix['timeline'])
     bible,plan=load_committed_plan(source,units,timeline)
+    execution = _source_execution(source,plan,timeline)
+    source_clips = execution['clips'] if execution is not None else plan['clips']
     choices=[]
     if request['kind']=='reselect_images':
         end=max(i for i,ids in enumerate(plan['batches'],1) if set(ids)&set(request['scene_ids']))
@@ -116,13 +126,19 @@ def _snapshot(source,*,target_config=None,reference_sha=None,request=None,target
     options['_scene_revision_planning']=dict(identity=identity_from_options(source.options,reference_settings_sha256=reference_sha),
         completed_image_ids=[],image_group_accepted=False,target_config=thaw(target_config.raw))
     hint=dict(source_options=options,bible=bible,scene_plan=plan,image_choices=choices,
-        clip_nodes=[dict(clip_id=c['clip_id'],record=None,acceptance=None,status='pending') for c in plan['clips']],
-        upscale_nodes=[dict(frame_id=c['clip_id']+f':frame_{i+1:06d}',record=None,status='pending') for c in plan['clips'] for i in range(c['retained_frames'])],pending_effects=[])
+        clip_nodes=[dict(clip_id=c['clip_id'],record=None,acceptance=None,status='pending') for c in source_clips],
+        upscale_nodes=[dict(frame_id=c['clip_id']+f':frame_{i+1:06d}',record=None,status='pending') for c in source_clips for i in range(c['retained_frames'])],pending_effects=[])
+    if execution is not None: hint['scene_execution'] = execution
     dirty=plan_scene_revision(hint,request,target_identity)['dirty']
     from ._scene_revision_origin_clips import origin_clip_scope
-    known=[c['clip_id'] for c in plan['clips']]
+    known=[c['clip_id'] for c in source_clips]
     with origin_image_scope(source,[s['scene_id'] for s in plan['scenes'] if s['scene_id'] not in dirty['images']]),origin_clip_scope(source,[cid for cid in known if cid not in dirty['clips']],all_ids=known):
         return _admitted_snapshot(source,target_config=target_config,reference_sha=reference_sha,excluded_frames=dirty['upscale'])
+
+
+def _source_execution(source,plan,timeline):
+    from .scene_execution_records import rendering_mode, load_scene_execution
+    return load_scene_execution(source,plan,timeline) if rendering_mode(source) is not None else None
 
 
 def _image_terminal(source,scene,bible,plan,intent_path):
@@ -163,6 +179,8 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
     from ..planning.production_timeline import ProductionTimeline
     units,timeline = prefix['units'],ProductionTimeline.from_dict(prefix['timeline'])
     bible,plan = load_committed_plan(source,units,timeline)
+    execution = _source_execution(source,plan,timeline)
+    source_clips = execution['clips'] if execution is not None else plan['clips']
     accepted = load_accepted_batches(source,units,timeline,bible,plan)
     choice_map=_choices(accepted)
     proof=require_scene_revision(source) if 'scene_revision' in source.options else None
@@ -176,11 +194,11 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
     run = Path(source.options['script_path']).parent.parent
     clips,upscale,effects = [],[],[]
     context = None
-    if any((run/'production/scene-clips'/c['clip_id']).exists() for c in plan['clips']):
+    if any((run/'production/scene-clips'/c['clip_id']).exists() for c in source_clips):
         from .scene_clip_records import scene_context,validate_clip
         context = scene_context(source,units,timeline)
     parents = {};media_context=None;extractions={}
-    for budget in plan['clips']:
+    for budget in source_clips:
         cid = budget['clip_id']; record = None
         if proof is not None and 'clip:'+cid in proof['imports']:
             from ._scene_revision_readers import inherited_clip_record
@@ -261,8 +279,10 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
     options['_scene_revision_planning']=dict(identity=identity_from_options(source.options,reference_settings_sha256=reference_sha),
         completed_image_ids=completed_images,image_group_accepted=group_accepted,
         target_config=thaw(target_config.raw) if target_config is not None else None)
-    return dict(source_options=options,bible=bible,scene_plan=plan,image_choices=choices,
+    result = dict(source_options=options,bible=bible,scene_plan=plan,image_choices=choices,
                 clip_nodes=clips,upscale_nodes=upscale,pending_effects=effects)
+    if execution is not None: result['scene_execution'] = execution
+    return result
 
 
 def _import_order(plan,invalidation,has_reference):
@@ -280,9 +300,9 @@ def _import_order(plan,invalidation,has_reference):
     return result
 
 
-def _dependencies(domain,key,plan,existing):
+def _dependencies(domain,key,plan,existing,*,execution_clips=None):
     from ._scene_revision_plan import import_dependencies
-    return import_dependencies(domain,key,plan,existing)
+    return import_dependencies(domain,key,plan,existing,execution_clips=execution_clips)
 
 
 @revision_validation
@@ -367,7 +387,8 @@ def create_scene_revision(source_run,request_path):
             imports,existing,common_view = [],{},None
             for domain,key in nodes:
                 iid = domain+':'+key; capture = captures[domain,key]
-                dependencies = _dependencies(domain,key,snapshot['scene_plan'],existing)
+                dependencies = _dependencies(domain,key,snapshot['scene_plan'],existing,
+                    execution_clips=snapshot.get('scene_execution',{}).get('clips'))
                 mappings = []
                 for role,original in capture['media']:
                     local = copy_identity(store,iid,domain,key,role,original,guard=capture['guard'])
@@ -400,6 +421,16 @@ def create_scene_revision(source_run,request_path):
                 raise ProductionRefused('target reference identity changed while freezing')
             boundary('options')
             validate_revision_structure(frozen.options,target); require_scene_revision(frozen)
+            if (frozen.config.raw.get('scene_rendering',{}).get('mode') is not None
+                    and 'all' in invalidation['reusable']['common'] and 'all' in invalidation['reusable']['plan']):
+                # Establish a new target budget only after imported semantic inputs
+                # exist. An intermediate revision can then be revised without video.
+                from .scene_revision_records import load_scene_common_prefix
+                from .image_selection_records import load_committed_plan
+                from .scene_execution_records import ensure_scene_execution
+                target_units,target_timeline=load_scene_common_prefix(frozen)
+                _,target_plan=load_committed_plan(frozen,target_units,target_timeline)
+                ensure_scene_execution(frozen,target_plan,target_timeline,lock=held)
             for capture in captures.values(): capture['guard'].verify_captured_bytes()
             store.save('ready.json',dict(schema_version=2,run_id=target.name,revision_id=str(revision_id),commit=commit_bound,
                 options=artifact(target/'production/options.json',root=target),created_at=frozen.options['created_at']))

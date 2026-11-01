@@ -9,6 +9,14 @@ from .production_scenes import canonical_digest
 def plan_scene_upscale(scene_clips):
     if not isinstance(scene_clips, Mapping): raise ValueError('scene clips object required')
     allowed=set('schema_version production_strategy run_id inputs_sha256 scene_plan_sha256 visual_bible_sha256 wan_inputs_sha256 timeline_sha256 total_frames scenes clips'.split())
+    if type(scene_clips.get('schema_version')) is int and scene_clips['schema_version'] == 3:
+        allowed.add('execution_budget')
+        budget = scene_clips.get('execution_budget')
+        if not isinstance(budget, Mapping) or set(budget) != {'path','bytes','sha256'}:
+            raise ValueError('schema3 scene clips require exact execution budget Artifact')
+        _artifact(budget)
+    elif 'schema_version' in scene_clips and (type(scene_clips['schema_version']) is not int or scene_clips['schema_version'] != 2):
+        raise ValueError('unknown scene clips index schema')
     if set(scene_clips)-allowed: raise ValueError('unknown scene clips fields')
     total = _integer(scene_clips.get('total_frames'), 'total_frames', 1)
     clips = scene_clips.get('clips')

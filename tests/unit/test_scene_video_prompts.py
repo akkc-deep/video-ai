@@ -191,6 +191,9 @@ def test_binding_traversal_reconstructs_an_unmaterialized_inherited_wan_view(tmp
     """Two prompt revisions may precede the pipeline's aggregate materialization."""
     from types import SimpleNamespace
     from video_ai.runtime.scene_video_prompt_records import prompt_binding_context
+    # Load module-level aliases before patching their source module. Otherwise
+    # this test leaves a patched load_frozen_inputs alias in later integrations.
+    from video_ai.runtime import image_selection_records  # noqa: F401
     f,b,p,t,w,c=fixture()
     original=SimpleNamespace(script=f.script,options=dict(scene_revision={},script_path=str(tmp_path/'middle/production/script.txt')))
     target=SimpleNamespace(script=f.script,options=dict(scene_revision={},script_path=str(tmp_path/'target/production/script.txt')))

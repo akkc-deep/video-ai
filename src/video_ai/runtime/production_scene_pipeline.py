@@ -79,6 +79,8 @@ def _preflight_later(frozen,units,timeline):
         from .scene_completed import validate_scene_completed_prefix,load_validated_prefix_details
         from .scene_media_records import SceneMediaResult
         progress=validate_scene_completed_prefix(frozen,units,timeline)
+        waiting=_continuity_wait(frozen,units,timeline)
+        if waiting is not None:return waiting
         if progress['composition']['status']=='ready':
             details=load_validated_prefix_details(frozen);candidate=details['candidate']
             template=run/'production/scene-composition/final-observation-template.json'
@@ -90,6 +92,14 @@ def _preflight_later(frozen,units,timeline):
     elif (run/'production/scene-clips').exists():
         from .scene_clip_records import scene_context,collect_progress
         collect_progress(scene_context(frozen,units,timeline))
+
+
+def _continuity_wait(frozen,units,timeline):
+    from .scene_continuity_records import require_scene_continuity_acceptance,SceneContinuityPending
+    try:require_scene_continuity_acceptance(frozen,units,timeline)
+    except SceneContinuityPending as exc:
+        from .production_scene_clips import _result,_error
+        return _result(run_of(frozen),'awaiting_continuity_review',error=_error(exc))
 
 
 def _restore_missing_aggregates(frozen,units,timeline,*,paths,logger,lock,deps):
@@ -104,19 +114,23 @@ def _restore_missing_aggregates(frozen,units,timeline,*,paths,logger,lock,deps):
             later=run/'production/scene-upscale/inputs.json'
             if later.is_file() and read_json(later)['scene_clips_sha256']!=canonical_digest(expected):
                 raise ProductionRefused('later upscale disagrees with missing source aggregate')
+            waiting=_continuity_wait(frozen,units,timeline)
+            if waiting is not None:return waiting
             from .production_scene_clips import produce_scene_clips
             result=produce_scene_clips(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
                 client_factory=deps.wan_client_factory,service_factory=deps.wan_service_factory)
             if result.status!='source_clips_ready':return result
         stage='upscale'
         if (run/'production/scene-composition').exists() and not (run/'production/scene-upscale/complete.json').exists():
-            from .scene_media_records import scene_media_context
+            from .scene_media_records import _scene_media_base_context
             from ._scene_upscale_records import validate_upscale_frames,complete_value
-            context=scene_media_context(frozen,units,timeline,paths=paths,lock=lock)
+            context=_scene_media_base_context(frozen,units,timeline,paths=paths,lock=lock)
             expected=complete_value(context,validate_upscale_frames(context))
             later=run/'production/scene-composition/inputs.json'
             if later.is_file() and read_json(later)['upscale_sha256']!=canonical_digest(expected):
                 raise ProductionRefused('later composition disagrees with missing upscale aggregate')
+            waiting=_continuity_wait(frozen,units,timeline)
+            if waiting is not None:return waiting
             from .production_scene_upscale import produce_scene_upscaled_clips
             result=produce_scene_upscaled_clips(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
                 client_factory=deps.upscale_client_factory,service_factory=deps.upscale_service_factory)
@@ -138,6 +152,11 @@ def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=No
         if not (run/'production/scene-plan-commit.json').exists() and not ('scene_revision' in frozen.options and 'plan:all' in require_scene_revision(frozen)['imports']):
             produce_scene_plan(frozen,units,timeline,paths=paths,logger=logger,lock=lock,planner=deps.planner)
         bible,plan=load_committed_plan(frozen,units,timeline)
+        if frozen.config.raw.get('scene_rendering',{}).get('mode') is not None:
+            from .scene_execution_records import ensure_scene_execution
+            # Validate the complete scene batch before image or video requests;
+            # revisions without common imports reach this after regeneration.
+            ensure_scene_execution(frozen,plan,timeline,lock=lock)
         recovered=_restore_missing_aggregates(frozen,units,timeline,paths=paths,logger=logger,lock=lock,deps=deps)
         if recovered is not None:return recovered
         prefix_result=_preflight_later(frozen,units,timeline)

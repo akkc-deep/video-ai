@@ -5,6 +5,7 @@ ownership_check)``. It must obey the same no-replay and send-guard contract.
 No transport thread may persist evidence or log events.
 """
 from http.client import HTTPConnection
+from contextvars import copy_context
 import json
 from queue import Queue, Empty
 import socket
@@ -26,10 +27,13 @@ def prompt_payload(graph, client_id):
 
 
 class SceneComfyClient:
-    def __init__(self, base_url, *, request_timeout, ownership_check, http=None):
+    def __init__(self, base_url, *, request_timeout, ownership_check, http=None, send_checks_only=False):
         self.base_url = validate_base_url(base_url)
         self.request_timeout = positive_timeout(request_timeout)
         if not callable(ownership_check): raise ValueError('ownership_check must be callable')
+        if type(send_checks_only) is not bool: raise ValueError('send_checks_only must be bool')
+        if send_checks_only and http is not None: raise ValueError('send checks require concrete HTTP transport')
+        self.send_checks_only = send_checks_only
         self.ownership_check = ownership_check
         self.http = http
 
@@ -46,10 +50,17 @@ class SceneComfyClient:
     def _request(self, method, route, *, timeout, body=None):
         budget = min(self.request_timeout, positive_timeout(timeout)); end = time.monotonic() + budget
         cancelled = Event(); result = Queue(maxsize=1); connections = []
+        def deadline():
+            if cancelled.is_set() or time.monotonic() >= end: raise TimeoutError('scene HTTP deadline exceeded')
         def guard():
-            if cancelled.is_set() or time.monotonic() >= end: raise TimeoutError('scene HTTP deadline exceeded')
+            deadline()
             self.ownership_check()
-            if cancelled.is_set() or time.monotonic() >= end: raise TimeoutError('scene HTTP deadline exceeded')
+            deadline()
+        # Explicit whole-scene media writers recheck before persisting any raw
+        # evidence. Their concrete transport still runs the complete proof at
+        # EVERY socket write; waiting/reading only needs cancellation/deadlines.
+        # A returned memory response is not a media acceptance or write permit.
+        phase_guard = deadline if self.send_checks_only else guard
         def close():
             for connection in connections:
                 sock = connection.sock
@@ -59,19 +70,19 @@ class SceneComfyClient:
                 connection.close()
         class Connection(HTTPConnection):
             def connect(self):
-                guard(); super().connect()
-                try: guard()
+                phase_guard(); super().connect()
+                try: phase_guard()
                 except BaseException:
                     self.close(); raise
             def send(self, data):
-                guard()
+                phase_guard()
                 if self.sock is None: self.connect()
                 guard()
                 self.sock.settimeout(max(.001, end-time.monotonic()))
                 super().send(data)
         def work():
             try:
-                guard()
+                phase_guard()
                 if self.http is not None:
                     value = self.http.request(method, route, body=body, timeout=budget, ownership_check=guard)
                 else:
@@ -80,7 +91,7 @@ class SceneComfyClient:
                     connection.request(method, route, body=body, headers={'Accept':'application/json', **({'Content-Type':'application/json'} if body is not None else {})})
                     response = connection.getresponse(); chunks=[]; size=0
                     while True:
-                        guard()
+                        phase_guard()
                         if connection.sock is not None: connection.sock.settimeout(max(.001,end-time.monotonic()))
                         chunk = response.read1(min(65536, JSON_LIMIT+1-size))
                         if not chunk: break
@@ -90,18 +101,19 @@ class SceneComfyClient:
                     length=response.getheader('Content-Length')
                     if length is not None and int(length)!=len(raw): raise ValueError('incomplete HTTP response')
                     value=dict(status=response.status, headers=dict(response.getheaders()), body=raw)
-                guard()
+                phase_guard()
                 if (not isinstance(value,dict) or set(value)!={'status','headers','body'} or type(value['status']) is not int
                     or not 100<=value['status']<=599 or not isinstance(value['headers'],dict) or not isinstance(value['body'],bytes)
                     or len(value['body'])>JSON_LIMIT): raise ValueError('invalid scene HTTP response')
                 result.put((True,value))
             except BaseException as exc: result.put((False,exc))
             finally: close()
-        guard(); thread=Thread(target=work, daemon=True, name='scene-comfy-io'); thread.start()
+        phase_guard(); context=copy_context()
+        thread=Thread(target=context.run,args=(work,),daemon=True,name='scene-comfy-io');thread.start()
         try:
             try: ok,value=result.get(timeout=max(.001,end-time.monotonic()))
             except Empty as exc: raise TimeoutError('scene HTTP deadline exceeded') from exc
-            guard()
+            phase_guard()
             if not ok: raise value
             return value
         finally:

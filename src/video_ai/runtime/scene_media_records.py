@@ -7,12 +7,13 @@ import json
 import re
 import stat
 from threading import get_ident
+from ..config import read_json
 
 from ..jimeng_config import STRATEGY
 from ..planning.production_scenes import canonical_digest
 from ..planning.scene_media import plan_scene_upscale
 from .manifest import thaw,validate_run_dir
-from .production_state import ProductionRefused, object_fields, run_path,ArtifactStamp
+from .production_state import ProductionRefused, object_fields, run_path,ArtifactStamp,RunLock
 from .scene_clip_records import SceneClipStore, equal
 
 
@@ -83,10 +84,36 @@ class SceneMediaStore(SceneClipStore):
         self.guard_absent_paths = set()
         self.guard_tool_stamps = {}
         self.captured_evidence_json = set()
+        self.continuity_check = None
+        self.continuity_read_guard = None
+        self._media_check_coverage = None
+
+    @property
+    def recheck_inputs(self):
+        """Whole media admits once; it does not repeat upstream audits per frame."""
+        raw=getattr(getattr(self.frozen,'config',None),'raw',{})
+        return raw.get('scene_rendering',{}).get('mode')!='whole_scene_v1'
+
+    def assert_owned(self):
+        if not self.recheck_inputs:
+            if (not isinstance(self.lock,RunLock) or self.lock.run_dir!=self.run_dir
+                    or read_json(self.lock.path)!=self.lock.owner):
+                raise ProductionRefused('scene clips lost held run lock')
+            return
+        from ._scene_media_check_coverage import media_checks_covered
+        if not media_checks_covered(self):return super().assert_owned()
+        # The complete source proof covers these exact execution obligations
+        # in assert_write / verify_global. Ownership itself still reads the lock.
+        if (not isinstance(self.lock,RunLock) or self.lock.run_dir!=self.run_dir
+                or read_json(self.lock.path)!=self.lock.owner):
+            raise ProductionRefused('scene clips lost held run lock')
 
     def _lexical(self,target):
         target=Path(target)
         if not target.is_absolute() or '..' in target.parts: raise ProductionRefused('absolute non-traversing media path required')
+        if not self.recheck_inputs:
+            if not target.is_relative_to(self.run_dir):raise ProductionRefused('scene media path outside this run')
+            return target
         for ancestor in (target,*target.parents):
             try: attributes=ancestor.lstat()
             except FileNotFoundError: continue
@@ -98,6 +125,9 @@ class SceneMediaStore(SceneClipStore):
         target=Path(relative)
         if not target.is_absolute(): target=self.root/target
         self._lexical(target)
+        if not self.recheck_inputs:
+            if not target.is_relative_to(self.root):raise ProductionRefused('scene clip record escapes root')
+            return target
         return super().path(target)
 
     def artifact(self,path):
@@ -105,19 +135,34 @@ class SceneMediaStore(SceneClipStore):
         return super().artifact(path)
 
     def validate_artifact(self,value):
+        from .scene_color_repair_records import require_production_repair_origin
+        require_production_repair_origin(value)
         object_fields(value,('path','bytes','sha256'),'scene media Artifact')
         self._lexical(value['path'])
         return super().validate_artifact(value)
 
     def verify_global(self):
         self.assert_owned()
+        if not self.recheck_inputs:return
+        check=getattr(self,'continuity_check',None)
+        if check is not None and check is not getattr(self,'continuity_read_guard',None):check()
         self.verify_captured_bytes()
         for stamp in self.frozen.options['model_stamps'].values(): ArtifactStamp.from_dict(thaw(stamp)).verify()
         self.verify_tools()
 
     def verify_captured_bytes(self):
         """Read-only guard audit, also valid while performing lock-free acceptance."""
-        if self.revision_context is not None:self.revision_context['guard'].verify_captured_bytes()
+        if not self.recheck_inputs:return
+        from ._scene_media_check_coverage import media_checks_covered
+        had_certificate=self._media_check_coverage is not None
+        if getattr(self,'continuity_read_guard',None) is not None:self.continuity_read_guard()
+        covered=media_checks_covered(self)
+        if (had_certificate or self._media_check_coverage is not None) and not covered:
+            execution=getattr(self,'execution_guard',None)
+            if not callable(execution):raise ProductionRefused('media execution check changed during validation')
+            execution()
+        if self.revision_context is not None and not covered:
+            self.revision_context['guard'].verify_captured_bytes()
         for artifact in self.guard_paths.values(): self.validate_artifact(artifact)
         for directory,expected in self.guard_directories.items():
             folder=self._lexical(directory)
@@ -130,6 +175,7 @@ class SceneMediaStore(SceneClipStore):
             if not path.is_file() or path.stat().st_size!=0: raise ProductionRefused('captured empty evidence changed')
 
     def verify_tools(self):
+        if not self.recheck_inputs:return
         for stamp in self.guard_tool_stamps.values(): stamp.verify()
 
     def bind_artifact(self,artifact):
@@ -286,8 +332,16 @@ class SceneMediaStore(SceneClipStore):
             for child in value: self.capture_command_evidence(child)
 
     def write(self,relative,value):
-        self.assert_write()
-        return super().write(relative,value)
+        if get_ident()!=self.caller_thread: raise ProductionRefused('scene media writes require caller thread')
+        self.assert_owned()
+        target=self.path(relative)
+        if target.exists():
+            self.assert_write()
+            return super().write(target,value)
+        # Keep the complete last guard after serialization, directly before
+        # creating bytes. The base writer rechecks ownership around its commit.
+        raw=(json.dumps(value,ensure_ascii=False,allow_nan=False,indent=2)+'\n').encode('utf-8')
+        return self.write_bytes(target,raw)
 
     def write_bytes(self,relative,raw):
         self.assert_write()
@@ -295,7 +349,20 @@ class SceneMediaStore(SceneClipStore):
 
     def assert_write(self):
         if get_ident()!=self.caller_thread: raise ProductionRefused('scene media writes require caller thread')
+        if not self.recheck_inputs:
+            self.assert_owned()
+            return
+        from ._scene_media_check_coverage import media_checks_covered
+        had_certificate=self._media_check_coverage is not None
         self.assert_owned()
+        if getattr(self,'continuity_check',None) is not None:self.continuity_check()
+        if (had_certificate or self._media_check_coverage is not None) and not media_checks_covered(self):
+            # New or changed validator metadata is never silently certified.
+            # If it changed inside the callback, also restore the execution check.
+            execution=getattr(self,'execution_guard',None)
+            if not callable(execution):raise ProductionRefused('media execution check changed during validation')
+            execution()
+            if self.revision_context is not None:self.revision_context['guard'].verify_captured_bytes()
 
     def for_root(self,relative):
         other = SceneMediaStore(self.frozen,self.run_dir,paths=self.paths,lock=self.lock,clip_ids=self.clip_ids)
@@ -308,6 +375,10 @@ class SceneMediaStore(SceneClipStore):
         other.captured_evidence_json = self.captured_evidence_json.copy()
         other.media_cache = self.media_cache
         other.revision_context = self.revision_context
+        other.continuity_check = getattr(self,'continuity_check',None)
+        other.continuity_read_guard = getattr(self,'continuity_read_guard',None)
+        other.execution_guard = getattr(self,'execution_guard',None)
+        other._media_check_coverage = self._media_check_coverage
         return other
 
     def frame_dir(self,frame_id):
@@ -318,7 +389,14 @@ class SceneMediaStore(SceneClipStore):
 
     def capture_guard(self,request,graph):
         folder = self.frame_dir(request['frame_id'])
-        captures = dict(self.guard_paths)
+        if not self.recheck_inputs:
+            saved_request,saved_graph=deepcopy(request),deepcopy(graph)
+            def owned_request():
+                self.assert_owned()
+                equal(self.read(folder/'request.json'),saved_request,'frame send request')
+                equal(self.read(folder/'graph.json'),saved_graph,'frame send graph')
+            return owned_request
+        captures = deepcopy(self.guard_paths)
         def capture(value):
             if isinstance(value,dict):
                 if set(value)=={'path','bytes','sha256'}:
@@ -332,7 +410,17 @@ class SceneMediaStore(SceneClipStore):
             captures[str(path)] = self.artifact(path)
         def guard():
             self.verify_global()
-            for artifact in captures.values(): self.validate_artifact(artifact)
+            for artifact in captures.values():
+                current=self.guard_paths.get(artifact['path'])
+                # verify_global just checked the same original binding. New,
+                # removed or rebound captures still require their own byte check.
+                if (type(current) is dict and set(current)=={'path','bytes','sha256'}
+                        and type(current['bytes']) is int and type(artifact['bytes']) is int
+                        and type(current['path']) is str and type(artifact['path']) is str
+                        and type(current['sha256']) is str and type(artifact['sha256']) is str
+                        and current==artifact):
+                    continue
+                self.validate_artifact(artifact)
             equal(self.read(folder/'request.json'),request,'frame send request')
             equal(self.read(folder/'graph.json'),graph,'frame send graph')
         return guard
@@ -342,8 +430,9 @@ from .verification import verified_read
 
 
 @verified_read
-def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
-    from .scene_clip_records import require_scene_clip_acceptance
+def _scene_media_base_context(frozen,units,timeline,*,paths=None,lock=None):
+    """Reconstruct historical content; writers always retain current admission guards."""
+    from .scene_clip_records import _require_scene_clip_base_acceptance
     from .image_selection_records import require_complete_image_acceptance,load_committed_plan
     from .production_visual_templates import validate_fixed_visual_template
     from .workflows import WorkflowTemplate
@@ -359,7 +448,22 @@ def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
         'production/image-selection','production/reference-images','production/reference-storage','production/jimeng','production/scene-clips'))
     store.guard_tool_stamps=tool_stamps
     store.capture_unhashed_inputs(snapshot,pcm_paths=(c.pcm.path for c in timeline.clips))
-    clips = require_scene_clip_acceptance(frozen,units,timeline)
+    clips = _require_scene_clip_base_acceptance(frozen,units,timeline)
+    execution = None
+    if clips.get('schema_version') == 3:
+        from .scene_execution_records import load_scene_execution, verify_whole_scene_frozen
+        # The complete source reader has already compared the schema3 Artifact;
+        # keep its exact budget and evidence live through every downstream write.
+        _, semantic_plan = load_committed_plan(frozen,units,timeline)
+        execution = load_scene_execution(frozen,semantic_plan,timeline)
+        budget_artifact = clips['execution_budget']
+        def execution_guard():
+            equal(store.artifact(budget_artifact['path']),budget_artifact,'media execution budget')
+            if execution['mode'] == 'whole_scene_v1': verify_whole_scene_frozen(frozen)
+        store.execution_guard = execution_guard
+        if execution['mode']=='whole_scene_v1':
+            from ._scene_media_check_coverage import WholeExecutionCheck
+            store.execution_guard=WholeExecutionCheck(store,frozen,budget_artifact)
     store.verify_admission_snapshot(snapshot)
     bible,plan=load_committed_plan(frozen,units,timeline)
     images = require_complete_image_acceptance(frozen,units,timeline)
@@ -385,8 +489,42 @@ def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
     if store.read('inputs.json') is not None: equal(store.read('inputs.json'),inputs,'upscale inputs')
     for artifact in (inputs['workflow'],inputs['mapping']): store.guard_paths[artifact['path']] = artifact
     store.verify_admission_snapshot(snapshot)
+    from .scene_continuity_records import load_continuity_policy,require_scene_continuity_acceptance
+    if load_continuity_policy(frozen) is not None:
+        continuity_snapshot=store.snapshot_json(directories=('production/scene-continuity',))
+        # External audit/engine references are verified by the continuity reader;
+        # the media store only owns the production-side bytes and inventories.
+        store.verify_json_snapshot(continuity_snapshot)
+        for directory,inventory in continuity_snapshot['directories'].items():
+            store.guard_directories[directory]=set(inventory)
+        for value in continuity_snapshot['artifacts'].values():store.bind_artifact(value)
+        store.continuity_check=lambda:require_scene_continuity_acceptance(frozen,units,timeline)
     return dict(frozen=frozen,units=units,timeline=timeline,store=store,bible=bible,plan=plan,
-        image_acceptance=images,scene_clips=clips,inputs=inputs,template=template,rows=plan_scene_upscale(clips))
+        execution=execution,image_acceptance=images,scene_clips=clips,inputs=inputs,template=template,rows=plan_scene_upscale(clips))
+
+
+@verified_read
+def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
+    context=_scene_media_base_context(frozen,units,timeline,paths=paths,lock=lock)
+    store=context['store']
+    if not store.recheck_inputs:
+        # Human/source admission is an entry requirement, not a per-write audit.
+        check=store.continuity_check
+        if check is not None:check()
+        store.continuity_check=None
+        store.continuity_read_guard=None
+        return context
+    from .scene_continuity_records import capture_scene_continuity_guard
+    guard=capture_scene_continuity_guard(frozen,units,timeline)
+    store.verify_captured_bytes()
+    if guard is not None:
+        guard()
+        store.continuity_check=guard
+        store.continuity_read_guard=guard
+        from ._scene_media_check_coverage import capture_media_check_coverage
+        store._media_check_coverage=capture_media_check_coverage(store,guard)
+    else:store.continuity_read_guard=getattr(store,'continuity_check',None)
+    return context
 
 
 def require_scene_upscale_acceptance(frozen,units,timeline):

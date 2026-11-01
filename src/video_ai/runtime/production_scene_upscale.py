@@ -1,6 +1,7 @@
 """Held-lock exact retained-frame RealESRGAN production and original-task recovery."""
 from copy import deepcopy
 import os
+import re
 from pathlib import Path
 import sys
 from uuid import uuid4
@@ -29,14 +30,28 @@ def _result(context,status,error=None):
         log_dir=run/'logs/production' if run else None,error=error)
 
 
-def _extract(context,clip,logger):
+def _extract(context,clip,logger,*,recovery_directory=None):
     from ..media.scene_upscale import extract_scene_frames
-    store=context['store']; old=validate_extraction(context,clip,promote=True)
+    store=context['store']; folder=store.clip_dir(clip['clip_id'])
+    whole=context['frozen'].config.raw.get('scene_rendering',{}).get('mode')=='whole_scene_v1'
+    if recovery_directory is not None:
+        stage=Path(recovery_directory)
+        if (not whole or not stage.is_absolute() or stage.parent!=folder
+                or re.fullmatch(r'extraction-[0-9a-f]{32}',stage.name) is None):
+            raise ProductionRefused('exact owned whole-scene extraction directory required')
+        store._lexical(stage)
+    else:stage=folder/('extraction-'+uuid4().hex)
+    old=validate_extraction(context,clip,promote=True)
     if old is not None: return old
-    folder=store.clip_dir(clip['clip_id']); stage=folder/('extraction-'+uuid4().hex); target=folder/'input-frames'
+    target=folder/'input-frames'
     p=context['frozen'].config.media.profile; store.verify_global()
+    extra={}
+    if whole:
+        from ..media.scene_native_batch import extract_native_scene_batch
+        extract_scene_frames=extract_native_scene_batch
+        extra['reuse_existing']=recovery_directory is not None
     images,evidence=extract_scene_frames(clip['source']['path'],stage,expected_frames=clip['budget']['retained_frames'],
-        width=p.width,height=p.height,config=context['frozen'].config,paths=store.paths,logger=logger,unit_id=clip['clip_id'])
+        width=p.width,height=p.height,config=context['frozen'].config,paths=store.paths,logger=logger,unit_id=clip['clip_id'],**extra)
     store.verify_global(); stage_frames=[]; target_frames=[]
     for row,image in zip(clip_rows(context,clip['clip_id']),images):
         indexed={k:row[k] for k in ('retained_frame_index','generated_frame_index','output_frame_index')}
@@ -89,6 +104,7 @@ def _produce(context,logger,client_factory,service_factory):
         nonlocal service
         store.verify_global()
         if service is None: service=(service_factory or _OwnedService)(context['frozen'],store.paths,logger,store.lock)
+        if hasattr(service,'stage'): service.stage='upscale'
         service.ensure(); store.verify_global()
     try:
         for clip in context['scene_clips']['clips']:
@@ -103,8 +119,14 @@ def _produce(context,logger,client_factory,service_factory):
                 copy=_copy(context,row,'input_copy',image); graph=graph_for(context,row)
                 request=expected_request(context,row,image,copy['target']); folder=store.frame_dir(row['frame_id'])
                 store.write(folder/'request.json',request); store.write(folder/'graph.json',graph); boundary('request')
+                whole=context['frozen'].config.raw.get('scene_rendering',{}).get('mode')=='whole_scene_v1'
+                # Service preparation has its existing independent startup
+                # budget. Start a fresh whole frame's unchanged 180s tracking
+                # only after that preparation, never by resetting an intent.
+                if whole and service is None and store.read(folder/'intent.json') is None:ensure()
+                client_options={'send_checks_only':True} if whole and client_factory is None else {}
                 client=(client_factory or SceneComfyClient)(context['frozen'].config.services['comfyui'],
-                    request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph))
+                    request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph),**client_options)
                 submission=recover_or_submit_scene_frame(store,request,graph,client=client,template=context['template'],
                     ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['upscale_frame'])
                 try: validate_png(store,submission['output'],width=1920,height=1080)
@@ -132,7 +154,11 @@ def _produce(context,logger,client_factory,service_factory):
 from .scene_revision_records import revision_validation
 
 
+from .scene_execution_records import verified_scene_execution_write
+
+
 @revision_validation
+@verified_scene_execution_write
 def produce_scene_upscaled_clips(frozen,units,timeline,*,paths,logger,client_factory=None,service_factory=None,lock=None):
     from .image_selection_records import _run
     from .scene_upscale_transactions import SceneSubmitUnknown,SceneFrameTerminal

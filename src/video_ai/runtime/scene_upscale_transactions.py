@@ -443,7 +443,9 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
             cid=str(uuid4()); prompt_payload(graph,cid)  # Size rejection precedes intent.
             guard(); ensure_service(); guard()
             service_ready=True
-            _remote_validate(store,client,template,logger,remaining()); guard()
+            if getattr(store,'recheck_inputs',True):
+                _remote_validate(store,client,template,logger,remaining())
+            guard()
             store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
             intent=dict(schema_version=2,run_id=request['run_id'],frame_id=request['frame_id'],request_sha256=canonical_digest(request),graph_sha256=request['graph_sha256'],
                 input_sha256=request['input_copy']['sha256'],

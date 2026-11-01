@@ -316,6 +316,8 @@ def _publish_role(context,candidate,acceptance,tx,role,lock,guard):
 
 
 def publish(context,candidate,acceptance,lock,guard):
+    from .scene_continuity_records import require_scene_continuity_acceptance
+    require_scene_continuity_acceptance(context['frozen'],context.get('units'),context.get('timeline'))
     store=_stage(context);tx=store.read('transaction.json')
     if tx is None:
         targets=dict(context['frozen'].options['output_paths']);validate_targets(targets,store.run_dir,frozen=context['frozen'])

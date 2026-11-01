@@ -40,3 +40,52 @@ def test_protected_observed_desktop_uses_fresh_os_name(runtime_run,monkeypatch):
     result=module.desktop_policy(runtime_run[0],sample)
     assert result['approved_desktop_pids']==[42]
     assert result['external_pids']==[43]
+
+
+def test_explicit_desktop_approval_is_scoped_and_preserves_compute_blocks(runtime_run,monkeypatch):
+    import json
+    import video_ai.runtime.gpu_desktop as module
+    scope=getattr(module,'desktop_approval_scope',None)
+    assert callable(scope),'explicit invocation-scoped desktop approval is missing'
+    app='D:/Program Files/Oray/AweSun/flutter/AweSun.exe'
+    monkeypatch.setattr(module,'process_image',lambda pid:app if pid in (42,43) else 'D:/AI/python.exe')
+    monkeypatch.setattr(module,'process_types',lambda run:{42:'C+G',43:'C',44:'C+G'})
+    sample={'status':'verified','external_pids':[42,43,44],'gpu_total_mib':24455,'gpu_used_mib':2000}
+    run=runtime_run[0]
+    assert module.desktop_policy(run,sample)['external_pids']==[42,43,44]
+    with scope(run,[app],'User: keep this observed desktop application running'):
+        result=module.desktop_policy(run,sample)
+        assert result['external_pids']==[43,44]
+        assert result['approved_desktop_pids']==[42]
+        records=[json.loads(p.read_text(encoding='utf-8')) for p in (run/'logs/resources').glob('desktop-policy-*.json')]
+        assert any(r.get('additional_approval',{}).get('authorization')=='User: keep this observed desktop application running' for r in records)
+        assert module.desktop_policy(run.with_name('20261030-000000-000000000000'),sample)['external_pids']==[42,43,44]
+    assert module.desktop_policy(run,sample)['external_pids']==[42,43,44]
+
+
+def test_explicit_approval_cannot_replace_unknown_process_identity(runtime_run,monkeypatch):
+    import video_ai.runtime.gpu_desktop as module
+    scope=getattr(module,'desktop_approval_scope',None)
+    assert callable(scope),'explicit invocation-scoped desktop approval is missing'
+    def denied(pid):raise PermissionError('protected identity')
+    monkeypatch.setattr(module,'process_image',denied)
+    monkeypatch.setattr(module,'process_names',lambda:{42:'awesun.exe'})
+    monkeypatch.setattr(module,'process_types',lambda run:{42:'C+G'})
+    sample={'status':'verified','external_pids':[42],'gpu_total_mib':24455,'gpu_used_mib':2000}
+    with scope(runtime_run[0],['D:/Program Files/Oray/AweSun/flutter/AweSun.exe'],'User: keep AweSun'):
+        assert module.desktop_policy(runtime_run[0],sample)['external_pids']==[42]
+
+
+@pytest.mark.parametrize('paths,authorization',[
+    (['AweSun.exe'],'User approval'),
+    (['D:/Apps/*/AweSun.exe'],'User approval'),
+    (['D:/Apps/../AweSun.exe'],'User approval'),
+    (['D:/Apps/AweSun.exe'],''),
+])
+def test_explicit_approval_requires_exact_paths_and_authorization(runtime_run,paths,authorization):
+    import video_ai.runtime.gpu_desktop as module
+    scope=getattr(module,'desktop_approval_scope',None)
+    assert callable(scope),'explicit invocation-scoped desktop approval is missing'
+    with pytest.raises(ValueError):
+        with scope(runtime_run[0],paths,authorization):
+            pytest.fail('invalid desktop approval entered')

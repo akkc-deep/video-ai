@@ -2,11 +2,11 @@
 
 
 def validate_scene_completed_prefix(frozen,units,timeline):
-    from .scene_media_records import scene_media_context,_load_scene_media_progress
+    from .scene_media_records import _scene_media_base_context,_load_scene_media_progress
     from .scene_revision_records import _context
     # The progress facade admits every extant complete gate in dependency order;
     # it never fills missing markers or touches legacy shot stage state.
-    context=scene_media_context(frozen,units,timeline)
+    context=_scene_media_base_context(frozen,units,timeline)
     progress=_load_scene_media_progress(context)
     scope=_context.get()
     if scope is not None:

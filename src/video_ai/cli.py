@@ -38,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     automatic.add_argument('--image-model', metavar='REQ_KEY', help='image model for a new Jimeng run')
     action_group=automatic.add_mutually_exclusive_group()
     action_group.add_argument('--image-selection', metavar='PATH', help='consume image choices in a prepared Jimeng run')
-    for name in ('clip-observation','final-observation','retry-email','revision'):
+    for name in ('clip-observation','continuity-review','final-observation','retry-email','revision'):
         action_group.add_argument('--'+name,metavar='PATH')
     action_group.add_argument('--publish',action='store_true',help='publish only the exact accepted scene candidate')
     automatic.add_argument('--reference-settings',metavar='PATH')
@@ -134,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
                                 output_path=options.output, cpu_planner=options.cpu_planner, image_model=options.image_model,
                                 image_selection=options.image_selection,reference_settings=options.reference_settings,
                                 email_settings=options.email_settings,clip_observation=options.clip_observation,
+                                continuity_review=options.continuity_review,
                                 final_observation=options.final_observation,retry_email=options.retry_email,
                                 revision=options.revision,publish=options.publish)
             if options.json:

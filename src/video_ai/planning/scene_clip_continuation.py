@@ -59,7 +59,12 @@ def scene_clip_frame_mapping(clip, *, actual_generated_frames):
                              for k, j in enumerate(range(a, b))])
 
 
-def _budgets(plan, timeline):
+def _budgets(plan, timeline, *, execution=None):
+    if execution is not None:
+        from .scene_execution import EXPECTED_FIELDS, validate_scene_execution_budget
+        if not isinstance(execution, Mapping): raise ValueError('scene execution budget required')
+        expected = {key: execution.get(key) for key in EXPECTED_FIELDS}
+        return validate_scene_execution_budget(execution, plan, timeline, expected=expected)['clips']
     if not isinstance(plan, Mapping):
         raise ValueError('scene plan required')
     total = _integer(timeline.total_frames, 'timeline.total_frames', 1)
@@ -76,9 +81,9 @@ def _budgets(plan, timeline):
     return expected
 
 
-def validate_scene_clip_frame_mappings(plan, timeline, mappings):
+def validate_scene_clip_frame_mappings(plan, timeline, mappings, *, execution=None):
     """Rebuild budgets and require exact once-only coverage of the full timeline."""
-    clips = _budgets(plan, timeline)
+    clips = _budgets(plan, timeline, execution=execution)
     if not isinstance(mappings, (list, tuple)) or len(mappings) != len(clips):
         raise ValueError('ordered complete scene clip mappings required')
     cursor = 0
@@ -136,21 +141,33 @@ def _artifact(image):
     return result
 
 
-def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_contract=None, prompt_binding_context=None):
+def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_contract=None, prompt_binding_context=None,
+                         execution=None):
     """Keep fixed shared visual context, original narration and every baseline use."""
-    clips = _budgets(plan, timeline)
+    clips = _budgets(plan, timeline, execution=execution)
+    whole = execution is not None and execution['mode'] == 'whole_scene_v1'
+    raw = getattr(frozen.config, 'raw', {})
+    rendering = raw.get('scene_rendering', {})
+    mode = rendering.get('mode') if isinstance(rendering, Mapping) else None
+    if ((execution is not None and mode != execution['mode'])
+            or (mode is not None and execution is None)):
+        raise ValueError('explicit rendering mode requires its matching execution budget')
     _narration(plan, timeline)
     validate_reference_graph(thaw(plan['scenes']), thaw(bible))
     from .scene_video_prompts import (parse_scene_rendering,
         validate_scene_video_prompt_contract, render_scene_video_prompt)
-    raw = getattr(frozen.config, 'raw', {})
     visual = 'scene_rendering' in raw
     if visual:
         parse_scene_rendering(raw['scene_rendering'])
         binding = prompt_binding_context if prompt_binding_context is not None else dict(
             bible=bible,plan=plan,wan_inputs=wan_inputs,script=frozen.script)
         _fields(binding, ('bible','plan','wan_inputs','script'), 'prompt binding context')
-        validate_scene_video_prompt_contract(prompt_contract, **binding)
+        if isinstance(prompt_contract, Mapping) and prompt_contract.get('schema_version') != (2 if whole else 1):
+            raise ValueError('prompt schema differs from scene execution mode')
+        if whole:
+            validate_scene_video_prompt_contract(prompt_contract, **binding, execution=execution)
+        else:
+            validate_scene_video_prompt_contract(prompt_contract, **binding)
         if [c['clip_id'] for c in prompt_contract['clips']] != [c['clip_id'] for c in clips]:
             raise ValueError('visual prompt coverage differs from target plan')
     elif prompt_contract is not None:
@@ -162,6 +179,8 @@ def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_co
             or type(frozen.config.media.fps) is not int or frozen.config.media.fps != 16
             or frozen.config.media.transition != 'cut'):
         raise ValueError('fixed native16/cut profile required')
+    if whole and (profile.name, profile.width, profile.height) != ('fast', 768, 432):
+        raise ValueError('whole scene execution requires fast 768x432 profile')
     scenes = {s['scene_id']: s for s in plan['scenes']}
     rows = wan_inputs['scenes']
     if [r['scene_id'] for r in rows] != list(scenes):
@@ -186,12 +205,21 @@ def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_co
                 comparisons[sid].append(dict(kind=baseline['kind'], id=baseline['id'],
                     scene_id=baseline['scene_id'], candidate_id=image['candidate_id'], image=_artifact(image)))
         _artifact(selected[sid])
+    seed_indices = {}
+    if whole:
+        original = plan_scene_clips(plan, max_clip_seconds=plan.get('settings', {}).get('max_clip_seconds', 6))
+        if not _same(plan.get('clips'), original):
+            raise ValueError('semantic clip budgets differ from committed scene plan')
+        for index, clip in enumerate(original):
+            _clip(clip)
+            seed_indices.setdefault(clip['scene_id'], index)
     result = []
     for index, clip in enumerate(clips):
         sid = clip['scene_id']; scene = scenes[sid]
         positive = render_scene_video_prompt(prompt_contract, bible, scene, clip['clip_id']) if visual else contexts[sid]
         parameters = dict(positive=positive, negative=WAN_NEGATIVE,
-            seed_high=264244520398999+index, seed_low=0, width=profile.width, height=profile.height,
+            seed_high=264244520398999+(seed_indices[sid] if whole else index), seed_low=0,
+            width=profile.width, height=profile.height,
             length=clip['generated_frames'], fps=16, batch=1, steps=40, cfg=3.5, sampler='euler',
             scheduler='simple', split_step=15, shift_high=5.000000000000001,
             shift_low=5.000000000000001, lora_enabled=False)

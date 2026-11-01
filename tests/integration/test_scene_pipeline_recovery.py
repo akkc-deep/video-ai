@@ -126,7 +126,12 @@ def test_new_original_text_uses_automatic_prefix_and_exact_baseline_prompts(prod
         assert (len(posts),len(official),len(smtp.messages))==before
 
 
-def test_prepared_public_pipeline_waits_for_parent_and_never_posts_child_or_duplicate(runtime_run,tmp_path,monkeypatch):
+def test_prepared_public_pipeline_waits_for_parent_and_never_posts_child_or_duplicate(runtime_run,tmp_path,monkeypatch,request):
+    # Public-call fault injection is undone before the continuation checks;
+    # exact-path offline model validation belongs to the whole fixture lifetime.
+    fixture_patch=monkeypatch
+    monkeypatch=pytest.MonkeyPatch()
+    request.addfinalizer(monkeypatch.undo)
     import video_ai.production as production
     import video_ai.runtime.production_scene_clips as clips_module
     import video_ai.adapters.scene_comfy as comfy
@@ -146,7 +151,7 @@ def test_prepared_public_pipeline_waits_for_parent_and_never_posts_child_or_dupl
             if value.status!='interrupted':return value
             assert len(interruptions)>count,value.error
         raise AssertionError('coordinator failed to recover its durable boundaries')
-    setup=prepared_pipeline(runtime_run,tmp_path,monkeypatch)
+    setup=prepared_pipeline(runtime_run,tmp_path,fixture_patch)
     backend=OfflineWan(setup)
     monkeypatch.setattr(comfy,'SceneComfyClient',backend.factory)
     monkeypatch.setattr(clips_module,'_OwnedService',backend.service_factory)

@@ -47,6 +47,8 @@ class SceneClipStore:
         if (not isinstance(self.lock, RunLock) or self.lock.run_dir != self.run_dir
                 or read_json(self.lock.path) != self.lock.owner):
             raise ProductionRefused('scene clips lost held run lock')
+        guard = getattr(self, 'execution_guard', None)
+        if guard is not None: guard()
 
     def path(self, relative):
         relative = Path(relative)
@@ -89,6 +91,8 @@ class SceneClipStore:
         return {key: getattr(identity, key) for key in ('path', 'bytes', 'sha256')}
 
     def validate_artifact(self, value):
+        from .scene_color_repair_records import require_production_repair_origin
+        require_production_repair_origin(value)
         object_fields(value, ('path', 'bytes', 'sha256'), 'scene Artifact')
         integer(value['bytes'], 'artifact bytes', 1); images._sha(value['sha256'])
         from ._scene_revision_origin_images import source_image_artifact
@@ -146,8 +150,15 @@ class SceneClipStore:
                 inventories[directory]={str(path) for path in directory.glob('*.json')}
                 for path in inventories[directory]: paths[path]=self.artifact(path)
         expected_request, expected_graph = canonical_digest(request), canonical_digest(graph)
+        # A durable intent is recovered through its existing GET-only protocol.
+        # A new child must retain current parent admission through every send guard.
+        admission = getattr(self,'continuity_context',None)
+        new_child = parent is not None and self.read(folder/'intent.json') is None
         def guard():
             self.verify_global()
+            if new_child and admission is not None:
+                from .scene_continuity_records import require_scene_continuity_acceptance
+                require_scene_continuity_acceptance(self.frozen,*admission,clip_id=parent['clip_id'])
             for directory,inventory in inventories.items():
                 if {str(path) for path in directory.glob('*.json')}!=inventory:
                     raise ProductionRefused('parent observation inventory changed before send')
@@ -173,12 +184,31 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     template = WorkflowTemplate.load(Path(frozen.options['workflow_snapshots']['wan']['path']),
         Path(frozen.options['workflow_snapshots']['wan_mapping']['path']), frozen.config.models)
     validate_fixed_visual_template(template, 'wan')
-    store = SceneClipStore(frozen, run, paths=paths, lock=lock, clip_ids=[c['clip_id'] for c in plan['clips']])
+    from .scene_execution_records import (rendering_mode, load_scene_execution, ensure_scene_execution,
+        execution_artifact, verify_whole_scene_frozen)
+    mode = rendering_mode(frozen)
+    execution = None
+    budget_artifact = None
+    if mode is not None:
+        execution = (ensure_scene_execution(frozen, plan, timeline, lock=lock) if lock is not None
+                     else load_scene_execution(frozen, plan, timeline))
+        budget_artifact = execution_artifact(frozen)
+        equal(read_json(Path(budget_artifact['path'])), execution, 'captured execution budget content')
+    clips = execution['clips'] if execution is not None else plan['clips']
+    store = SceneClipStore(frozen, run, paths=paths, lock=lock, clip_ids=[c['clip_id'] for c in clips])
+    store.execution_mode=mode
+    if execution is not None:
+        def execution_guard():
+            equal(store.artifact(budget_artifact['path']), budget_artifact, 'execution budget')
+            if mode == 'whole_scene_v1': verify_whole_scene_frozen(frozen)
+        store.execution_guard = execution_guard
+        store.guard_paths[budget_artifact['path']] = budget_artifact
+    store.continuity_context = (units,timeline)
     from .scene_video_prompt_records import load_prompt_contract,prompt_binding_context
     contract,prompt_artifact = load_prompt_contract(frozen)
     binding = prompt_binding_context(frozen,contract,bible,plan,wan) if contract is not None else None
     rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan,
-        prompt_contract=contract,prompt_binding_context=binding)
+        prompt_contract=contract,prompt_binding_context=binding,execution=execution)
     for selected in wan['scenes']:
         from ._scene_revision_origin_images import source_image_required
         if not source_image_required(frozen,selected['scene_id']):continue
@@ -200,6 +230,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     if prompt_artifact is not None:
         inputs.update(prompt_policy='visual_v2',prompt_contract=prompt_artifact)
         store.guard_paths[prompt_artifact['path']] = prompt_artifact
+    if execution is not None:
+        inputs.update(schema_version=3, algorithm='scene_wan_execution_v1', execution_budget=budget_artifact)
     old = store.read('inputs.json')
     if old is not None: equal(old, inputs, 'inputs')
     for path in (run/'production/options.json', run/'production/scene-plan.json', run/'production/visual-bible.json',
@@ -216,6 +248,7 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         value={k:selected[k] for k in ('path','bytes','sha256')}
         store.guard_paths[value['path']]=value
     return dict(frozen=frozen, units=units, timeline=timeline, store=store, bible=bible, plan=plan,
+                execution=execution, execution_budget=budget_artifact,
                 wan=wan, rows=rows, inputs=inputs, template=template)
 
 
@@ -311,6 +344,9 @@ def validate_media_receipt(store, folder, operation, *, source=None, target=None
     if not staging.is_relative_to(folder/'staging'): raise ProductionRefused('media staging escapes clip')
     if media:
         if not staging.exists() and not final.exists(): raise ProductionRefused('prepared media bytes missing')
+        if not staging.exists():
+            from ._continuity_byte_guard import observe_absence
+            observe_absence(staging)
         if staging.exists(): store.validate_artifact(value['staging'])
         if final.exists(): store.validate_artifact(value['target'])
         elif promote:
@@ -518,7 +554,8 @@ def complete_value(context,records):
     from ..planning.scene_clip_continuation import validate_scene_clip_frame_mappings
     if any(r['budget']['clip_id'] not in records or not records[r['budget']['clip_id']]['accepted'] for r in context['rows']):
         raise ProductionRefused('all source clips and process observations required')
-    validate_scene_clip_frame_mappings(context['plan'],context['timeline'],[records[r['budget']['clip_id']]['mapping'] for r in context['rows']])
+    validate_scene_clip_frame_mappings(context['plan'],context['timeline'],[records[r['budget']['clip_id']]['mapping'] for r in context['rows']],
+        execution=context.get('execution'))
     inputs=context['inputs']; store=context['store']; scenes=[]; clips=[]
     for scene in context['plan']['scenes']:
         scenes.append(dict({k:deepcopy(scene[k]) for k in ('scene_id','unit_ids','start_frame','end_frame','bindings')},
@@ -530,9 +567,12 @@ def complete_value(context,records):
             narration_bindings=deepcopy(row['narration_bindings']),generated=r['clip']['generated'],source=r['clip']['source'],
             frame_mapping=r['mapping'],last_frame=r['last_frame'],clip_sha256=canonical_digest(r['clip']),
             observation_acceptance_sha256=canonical_digest(r['accepted'])))
-    return dict(schema_version=2,production_strategy=STRATEGY,run_id=store.run_dir.name,inputs_sha256=canonical_digest(inputs),
+    result = dict(schema_version=2,production_strategy=STRATEGY,run_id=store.run_dir.name,inputs_sha256=canonical_digest(inputs),
         **{k:inputs[k] for k in ('scene_plan_sha256','visual_bible_sha256','wan_inputs_sha256','timeline_sha256')},
         total_frames=context['timeline'].total_frames,scenes=scenes,clips=clips)
+    if context.get('execution') is not None:
+        result.update(schema_version=3, execution_budget=context['execution_budget'])
+    return result
 
 
 def load_scene_clip_progress(frozen,units,timeline):
@@ -542,10 +582,18 @@ def load_scene_clip_progress(frozen,units,timeline):
     return progress
 
 
-def require_scene_clip_acceptance(frozen,units,timeline):
+def _require_scene_clip_base_acceptance(frozen,units,timeline):
+    """Validate the immutable schema-2 admission as historical evidence."""
     context=scene_context(frozen,units,timeline); store=context['store']
     if store.read('inputs.json') is None: raise ProductionRefused('scene clip inputs missing')
     _,records=collect_progress(context); expected=complete_value(context,records); value=store.read('complete.json')
     if value is None: raise ProductionRefused('complete source clip admission missing')
     equal(value,expected,'complete admission')
+    return value
+
+
+def require_scene_clip_acceptance(frozen,units,timeline):
+    value=_require_scene_clip_base_acceptance(frozen,units,timeline)
+    from .scene_continuity_records import require_scene_continuity_acceptance
+    require_scene_continuity_acceptance(frozen,units,timeline)
     return value

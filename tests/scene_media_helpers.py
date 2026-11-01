@@ -23,7 +23,11 @@ class OfflineUpscale(OfflineWan):
             cwd=setup['run'],env=build_child_env(setup['paths']),timeout=60,logger=setup['logger'],stage='test_fixture',unit_id='upscale')
         assert result.returncode==0
         self.outputs={}
-        clips=require_scene_clip_acceptance(setup['frozen'],setup['units'],setup['timeline'])
+        from video_ai.runtime.scene_revision_records import revision_scope
+        # Match the coordinator's operation-scoped proof reuse. Every hit still
+        # verifies the captured byte and inventory guards.
+        with revision_scope():
+            clips=require_scene_clip_acceptance(setup['frozen'],setup['units'],setup['timeline'])
         for row in plan_scene_upscale(clips):
             name=f'frame_{row["retained_frame_index"]+1:06d}'
             prefix=f'{setup["run"].name}/scene_upscale/{row["clip_id"]}/{name}/attempt_0001'
@@ -67,7 +71,7 @@ def prepared_scene_sources(runtime_run,tmp_path,monkeypatch,*,long_scene=False):
         return original(script,audio,**kwargs)
     with monkeypatch.context() as patch:
         patch.setattr(timeline_module,'build_production_timeline',short_authentic_pcm)
-        setup=prepared_wan(runtime_run,tmp_path,patch,long_scene=long_scene)
+        setup=prepared_wan(runtime_run,tmp_path,patch,long_scene=long_scene,model_patch=monkeypatch)
     wan=OfflineWan(setup); admitted=admit_all(setup,wan)
     assert admitted.status=='source_clips_ready',admitted.error
     setup['wan_backend']=wan

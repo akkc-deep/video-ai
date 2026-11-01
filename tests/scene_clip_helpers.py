@@ -11,7 +11,7 @@ import wave
 from image_selection_helpers import save
 
 
-def prepared_wan(runtime_run, tmp_path, monkeypatch, *, long_scene=False, original_format='png'):
+def prepared_wan(runtime_run, tmp_path, monkeypatch, *, long_scene=False, original_format='png', model_patch=None):
     from integration.test_jimeng_reference_flow import (
         prepared_baseline, configured_cloud, produce, accept_reference_batch)
     import video_ai.planning.production_timeline as timeline_module
@@ -21,6 +21,8 @@ def prepared_wan(runtime_run, tmp_path, monkeypatch, *, long_scene=False, origin
     original = timeline_module.build_production_timeline
     run = runtime_run[0]
     config = runtime_run[1]; raw = thaw(config.raw)
+    from offline_scene_models import model_inputs
+    raw['models']=model_inputs(config,model_patch if model_patch is not None else monkeypatch)
     raw.update(voice_config=str(config.voice.config_file), workflows=thaw(config.workflows))
     raw['media']['timeline'] = dict(sentence_pause_seconds=.02,paragraph_pause_seconds=.04,
                                   opening_seconds=.03,closing_seconds=.01)

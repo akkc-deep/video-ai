@@ -8,7 +8,7 @@ from .manifest import thaw
 from .production_state import ProductionRefused
 
 
-def import_dependencies(domain,key,plan,existing):
+def import_dependencies(domain,key,plan,existing,*,execution_clips=None):
     wanted=[]
     if domain!='common':wanted.append('common:all')
     if domain not in ('common','plan'):wanted.append('plan:all')
@@ -20,7 +20,8 @@ def import_dependencies(domain,key,plan,existing):
         if scene['reference_bindings']:wanted.append('reference_settings:all')
     if domain=='image_group':wanted.extend('choice:'+s['scene_id'] for s in plan['scenes'])
     if domain=='clip':
-        clip=next((c for c in plan['clips'] if c['clip_id']==key),None)
+        clips=execution_clips if execution_clips is not None else plan['clips']
+        clip=next((c for c in clips if c['clip_id']==key),None)
         if clip is None:raise ProductionRefused('unknown clip dependency node')
         wanted.append('choice:'+clip['scene_id'])
         if clip['parent_clip_id']:wanted.append('clip:'+clip['parent_clip_id'])
@@ -37,12 +38,17 @@ def verify_invalidation(frozen,origin,proof,originals):
     if canonical_digest(request)!=proof['invalidation']['request_sha256']:
         raise ProductionRefused('revision request differs from invalidation')
     plan_value=require_origin_node(origin,'plan','all');plan=plan_value['scene_plan']
+    from .production_scene_revision import _source_execution
+    from ._scene_revision_origins import common
+    from ..planning.production_timeline import ProductionTimeline
+    execution = _source_execution(origin,plan,ProductionTimeline.from_dict(common(origin)['timeline']))
+    source_clips = execution['clips'] if execution is not None else plan['clips']
     choices={s['key']:originals[iid] for iid,(s,_) in proof['imports'].items() if s['domain']=='choice'}
     if request['kind']=='reselect_images':
         for sid in request['scene_ids']:
             if sid not in choices:choices[sid]=require_origin_node(origin,'choice',sid)
     clips=[];frames=[]
-    for budget in plan['clips']:
+    for budget in source_clips:
         cid=budget['clip_id'];value=originals.get('clip:'+cid)
         accepted=source_clip_record(origin,cid)['accepted'] if value is not None else None
         clips.append(dict(clip_id=cid,record=value,acceptance=accepted,status='accepted' if value is not None else 'pending'))
@@ -57,6 +63,7 @@ def verify_invalidation(frozen,origin,proof,originals):
     snapshot=dict(source_options=options,bible=plan_value['bible'],scene_plan=plan,
         image_choices=[choices[s['scene_id']] for s in plan['scenes'] if s['scene_id'] in choices],
         clip_nodes=clips,upscale_nodes=frames,pending_effects=[])
+    if execution is not None: snapshot['scene_execution'] = execution
     rebuilt=plan_scene_revision(snapshot,request,proof['commit']['target_identity'])
     if canonical_digest(rebuilt)!=canonical_digest(proof['invalidation']):
         raise ProductionRefused('revision invalidation differs from verified source/request/target')

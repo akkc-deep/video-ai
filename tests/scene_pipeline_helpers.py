@@ -63,7 +63,7 @@ def prepared_pipeline(runtime_run,tmp_path,monkeypatch):
         return dict(run=run,frozen=frozen,units=units,timeline=timeline,bible=bible,plan=plan,paths=paths,config=config)
     with monkeypatch.context() as patch:
         patch.setattr(reference_flow,'setup_selection',setup_selection)
-        setup=prepared_wan(runtime_run,tmp_path,patch)
+        setup=prepared_wan(runtime_run,tmp_path,patch,model_patch=monkeypatch)
     return persist_prepared_common(setup)
 
 

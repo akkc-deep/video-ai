@@ -9,7 +9,7 @@ import subprocess
 from types import MappingProxyType
 from uuid import uuid4
 
-from ..config import ProjectConfig, load_config, load_voice_config, read_json
+from ..config import ProjectConfig, load_config, load_voice_config, parse_scene_continuity, read_json
 from ..jimeng_config import STRATEGY, active_models, active_workflows, override_image_model
 from ..planning.segments import SegmentedScript, segment_text
 from .environment import build_child_env
@@ -17,7 +17,7 @@ from .manifest import FileIdentity, hash_file, now, thaw, validate_run_dir
 from .paths import PathPolicy, RuntimePaths, resolve_cli_path
 from .preflight import PreflightCheck, PreflightReport, preflight
 from .production_state import (ArtifactStamp, ProductionRefused, absolute_path, integer,
-                               object_fields, run_path, timestamp, write_exclusive)
+                               json_bytes, object_fields, run_path, timestamp, write_exclusive)
 from .services import port_listening
 from .workflows import validate_workflow
 from ._scene_revision_freeze import revision_freeze_scope
@@ -38,6 +38,8 @@ class FrozenInputs:
 
 
 def validate_supported(config):
+    if 'scene_research_material' in config.raw:
+        raise ProductionRefused('research material is not eligible for automatic production')
     for field, expected in dict(fps=16, final_width=1920, final_height=1080, transition='cut',
                                 transition_seconds=0, burn_subtitles=True, music=None).items():
         actual = getattr(config.media, field)
@@ -106,6 +108,8 @@ def output_paths(config, run, output_path=None, *, check_existing=True):
 
 
 def freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None, cpu_planner=None, raw_script_bytes=None, image_model=None, scene_revision=None):
+    if (Path(run_dir)/'research/options.json').exists():
+        raise ProductionRefused('research run cannot be frozen as automatic production')
     if scene_revision is not None:
         from ._scene_revision_freeze import _store, recover_options
         from .scene_revision_records import validate_revision_structure
@@ -146,11 +150,17 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
     canonical = load_config(config.config_file, raw=read_json(Path(config_copy.path)), voice=voice)
     if not _same_json(canonical, config): raise ProductionRefused('effective configuration differs from source raw/resolved configuration')
     identities.update(config=thaw(config_copy), voice=thaw(voice_copy))
+    if 'scene_continuity' in config.raw:
+        policy_path = run_path(run, directory/'scene-continuity/policy.json')
+        _save_bytes(policy_path, json_bytes(parse_scene_continuity(config.raw['scene_continuity'])))
+        identities['scene_continuity_policy'] = thaw(hash_file(policy_path))
     if 'scene_rendering' in config.raw:
-        from .scene_video_prompt_records import contract_source,parse_contract_bytes
+        from .scene_video_prompt_records import contract_source,parse_contract_bytes,validate_contract_mode
         _, copied = _copy_small(contract_source(config), run_path(run,directory/'scene-video-prompts.json'),
-                                validate=parse_contract_bytes)
+                                validate=lambda raw: validate_contract_mode(parse_contract_bytes(raw),config.raw['scene_rendering']))
         identities['scene_video_prompts'] = thaw(copied)
+        from .scene_execution_records import freeze_whole_scene_evidence
+        freeze_whole_scene_evidence(config,run,identities,save=_save_bytes)
     if config.production_strategy == STRATEGY and config.raw.get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths, parse_capability
         from ..adapters.common import strict_json
@@ -181,7 +191,6 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
     custom = dict(version='v2', device='cpu', is_half=False, t2s_weights_path=str(config.voice.gpt_weights),
                   vits_weights_path=str(config.voice.sovits_weights), bert_base_path=str(config.voice.bert_root),
                   cnhuhbert_base_path=str(config.voice.hubert_root))
-    from .production_state import json_bytes
     _save_bytes(yaml_path, json_bytes(dict(custom=custom, v2=custom)))
     identities['tts_yaml'] = thaw(hash_file(yaml_path))
     models = {role: ArtifactStamp.read(path).to_dict() for role, path in active_models(config).items()}
@@ -218,7 +227,10 @@ def _verify_identity(data, run=None):
 
 
 def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=None, image_model=None):
-    run = validate_run_dir(run_dir); options = read_json(run_path(run, run/'production/options.json'))
+    run = validate_run_dir(run_dir)
+    if (run/'research/options.json').exists():
+        raise ProductionRefused('research run cannot be loaded as automatic production')
+    options = read_json(run_path(run, run/'production/options.json'))
     modern = type(options.get('schema_version')) is int and options['schema_version'] == 2
     fields = OPTION_FIELDS + ('production_strategy', 'image_model_override', 'image_generation') if modern else OPTION_FIELDS
     if modern and 'scene_revision' in options: fields += ('scene_revision',)
@@ -239,10 +251,17 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     records = policy['input_identities']
     roles = ('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping')
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
+    if 'scene_continuity' in options['config_snapshot']['raw']:
+        required.add('scene_continuity_policy')
+        if records.get('scene_continuity_policy', {}).get('path') != str(run/'production/scene-continuity/policy.json'):
+            raise ProductionRefused('frozen scene continuity policy path differs')
     if modern and 'scene_rendering' in options['config_snapshot']['raw']:
         required.add('scene_video_prompts')
         if records.get('scene_video_prompts',{}).get('path') != str(run/'production/scene-video-prompts.json'):
             raise ProductionRefused('frozen visual prompt path differs')
+        from ..planning.scene_video_prompts import parse_scene_rendering
+        if parse_scene_rendering(options['config_snapshot']['raw']['scene_rendering']).get('mode')=='whole_scene_v1':
+            required.update(('whole_scene_evidence','whole_scene_evidence_closure'))
     if modern and options['config_snapshot']['raw'].get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths
         for req_key in parse_capability_paths(options['config_snapshot']['raw']['reference_capabilities']):
@@ -265,6 +284,10 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     if not _same_json(_resolved(frozen), (options['config_snapshot']['resolved'], options['voice_snapshot']['resolved'])):
         raise ProductionRefused('frozen raw/resolved configuration differs')
     validate_supported(frozen)
+    if 'scene_continuity' in frozen.raw:
+        policy_value = parse_scene_continuity(read_json(Path(records['scene_continuity_policy']['path'])))
+        if not _same_json(policy_value, frozen.raw['scene_continuity']):
+            raise ProductionRefused('frozen scene continuity policy differs from configuration')
     if 'scene_rendering' in frozen.raw:
         from .scene_video_prompt_records import parse_contract_bytes
         parse_contract_bytes(Path(records['scene_video_prompts']['path']).read_bytes())
@@ -316,7 +339,13 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
                         image_generation=image,
                         voice=replace(voice, reference_audio=Path(records['reference']['path'])),
                         media=replace(frozen.media, font_file=Path(records['font']['path'])))
-    return FrozenInputs(effective, SegmentedScript.read(script_path), options)
+    result=FrozenInputs(effective, SegmentedScript.read(script_path), options)
+    if 'scene_rendering' in effective.raw:
+        from .scene_video_prompt_records import load_prompt_contract
+        load_prompt_contract(result)
+    from .scene_execution_records import verify_whole_scene_frozen
+    verify_whole_scene_frozen(result)
+    return result
 
 
 def check_stage_space(config, *, frames=0, audio_bytes=0, encoded_bytes=0, disk_usage=shutil.disk_usage):

@@ -142,6 +142,17 @@ def parse_scene_planner_model(value='qwen3:8b') -> str:
     return value
 
 
+def parse_scene_continuity(value) -> dict:
+    """Parse an explicit policy without introducing defaults for older runs."""
+    if not isinstance(value, Mapping) or set(value) != {'schema_version', 'policy'}:
+        raise ConfigError('scene_continuity: expected exact fields schema_version and policy')
+    if type(value['schema_version']) is not int or value['schema_version'] != 1:
+        raise ConfigError('scene_continuity.schema_version: expected integer 1')
+    if type(value['policy']) is not str or value['policy'] != 'advisory_v1':
+        raise ConfigError('scene_continuity.policy: expected advisory_v1')
+    return dict(schema_version=1, policy='advisory_v1')
+
+
 @dataclass(frozen=True)
 class Profile:
     name: str
@@ -297,15 +308,25 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
                                   'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
-                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_rendering'))
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_rendering', 'scene_continuity'))
     _exact(data['schema_version'], 1, path, 'schema_version')
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
     if strategy not in ('legacy', STRATEGY): _error(path, 'production_strategy', 'unsupported strategy')
+    if 'scene_continuity' in data:
+        if strategy != STRATEGY: _error(path, 'scene_continuity', 'requires paragraph_jimeng_v1 strategy')
+        try: parse_scene_continuity(data['scene_continuity'])
+        except ConfigError as exc: _error(path, 'scene_continuity', str(exc))
     if 'scene_rendering' in data:
         if strategy != STRATEGY: _error(path, 'scene_rendering', 'requires paragraph_jimeng_v1 strategy')
         from .planning.scene_video_prompts import parse_scene_rendering
-        try: parse_scene_rendering(data['scene_rendering'])
+        try:
+            rendering = parse_scene_rendering(data['scene_rendering'])
+            if rendering.get('mode') == 'whole_scene_v1':
+                if data.get('scene_continuity') != dict(schema_version=1, policy='advisory_v1'):
+                    raise ValueError('whole_scene_v1 requires explicit scene_continuity advisory_v1')
+                if not isinstance(data.get('media'), Mapping) or data['media'].get('profile') != 'fast':
+                    raise ValueError('whole_scene_v1 requires the admitted fast profile')
         except ValueError as exc: _error(path, 'scene_rendering', str(exc))
     image = parse_image_generation(data.get('image_generation'), path) if strategy == STRATEGY else None
     if strategy == 'legacy' and 'image_generation' in data:
@@ -386,6 +407,9 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     timeouts = {**TIMEOUT_DEFAULTS, **timeouts}
     for name, value in timeouts.items():
         _number(value, path, f'timeouts.{name}')
+    if data.get('scene_rendering',{}).get('mode') == 'whole_scene_v1':
+        if timeouts['wan']>7200 or timeouts['service_start']>300:
+            _error(path,'timeouts','whole_scene_v1 requires Wan <=7200 and service_start <=300 seconds')
     voice_path = _path(data['voice_config'], path, 'voice_config')
     if voice is None:
         voice = load_voice_config(voice_path)

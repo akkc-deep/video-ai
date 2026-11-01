@@ -15,6 +15,7 @@ from .manifest import ManifestStore,create_manifest,hash_file,now,thaw,validate_
 from .production_state import ProductionRefused,RunLock,object_fields,run_path
 from .scene_clip_records import (scene_context,graph_for,expected_request,validate_clip,collect_progress,
     complete_value,validate_media_receipt,technical_recipes,equal)
+from .scene_execution_records import verified_scene_execution_write
 
 
 def boundary(point):
@@ -111,15 +112,37 @@ class _GuardedLogger:
     def progress(self,*args,**kwargs):return self._write('progress',*args,**kwargs)
 
 
+def _prepare_comfy_directories(run,guard):
+    from .paths import PathPolicy
+    policy=PathPolicy()
+    for name in ('input','output','temp','user'):
+        guard()
+        policy.validate_write(run/'comfy'/name,'run').mkdir(parents=True,exist_ok=True)
+    guard()
+
+
 class _OwnedService:
     def __init__(self,frozen,paths,logger,lock):
         self.frozen,self.paths,self.logger,self.lock=frozen,paths,logger,lock
         self.run=logger.run_dir; self.manager=None; self.handle=None
+        self.lease=None; self.sampler=None; self.stage='source_clips'
+
+    def _start_resources(self,manifest):
+        if self.frozen.config.raw.get('scene_rendering',{}).get('mode') != 'whole_scene_v1': return
+        if self.lease is not None: return
+        from .resources import GpuLease, ResourceSampler
+        from .gpu_desktop import desktop_policy
+        self.lease=GpuLease(self.paths,manifest,self.logger,resource_policy=desktop_policy)
+        self.lease.acquire(self.stage,'whole_scene_v1',batch_size=1)
+        self.sampler=ResourceSampler(self.run,lambda: ({os.getpid()} |
+            (self.manager.owned_pids if self.manager is not None else set())),interval_seconds=2)
+        self.sampler.start()
 
     def ensure(self):
         if self.handle is not None: return
         from .services import ServiceManager,port_listening
         from .service_specs import build_service_specs
+        from .logging import RunLogger
         from ..adapters.scene_comfy import SceneComfyClient
         from ..adapters.common import strict_json,AdapterError,FailureKind
         run=self.run; frozen=self.frozen
@@ -136,6 +159,10 @@ class _OwnedService:
         else:
             manifest=create_manifest(run,frozen.config,inputs={'script':hash_file(Path(frozen.options['script_path']))},
                                      models={},workflows={},verify_integrity=False)
+        # Keep health evidence under the held run lock. The caller's full model
+        # admission guard remains outside the two-second HTTP probe budget.
+        guard()
+        health_logger=_GuardedLogger(RunLogger(run,production=True),guard)
         class Health:
             def __init__(inner,url,timeout,ignored_logger):
                 inner.client=SceneComfyClient(url,request_timeout=timeout,ownership_check=guard)
@@ -147,7 +174,7 @@ class _OwnedService:
                     raise AdapterError(FailureKind.unavailable,'bounded Comfy health unavailable: '+str(exc)) from exc
                 guard()
                 token=uuid4().hex
-                self.logger.save_json('scene-clips/service/'+token+'.json',dict(method='GET',route=route,status=response['status'],
+                health_logger.save_json('scene-clips/service/'+token+'.json',dict(method='GET',route=route,status=response['status'],
                     headers=response['headers'],body=response['body'].decode('utf-8'),finished_at=now()))
                 try:
                     if response['status']!=200: raise ValueError('health HTTP status differs')
@@ -155,13 +182,25 @@ class _OwnedService:
                 except ValueError as exc:
                     raise AdapterError(FailureKind.invalid_result,'invalid Comfy health response') from exc
         if port_listening(frozen.config.services['comfyui'],3): raise ProductionRefused('external Comfy service already listening')
+        _prepare_comfy_directories(run,guard)
         self.manager=ServiceManager(self.paths,manifest,self.logger,http_factory=Health)
         guard()
+        self._start_resources(manifest)
         self.handle=self.manager.ensure(build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui'])
         if not self.handle.owned: raise ProductionRefused('Comfy service is not owned by this run')
 
     def close(self):
-        if self.manager is not None and self.handle is not None: self.manager.stop(self.handle)
+        try:
+            if self.sampler is not None:
+                self.sampler.stop()
+                self.logger.save_json('scene-clips/resources/'+uuid4().hex+'.summary.json',self.sampler.summary())
+                self.sampler=None
+        finally:
+            try:
+                if self.manager is not None and self.handle is not None: self.manager.stop(self.handle)
+            finally:
+                if self.lease is not None:
+                    self.lease.release(); self.lease=None
 
 
 def _evidence(store,paths):
@@ -279,6 +318,13 @@ def _finish(context,errors=None):
     else:
         store.write('complete.json',complete_value(context,records)); boundary('complete'); status='source_clips_ready'
     error=next((s['error'] for s in scenes if s['error']),None)
+    from .scene_continuity_records import load_continuity_policy,require_scene_continuity_acceptance,SceneContinuityPending
+    if load_continuity_policy(context['frozen']) is not None:
+        try:
+            require_scene_continuity_acceptance(context['frozen'],context['units'],context['timeline'])
+        except SceneContinuityPending as exc:
+            if status!='failed':status='awaiting_continuity_review'
+            error=error or _error(exc)
     return _result(store.run_dir,status,scenes=scenes,templates=templates,error=error)
 
 
@@ -293,7 +339,14 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
     for row in context['rows']: graph_for(context,row)
     store.write('inputs.json',context['inputs']); boundary('inputs')
     _restore_outer(context,paths=paths,logger=logger)
-    collect_progress(context)
+    progress,_=collect_progress(context)
+    whole = context.get('execution') is not None and context['execution']['mode']=='whole_scene_v1'
+    if whole and any(row['status'] in ('failed','continuity_failed') for row in progress['scenes']):
+        return _finish(context)
+    from .scene_continuity_records import load_continuity_policy
+    if load_continuity_policy(context['frozen']) is not None:
+        from .production_scene_continuity import ensure_initial_epoch
+        ensure_initial_epoch(context['frozen'],context['units'],context['timeline'],paths=paths,logger=logger,lock=store.lock)
     service=None; errors={}; result=None
     def ensure():
         nonlocal service
@@ -311,6 +364,12 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
                     if not old['accepted'] or old['rejected']: break
                     parent=old; continue
                 try:
+                    # Existing original intents only recover their own GET evidence.
+                    # Admission is checked before allocating a new child request.
+                    if parent is not None and load_continuity_policy(context['frozen']) is not None and store.read(folder/'intent.json') is None:
+                        from .scene_continuity_records import require_scene_continuity_acceptance
+                        require_scene_continuity_acceptance(context['frozen'],context['units'],context['timeline'],
+                            clip_id=parent['clip']['clip_id'])
                     input_record=_input(context,row,parent,paths=paths,logger=logger)
                     graph=graph_for(context,row); request=expected_request(context,row,input_record,parent)
                     store.write(folder/'graph.json',graph); store.write(folder/'request.json',request); boundary('request')
@@ -337,11 +396,14 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
                 except Exception as exc:
                     store.assert_owned()
                     terminal=store.read(folder/'terminal.json')
-                    status=('failed' if terminal is not None else 'submit_unknown' if isinstance(exc,SceneSubmitUnknown)
+                    from .scene_continuity_records import SceneContinuityPending
+                    status=('awaiting_continuity_review' if isinstance(exc,SceneContinuityPending)
+                            else 'failed' if terminal is not None else 'submit_unknown' if isinstance(exc,SceneSubmitUnknown)
                             else 'blocked' if isinstance(exc,ProductionRefused) else 'failed')
                     evidence=[str(p) for p in folder.rglob('*') if p.is_file()]
                     errors[scene['scene_id']]=(status,_error(exc,evidence))
                     break
+            if whole and errors: break
         result=_finish(context,errors)
         return result
     finally:
@@ -463,6 +525,7 @@ def hashlib_sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+@verified_scene_execution_write
 def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
     run=None; acquired=None; result=None
     try:

@@ -14,7 +14,7 @@ from uuid import uuid4
 
 from ..config import read_json, ProjectConfig
 from .paths import PathPolicy, PROJECT_ROOT, shot_dir
-from .verification import validation_session, protected_hash, file_stamp, check_path
+from .verification import validation_session, protected_hash, file_stamp, check_path, _whole_cached_identity
 
 STAGES = ('preflight', 'speech', 'timeline', 'storyboard', 'start_images',
           'source_clips', 'upscale', 'composition', 'validation', 'publish')
@@ -53,8 +53,13 @@ class FileIdentity:
 
 
 def hash_file(path: Path) -> FileIdentity:
-    path = path.resolve(strict=True)
-    return protected_hash(path, _hash_open_file)
+    from ._continuity_byte_guard import observe_file
+    protected = _whole_cached_identity(path)
+    if protected is None:
+        path = path.resolve(strict=True)
+        protected = protected_hash(path, _hash_open_file)
+    observe_file(protected)
+    return protected
 
 
 def _hash_open_file(file, path):

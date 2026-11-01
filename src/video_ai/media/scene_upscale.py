@@ -24,8 +24,12 @@ def _decode(path,config,*,image=False,timeout=300):
     return result.stdout
 
 
-def verify_png(path,*,width,height,config,timeout=300):
+def verify_png(path,*,width,height,config,timeout=300,remaining_timeout=None):
     _dimensions(width,height)
+    def budget():
+        if remaining_timeout is None:return timeout
+        from ..adapters.common import positive_timeout
+        return min(timeout,positive_timeout(remaining_timeout()))
     # Pure byte defects are definitive media failures; tool launch/IO failures stay resumable.
     raw_png=Path(path).read_bytes()
     if raw_png[:8]!=b'\x89PNG\r\n\x1a\n': raise InvalidScenePng('model output is not PNG')
@@ -46,12 +50,13 @@ def verify_png(path,*,width,height,config,timeout=300):
     if offset!=len(raw_png) or not kinds or kinds[-1]!=b'IEND' or b'IDAT' not in kinds:
         raise InvalidScenePng('complete single PNG required')
     probe=subprocess.run([str(config.tools['ffprobe']),'-v','error','-show_streams','-show_format','-of','json',str(path)],
-        stdin=subprocess.DEVNULL,capture_output=True,timeout=timeout,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        stdin=subprocess.DEVNULL,capture_output=True,timeout=budget(),creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     if probe.returncode: raise RuntimeError('PNG probe tool failed')
     info=json.loads(probe.stdout); streams=info.get('streams',[])
     if len(streams)!=1 or any(streams[0].get(k)!=v for k,v in dict(codec_name='png',width=width,height=height,pix_fmt='rgb24').items()):
         raise InvalidScenePng('exact RGB24 PNG dimensions/format required')
-    raw=_decode(path,config,timeout=timeout)
+    raw=_decode(path,config,timeout=budget())
+    if remaining_timeout is not None:budget()
     if len(raw)!=width*height*3: raise InvalidScenePng('single complete PNG required')
     return raw
 

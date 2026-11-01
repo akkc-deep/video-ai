@@ -115,7 +115,8 @@ def common(frozen):
 def origin_media_context(frozen,units,timeline,*,scene_ids,clip_ids):
     """Reuse source admission only inside this invocation and exact ancestry."""
     from .scene_revision_records import _context
-    from .scene_media_records import scene_media_context
+    from .scene_media_records import _scene_media_base_context,scene_media_context
+    from .scene_continuity_records import load_continuity_policy
     active=_context.get()
     key=canonical_digest(dict(options=thaw(frozen.options),config=thaw(frozen.config.raw),
         units=units,timeline=timeline.as_dict() if timeline is not None else None,
@@ -123,7 +124,8 @@ def origin_media_context(frozen,units,timeline,*,scene_ids,clip_ids):
     contexts=active.setdefault('origin_media_contexts',{}) if active is not None else {}
     context=contexts.get(key)
     if context is None:
-        context=scene_media_context(frozen,units,timeline)
+        reader=_scene_media_base_context if load_continuity_policy(frozen) is not None else scene_media_context
+        context=reader(frozen,units,timeline)
         contexts[key]=context
     store=context['store'];store.verify_captured_bytes();store.verify_tools()
     for stamp in frozen.options['model_stamps'].values():ArtifactStamp.from_dict(thaw(stamp)).verify()
@@ -135,7 +137,11 @@ def _origin_scene_ids(frozen,domain,key):
     from .image_selection_records import load_committed_plan
     _,plan=load_committed_plan(frozen,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
     if domain in ('image','choice'):sid=key
-    else:sid=next(c['scene_id'] for c in plan['clips'] if c['clip_id']==key.split(':')[0])
+    else:
+        from .production_scene_revision import _source_execution
+        execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+        clips=execution['clips'] if execution is not None else plan['clips']
+        sid=next(c['scene_id'] for c in clips if c['clip_id']==key.split(':')[0])
     required=set()
     def include(scene_id):
         if scene_id in required:return
@@ -149,7 +155,10 @@ def _origin_clip_ids(frozen,key):
     prefix=common(frozen)
     from .image_selection_records import load_committed_plan
     _,plan=load_committed_plan(frozen,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
-    by_id={c['clip_id']:c for c in plan['clips']};required=set();cid=key.split(':')[0]
+    from .production_scene_revision import _source_execution
+    execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+    clips=execution['clips'] if execution is not None else plan['clips']
+    by_id={c['clip_id']:c for c in clips};required=set();cid=key.split(':')[0]
     while cid is not None:
         if cid in required or cid not in by_id:raise ProductionRefused('invalid original clip ancestry')
         required.add(cid);cid=by_id[cid]['parent_clip_id']
@@ -407,16 +416,32 @@ def capture_origin(frozen,domain,key):
                         sha=selected.get(binding['source_scene_id'])
                         if sha is not None:directories.add(run/'production/reference-storage'/_sha(sha))
     if domain in ('clip','upscale'):
+        from .production_scene_revision import _source_execution
+        execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+        source_clips=execution['clips'] if execution is not None else plan['clips']
+        if execution is not None:
+            files.add(run/'production/scene-rendering/execution-budget.json')
+            # Admission bytes and external closure must remain verifiable in
+            # the source run, regardless of the target's mode or budget.
+            if execution['mode']=='whole_scene_v1':
+                from .scene_execution_records import verify_whole_scene_frozen
+                verify_whole_scene_frozen(frozen)
+                records=frozen.options['execution_policy']['input_identities']
+                files.update(Path(records[role]['path']) for role in ('whole_scene_evidence','whole_scene_evidence_closure'))
+        from .scene_continuity_records import load_continuity_policy
+        if load_continuity_policy(frozen) is not None:
+            # Retain late raw failures as well as receipts when media is inherited.
+            directories.add(run/'production/scene-continuity')
         if 'scene_rendering' in frozen.config.raw:
             # A cached import proof must keep guarding the exact prompt bytes
             # that produced this source, not only its options/request digests.
             files.add(Path(frozen.options['execution_policy']['input_identities']['scene_video_prompts']['path']))
         files.add(run/'production/reference-images/wan-inputs.json')
         files.add(run/'production/scene-clips/inputs.json')
-        if domain=='upscale': relevant = plan['clips']
+        if domain=='upscale': relevant = source_clips
         else:
-            target = next(c for c in plan['clips'] if c['clip_id']==key)
-            relevant = [c for c in plan['clips'] if c['scene_id']==target['scene_id'] and c['ordinal']<=target['ordinal']]
+            target = next(c for c in source_clips if c['clip_id']==key)
+            relevant = [c for c in source_clips if c['scene_id']==target['scene_id'] and c['ordinal']<=target['ordinal']]
         for clip in relevant:
             folder = run/'production/scene-clips'/clip['clip_id']; directories.add(folder)
             absent.add(folder/'observation-rejected.json')

@@ -24,6 +24,8 @@ def source_clip_required(frozen,clip_id):
 
 
 def declared_artifact(store,value):
+    from .scene_color_repair_records import require_production_repair_origin
+    require_production_repair_origin(value)
     object_fields(value,('path','bytes','sha256'),'original declared media')
     integer(value['bytes'],'original declared media bytes',1)
     from .image_selection_records import _sha
@@ -32,6 +34,8 @@ def declared_artifact(store,value):
 
 
 def media_declaration(frozen,path):
+    from .scene_color_repair_records import require_production_repair_origin
+    require_production_repair_origin(path)
     scope=_scope.get()
     if scope is None or scope['identity']!=canonical_digest(frozen.options):return None
     run=Path(frozen.options['script_path']).parent.parent;path=Path(path)

@@ -173,3 +173,92 @@ def test_wan_stage_rejects_committed_over_six_second_clip_without_replanning():
     with pytest.raises(ValueError,match='six|6|96'):
         build_scene_wan_plan(frozen,bible,plan,timeline,wan)
     assert plan==before
+
+
+def _whole_execution(plan, timeline):
+    from video_ai.planning.scene_execution import build_scene_execution_budget
+    timeline.as_dict = lambda: dict(total_frames=timeline.total_frames, total_samples=timeline.total_samples,
+                                    clips=[dict(vars(c)) for c in timeline.clips])
+    return build_scene_execution_budget(plan, timeline, run_id='run_123', mode='whole_scene_v1',
+        rendering_identity_sha256='a'*64,
+        admission=dict(path='D:/VideoSi/run/evidence.json', bytes=100, sha256='b'*64))
+
+
+def _whole_request_fixture():
+    from unit.test_whole_scene_contracts import whole_contract, rendering
+    frozen, bible, plan, timeline, wan, contract, _ = whole_contract()
+    frozen.config.raw['scene_rendering'] = rendering('whole_scene_v1')
+    return frozen, bible, plan, timeline, wan, contract
+
+
+def test_whole_requests_keep_original_first_semantic_clip_seed_and_complete_narration():
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    frozen, bible, plan, timeline, wan, contract = _whole_request_fixture()
+    execution = _whole_execution(plan, timeline)
+    before = deepcopy((bible, plan, wan, execution))
+    result = build_scene_wan_plan(frozen, bible, plan, timeline, wan, execution=execution, prompt_contract=contract)
+    assert len(result) == 3
+    assert [r['budget']['retained_frames'] for r in result] == [1, 200, 4]
+    assert [r['parameters']['length'] for r in result] == [1, 201, 5]
+    assert [r['parameters']['seed_high'] for r in result] == [264244520398999, 264244520399000, 264244520399003]
+    assert all(r['parameters']['seed_low'] == 0 for r in result)
+    assert all(r['budget']['parent_clip_id'] is None for r in result)
+    assert [r['narration_bindings'] for r in result] == [s['bindings'] for s in plan['scenes']]
+    assert all('Continue from selected scene image pose' in r['parameters']['positive'] for r in result)
+    assert all('原样动作' not in r['parameters']['positive'] and 'AUDIT_ONLY' not in r['parameters']['positive'] for r in result)
+    assert (bible, plan, wan, execution) == before
+
+
+@pytest.mark.parametrize('fault', ['quality', 'budget', 'timeline', 'semantic_clip', 'text'])
+def test_whole_requests_reject_profile_budget_or_original_narration_drift(fault):
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    frozen, bible, plan, timeline, wan, contract = _whole_request_fixture()
+    execution = _whole_execution(plan, timeline)
+    if fault == 'quality':
+        frozen.config.media.profile.name = 'quality'
+        frozen.config.media.profile.width, frozen.config.media.profile.height = 1280, 720
+    elif fault == 'budget': execution['clips'][1]['generated_frames'] += 4
+    elif fault == 'timeline': timeline.total_samples += 1
+    elif fault == 'semantic_clip': plan['clips'][2]['parent_clip_id'] = None
+    else: plan['scenes'][1]['bindings'][0]['text'] = '摘要'
+    with pytest.raises(ValueError):
+        build_scene_wan_plan(frozen, bible, plan, timeline, wan, execution=execution, prompt_contract=contract)
+
+
+def test_explicit_segmented_execution_preserves_original_requests_and_mappings():
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan, scene_clip_frame_mapping, validate_scene_clip_frame_mappings
+    from video_ai.planning.scene_execution import build_scene_execution_budget
+    from unit.test_scene_video_prompts import fixture
+    frozen, bible, plan, timeline, wan, contract = fixture()
+    _whole_execution(plan, timeline)
+    execution = build_scene_execution_budget(plan, timeline, run_id='run_123', mode='segmented_v1',
+        rendering_identity_sha256='a'*64, admission=None)
+    original = build_scene_wan_plan(frozen, bible, plan, timeline, wan, prompt_contract=contract)
+    frozen.config.raw['scene_rendering']['mode'] = 'segmented_v1'
+    assert build_scene_wan_plan(frozen, bible, plan, timeline, wan, execution=execution, prompt_contract=contract) == original
+    mappings = [scene_clip_frame_mapping(c, actual_generated_frames=c['generated_frames']) for c in plan['clips']]
+    validate_scene_clip_frame_mappings(plan, timeline, mappings, execution=execution)
+
+
+@pytest.mark.parametrize('fault', ['legacy_execution', 'old_visual_execution', 'mode_mismatch',
+    'missing_execution_whole', 'missing_execution_segmented'])
+def test_requests_refuse_missing_or_mixed_explicit_execution_modes(fault):
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    from unit.test_scene_video_prompts import fixture
+    if fault in ('old_visual_execution', 'missing_execution_segmented'):
+        frozen, bible, plan, timeline, wan, contract = fixture()
+    else:
+        frozen, bible, plan, timeline, wan, contract = _whole_request_fixture()
+    execution = _whole_execution(plan, timeline)
+    if fault == 'legacy_execution':
+        frozen.config.raw = {}
+        contract = None
+    elif fault == 'mode_mismatch':
+        frozen.config.raw['scene_rendering'].pop('whole_scene_evidence')
+        frozen.config.raw['scene_rendering']['mode'] = 'segmented_v1'
+    elif fault == 'missing_execution_whole': execution = None
+    elif fault == 'missing_execution_segmented':
+        frozen.config.raw['scene_rendering']['mode'] = 'segmented_v1'
+        execution = None
+    with pytest.raises(ValueError):
+        build_scene_wan_plan(frozen, bible, plan, timeline, wan, prompt_contract=contract, execution=execution)

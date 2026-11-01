@@ -77,6 +77,8 @@ def artifact(path, *, root=None, allow_empty=False):
 
 
 def verify_artifact(value, *, root, allow_empty=False):
+    from .scene_color_repair_records import require_production_repair_origin
+    require_production_repair_origin(value)
     object_fields(value, ('path','bytes','sha256'), 'revision Artifact')
     integer(value['bytes'], 'revision artifact bytes',0 if allow_empty else 1)
     if artifact(value['path'],root=root,allow_empty=allow_empty) != value:
@@ -133,8 +135,12 @@ class RevisionGuard:
     def verify_frozen(self,frozen):
         if canonical_digest(frozen.options)!=self.options_sha256:
             raise ProductionRefused('revision proof frozen options changed')
+        if frozen.options.get('config_snapshot',{}).get('raw',{}).get('scene_rendering',{}).get('mode') == 'whole_scene_v1':
+            from .scene_execution_records import verify_whole_scene_frozen
+            verify_whole_scene_frozen(frozen)
 
     def verify_captured_bytes(self):
+        from ._continuity_byte_guard import observe_inventory, observe_absence
         self.verify_frozen(self.frozen)
         for ancestor in self.ancestors:ancestor.verify_captured_bytes()
         for value,root,empty,identity in self.files.values():
@@ -143,8 +149,10 @@ class RevisionGuard:
         for directory,(inventory,root) in self.directories.items():
             current = sorted(str(safe_path(p,root)) for p in safe_path(directory,root).rglob('*.json'))
             if current != inventory: raise ProductionRefused('revision evidence inventory changed')
+            observe_inventory(directory,'revision_json',current)
         for path,root in self.absent.items():
             if safe_path(path,root).exists(): raise ProductionRefused('revision absent evidence appeared')
+            observe_absence(path)
 
     def verify_global(self):
         self.verify_captured_bytes()
@@ -250,8 +258,15 @@ def validate_revision_structure(options, run):
         imports[iid] = (sidecar,bound)
     plan=imports['plan:all'][0]['view']['scene_plan'] if 'plan:all' in imports else None
     from ._scene_revision_plan import import_dependencies
+    source_clips = None
+    source_options = _json(source/'production/options.json',root=source)
+    source_mode = source_options['config_snapshot']['raw'].get('scene_rendering',{}).get('mode')
+    if source_mode is not None and plan is not None:
+        from types import SimpleNamespace
+        from ..planning.scene_execution import derive_scene_execution_clips
+        source_clips=derive_scene_execution_clips(plan,SimpleNamespace(total_frames=plan['total_frames']),mode=source_mode)
     for iid,(sidecar,_) in imports.items():
-        if sidecar['dependency_import_ids']!=import_dependencies(sidecar['domain'],sidecar['key'],plan,imports):
+        if sidecar['dependency_import_ids']!=import_dependencies(sidecar['domain'],sidecar['key'],plan,imports,execution_clips=source_clips):
             raise ProductionRefused('import dependency closure differs')
     from ._scene_revision_copy import preflight_copies
     domain_map={'images':'image','choices':'choice','clips':'clip'}
@@ -262,6 +277,24 @@ def validate_revision_structure(options, run):
     return dict(commit=commit,imports=imports,invalidation=invalidation,source_run=source)
 
 
+def _same_whole_frozen(frozen,original):
+    if frozen.options.get('config_snapshot',{}).get('raw',{}).get('scene_rendering',{}).get('mode')!='whole_scene_v1':
+        return False
+    if frozen is original:return True
+    from .production_inputs import FrozenInputs
+    from ..config import ProjectConfig
+    from ..planning.segments import SegmentedScript
+    if (type(frozen) is not FrozenInputs or type(original) is not FrozenInputs
+            or type(frozen.config) is not ProjectConfig or type(original.config) is not ProjectConfig
+            or type(frozen.script) is not SegmentedScript or type(original.script) is not SegmentedScript
+            or frozen.config.production_strategy!='paragraph_jimeng_v1'
+            or original.config.production_strategy!='paragraph_jimeng_v1'):
+        return False
+    # Complete typed JSON includes parsed config, raw config, options and text.
+    # Python equality alone would conflate boolean and numeric values.
+    return canonical_digest(thaw(frozen))==canonical_digest(thaw(original))
+
+
 @verified_read
 def require_scene_revision(frozen):
     """Admit original nodes and compare registered views under one recursion scope."""
@@ -270,7 +303,12 @@ def require_scene_revision(frozen):
     active = _context.get()
     if active is not None and str(run) in active['validated']:
         result = active['validated'][str(run)]
-        result['guard'].verify_frozen(frozen)
+        guard = result['guard']
+        # Captured-byte validation checks the original complete frozen state.
+        # Whole admission scans its complete external closure; do it once.
+        # Changed typed state and historical modes keep both original checks.
+        same_whole = _same_whole_frozen(frozen,guard.frozen)
+        if not same_whole: guard.verify_frozen(frozen)
         result['guard'].verify_captured_bytes()
         return result
     root_call = active is None

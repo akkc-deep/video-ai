@@ -215,6 +215,8 @@ def require_scene_delivery_record(context):
 
 def _produce(context):
     from .scene_delivery_files import SceneOutputLock,publish,validate_completed
+    from .scene_continuity_records import require_scene_continuity_acceptance
+    require_scene_continuity_acceptance(context['frozen'],context['units'],context['timeline'])
     acceptance=require_scene_final_acceptance_record(context)
     from .production_scene_composition import require_scene_composition_record
     candidate=require_scene_composition_record(context)
@@ -245,7 +247,11 @@ def _result(context,status,stage,*,candidate=None,error=None):
 from .scene_revision_records import revision_validation
 
 
+from .scene_execution_records import verified_scene_execution_write
+
+
 @revision_validation
+@verified_scene_execution_write
 def _entry(frozen,units,timeline,*,paths,logger,lock,stage,operation):
     from .scene_media_records import scene_media_context
     from .image_selection_records import _run

@@ -351,7 +351,11 @@ def _produce(context,logger):
 from .scene_revision_records import revision_validation
 
 
+from .scene_execution_records import verified_scene_execution_write
+
+
 @revision_validation
+@verified_scene_execution_write
 def produce_scene_composition(frozen,units,timeline,*,paths,logger,lock=None):
     run=None; acquired=None; result=None; status='failed'; error=None
     try:

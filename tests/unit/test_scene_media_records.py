@@ -206,7 +206,7 @@ def test_source_admission_race_refused_before_upscale_pipeline(runtime_run,monke
         if phase=='image_require': mutate()
         return {}
     monkeypatch.setattr(image_selection_records,'_run',lambda frozen:run)
-    monkeypatch.setattr(scene_clip_records,'require_scene_clip_acceptance',clip_gate)
+    monkeypatch.setattr(scene_clip_records,'_require_scene_clip_base_acceptance',clip_gate)
     monkeypatch.setattr(image_selection_records,'load_committed_plan',lambda *a:({},{}))
     monkeypatch.setattr(image_selection_records,'require_complete_image_acceptance',image_gate)
     monkeypatch.setattr(WorkflowTemplate,'load',lambda *a:SimpleNamespace())

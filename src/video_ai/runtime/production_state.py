@@ -598,7 +598,7 @@ class ProductionStateStore:
 
 
 def process_started_at(pid):
-    """Return the Windows process creation FILETIME; None means proven no such PID."""
+    """Return a live process's creation FILETIME; None means absent or exited."""
     integer(pid, 'pid', 1)
     kernel = ctypes.WinDLL('kernel32', use_last_error=True)
     kernel.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
@@ -614,6 +614,8 @@ def process_started_at(pid):
         times = [wintypes.FILETIME() for _ in range(4)]
         if not kernel.GetProcessTimes(handle, *(ctypes.byref(t) for t in times)):
             raise ProductionRefused(f'cannot read process start time: pid={pid}')
+        if times[1].dwHighDateTime or times[1].dwLowDateTime:
+            return None
         return str((times[0].dwHighDateTime << 32) | times[0].dwLowDateTime)
     finally: kernel.CloseHandle(handle)
 
