@@ -25,6 +25,27 @@ def proof(module, path):
     return capture.finish()
 
 
+def test_formal_guard_outlives_300_seconds_and_still_rejects_changed_bytes(evidence,monkeypatch):
+    module=importlib.import_module('video_ai.runtime._continuity_byte_guard')
+    from video_ai.runtime import manifest
+    from video_ai.runtime.execution_limits import production_execution
+    guard=proof(module,evidence)
+    clock=[0.]
+    original=manifest.hash_file
+    def slow_hash(*args,**kwargs):
+        value=original(*args,**kwargs)
+        clock[0]+=301
+        return value
+    monkeypatch.setattr(module,'monotonic',lambda:clock[0])
+    monkeypatch.setattr(manifest,'hash_file',slow_hash)
+    assert production_execution(guard.verify)() is None
+    before=evidence.stat()
+    evidence.write_bytes(b'{"ok":fals}')
+    os.utime(evidence,ns=(before.st_atime_ns,before.st_mtime_ns))
+    with pytest.raises(ValueError,match='byte proof file changed'):
+        production_execution(guard.verify)()
+
+
 def directory_link(alias, target):
     try:
         alias.symlink_to(target, target_is_directory=True)

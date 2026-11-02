@@ -77,7 +77,8 @@ def test_clip_and_frame_deadlines_are_absolute_and_http_capped(runtime_run,monke
     f=setup(runtime_run,monkeypatch)
     base=f.ug.DeadlineHttp.set_deadlines
     monkeypatch.setattr(f.ug.DeadlineHttp,'set_deadlines',lambda self,*a:base(self,time.monotonic()+.000001,time.monotonic()+.000001))
-    result=f.uc.prepare_upscaled_clips(f.config,run_dir=f.run)
+    # Historical bounded component execution remains characterized independently.
+    result=f.uc.prepare_upscaled_clips.__wrapped__(f.config,run_dir=f.run)
     assert result.status=='failed' and not f.requests and f.actions==['start','stop']
 
 

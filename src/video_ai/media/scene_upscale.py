@@ -9,6 +9,7 @@ from ..runtime.manifest import hash_file
 from ..runtime.production_state import ProductionRefused
 from .frames import extract_video_frames,_count
 from .video import inspect_video,_dimensions
+from ..runtime.execution_limits import command_timeout
 
 
 class InvalidScenePng(ProductionRefused):
@@ -18,7 +19,7 @@ class InvalidScenePng(ProductionRefused):
 def _decode(path,config,*,image=False,timeout=300):
     args=[str(config.tools['ffmpeg']),'-nostdin','-v','error','-xerror','-i',str(path),
           '-map','0:v:0','-vf','format=rgb24','-fps_mode','passthrough','-pix_fmt','rgb24','-f','rawvideo','-']
-    result=subprocess.run(args,stdin=subprocess.DEVNULL,capture_output=True,timeout=timeout,
+    result=subprocess.run(args,stdin=subprocess.DEVNULL,capture_output=True,timeout=command_timeout(timeout),
         creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     if result.returncode: raise RuntimeError('complete RGB24 decode tool failed: '+str(path))
     return result.stdout
@@ -27,9 +28,9 @@ def _decode(path,config,*,image=False,timeout=300):
 def verify_png(path,*,width,height,config,timeout=300,remaining_timeout=None):
     _dimensions(width,height)
     def budget():
-        if remaining_timeout is None:return timeout
-        from ..adapters.common import positive_timeout
-        return min(timeout,positive_timeout(remaining_timeout()))
+        if remaining_timeout is None:return command_timeout(timeout)
+        remaining=remaining_timeout()
+        return command_timeout(remaining,command_timeout(timeout))
     # Pure byte defects are definitive media failures; tool launch/IO failures stay resumable.
     raw_png=Path(path).read_bytes()
     if raw_png[:8]!=b'\x89PNG\r\n\x1a\n': raise InvalidScenePng('model output is not PNG')
@@ -70,7 +71,7 @@ def verify_scene_frame_pixels(source,images,*,expected_frames,width,height,confi
     if len(images)!=expected_frames or len(raw)!=size*expected_frames:
         raise ProductionRefused('native retained decode frame count differs')
     for index,path in enumerate(images):
-        if verify_png(path,width=width,height=height,config=config,timeout=min(300,timeout))!=raw[index*size:(index+1)*size]:
+        if verify_png(path,width=width,height=height,config=config,timeout=command_timeout(timeout,300))!=raw[index*size:(index+1)*size]:
             raise ProductionRefused('PNG pixels differ from retained source frame')
     def identity(value): return value.path,value.bytes,value.sha256
     if identity(before)!=identity(hash_file(Path(source))) or any(identity(a)!=identity(hash_file(Path(p))) for a,p in zip(image_before,images)):
@@ -80,7 +81,7 @@ def verify_scene_frame_pixels(source,images,*,expected_frames,width,height,confi
 def extract_scene_frames(source,target_dir,*,expected_frames,width,height,config,paths,logger,unit_id,timeout=1200):
     before=hash_file(Path(source))
     info,evidence=inspect_video(source,width=width,height=height,config=config,paths=paths,logger=logger,
-        unit_id=unit_id,stage='upscale',timeout=min(300,timeout))
+        unit_id=unit_id,stage='upscale',timeout=command_timeout(timeout,300))
     if info['frames']!=expected_frames: raise ValueError('retained source count differs')
     rows,more=extract_video_frames(source,target_dir,expected_frames=expected_frames,width=width,height=height,
         config=config,paths=paths,logger=logger,unit_id=unit_id,timeout=timeout)

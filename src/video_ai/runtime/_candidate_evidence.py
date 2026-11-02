@@ -14,6 +14,7 @@ from .logging import RunLogger
 from .manifest import hash_file, thaw, _timestamp
 from .timeline_checks import _local, _again, _fresh
 from .paths import PROJECT_ROOT
+from .execution_limits import command_receipt_policy
 
 FIELDS = 'schema_version run_id created_at status passed staging_only ready_for_review composition_identity input_identities candidate_identity subtitle_identity effective_media subtitle_events requirement_bindings cue_checks provenance validation request_evidence plan_identity execution_identity'
 PLAN_FIELDS = 'schema_version run_id composition_identity expected_media subtitle_events requirement_bindings cue_checks'
@@ -194,14 +195,15 @@ def commands_media(config, run, commands, context, evidence):
     expected = expected_argv(config, context['candidate_path'])
     seen = set(); receipts = {}
     for operation, record in zip(OPERATIONS, commands):
-        keys(record, COMMAND_FIELDS, 'candidate command')
+        keys(record, COMMAND_FIELDS+(' time_limits' if 'time_limits' in record else ''), 'candidate command')
         if record['operation'] != operation or record['args'] != [str(x) for x in expected[operation]]:
             raise ValueError('candidate command order/arguments differ')
-        if type(record['returncode']) is not int or record['returncode'] != 0 or record['timed_out'] is not False or type(record['timeout_seconds']) is not int or record['timeout_seconds'] != 300 or record['cwd'] != str(run/'logs/validation'):
-            raise ValueError('failed/unbounded candidate command')
+        if type(record['returncode']) is not int or record['returncode'] != 0 or record['timed_out'] is not False or not command_receipt_policy(record) or record['cwd'] != str(run/'logs/validation'):
+            raise ValueError('failed/invalid candidate command execution policy')
         for k in ('started_at', 'finished_at'): _timestamp(record[k])
         start, end = (datetime.fromisoformat(record[k]) for k in ('started_at', 'finished_at'))
-        if not 0 <= (end-start).total_seconds() <= 301 or end > datetime.now().astimezone():
+        elapsed=(end-start).total_seconds()
+        if elapsed<0 or record['timeout_seconds'] is not None and elapsed>301 or end > datetime.now().astimezone():
             raise ValueError('candidate command timestamps differ')
         for key in ('record_path', 'stdout_path', 'stderr_path'):
             path = _local(run, Path(record[key])); name = path.relative_to(run).as_posix()

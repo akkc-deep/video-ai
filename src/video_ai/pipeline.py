@@ -11,6 +11,7 @@ from .runtime.manifest import ManifestStore, create_manifest, hash_file, now, th
 from .runtime.paths import RuntimePaths, create_run, validate_output_pair, _validate_spelling
 from .runtime.timeline_checks import _run_path, _local, _again, _artifact
 from .runtime import pipeline_stages as stages
+from .runtime.execution_limits import production_execution
 from .runtime.pipeline_evidence import (exclusive, check_lock, check_stage_locks,
     fresh_identity, save_record, write_exclusive, protected_snapshot,register_pipeline_evidence)
 
@@ -170,9 +171,11 @@ def _options(run):
     _timestamp(data['created_at'])
     if datetime.fromisoformat(data['created_at'])>datetime.now().astimezone():raise PipelineRefusal('future pipeline options')
     policy=data['execution_policy']
-    if (not isinstance(policy,dict) or set(policy)!=set(('gpu_management','total_timeout_seconds','media_command_timeout_seconds'))
+    current=isinstance(policy,dict) and 'time_limits' in policy
+    if (not isinstance(policy,dict) or set(policy)!=set(('gpu_management','total_timeout_seconds','media_command_timeout_seconds'))|({'time_limits'} if current else set())
             or policy['gpu_management']!='disabled' or policy['total_timeout_seconds'] is not None
-            or type(policy['media_command_timeout_seconds']) is not int or policy['media_command_timeout_seconds']!=300):
+            or (current and (policy['time_limits']!='unlimited_v1' or policy['media_command_timeout_seconds'] is not None))
+            or (not current and (type(policy['media_command_timeout_seconds']) is not int or policy['media_command_timeout_seconds']!=300))):
         raise PipelineRefusal('invalid pipeline execution policy')
     ids = {name:fresh_identity(value) for name,value in data['input_identities'].items()}
     for name in ('unit_review_identity','image_inputs_identity','settings_identity'):
@@ -229,6 +232,7 @@ def plan_resume(config:ProjectConfig, *, run_dir:Path,reviews_path:Path|None=Non
     return result
 
 
+@production_execution
 def run_pipeline(config:ProjectConfig, *, script:Path,unit_review_path:Path,
         image_inputs_path:Path|None=None,settings_path:Path|None=None,
         output_path:Path|None=None,cpu_planner:bool=False)->PipelineResult:
@@ -254,12 +258,13 @@ def run_pipeline(config:ProjectConfig, *, script:Path,unit_review_path:Path,
     write_exclusive(run,run/'logs/pipeline/pipeline-options.json',dict(schema_version=1,run_id=run.name,created_at=now(),
         input_identities=thaw(inputs),unit_review_identity=thaw(copied),image_inputs_identity=thaw(optional.get('image_inputs_identity')),
         settings_identity=thaw(optional.get('settings_identity')),output_path=str(output_path) if output_path else None,
-        cpu_planner=cpu_planner,execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=300)))
+        cpu_planner=cpu_planner,execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=None,time_limits='unlimited_v1')))
     store = create_manifest(run,config,inputs=inputs,models={},workflows={})
     store.record_stage('preflight','running'); store.record_stage('preflight','completed',artifacts=[_artifact(preflight_id)])
     return resume_pipeline(config,run_dir=run)
 
 
+@production_execution
 def resume_pipeline(config:ProjectConfig, *, run_dir:Path,reviews_path:Path|None=None,
         changes_path:Path|None=None,retry_failed:bool=False,publish:bool=False,
         output_path:Path|None=None)->PipelineResult:

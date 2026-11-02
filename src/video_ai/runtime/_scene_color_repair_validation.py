@@ -212,8 +212,7 @@ def verify_reference_source(record,binding):
 
 
 def remaining(reader):
-    from time import monotonic
-    reader.check();return max(.001,reader.deadline-monotonic())
+    return reader.remaining()
 
 
 def validate_native(video,count):

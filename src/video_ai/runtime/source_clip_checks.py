@@ -16,6 +16,7 @@ from ._source_clip_inputs import inputs,fresh,same,MODEL_NAMES
 from ._source_clip_generation import generate
 from ._source_clip_evidence import validate,validation
 from ._source_clip_review import review,ReviewIncomplete
+from .execution_limits import production_execution
 
 
 class SourceClipRefusal(ValueError):
@@ -132,6 +133,7 @@ def failure(run,store,logger,exc,count):
     return result(run,'failed',count)
 
 
+@production_execution
 def prepare_source_clips(config:ProjectConfig, *, run_dir:Path)->SourceClipsResult:
     run=run_path(run_dir);store=entry_store(run)
     with exclusive(run) as owner:
@@ -178,6 +180,7 @@ def prepare_source_clips(config:ProjectConfig, *, run_dir:Path)->SourceClipsResu
         except BaseException as exc:return failure(run,store,logger,exc,len(clips))
 
 
+@production_execution
 def resume_source_clips(config:ProjectConfig, *, run_dir:Path,reuse_context)->SourceClipsResult:
     """Continue a new child after strict origin consumption; never reset parent."""
     from .pipeline_import import verify_reuse_context,reused_source_clips
@@ -222,6 +225,7 @@ def resume_source_clips(config:ProjectConfig, *, run_dir:Path,reuse_context)->So
         except BaseException as exc:return failure(run,store,logger,exc,len(clips))
 
 
+@production_execution
 def finalize_source_clips(config:ProjectConfig, *, run_dir:Path,review_path:Path)->SourceClipsResult:
     run=run_path(run_dir);path=globals()['review_path'](run,review_path);store=entry_store(run)
     with exclusive(run) as owner:

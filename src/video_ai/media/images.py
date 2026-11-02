@@ -2,23 +2,21 @@
 from uuid import uuid4
 import re
 from time import monotonic
-from ..adapters.common import positive_timeout
 from ..config import read_json
 from ..planning.start_images import contain_filter, validate_dimensions
 from ..runtime.environment import build_child_env
 from ..runtime.manifest import hash_file, thaw
 from ..runtime.processes import run_logged
 from ..runtime.timeline_checks import _again, _local
+from ..runtime.execution_limits import command_timeout, execution_deadline, execution_remaining
 
 
 def _deadline(timeout, now):
-    return now + positive_timeout(timeout)
+    return execution_deadline(timeout, now)
 
 
 def _remaining(deadline, now):
-    remaining=deadline-now
-    if remaining<=0:raise TimeoutError('media budget expired')
-    return remaining
+    return execution_remaining(deadline, now)
 
 
 def _record_name(logger, prefix, unit_id, stage):
@@ -33,7 +31,7 @@ def _record_name(logger, prefix, unit_id, stage):
 
 def _command(args, *, config, paths, logger, unit_id, stage='start_images', timeout=300):
     result=run_logged(tuple(str(a) for a in args),cwd=logger.run_dir,env=build_child_env(paths),
-        timeout=min(300,positive_timeout(timeout)),logger=logger,stage=stage,unit_id=unit_id)
+        timeout=command_timeout(timeout,300),logger=logger,stage=stage,unit_id=unit_id)
     if result.returncode != 0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: image command failed: {result.stderr_path}')
     return result

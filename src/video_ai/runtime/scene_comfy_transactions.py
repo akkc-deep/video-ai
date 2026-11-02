@@ -355,13 +355,14 @@ def _remote_validate(store,client,template,logger,timeout):
     except ValueError as exc: raise ProductionRefused('remote Wan template invalid: '+str(exc)) from exc
 
 
-def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_service,logger,timeout):
-    budget=positive_timeout(timeout); end=time.monotonic()+budget
+def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None):
+    from .execution_limits import execution_deadline, request_timeout
+    budget=positive_timeout(timeout); end=execution_deadline(timeout,time.monotonic())
     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
     completed=validate_scene_submission(store,request,graph)
     if completed is not None: return completed
     whole=getattr(store,'execution_mode',None)=='whole_scene_v1'
-    if whole and intent is not None:
+    if whole and intent is not None and end is not None:
         available=datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time()
         end=min(end,time.monotonic()+available)
     if intent is None:
@@ -369,9 +370,13 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
         store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
     guard=store.capture_guard(request,graph); guard()
     def remaining():
-        guard(); result=end-time.monotonic()
+        guard()
+        if end is None:
+            seconds=request_timeout_seconds if request_timeout_seconds is not None else client.request_timeout
+            return request_timeout(None,seconds,time.monotonic())
+        result=end-time.monotonic()
         if result<=0: raise SceneSubmitUnknown('original scene tracking deadline exceeded')
-        return result
+        return result if request_timeout_seconds is None else min(result,positive_timeout(request_timeout_seconds))
     old_guard=getattr(client,'ownership_check',None)
     if old_guard is not None: client.ownership_check=guard
     service_ready=False
@@ -386,7 +391,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                 input_sha256=request['input_sha256'],parent_sha256=canonical_digest(request['parent']) if request['parent'] is not None else None,
                 attempt_id=str(uuid4()),client_id=cid,output_prefix=_prefix(request),created_at=now())
             store.write(directory/'intent.json',intent); guard()
-            if whole:
+            if whole and end is not None:
                 # The inference clock begins at the durable original intent;
                 # startup has its separate bound and recovery never resets it.
                 end=time.monotonic()+max(0,datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time())

@@ -9,6 +9,7 @@ from ..config import read_json
 from ..media.images import validate_start_png
 from ..planning.production_visual_plan import plan_production_upscale,production_upscale_frame_mapping
 from .environment import build_child_env
+from .execution_limits import production_execution
 from .manifest import thaw
 from .owned_cleanup import stop_owned_preserving_exception
 from .processes import run_logged
@@ -148,6 +149,7 @@ def _input_copy(task,uid,input_stamp,*,completed):
     return copy,record
 
 
+@production_execution
 def produce_upscaled_clips(frozen,source_clips,*,state,manifest,paths,logger):
     plans=plan_production_upscale(source_clips);check_stage_space(frozen.config,frames=sum(p.source_frames for p in plans))
     inputs=stamps({'options':state.run_dir/'production/options.json','source_clips':state.run_dir/'production/source-clips.json'})

@@ -14,6 +14,7 @@ from .production_inputs import _same_json, load_frozen_inputs
 from .production_image_selection import _Records as SelectionRecords, prepare_image_batch
 from .production_state import ProductionRefused, RunLock, integer, object_fields, run_path, timestamp
 from .reference_settings import bind_reference_settings
+from .execution_limits import production_execution
 
 
 def boundary(point):
@@ -236,6 +237,7 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
 from .scene_revision_records import revision_validation
 
 
+@production_execution
 @revision_validation
 def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logger, reference_settings_path=None,
                             storage=None, client_factory=None, smtp_factory=None, email_settings=None, lock=None):

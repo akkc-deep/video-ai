@@ -17,6 +17,7 @@ from ..planning.production_timeline import validate_production_timeline
 from ..planning.segments import SegmentedScript, TextSpan
 from .manifest import ManifestStore, create_manifest, hash_file, thaw, validate_run_dir
 from .owned_cleanup import stop_owned_preserving_exception
+from .execution_limits import production_execution
 from .production_inputs import _same_json, load_frozen_inputs
 from .production_state import ProductionRefused, RunLock, object_fields, run_path, write_exclusive
 from .production_support import recover_http
@@ -95,6 +96,7 @@ def _settings(store, folder, base, raw):
     return settings
 
 
+@production_execution
 def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, planner=None):
     """Produce/recover proposed scene data; no image, video or email submissions.
 

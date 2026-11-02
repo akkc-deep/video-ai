@@ -171,6 +171,9 @@ class _ResearchWindow(AuditWindow):
             raise ProductionRefused('independent research audit location required')
         self.logger, self.deadline = logger, deadline
         self.frozen, self.outputs, self.json_bytes = {}, [], 0
+        from ._continuity_storage import GeometryDecoder
+        self.geometry_decoder = GeometryDecoder()
+        self.packed_geometry = False
         self.intent = _write(logger.root/'continuity/research-input.json', intent)
 
     def save_bytes(self, name, data):

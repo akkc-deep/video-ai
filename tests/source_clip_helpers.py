@@ -21,7 +21,7 @@ def write(path, data):
     return path
 
 
-def setup(runtime_run, monkeypatch, mode='success', profile='fast', fps=16, transition='cut'):
+def setup(runtime_run, monkeypatch, mode='success', profile='fast', fps=16, transition='cut', wan_timeout=None):
     from video_ai.runtime import source_clip_checks as sc
     from video_ai.runtime import _source_clip_inputs as ci
     from video_ai.runtime import _source_clip_generation as cg
@@ -39,6 +39,7 @@ def setup(runtime_run, monkeypatch, mode='success', profile='fast', fps=16, tran
     raw['tools']['ffmpeg'] = str(actual.tools['ffmpeg'])
     raw['tools']['ffprobe'] = str(actual.tools['ffprobe'])
     raw['services']['ollama'] = 'http://127.0.0.1:11435'
+    if wan_timeout is not None:raw.setdefault('timeouts',{})['wan']=wan_timeout
     raw['media'].update(profile=profile, fps=fps, transition=transition, transition_seconds=0 if transition=='cut' else .5)
     for name in ('wan_high','wan_low','text_encoder','vae'):
         model=run/'fixture-models'/Path(raw['models'][name]).name

@@ -179,7 +179,8 @@ def test_actual_fixed_file_and_task4_provenance_refusals_are_zero_post(runtime_r
 def test_resealed_receipts_reach_and_reject_technical_lies(runtime_run,monkeypatch,fault):
     from video_ai.runtime._upscale_evidence import validate
     from upscale_helpers import reseal_technical
-    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips(f.config,run_dir=f.run)
+    # Build a historical finite receipt, whose saved policy retains its bounds.
+    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips.__wrapped__(f.config,run_dir=f.run)
     assert result.status=='review_required'
     draft=json.loads(result.draft_path.read_text(encoding='utf-8'));frame=draft['clips'][0]['frames'][0]
     if fault in ('frame_time','frame_time_small'):
@@ -237,7 +238,7 @@ def test_resealed_raw_media_errors_and_total_deadlines(runtime_run,monkeypatch,f
     from datetime import datetime,timedelta
     from video_ai.runtime._upscale_evidence import validate
     from upscale_helpers import reseal_technical
-    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips(f.config,run_dir=f.run)
+    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips.__wrapped__(f.config,run_dir=f.run)
     assert result.status=='review_required'
     draft=json.loads(result.draft_path.read_text(encoding='utf-8'));clip=draft['clips'][0];frame=clip['frames'][0]
     prefix='video-' if fault.startswith('video_') else 'extract-' if fault.startswith('extract_') else 'encode-' if fault.startswith('encode_') else 'media-'
@@ -285,7 +286,7 @@ def test_later_encoding_png_reinspection_uses_clip_deadline(runtime_run,monkeypa
     from datetime import datetime,timedelta
     from video_ai.runtime._upscale_evidence import validate
     from upscale_helpers import reseal_technical
-    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips(f.config,run_dir=f.run)
+    f=setup(runtime_run,monkeypatch);result=f.uc.prepare_upscaled_clips.__wrapped__(f.config,run_dir=f.run)
     assert result.status=='review_required'
     draft=json.loads(result.draft_path.read_text(encoding='utf-8'));frame=draft['clips'][0]['frames'][0]
     target=next(f.run/name for name in draft['request_evidence'] if name.startswith('logs/upscale/media-') and json.loads((f.run/name).read_text())['info']['identity']['path']==frame['upscaled_frame_identity']['path'])

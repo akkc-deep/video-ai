@@ -145,7 +145,7 @@ class _ReadWindow:
         self._json_bytes += size
 
     def check_time(self):
-        if monotonic() >= self.deadline:
+        if self.deadline is not None and monotonic() >= self.deadline:
             raise TimeoutError('continuity report verification budget expired')
 
     def freeze(self, path, *, package=False):
@@ -578,7 +578,7 @@ def validate_continuity_report(report_identity, manifest_identity=None, *, manif
     if _budget is not None:
         shared_deadline = getattr(_budget, 'deadline', None)
         if shared_deadline is not None:
-            deadline = min(deadline, shared_deadline)
+            deadline = shared_deadline if deadline is None else min(deadline, shared_deadline)
     path = _local_file(report['path'] if isinstance(report, dict) else report)
     if len(path.parents) < 4 or path.name != 'report.json' or path.parent.name != 'continuity' or path.parent.parent.name != 'logs':
         raise ValueError('original logs/continuity/report.json required')
@@ -624,7 +624,7 @@ def validate_continuity_report(report_identity, manifest_identity=None, *, manif
     record_paths += [f['record']['path'] for f in data['references']]
     # Only original metadata read through this window contributes to inputs.
     before_sources = set(window.frozen)
-    with load_color_analysis_set(record_paths, config=config, timeout=max(.001, deadline-monotonic())) as reader:
+    with load_color_analysis_set(record_paths, config=config, timeout=None if deadline is None else max(.001, deadline-monotonic())) as reader:
         # Share one metadata budget with the original color reader, including
         # raw probe stdout whose filename does not end in .json.
         for key in reader._json_paths:

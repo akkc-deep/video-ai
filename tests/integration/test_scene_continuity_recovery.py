@@ -77,13 +77,13 @@ def test_direct_media_context_cannot_bypass_current_guard(monkeypatch):
     from video_ai.runtime import scene_media_records as media
     from video_ai.runtime import scene_continuity_records as continuity
     calls = []
-    context = {'store': SimpleNamespace()}
+    context = {'store': SimpleNamespace(recheck_inputs=True, verify_captured_bytes=lambda: None)}
     monkeypatch.setattr(media, '_scene_media_base_context', lambda *a, **k:
                         calls.append('historical') or context)
     def pending(*a, **k):
         calls.append('current')
         raise continuity.SceneContinuityPending('current epoch awaits review')
-    monkeypatch.setattr(continuity, 'require_scene_continuity_acceptance', pending)
+    monkeypatch.setattr(continuity, 'capture_scene_continuity_guard', lambda *a, **k: pending)
     with pytest.raises(continuity.SceneContinuityPending):
         media.scene_media_context(object(), [], object())
     assert calls == ['historical', 'current']
@@ -95,6 +95,9 @@ def test_media_write_guard_rechecks_current_epoch_before_write(monkeypatch):
     from video_ai.runtime import scene_continuity_records as continuity
     store = object.__new__(SceneMediaStore)
     store.caller_thread = get_ident()
+    store.frozen = SimpleNamespace(config=SimpleNamespace(raw={
+        'scene_rendering': {'mode': 'segmented_v1'}}))
+    store._media_check_coverage = None
     store.assert_owned = lambda: None
     def pending():
         raise continuity.SceneContinuityPending('epoch changed before writer')

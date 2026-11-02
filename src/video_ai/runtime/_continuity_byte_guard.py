@@ -62,7 +62,7 @@ class _Inventory:
 
 
 def _check_time(deadline):
-    if monotonic() >= deadline:
+    if deadline is not None and monotonic() >= deadline:
         raise ValueError('byte proof verification interval exceeded')
 
 
@@ -180,7 +180,8 @@ class ByteGuard:
     def verify(self):
         from .manifest import hash_file
         from ._protected_continuity_inputs import verify_protected_continuity_file
-        deadline = monotonic() + 300.0
+        from .execution_limits import execution_deadline
+        deadline = execution_deadline(300,monotonic())
         token = _captures.set(())
         try:
             for baseline in self.files:

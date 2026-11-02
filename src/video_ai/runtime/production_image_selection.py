@@ -20,6 +20,7 @@ from ..selection_config import parse_selection_email
 from . import image_selection_records as records
 from .manifest import hash_file, now, thaw, validate_run_dir
 from .production_inputs import load_frozen_inputs, _same_json
+from .execution_limits import production_execution
 from .production_state import ProductionRefused, RunLock, object_fields, run_path, timestamp
 
 
@@ -113,6 +114,7 @@ def _folder(run,batch_id):
 from .scene_revision_records import revision_validation
 
 
+@production_execution
 @revision_validation
 def _invoke(frozen,logger,lock,operation):
     run=None

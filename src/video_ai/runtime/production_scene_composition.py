@@ -14,6 +14,7 @@ from ..planning.scene_media import plan_scene_contributions
 from ..planning.production_timeline import validate_production_timeline
 from .manifest import now, thaw
 from .processes import run_logged
+from .execution_limits import command_timeout, production_execution
 from .production_inputs import check_stage_space
 from .production_composition_records import probe as validate_original_probe
 from .production_state import ProductionRefused, RunLock, json_bytes, object_fields, run_path, timestamp
@@ -125,7 +126,7 @@ def _inspect(context,artifact,probe):
     def execute(args):
         for stamp in context['composition_tool_stamps']: stamp.verify()
         try:
-            result=subprocess.run([str(a) for a in args],stdin=subprocess.DEVNULL,capture_output=True,timeout=300,
+            result=subprocess.run([str(a) for a in args],stdin=subprocess.DEVNULL,capture_output=True,timeout=command_timeout(300),
                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         except (OSError,subprocess.SubprocessError) as exc:
             raise ProductionRefused('candidate validation tool failed: '+str(exc)) from exc
@@ -354,6 +355,7 @@ from .scene_revision_records import revision_validation
 from .scene_execution_records import verified_scene_execution_write
 
 
+@production_execution
 @revision_validation
 @verified_scene_execution_write
 def produce_scene_composition(frozen,units,timeline,*,paths,logger,lock=None):

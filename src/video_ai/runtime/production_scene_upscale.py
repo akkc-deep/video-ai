@@ -120,15 +120,16 @@ def _produce(context,logger,client_factory,service_factory):
                 request=expected_request(context,row,image,copy['target']); folder=store.frame_dir(row['frame_id'])
                 store.write(folder/'request.json',request); store.write(folder/'graph.json',graph); boundary('request')
                 whole=context['frozen'].config.raw.get('scene_rendering',{}).get('mode')=='whole_scene_v1'
-                # Service preparation has its existing independent startup
-                # budget. Start a fresh whole frame's unchanged 180s tracking
-                # only after that preparation, never by resetting an intent.
+                # Prepare the owned service before a new whole-frame intent;
+                # recovery always keeps the original intent. Production has
+                # no startup/frame limit, and each HTTP request stays bounded.
                 if whole and service is None and store.read(folder/'intent.json') is None:ensure()
                 client_options={'send_checks_only':True} if whole and client_factory is None else {}
                 client=(client_factory or SceneComfyClient)(context['frozen'].config.services['comfyui'],
                     request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph),**client_options)
                 submission=recover_or_submit_scene_frame(store,request,graph,client=client,template=context['template'],
-                    ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['upscale_frame'])
+                    ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['upscale_frame'],
+                    request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'])
                 try: validate_png(store,submission['output'],width=1920,height=1080)
                 except InvalidScenePng as exc:
                     # Only definitive media validation is terminal; missing tools/OSError remains recoverable.
@@ -152,11 +153,13 @@ def _produce(context,logger,client_factory,service_factory):
 
 
 from .scene_revision_records import revision_validation
+from .execution_limits import production_execution
 
 
 from .scene_execution_records import verified_scene_execution_write
 
 
+@production_execution
 @revision_validation
 @verified_scene_execution_write
 def produce_scene_upscaled_clips(frozen,units,timeline,*,paths,logger,client_factory=None,service_factory=None,lock=None):

@@ -15,6 +15,7 @@ from ._scene_continuity_io import (Reader, ContinuityStore, SceneContinuityPendi
     artifact, verify, instant, uid, nonempty, local, run_for)
 from . import scene_continuity_records as records
 from .scene_execution_records import verified_scene_execution_write
+from .execution_limits import production_execution
 
 
 def boundary(point):
@@ -124,6 +125,7 @@ def _commit_epoch(store,intent,reader):
     return result
 
 
+@production_execution
 def ensure_initial_epoch(frozen,units,timeline,*,paths,logger,lock):
     if records.load_continuity_policy(frozen) is None:return None
     store=ContinuityStore(frozen,lock);store.owned()
@@ -143,6 +145,7 @@ def ensure_initial_epoch(frozen,units,timeline,*,paths,logger,lock):
     return _commit_epoch(store,intent,reader)
 
 
+@production_execution
 @verified_scene_execution_write
 def _entry(frozen,units,timeline,operation,*,paths,logger,lock,timeout=300):
     acquired=None
@@ -208,7 +211,7 @@ def _analysis(store,context,source,reader,request_path,paths):
     if not chain or pending or request['epoch']!=chain[-1]['artifact']:raise ProductionRefused('analysis requires current complete epoch')
     epoch=chain[-1];binding=records._binding(context,source,request['clip_id'])
     manifest=reader.read(request['manifest'])
-    records.validate_manifest_binding(manifest,binding,config=context['frozen'].config,_reader=reader,timeout=max(.001,reader.deadline-monotonic()))
+    records.validate_manifest_binding(manifest,binding,config=context['frozen'].config,_reader=reader,timeout=reader.remaining())
     # One assessment intent locks a clip in an epoch, before any audit is created.
     for p in (store.root/'jobs').glob('*/intent.json'):
         old=reader.read(p)
@@ -245,7 +248,7 @@ def _analysis(store,context,source,reader,request_path,paths):
         elif report_path.exists():
             verified=validate_continuity_report(report_path,manifest=request['manifest'],config=context['frozen'].config,_budget=reader,
                 expected_engine=epoch['intent']['engine'],
-                expected_audit_run_dir=audit,timeout=max(.001,reader.deadline-monotonic()))
+                expected_audit_run_dir=audit,timeout=reader.remaining())
             terminal=_terminal(store,relative,job,attempt,status='completed',outputs=_outputs(audit),report=artifact(report_path))
             completed.append((attempt,terminal))
         elif not audit.exists() or not any((audit/'logs/continuity').rglob('*')):
@@ -266,7 +269,7 @@ def _analysis(store,context,source,reader,request_path,paths):
         audit_logger=RunLogger(audit)
         try:
             analyze_continuity(manifest,config=context['frozen'].config,paths=paths,logger=audit_logger,
-                timeout=max(.001,reader.deadline-monotonic()))
+                timeout=reader.remaining())
         except BaseException as exc:
             _terminal(store,relative,job,attempt,status='interrupted' if isinstance(exc,KeyboardInterrupt) else 'failed',
                 outputs=_outputs(audit),exc=exc)
@@ -275,13 +278,13 @@ def _analysis(store,context,source,reader,request_path,paths):
         report_path=audit/'logs/continuity/report.json'
         validate_continuity_report(report_path,manifest=request['manifest'],config=context['frozen'].config,_budget=reader,
             expected_engine=epoch['intent']['engine'],
-            expected_audit_run_dir=audit,timeout=max(.001,reader.deadline-monotonic()))
+            expected_audit_run_dir=audit,timeout=reader.remaining())
         terminal=_terminal(store,relative,job,attempt,status='completed',outputs=_outputs(audit),report=artifact(report_path))
         completed.append((attempt,terminal))
     attempt,terminal=completed[0];terminal_value=reader.read(terminal)
     verified=validate_continuity_report(terminal_value['report'],manifest=request['manifest'],config=context['frozen'].config,_budget=reader,
         expected_engine=epoch['intent']['engine'],
-        expected_audit_run_dir=attempt['audit_run_dir'],timeout=max(.001,reader.deadline-monotonic()))
+        expected_audit_run_dir=attempt['audit_run_dir'],timeout=reader.remaining())
     mandatory=verified['closure']+[request['manifest']]
     for row in binding['clips']:
         mandatory += [row[k] for k in ('clip_record','request','generated','source','mapping','last_frame')]
@@ -317,6 +320,7 @@ def analyze_scene_continuity(frozen,units,timeline,request_path,*,paths,logger,l
         _analysis(store,context,source,reader,request_path,paths),paths=paths,logger=logger,lock=lock,timeout=timeout)
 
 
+@production_execution
 def consume_scene_continuity_review(frozen,units,timeline,review_path,*,paths,logger,lock=None):
     """Store author evidence only; never advance generation or media production."""
     from .production_scene_clips import _entry as clip_entry, _consume, _finish, _result as clip_result, _error as clip_error

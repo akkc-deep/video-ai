@@ -13,6 +13,7 @@ from ..media.subtitles import ass_text, plan_subtitle_events, srt_text
 from ..planning.composition import CompositionSettings
 from ..planning.production_timeline import validate_production_timeline
 from .environment import build_child_env
+from .execution_limits import historical_command_timeout, production_execution
 from .manifest import now, thaw
 from .processes import run_logged
 from .production_inputs import check_stage_space
@@ -155,7 +156,8 @@ def _command_result(intent, logger):
     if not matches: return None
     if len(matches) != 1: raise ProductionRefused('media command has conflicting durable completions')
     details = matches[0]
-    if details.get('args') != intent['args'] or details.get('cwd') != intent['cwd'] or details.get('timeout') != 300:
+    if (details.get('args') != intent['args'] or details.get('cwd') != intent['cwd']
+            or 'timeout' not in details or not historical_command_timeout(details['timeout'])):
         raise ProductionRefused('original media command identity differs')
     if details.get('interrupted') is not False or details.get('timed_out') is not False or type(details.get('returncode')) is not int or details['returncode'] != 0:
         return None
@@ -266,6 +268,7 @@ def _technical_record(state, report_path):
     return record
 
 
+@production_execution
 def produce_composition(frozen, units, timeline, upscaled, *, state, manifest, paths, logger):
     validate_production_timeline(timeline)
     if (units['decoded_text'], units['has_bom'], units['spans']) != (timeline.original_text, timeline.has_bom, thaw(timeline.source_spans)):

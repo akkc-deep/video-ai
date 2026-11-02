@@ -17,6 +17,7 @@ from ._upscale_inputs import inputs,generated_inputs,fresh,required_capacity,shu
 from ._upscale_generation import generate
 from ._upscale_evidence import validate,validation,requirements
 from ._upscale_review import review,ReviewIncomplete
+from .execution_limits import production_execution,unlimited_execution
 
 
 class UpscaleRefusal(ValueError):
@@ -103,6 +104,7 @@ def failure(run,store,logger,exc,count):
     return result(run,'failed',count)
 
 
+@production_execution
 def prepare_upscaled_clips(config:ProjectConfig, *, run_dir:Path, execution_policy=None, verify_integrity=True)->UpscaledClipsResult:
     if execution_policy not in (None,'pipeline'):raise UpscaleRefusal('unknown upscale execution policy')
     if type(verify_integrity) is not bool:raise UpscaleRefusal('verify_integrity must be a boolean')
@@ -114,7 +116,7 @@ def prepare_upscaled_clips(config:ProjectConfig, *, run_dir:Path, execution_poli
             from ._pipeline_model_paths import prepare_or_consume_model_binding
             if verify_integrity:prepare_or_consume_model_binding(config,run,'upscale',create=True)
             context=inputs(config,run) if verify_integrity else generated_inputs(config,run)
-            if execution_policy=='pipeline':context['no_total_timeout']=True
+            if unlimited_execution() or execution_policy=='pipeline':context['no_total_timeout']=True
             logs=_local(run,run/'logs/upscale')
             if logs.exists() and any(p.name.startswith(('frame-','clip-','extract-','encode-')) for p in logs.iterdir()):raise ValueError('orphan upscale checkpoint/media log')
             for plan in context['plans']:
@@ -134,7 +136,7 @@ def prepare_upscaled_clips(config:ProjectConfig, *, run_dir:Path, execution_poli
             def begin(data):
                 state_unchanged(data,snapshot);store._record_status(data,data['stages']['upscale'],'running',[],None,'upscale',None)
             store.update(begin)
-            if execution_policy=='pipeline':
+            if unlimited_execution() or execution_policy=='pipeline':
                 from ._upscale_resume import policy
                 policy_path=logger.save_json('upscale/execution-policy.json',policy(config));policy_identity=hash_file(policy_path)
                 store.update(lambda data:data['workflows'].update(upscale_execution_policy=thaw(policy_identity)))
@@ -150,7 +152,7 @@ def prepare_upscaled_clips(config:ProjectConfig, *, run_dir:Path, execution_poli
                 frame_mappings=[upscale_frame_mapping(m,upscaled_identity=c['upscaled_identity']) for m,c in zip(context['source']['frame_mappings'],clips)],
                 model_identity=thaw(context['identities']['model']),workflow_identity=thaw(context['identities']['workflow']),mapping_identity=thaw(context['identities']['mapping']),
                 provenance=context['provenance'],validation=validation(False),request_evidence=records)
-            if execution_policy=='pipeline':
+            if unlimited_execution() or execution_policy=='pipeline':
                 from ._upscale_resume import policy
                 draft.update(schema_version=3,import_identity=None,reused_units={},execution_policy=policy(config))
             state_unchanged(store.snapshot(),snapshot);ready=store.snapshot()
@@ -173,6 +175,7 @@ def review_path(run,path):
     except (ValueError,OSError,TypeError) as exc:raise UpscaleRefusal(str(exc)) from exc
 
 
+@production_execution
 def resume_upscaled_clips(config:ProjectConfig, *, run_dir:Path)->UpscaledClipsResult:
     """Resume a verified unsubmitted prefix once, with no cumulative deadline."""
     from ._upscale_resume import reconstruct,freeze,policy,draft_data,StagedServiceStore
@@ -217,6 +220,7 @@ def resume_upscaled_clips(config:ProjectConfig, *, run_dir:Path)->UpscaledClipsR
             return failure(run,store,logger,exc,len(clips))
 
 
+@production_execution
 def resume_upscale_generation(config:ProjectConfig, *, run_dir:Path,reuse_context)->UpscaledClipsResult:
     """Generate only remaining frames in a fresh imported child."""
     from .pipeline_import import verify_reuse_context,reused_upscale_frames,reused_upscale_clips
@@ -243,6 +247,11 @@ def resume_upscale_generation(config:ProjectConfig, *, run_dir:Path,reuse_contex
         logger=RunLogger(run);records={};clips=list(complete.values())
         try:
             store.record_stage('upscale','running')
+            # Partial recovery may precede every complete clip/draft. Persist
+            # the policy before extraction so replay never infers finite work.
+            policy_path=logger.save_json('upscale/execution-policy.json',policy(config))
+            policy_identity=hash_file(policy_path)
+            store.update(lambda data:data['workflows'].update(upscale_execution_policy=thaw(policy_identity)))
             remaining=dict(context,plans=tuple(p for p in context['plans'] if p.shot_id not in complete),source=dict(context['source'],clips=[c for c in context['source']['clips'] if c['shot_id'] not in complete]))
             if remaining['plans']:generate(config,run,store,logger,remaining,records,clips)
             by_id={c['shot_id']:c for c in clips};clips=[by_id[p.shot_id] for p in context['plans']]
@@ -256,6 +265,7 @@ def resume_upscale_generation(config:ProjectConfig, *, run_dir:Path,reuse_contex
         except BaseException as exc:return failure(run,store,logger,exc,len(clips))
 
 
+@production_execution
 def finalize_upscaled_clips(config:ProjectConfig, *, run_dir:Path,review_path:Path)->UpscaledClipsResult:
     run,store=entry(run_dir);path=globals()['review_path'](run,review_path)
     with exclusive(run) as owner:

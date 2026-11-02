@@ -34,6 +34,24 @@ def test_missing_composition_refuses_before_stage(run_store):
     assert (run_store.run_dir/'manifest.json').read_bytes() == before
 
 
+def test_unlimited_candidate_receipts_are_readable_outside_production_scope(candidate,monkeypatch):
+    from dataclasses import replace
+    from datetime import datetime,timedelta
+    from video_ai.runtime.execution_limits import production_execution
+    from video_ai.media import composition_video
+    original=composition_video.run_logged
+    def slow_command(*a,**k):
+        result=original(*a,**k)
+        return replace(result,started_at=(datetime.fromisoformat(result.started_at)-timedelta(seconds=600)).isoformat())
+    monkeypatch.setattr(composition_video,'run_logged',slow_command)
+    run,config,_,_=candidate
+    result=production_execution(module().validate_candidate)(config,run_dir=run)
+    assert result.passed
+    execution=json.loads((run/'logs/validation/execution.json').read_text(encoding='utf-8'))
+    assert all(r['timeout_seconds'] is None and r.get('time_limits')=='unlimited_v1' for r in execution['commands'])
+    assert module().load_committed_candidate(run)['passed']
+
+
 def test_completed_validation_is_fresh_staging_only_and_preserves_upstream(candidate):
     run, config, store, composition = candidate; before = store.snapshot()
     result = module().validate_candidate(config, run_dir=run)

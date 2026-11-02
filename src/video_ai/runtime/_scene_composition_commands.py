@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from ..config import read_json
 from ..planning.production_scenes import canonical_digest
 from .environment import build_child_env
+from .execution_limits import historical_command_timeout
 from .manifest import now, thaw
 from .production_composition import COMMAND_FIELDS
 from .production_composition_records import command as validate_command
@@ -60,7 +61,8 @@ def _completion(context,intent,token):
     if not matches: return None
     if len(matches)!=1: raise ProductionRefused('scene media command has conflicting durable completions')
     value=matches[0]
-    if value.get('args')!=intent['args'] or value.get('cwd')!=intent['cwd'] or value.get('timeout')!=300:
+    if (value.get('args')!=intent['args'] or value.get('cwd')!=intent['cwd']
+            or 'timeout' not in value or not historical_command_timeout(value['timeout'])):
         raise ProductionRefused('scene media command completion identity differs')
     if (value.get('interrupted') is not False or value.get('timed_out') is not False
             or type(value.get('returncode')) is not int or value['returncode']!=0): return None

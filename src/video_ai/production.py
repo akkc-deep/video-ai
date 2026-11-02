@@ -14,6 +14,7 @@ from .runtime.production_inputs import (DEFAULT_CONFIG, _save_bytes, check_stage
                                         load_frozen_inputs, production_preflight, read_script, validate_supported)
 from .runtime.production_state import (STAGES, ProductionRefused, ProductionStateStore, RunLock,
                                        absolute_path, object_fields, run_path, validate_error, write_exclusive)
+from .runtime.execution_limits import production_execution
 
 TECHNICAL_CHECKS = ('source_text_coverage', 'audio_samples', 'frame_mapping', 'subtitles', 'final_media')
 
@@ -287,6 +288,7 @@ def _make_legacy_video(config=None, *, script=None, text=None, run_dir=None, out
             error=dict(kind=type(exc).__name__, message=str(exc) or type(exc).__name__, evidence_paths=[]))
 
 
+@production_execution
 def make_video(config=None, *, script=None, text=None, run_dir=None, output_path=None, cpu_planner=None, image_model=None,
                image_selection=None, reference_settings=None, email_settings=None, clip_observation=None,
                final_observation=None, retry_email=None, revision=None, publish=False, continuity_review=None):

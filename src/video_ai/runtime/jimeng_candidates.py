@@ -13,6 +13,7 @@ from ..config import read_json
 from ..jimeng_config import STRATEGY
 from .manifest import hash_file, now, thaw, validate_run_dir
 from .production_inputs import load_frozen_inputs, _same_json
+from .execution_limits import execution_deadline
 from .production_state import ProductionRefused, RunLock, run_path, object_fields, write_exclusive
 
 
@@ -134,9 +135,10 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
     if terminal_path.exists():
         terminal = _read_bound(terminal_path, ('schema_version', 'identity', 'status'), identity)
         raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
-    end = time.monotonic()+settings.task_timeout_seconds
+    end = execution_deadline(settings.task_timeout_seconds,time.monotonic())
     delay = settings.poll_interval_seconds
     def remaining():
+        if end is None:return settings.request_timeout_seconds
         value = end-time.monotonic()
         if value <= 0: raise TimeoutError('Jimeng image polling/download budget expired; resume original task')
         return value

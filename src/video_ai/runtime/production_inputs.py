@@ -21,6 +21,7 @@ from .production_state import (ArtifactStamp, ProductionRefused, absolute_path, 
 from .services import port_listening
 from .workflows import validate_workflow
 from ._scene_revision_freeze import revision_freeze_scope
+from .execution_limits import command_timeout
 
 DEFAULT_CONFIG = Path('D:/VideoSi/projects/video-ai/config/production.json')
 GIB = 1024**3
@@ -207,7 +208,7 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
                    tts_yaml_path=str(yaml_path), workflow_snapshots=workflows, model_stamps=models, output_paths=targets,
                    cpu_planner=bool(cpu_planner), execution_policy=dict(
                        ollama_request_seconds=max(config.timeouts['ollama_request'], 1800) if cpu_planner else config.timeouts['ollama_request'],
-                       media_command_seconds=300, input_identities=identities, model_roots=roots))
+                       time_limits='unlimited_v1', media_command_seconds=None, input_identities=identities, model_roots=roots))
     if config.production_strategy == STRATEGY:
         options.update(schema_version=2, production_strategy=STRATEGY,
                        image_model_override=image_model, image_generation=thaw(image))
@@ -245,9 +246,14 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     elif options['input_source'] is not None: raise ProductionRefused('text mode source must be null')
     script_path = run_path(run, options['script_path'])
     if script_path != run/'production/script.txt': raise ProductionRefused('frozen script path differs')
-    policy = options['execution_policy']; object_fields(policy, POLICY_FIELDS, 'execution policy')
-    if type(policy['media_command_seconds']) is not int or policy['media_command_seconds'] != 300:
-        raise ProductionRefused('media command deadline must be 300')
+    policy = options['execution_policy']
+    fields = POLICY_FIELDS + ('time_limits',) if 'time_limits' in policy else POLICY_FIELDS
+    object_fields(policy, fields, 'execution policy')
+    if 'time_limits' in policy:
+        if policy['time_limits'] != 'unlimited_v1' or policy['media_command_seconds'] is not None:
+            raise ProductionRefused('unlimited production execution policy differs')
+    elif type(policy['media_command_seconds']) is not int or policy['media_command_seconds'] != 300:
+        raise ProductionRefused('legacy media command deadline must be 300')
     records = policy['input_identities']
     roles = ('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping')
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
@@ -396,12 +402,13 @@ def production_preflight(config, run_dir, *, runner=subprocess.run, port_probe=p
         stderr_path = run_path(run, core.log_dir/'tts-yaml.stderr.txt')
         args = [str(config.tools['tts_python']), '-B', '-c',
                 'import yaml,json,sys; print(json.dumps(yaml.safe_load(open(sys.argv[1],encoding="utf-8-sig"))))', str(source)]
-        command = dict(args=args, cwd=str(core.log_dir), timeout_seconds=30, stdout=str(stdout_path),
+        timeout = command_timeout(30)
+        command = dict(args=args, cwd=str(core.log_dir), timeout_seconds=timeout, stdout=str(stdout_path),
                        stderr=str(stderr_path), returncode=None, timed_out=False, error=None)
         try:
             with stdout_path.open('x', encoding='utf-8') as stdout, stderr_path.open('x', encoding='utf-8') as stderr:
                 result = runner(args, cwd=str(core.log_dir), env=build_child_env(RuntimePaths.from_config(config)),
-                                timeout=30, stdout=stdout, stderr=stderr, text=True, encoding='utf-8', errors='replace')
+                                timeout=timeout, stdout=stdout, stderr=stderr, text=True, encoding='utf-8', errors='replace')
             command['returncode'] = result.returncode
             if result.returncode != 0: raise OSError(f'TTS YAML parser exit {result.returncode}; stderr: {stderr_path}')
             installed = read_json(stdout_path)

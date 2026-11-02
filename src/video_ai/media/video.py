@@ -5,13 +5,13 @@ import re
 from time import monotonic
 
 from .images import _deadline, _remaining, _record_name as _media_record_name
-from ..adapters.common import positive_timeout
 
 from ..config import read_json
 from ..runtime.environment import build_child_env
 from ..runtime.manifest import hash_file, thaw
 from ..runtime.processes import run_logged
 from ..runtime.timeline_checks import _again, _local
+from ..runtime.execution_limits import command_timeout
 
 
 def _integer(value, label, *, minimum=0):
@@ -124,7 +124,7 @@ def _video_path(path, logger, paths):
 
 def _command(args, *, paths, logger, unit_id, stage='source_clips', timeout=300):
     result = run_logged(tuple(str(a) for a in args), cwd=logger.run_dir,
-                        env=build_child_env(paths), timeout=min(300,positive_timeout(timeout)), logger=logger,
+                        env=build_child_env(paths), timeout=command_timeout(timeout,300), logger=logger,
                         stage=stage, unit_id=unit_id)
     if result.returncode != 0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: video command failed: {result.stderr_path}')

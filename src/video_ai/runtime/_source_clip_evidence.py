@@ -11,6 +11,7 @@ from .manifest import hash_file,thaw,_timestamp
 from .timeline_checks import _local,_again
 from .component_checks import output_path
 from ._source_clip_inputs import fresh,same,graph,MODEL_NAMES
+from ._legacy_execution_policy import unlimited_receipt,receipt_fields
 
 DRAFT_FIELDS='schema_version run_id created_at status passed images_identity storyboard_identity timeline_identity effective_media clips requirement_clips frame_mappings model_identities workflow_identity mapping_identity provenance validation request_evidence'
 CLIP_FIELDS='shot_id primary_unit_id budget start_image_identity input_copy_identity selected_attempt_id attempts generated_identity source_identity width height native_fps generated_frames source_frames parameters evidence_identities'
@@ -109,7 +110,8 @@ def http(config,run,attempt,saved,t,expected_graph,records):
         keys(response,'method url stage unit_id status headers bytes truncated finished_at error','HTTP response')
         _timestamp(request['started_at']);_timestamp(response['finished_at'])
         if datetime.fromisoformat(response['finished_at'])<datetime.fromisoformat(request['started_at']):raise ValueError('HTTP evidence time reversed')
-        if type(request['timeout']) not in (int,float) or not math.isfinite(request['timeout']) or not 0<request['timeout']<=min(config.timeouts['comfy_request'],config.timeouts['wan']):raise ValueError('HTTP timeout exceeds attempt/request budget')
+        request_cap=config.timeouts['comfy_request'] if unlimited_receipt(attempt) else min(config.timeouts['comfy_request'],config.timeouts['wan'])
+        if type(request['timeout']) not in (int,float) or not math.isfinite(request['timeout']) or not 0<request['timeout']<=request_cap:raise ValueError('HTTP timeout exceeds attempt/request budget')
         if any(not same(request[k],response[k]) for k in ('method','url','stage','unit_id')) or type(response['bytes']) is not int or response['bytes']!=body_path.stat().st_size or type(response['truncated']) is not bool:
             raise ValueError('HTTP request/response/body association differs')
         good=type(response['status']) is int and response['status']==200 and response['truncated'] is False and response['error'] is None
@@ -163,7 +165,7 @@ def validate(config,run,draft,context,snapshot, *, _partial=False):
     if not isinstance(clips,list) or [c.get('shot_id') for c in clips]!=[p.shot_id for p in plans]:raise ValueError('source clip frozen order/coverage differs')
     mappings={};sources={};expected_attempt_units=set()
     for clip,plan in zip(clips,plans):
-        keys(clip,CLIP_FIELDS,'source clip');uid=plan.shot_id
+        keys(clip,CLIP_FIELDS+receipt_fields(clip),'source clip');uid=plan.shot_id
         if clip['primary_unit_id']!=plan.primary_unit_id or not same(clip['budget'],plan.budget) or not same(clip['start_image_identity'],plan.start_image_identity):raise ValueError('clip budget/start/primary association differs')
         bind('start/'+uid,clip['start_image_identity'],run/'shots'/uid/'start.png',True)
         copied=bind('input/'+uid,clip['input_copy_identity'],run/'comfy/input'/run.name/'source_clips'/uid/'start.png',True)
@@ -176,7 +178,7 @@ def validate(config,run,draft,context,snapshot, *, _partial=False):
         if not isinstance(attempts,list) or not 1<=len(attempts)<=2:raise ValueError('one or two independent attempts required')
         requested=plan.parameters['length'];required=plan.budget['required_native_frames'];seen_uuids=set()
         for ordinal,attempt in enumerate(attempts,1):
-            keys(attempt,ATTEMPT_FIELDS,'source attempt');local=f'attempt_{ordinal:04d}';unit_id=uid+':'+local
+            keys(attempt,ATTEMPT_FIELDS+receipt_fields(attempt),'source attempt');local=f'attempt_{ordinal:04d}';unit_id=uid+':'+local
             if type(attempt['ordinal']) is not int or attempt['ordinal']!=ordinal or attempt['attempt_id']!=local or attempt['unit_id']!=unit_id or type(attempt['requested_frames']) is not int or attempt['requested_frames']!=requested or type(attempt['actual_frames']) is not int or attempt['actual_frames']<=0:
                 raise ValueError('attempt identity/ordinal/frame request differs')
             expected_attempt_units.add(unit_id);last=ordinal==len(attempts);actual=attempt['actual_frames']

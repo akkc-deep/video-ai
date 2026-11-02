@@ -15,6 +15,7 @@ from .logging import RunLogger
 from .manifest import hash_file,thaw,_timestamp
 from .timeline_checks import _local,_again
 from ._composition_inputs import fresh,equal_identity
+from .execution_limits import command_receipt_policy
 
 FIELDS='schema_version run_id created_at status passed staging_only input_identities settings settings_identity plan_identity frame_mappings requirement_bindings cue_checks narration_identity mixed_audio_identity subtitles candidate_identity effective_media provenance validation request_evidence'
 EXECUTION_FIELDS='schema_version run_id plan_identity output_frames audio_plan normalized_music_identity mixed_audio_plan subtitle_render font_metrics commands'
@@ -56,12 +57,16 @@ def _commands(config,run,execution,folder,plan,covered):
     if not isinstance(commands,list) or [r.get('operation') for r in commands]!=expected_ops:raise ValueError('missing/extra/reordered composition commands')
     outputs=[];record_paths=set()
     for record in commands:
-        keys(record,'operation timeout_seconds args cwd returncode timed_out stdout_path stderr_path started_at finished_at record_path','command receipt')
+        fields='operation timeout_seconds args cwd returncode timed_out stdout_path stderr_path started_at finished_at record_path'
+        if 'time_limits' in record:fields+=' time_limits'
+        keys(record,fields,'command receipt')
         if record['record_path'] in record_paths:raise ValueError('repeated command receipt')
         record_paths.add(record['record_path'])
-        if type(record['returncode']) is not int or record['returncode']!=0 or record['timed_out'] is not False or type(record['timeout_seconds']) is not int or record['timeout_seconds']!=300 or record['cwd']!=str(folder):raise ValueError('failed/unbounded command')
+        if type(record['returncode']) is not int or record['returncode']!=0 or record['timed_out'] is not False or not command_receipt_policy(record) or record['cwd']!=str(folder):raise ValueError('failed/invalid command execution policy')
         start,end=(datetime.fromisoformat(record[k]) for k in ('started_at','finished_at'))
-        if not start.tzinfo or not end.tzinfo or not 0<=(end-start).total_seconds()<=301:raise ValueError('command deadline/time evidence differs')
+        elapsed=(end-start).total_seconds()
+        if (not start.tzinfo or not end.tzinfo or elapsed<0
+                or record['timeout_seconds'] is not None and elapsed>301):raise ValueError('command deadline/time evidence differs')
         for k in ('record_path','stdout_path','stderr_path'):
             p=_local(run,Path(record[k]));name=p.relative_to(run).as_posix()
             if name not in covered:raise ValueError('command evidence omitted')

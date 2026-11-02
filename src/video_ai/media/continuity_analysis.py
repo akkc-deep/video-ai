@@ -362,7 +362,7 @@ def analyze_continuity(manifest, *, config,paths,logger,timeout=300):
     data=validate_continuity_manifest(manifest);deadline=_deadline(timeout,monotonic());window=AuditWindow(paths,logger,deadline)
     inputs=[f['record']['path'] for c in data['clips'] for f in c['frames']]+[f['record']['path'] for f in data['references']]
     deps=dependencies(window)
-    with load_color_analysis_set(inputs,config=config,timeout=max(.001,deadline-monotonic())) as reader:
+    with load_color_analysis_set(inputs,config=config,timeout=None if deadline is None else max(.001,deadline-monotonic())) as reader:
         plan,records=_resolve_manifest(data,reader,window);provider=_ReaderProvider(plan,records,reader)
         result=measure_continuity(plan,provider,deadline=deadline)
         for f in result['frame_results']:

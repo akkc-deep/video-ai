@@ -13,6 +13,7 @@ from ..planning.production_timeline import ProductionAudioInfo
 from ..planning.segments import TextSpan, validate_segments
 from .manifest import thaw
 from .owned_cleanup import stop_owned_preserving_exception
+from .execution_limits import production_execution
 from .production_inputs import _save_bytes, check_stage_space
 from .production_state import (ArtifactStamp, ProductionRefused, integer, object_fields, run_path,
                                sync_file, write_exclusive)
@@ -79,6 +80,7 @@ def _validate_intent(path, frozen, span, client):
     return intent
 
 
+@production_execution
 def produce_speech(frozen, units, *, state, manifest, paths, logger, limits=SpeechLimits()):
     report=read_report(state,'speech')
     complete=state.snapshot()['stages']['speech']['status']=='completed'

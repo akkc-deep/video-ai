@@ -214,7 +214,7 @@ def test_resume_single_frame_deadline_failure_never_posts(runtime_run,monkeypatc
     import time
     f=stopped(runtime_run,monkeypatch);base=f.ug.DeadlineHttp.set_deadlines
     monkeypatch.setattr(f.ug.DeadlineHttp,'set_deadlines',lambda self,c,e:base(self,c,time.monotonic()-.01))
-    result=f.uc.resume_upscaled_clips(f.config,run_dir=f.run)
+    result=f.uc.resume_upscaled_clips.__wrapped__(f.config,run_dir=f.run)
     assert result.status=='failed' and len(f.requests)==1
     assert f.store.snapshot()['units']['frame']['shot_0001:frame_000002']['submission'] is None
     assert f.actions[-1]=='stop'

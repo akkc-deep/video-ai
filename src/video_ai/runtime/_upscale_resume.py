@@ -15,24 +15,41 @@ from ..planning.start_images import keys
 from .manifest import hash_file, thaw, now, _timestamp
 from .timeline_checks import _local, _again
 from ._upscale_inputs import fresh, same, evidence
+from ._legacy_execution_policy import unlimited_policy,receipt_fields
 
 POLICY_FIELDS='total_timeout_seconds frame_timeout_seconds media_command_timeout_seconds request_timeout_seconds'
 RECEIPT_FIELDS='schema_version run_id created_at authorization manifest_identity unit_id reused_identities execution_policy'
 
 
-def policy(config):
-    value=dict(total_timeout_seconds=None,frame_timeout_seconds=config.timeouts['upscale_frame'],
-        media_command_timeout_seconds=300,request_timeout_seconds=config.timeouts['comfy_request'])
+def policy(config, *, legacy=False):
+    value=dict(total_timeout_seconds=None,frame_timeout_seconds=config.timeouts['upscale_frame'] if legacy else None,
+        media_command_timeout_seconds=300 if legacy else None,request_timeout_seconds=config.timeouts['comfy_request'])
+    if not legacy:value['time_limits']='unlimited_v1'
     check_policy(value)
     return value
 
 
 def check_policy(value):
-    keys(value,POLICY_FIELDS,'resume execution policy')
+    current='time_limits' in value
+    keys(value,POLICY_FIELDS+(' time_limits' if current else ''),'resume execution policy')
+    if current:
+        if (value['time_limits']!='unlimited_v1' or value['total_timeout_seconds'] is not None
+                or value['frame_timeout_seconds'] is not None or value['media_command_timeout_seconds'] is not None):
+            raise ValueError('unlimited resume execution policy differs')
+        request=value['request_timeout_seconds']
+        if type(request) not in (int,float) or not math.isfinite(request) or request<=0:raise ValueError('finite positive request timeout required')
+        return
     if value['total_timeout_seconds'] is not None or type(value['media_command_timeout_seconds']) is not int or value['media_command_timeout_seconds']!=300:
         raise ValueError('resume total/media policy differs')
     for key in ('frame_timeout_seconds','request_timeout_seconds'):
         if type(value[key]) not in (int,float) or not math.isfinite(value[key]) or value[key]<=0:raise ValueError('finite positive resume operation timeout required')
+
+
+def check_config_policy(value,config):
+    """Both historical and current policies replay independently of call scope."""
+    check_policy(value)
+    if not same(value,policy(config,legacy='time_limits' not in value)):
+        raise ValueError('execution policy differs from frozen config')
 
 
 def prefix(snapshot,plans=None, *, _pipeline=False,_imported=()):
@@ -98,11 +115,12 @@ def reject_historical_posts(run,request_paths,completed_frames, *, failed_eviden
 
 
 def replay(config,run,draft,snapshot):
-    value=draft['execution_policy'];keys(value,POLICY_FIELDS+' resume_identity','schema2 execution policy')
-    if not same({k:value[k] for k in POLICY_FIELDS.split()},policy(config)):raise ValueError('resume policy differs from frozen config')
+    value=draft['execution_policy'];keys(value,POLICY_FIELDS+' resume_identity'+(' time_limits' if 'time_limits' in value else ''),'schema2 execution policy')
+    check_config_policy({k:v for k,v in value.items() if k!='resume_identity'},config)
     if not same(value['resume_identity'],snapshot['workflows'].get('upscale_resume')):raise ValueError('resume policy receipt is not registered')
     proof,old,ids=receipt(run,value['resume_identity'],snapshot,replay=True)
-    if not same(proof['execution_policy'],policy(config)):raise ValueError('receipt config timeout policy differs')
+    check_config_policy(proof['execution_policy'],config)
+    if not same(proof['execution_policy'],{k:v for k,v in value.items() if k!='resume_identity'}):raise ValueError('receipt and draft policies differ')
     if prefix(old)!=proof['unit_id']:raise ValueError('old tail differs')
     for key in ('schema_version','run_id','created_at','inputs','models','config_snapshot','voice_snapshot'):
         if old[key]!=snapshot[key]:raise ValueError('resume frozen original manifest changed: '+key)
@@ -164,6 +182,10 @@ def draft_data(run,context,clips,records, *, execution_policy=None):
 
 def reconstruct(config,run,snapshot,context, *, _receipt_paths=(), _pipeline=False):
     from ._upscale_evidence import validate, CLIP_FIELDS
+    policy_identity=snapshot['workflows'].get('upscale_execution_policy');execution=None
+    if policy_identity is not None:
+        actual=fresh(policy_identity,run=run);execution=read_json(Path(actual.path))
+        check_config_policy(execution,config)
     failed_evidence={};inherited={};inherited_clips={};origin_rows={}
     if _pipeline:
         from .pipeline_import import imported_unit_map,reused_upscale_frames,reused_upscale_clips,import_source_identities
@@ -215,7 +237,7 @@ def reconstruct(config,run,snapshot,context, *, _receipt_paths=(), _pipeline=Fal
             index([run/n for n in frame['evidence_identities']]+[path]);frames.append(frame);allowed.add(path)
         directory=_local(run,run/'shots'/uid/'frames')
         if checkpoint.exists():
-            clip=read_json(_local(run,checkpoint));keys(clip,CLIP_FIELDS,'retained clip')
+            clip=read_json(_local(run,checkpoint));keys(clip,CLIP_FIELDS+receipt_fields(clip),'retained clip')
             if any(f"{uid}:frame_{i+1:06d}" in inherited for i in range(len(frames))):
                 extracts=list((run/'logs/upscale').glob(f'extract-{uid}-*.json'))
                 if len(extracts)!=1:raise ValueError('one current extraction required for inherited frames')
@@ -243,6 +265,7 @@ def reconstruct(config,run,snapshot,context, *, _receipt_paths=(), _pipeline=Fal
             clip=dict(shot_id=uid,primary_unit_id=plan.primary_unit_id,budget=thaw(plan.budget),source_identity=thaw(plan.source_identity),
                 upscaled_identity=None,width=1920,height=1080,native_fps=16,source_frames=plan.source_frames,upscaled_frames=plan.source_frames,
                 parameters=thaw(plan.parameters),frames=frames,evidence_identities=list(dict.fromkeys(base+[n for f in frames if f"{uid}:frame_{f['frame_index']:06d}" not in inherited for n in f['evidence_identities']]+[Path(f['checkpoint_identity']['path']).relative_to(run).as_posix() for f in frames if f"{uid}:frame_{f['frame_index']:06d}" not in inherited])))
+            if execution is not None and execution.get('time_limits')=='unlimited_v1':clip['execution_policy']=unlimited_policy()
             partial[uid]=dict(rows=rows,base=list(dict.fromkeys(base)),frames=frames)
             if (run/'shots'/uid/'upscaled.mp4').exists():raise ValueError('orphan partially encoded video')
         else:
@@ -264,10 +287,7 @@ def reconstruct(config,run,snapshot,context, *, _receipt_paths=(), _pipeline=Fal
             if error.get('traceback_path') is not None:paths=[*paths,error['traceback_path']]
             index([_local(run,Path(path)) for path in paths])
     draft=draft_data(run,context,all_clips,records)
-    policy_identity=snapshot['workflows'].get('upscale_execution_policy')
-    if _pipeline and policy_identity is not None:
-        actual=fresh(policy_identity,run=run);execution=read_json(Path(actual.path));check_policy(execution)
-        if not same(execution,policy(config)):raise ValueError('partial upscale execution policy differs')
+    if policy_identity is not None:
         index([Path(actual.path)])
         draft.update(schema_version=3,import_identity=None,reused_units={},execution_policy=execution,request_evidence=records)
     if inherited and draft['schema_version']==1:

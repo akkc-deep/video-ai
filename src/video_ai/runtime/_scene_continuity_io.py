@@ -78,14 +78,19 @@ def verify(value, *, runtime=True, empty=False):
 
 class Reader:
     def __init__(self, timeout=300):
-        if type(timeout) not in (int, float) or not 0 < timeout <= 300:
+        from .execution_limits import unlimited_execution, execution_deadline
+        if not unlimited_execution() and (type(timeout) not in (int, float) or not 0 < timeout <= 300):
             raise ProductionRefused('continuity timeout must be within 300 seconds')
-        self.deadline = monotonic()+timeout
+        self.deadline = execution_deadline(timeout,monotonic())
         self.bytes = 0
         self.json_paths = {}
 
     def check(self):
-        if monotonic() >= self.deadline: raise TimeoutError('continuity deadline expired')
+        if self.deadline is not None and monotonic() >= self.deadline: raise TimeoutError('continuity deadline expired')
+
+    def remaining(self):
+        self.check()
+        return None if self.deadline is None else max(.001,self.deadline-monotonic())
 
     def charge(self,path,size):
         self.check();key=str(path)

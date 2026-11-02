@@ -13,6 +13,7 @@ from ..jimeng_config import STRATEGY, active_models, active_workflows
 from .environment import build_child_env
 from .paths import RuntimePaths, validate_output_pair
 from .workflows import validate_workflow
+from .execution_limits import command_timeout
 
 
 @dataclass(frozen=True)
@@ -133,12 +134,13 @@ def preflight(config: ProjectConfig, *, script: Path | None = None, output: Path
         def query(tool, flag, label, capability_kind=None, expected=()):
             args = [str(config.tools[tool]), '-hide_banner', flag]
             stdout_path, stderr_path = log_dir / (label + '.stdout.txt'), log_dir / (label + '.stderr.txt')
-            command = {'args': args, 'cwd': str(log_dir), 'timeout_seconds': 30,
+            timeout = command_timeout(30)
+            command = {'args': args, 'cwd': str(log_dir), 'timeout_seconds': timeout,
                        'stdout': str(stdout_path), 'stderr': str(stderr_path),
                        'returncode': None, 'timed_out': False, 'error': None}
             try:
                 with stdout_path.open('w', encoding='utf-8') as stdout, stderr_path.open('w', encoding='utf-8') as stderr:
-                    result = runner(args, cwd=str(log_dir), env=env, timeout=30, stdout=stdout,
+                    result = runner(args, cwd=str(log_dir), env=env, timeout=timeout, stdout=stdout,
                                     stderr=stderr, text=True, encoding='utf-8', errors='replace')
                 command['returncode'] = result.returncode
                 if result.returncode != 0:

@@ -16,6 +16,7 @@ from .production_state import (ArtifactStamp, ProductionRefused, RunLock, intege
                                object_fields, run_path, timestamp)
 from . import image_selection_records as images
 from .verification import verified_read
+from .execution_limits import command_timeout
 
 
 def equal(actual, expected, label):
@@ -306,7 +307,7 @@ def _decode_video(store, value, *, frames, width, height):
     if key in store.media_cache: return
     def execute(args):
         proc = subprocess.run([str(x) for x in args], stdin=subprocess.DEVNULL, capture_output=True,
-            timeout=300, creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            timeout=command_timeout(300), creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if proc.returncode: raise ProductionRefused('scene video decode failed: '+str(path))
         return proc.stdout
     tools=store.frozen.config.tools
@@ -380,7 +381,7 @@ def _verify_native_pixels(store,generated,image,index,width,height):
     def decode(path,filter_value):
         args=[str(ffmpeg),'-nostdin','-v','error','-xerror','-i',str(path),'-map','0:v:0',
               '-vf',filter_value,'-frames:v','1','-pix_fmt','rgb24','-f','rawvideo','-']
-        result=subprocess.run(args,stdin=subprocess.DEVNULL,capture_output=True,timeout=300,
+        result=subprocess.run(args,stdin=subprocess.DEVNULL,capture_output=True,timeout=command_timeout(300),
             creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if result.returncode or len(result.stdout)!=width*height*3: raise ProductionRefused('native PNG pixel decode failed')
         return result.stdout

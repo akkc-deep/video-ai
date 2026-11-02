@@ -19,6 +19,7 @@ from .manifest import ManifestStore, FileIdentity, hash_file, thaw, now, _identi
 from .timeline_checks import _run_path, _local, _again
 from .paths import _validate_spelling
 from .verification import verified_read
+from .execution_limits import production_execution
 
 FIELDS = 'schema_version run_id parent_run_id created_at reason parent_snapshot_identity changes_identity source_identities copies stages units review_inheritance'
 ROW_FIELDS = 'id source_record imported_record signature origin'
@@ -531,6 +532,7 @@ def validate_imported_current_inputs(run,stage,report,parent):
         _again(context['identities'])
 
 
+@production_execution
 def derive_completed_stages(config, *, parent_run_dir, stages, reason, changes_identity=None, partial_stages=(),selected_units=None,changes=None,child_inputs=None,preflight_report=None,extra_source_identities=None,retry_targets=None):
     kwargs=locals();created=[]
     try:return _derive_completed_stages(**kwargs,_created=created)
@@ -717,6 +719,7 @@ def select_completed_inventory(parent,stage,unit_ids=None):
     return dict(verified_units=verified,remaining_units=tuple(uid for uid in all_ids if uid not in selected),input_identities={},evidence_identities=sources,clips=clips,source_report_identity=thaw(source_id))
 
 
+@production_execution
 def derive_run(config, *, parent_run_dir, plan, changes=None,changes_identity=None):
     """Execute only fresh reusable stages; the coordinator locks the child next."""
     def field(row,name):return row.get(name) if isinstance(row,Mapping) else getattr(row,name)
@@ -762,7 +765,7 @@ def derive_run(config, *, parent_run_dir, plan, changes=None,changes_identity=No
     if settings is not None:settings=fresh(settings)
     write_exclusive(run,run/'logs/pipeline/pipeline-options.json',dict(schema_version=1,run_id=run.name,created_at=now(),input_identities=inputs,
         unit_review_identity=thaw(copied_review),image_inputs_identity=thaw(image_inputs),settings_identity=thaw(settings),output_path=options.get('output_path'),
-        cpu_planner=options.get('cpu_planner',False),execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=300)))
+        cpu_planner=options.get('cpu_planner',False),execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=None,time_limits='unlimited_v1')))
     # Timeline has no imported schema: rebuild it from actual copied samples.
     if 'speech' in stages and any(field(row,'stage')=='timeline' and field(row,'unit_id') is None for row in plan.reused):
         from .speech_checks import load_committed_speech

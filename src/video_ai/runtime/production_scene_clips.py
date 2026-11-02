@@ -377,7 +377,8 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
                     client=factory(context['frozen'].config.services['comfyui'],
                         request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph))
                     submission=recover_or_submit_scene_clip(store,request,graph,client=client,template=context['template'],
-                        ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['wan'])
+                        ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['wan'],
+                        request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'])
                     try:
                         _technical(context,row,submission,request,paths=paths,logger=logger)
                     except InvalidGeneratedMedia as exc:
@@ -554,14 +555,17 @@ def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
 
 
 from .scene_revision_records import revision_validation
+from .execution_limits import production_execution
 
 
+@production_execution
 @revision_validation
 def produce_scene_clips(frozen,units,timeline,*,paths,logger,client_factory=None,service_factory=None,lock=None):
     return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
         operation=lambda context:_produce(context,paths=paths,logger=logger,client_factory=client_factory,service_factory=service_factory))
 
 
+@production_execution
 @revision_validation
 def consume_scene_clip_observation(frozen,units,timeline,observation_path,*,paths,logger,lock=None):
     return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,

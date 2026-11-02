@@ -143,9 +143,10 @@ class ServiceManager:
 
     def ensure(self, spec):
         from .owned_cleanup import best_effort,cleanup_preserving_exception
+        from .execution_limits import execution_deadline, request_timeout
         validate_base_url(spec.url)
         env = service_environment(self.paths,spec)
-        deadline = time.monotonic()+positive_timeout(spec.start_timeout)
+        deadline = execution_deadline(spec.start_timeout,time.monotonic())
         if spec.name not in ('comfyui','ollama','tts'):
             raise ValueError('unknown service name')
         known = self._handles.get(spec.name)
@@ -155,7 +156,7 @@ class ServiceManager:
             health = self._health(spec.name,spec.url,min(2,spec.start_timeout))
         except (AdapterError,ServiceConflictError,ServiceStartError) as exc:
             best_effort(lambda:self.logger.exception('preflight',None,exc))
-            remaining = deadline-time.monotonic()
+            remaining = 3 if deadline is None else deadline-time.monotonic()
             if remaining <= 0:
                 raise ServiceStartError('service identity deadline exhausted') from exc
             # Windows can take about two seconds to return WSAECONNREFUSED.
@@ -179,13 +180,13 @@ class ServiceManager:
             self._handles[spec.name] = handle
             self._streams[spec.name] = (stdout,stderr)
             self._record(handle,'starting',args=list(args),cwd=str(cwd),stdout_path=str(stdout_path),stderr_path=str(stderr_path))
-            while time.monotonic()<deadline:
+            while deadline is None or time.monotonic()<deadline:
                 if process.poll() is not None:
                     raise ServiceStartError(f'service exited before health: {process.returncode}')
                 try:
-                    health = self._health(spec.name,spec.url,min(2,deadline-time.monotonic()))
+                    health = self._health(spec.name,spec.url,request_timeout(deadline,2,time.monotonic()))
                 except (AdapterError,ServiceConflictError,ServiceStartError):
-                    remaining = deadline-time.monotonic()
+                    remaining = .1 if deadline is None else deadline-time.monotonic()
                     if remaining>0:
                         time.sleep(min(.1,remaining))
                     continue

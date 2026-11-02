@@ -17,6 +17,7 @@ from ..jimeng_config import STRATEGY
 from ..planning.production_scenes import canonical_digest, validate_scene_plan
 from .manifest import hash_file, thaw, validate_run_dir
 from .production_inputs import _same_json, load_frozen_inputs
+from .execution_limits import command_timeout
 from .production_state import ProductionRefused, integer, object_fields, run_path, timestamp
 
 
@@ -129,7 +130,7 @@ def _inspect_original(frozen, path):
     def execute(args):
         try:
             result = subprocess.run([str(arg) for arg in args], stdin=subprocess.DEVNULL,
-                capture_output=True, timeout=60, check=False, creationflags=flags)
+                capture_output=True, timeout=command_timeout(60), check=False, creationflags=flags)
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise ProductionRefused('original image decode unavailable') from exc
         if result.returncode:

@@ -264,9 +264,15 @@ def test_actual_ffmpeg_failure_keeps_original_and_never_retries_same_uuid(runtim
     def injected(args,**kwargs):
         if kwargs.get('stage')=='scene_color_repair' and args[-1].endswith('master.mp4'):
             args=list(args)
-            if fault=='encoder':args[args.index('-c:v')+1]='fixture_only_missing_encoder'
-            else:kwargs['timeout']=1e-9
-            result=actual(args,**kwargs);commands.append(result);return result
+            if fault=='encoder':
+                args[args.index('-c:v')+1]='fixture_only_missing_encoder'
+                result=actual(args,**kwargs)
+            else:
+                # Force this fault below the intentional unlimited production policy.
+                with monkeypatch.context() as fault_scope:
+                    fault_scope.setattr(processes,'command_timeout',lambda seconds,maximum=None:1e-9)
+                    result=actual(args,**kwargs)
+            commands.append(result);return result
         return actual(args,**kwargs)
     monkeypatch.setattr(processes,'run_logged',injected)
     first=propose(setup,request);folder=folder_for(setup,request)

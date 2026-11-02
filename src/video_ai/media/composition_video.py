@@ -11,12 +11,17 @@ from ..runtime.environment import build_child_env
 from ..runtime.manifest import hash_file,thaw
 from ..runtime.processes import run_logged
 from ..runtime.timeline_checks import _again,_local
+from ..runtime.execution_limits import command_timeout
 
 
 def command(args,*,config,paths,logger,cwd,operation):
     cwd=_local(logger.run_dir,Path(cwd))
-    result=run_logged(tuple(str(x) for x in args),cwd=cwd,env=build_child_env(paths),timeout=300,logger=logger,stage='composition')
-    record=dict(operation=operation,timeout_seconds=300,**thaw(result))
+    timeout=command_timeout(300)
+    result=run_logged(tuple(str(x) for x in args),cwd=cwd,env=build_child_env(paths),timeout=timeout,logger=logger,stage='composition')
+    # The historical receipt schema uses integer 300 even though run_logged
+    # normalizes the process/event timeout to 300.0.
+    record=dict(operation=operation,timeout_seconds=None if timeout is None else 300,**thaw(result))
+    if timeout is None:record['time_limits']='unlimited_v1'
     path=logger.save_json(f'composition/command-{uuid4().hex}.json',record)
     record['record_path']=str(path)
     if result.returncode!=0 or result.timed_out:

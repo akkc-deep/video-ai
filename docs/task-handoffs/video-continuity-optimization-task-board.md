@@ -34,7 +34,7 @@
 | 5 | VCO-05 | P1-C：单次 20 秒隔离生成与跨题材验证 | COMPLETED | VCO-01 | docs/task-designs/VCO-05-design.md | docs/task-handoffs/VCO-05-handoff.md |
 | 6 | VCO-06 | P2-A：轻度非破坏性校色与修订血缘 | COMPLETED | VCO-03, VCO-04 | docs/task-designs/VCO-06-design.md | docs/task-handoffs/VCO-06-handoff.md |
 | 7 | VCO-07 | P2-B：经实测准入的版本化整段生产模式 | COMPLETED | VCO-04, VCO-05 | docs/task-designs/VCO-07-design.md | docs/task-handoffs/VCO-07-handoff.md |
-| 8 | VCO-08 | P3：原生跨窗口续写后端验证与接入 | IN_PROGRESS | VCO-01, VCO-04 | docs/task-designs/VCO-08-design.md | None |
+| 8 | VCO-08 | P3：原生跨窗口续写后端验证与接入 | IN_PROGRESS | VCO-01, VCO-04 | docs/task-designs/VCO-08-design.md | docs/task-handoffs/VCO-08-handoff.md |
 
 ## Task Details
 
@@ -278,7 +278,45 @@
 
 ### VCO-08
 
-- **Current research design（2026-11-01）：** 已关联`docs/task-designs/VCO-08-design.md`，只冻结用户同意的LongCat前置研究；整个任务的生产接入设计仍未就绪，未标READY或完成。代码固定6b3f4b8、权重固定03b55529，清单77,577,230,776字节；已取得元数据/配置，尚未完整下载。研究依赖仅写独立目录，CPU多帧/clean KV机制和CUDA逐层加载小探针通过（均随机小张量，不是实际视频）。拟研究原生15fps、93+80+80=253帧三窗；不改变正式16fps或继承旧观看。实际进展、失败和后续门槛以该设计及研究结果记录为准。
+- **2026-11-02 10:05 当前进展：** 保持IN_PROGRESS。独立案例003三窗均已真实技术完成，每窗仅一次采样；第三窗session29654/worker40556退出0、4632.156秒，result SHA cc06527eed75c86c555519874231e950354628625fe2c00eb024b3950c2bf2e3。三窗artifact、父链及两续窗各48层/4,907,335,680字节KV完整SHA核验通过；只追加新增区组成253帧/15fps/16.8667秒链，raw逐像素一致。原模型/文本复用，0新增下载/编码。首窗完整观看已接受；新的整链播放问题已发出，曝光变化、主体偏左/部分翼尖出画等静态风险保留，完整动态仍unverified，正式16fps未启用。GPU退出后单点真实复现原timeout测试失败（95.31秒），证实被用户要求的production无时限覆盖；只修测试故障注入，不改生产规则，5项定向复验session98891运行中。4375精确余项尚待，不重跑751已报告通过前缀。详见研究实录最新段落及VCO-08-native16-interface-audit.md；旧handoff中BLOCKED为历史。
+
+- **第二窗已开始、回归精确排程（2026-11-02 07:22+08）：** 为让已授权两窗继续，先通过两次完全一致的5127节点收集和520源未变验证，保存全库已报告前缀751PASS/1FAIL及4375个精确余项，结束自有pytest40232（script_exit15为调度中断，不是全库通过）。`M/regression-resume-manifest.json`绑定顺序/源/日志，后续只复现timeout失败节点并续跑余项，避免重复通过前缀。CPU退出、主机余量核对后，stage2唯一采样session66767/worker28276启动，13历史+80新增/50步/15fps，无时间/占用配额；原首窗及用户完整观看接受保持。任务仍IN_PROGRESS，准确当前状态见研究实录顶部和M/live-run.json。
+
+- **首窗完整观看接受：** 用户明确回复“完整观看后可接受，继续后续两窗”。已将反馈保存到M/trial-001/window-001/dynamic-review.json，绑定父result及观看副本SHA，保留已披露曝光变化；screening SHA7ba082ff…，allow_next_window=true。仅该首窗接受，全链及正式16fps尚未验收；不重复询问同一接受/两窗继续授权。全库session5241仍在运行，按CPU/GPU串行约束，退出后监督stage2一次。
+
+- **第三案例首窗完成及当前验证（2026-11-02 02:24+08）：** session75394/worker30428退出0，50/50、4428.968秒，latent/93帧/原生15fps/6.2秒已提交，无损副本逐像素一致，result SHA091d3423…。静态原始帧显示后段明显变亮；已保存绑定父result的static-observation并提供完整视频请求动态反馈，暂未签发screening/启动第二窗，不预记视觉通过。GPU已退出后启动固定当前源码的项目收尾全库`./scripts/test_windows.ps1 -q`，session5241、日志test-9a1489230dd64f3a97032566b0a5d460，仍在运行，未预记通过。任务IN_PROGRESS；正式16fps/多窗/动态及最终全库结果仍待完成。新目录live-run.json和研究实录顶部为当前入口，旧交接仅为上次失败历史。
+
+- **第三案例实际开始（2026-11-02 01:07+08）：** 独立目录`20261102-0102-progress-io`部署已验证读锁小修复，24其余源不变，case003 SHA c8164ea1…/软件71bd3242…。真实读锁3项及资源守卫检查通过；五阶段资源235.197秒/退出0，最低commit6,591,651,840/物理15,364,513,792字节，三组件layout、最终25/11源身份及独立只读review均通过。首窗唯一采样session75394/worker30428已开始，无时间/占用配额；模型/文本复用，0下载/编码/权重复制。原两失败案/冻结源/intent保持，当前IN_PROGRESS，不预记视频/正式16fps或全库通过。准确日志和活动入口见research-results顶部及新目录live-run.json。
+
+- **读锁修复新案例开始：** 同一“继续完成当前任务”作为明确继续执行指令，观察READY后登记READY -> IN_PROGRESS。按N/progress-io-candidate-v1已验证候选准备新案例及新资源/软件身份，再监督首窗一次；不重新下载/编码，不覆盖原N或R冻结源/intent，不重启已退出session86714。
+
+- **读锁修复新案例授权：** 针对已交付并通过真实Win32读锁RED/GREEN的修复候选和“另建案例继续”问题，用户明确回复“继续完成当前任务”。完整复读本任务设计及当前阻塞交接后，以该答复解除新案例执行阻塞，登记BLOCKED -> READY；保留两次失败案和同路径交接作为历史。允许应用候选、另建独立身份，复用模型/文本并按原题材/seed/规格继续三窗；研究与正式生产仍无执行时间上限，新试验无人工分配上限，空闲余量守卫保持。授权不等于资源/视频/正式16fps验收通过。
+
+- **新案例技术阻塞（2026-11-02 00:05+08）：** session86714/worker24508在16/50步后因可选progress.json的WinError5读锁替换冲突退出1，elapsed1421.782秒、stop_reason=null，不是OOM/时间/资源停止；无成功latent/媒体。25冻结源未变，原N及历史R案/intent全部保留，不重采样。候选`N/progress-io-candidate-v1/`仅让Windows共享冲突延后可选快照发布，stdout和全部资源检查不变；真实Win32读锁RED→GREEN，3.12/worker3.13各3项通过，无CUDA/模型调用。已先归档旧交接并更新同路径pause阻塞交接，再登记IN_PROGRESS -> BLOCKED；用户未要求暂停，VCO-08未完成。已提交具体新案例继续问题，待明确允许后BLOCKED -> READY -> IN_PROGRESS；无需重问时间/占用上限解除。新资源/视频/正式16fps/全库不预记通过。准确身份、日志、候选SHA及恢复入口见最新handoff和research-results顶部。
+
+- **新复验实际运行（2026-11-01 23:42+08）：** 独立新目录`D:/VideoSi/projects/video-ai/vco08-preflight/20261101-2314-allocator-unlimited`五阶段资源预检233.452秒退出0（c45a733527024074a389b2cbe22fbd3f），人工8GiB池/20GiB峰值配额均移除，保留原空闲余量；VAE空闲缓存释放的真实encode/decode逐位等价验证通过。25源freeze `2a444e36…`、三组件layout及最终身份检查通过，新case `a6580131…`；模型/文本复用，0下载/重编码。新首窗已且仅已启动一次，session86714/worker24508，intent `77aee0ae…`，正在50步采样，无时间上限，勿重启。原失败案全部保留；本状态仍IN_PROGRESS，不预记视频/多窗/正式16fps/全库通过。日志和完整身份见research-results顶部。
+
+- **新案例开始证据：** 同一“是的，移除内存占用上限”作为继续执行依据，登记READY -> IN_PROGRESS；保留当前交接为原失败/恢复历史。先在独立研究目录部署已审查候选，移除8GiB池与人工峰值占用上限，完成实际pipeline驻留预检和新freeze/layout，再监督新案例首窗一次。原case/window-start及intent不删除、不覆盖，不重新下载/编码，不重跑已完成软件批次。
+
+- **阻塞解除证据：** 用户对另建案例、取消人工分配池并先资源复验再继续三窗的明确询问回复“是的，移除内存占用上限”。该指令明确授权新技术复验，保留原失败案，复用已下载权重/文本，题材/seed/规格不改。完整读取本任务设计/阻塞交接后登记BLOCKED -> READY；该授权不等于GPU资源或视频通过。
+
+- **技术阻塞与软件收尾（2026-11-01 22:30+08）：** 已完整复读关联设计、确认源IN_PROGRESS，先归档旧交接原字节并写入新的pause阻塞交接，再登记 `IN_PROGRESS -> BLOCKED`，同路径Handoff保留。时间解除已经覆盖研究和正式production/scene/pipeline，相关定向与兼容通过：legacy476、最终whole230、精确integration7、最终原四研究文件19+其中两个guard共同覆盖原21；逐批证据见两份time-limits文档及research-results。没有虚构去重总数；原275并非完整通过，延期33个精确ID留VCO-08最后全库。唯一实际首窗已0/50因8GiB人工池OOM，无成功latent/视频；不能在原case重采样。25冻结运行源、原案/日志/缓存均保留。allocator-candidate-v2仅语法及CPU准入通过，尚未应用/执行GPU；新的技术复验范围待明确。解除条件是用户明确授权独立新技术复验及其原案失败血缘（如取消人工8GiB池但保留原运行余量、复用模型/文本与同规格三窗），不把授权当实际资源或视频通过。当前无活动测试/模型，正式16fps/视觉/最终全库仍未完成。
+
+- **最新实际失败（2026-11-01 21:35+08）：** session86229监督真实首窗一次，0/50步DiT FFN处触发冻结8GiB PyTorch分配池OOM，GPU当时仍15.70GiB空闲。worker28200及supervisor均退出1；无成功latent/视频，无stage2/3，不自动重试；case/window-start和intent留存，软件1342e93c...及case5db7a7a4...已进入运行身份，禁止再做准备期覆盖。此前随机latent五阶段成功不等于真实pipeline通过。正在完成生产/旧pipeline取消时间上限的剩余定向回归；真实多窗、正式16fps资格和项目最终全库仍未完成，保持IN_PROGRESS，不记VCO-08完成。详见研究实录顶部。
+
+- **无时限资源成功：** 原FFN五阶段完整247.783秒退出0，结果full-dit-resource-probe-1acf48d3d9254b099a95a516b994f683；最低commit12,392,964,096、物理16,430,608,384字节，保持原资源门槛。最终25文件freeze软件SHA1342e93c...、三组件layout及25源/11官方源/case/cache准入复核通过；新case5db7a7a4...，文本仍53c254...、0重编码。独立只读审查无重要问题。真实采样尚未开始；正在实施正式生产取消执行时限，先软件定向再串行真实首窗，不把资源通过记为视频或VCO-08完成。
+
+- **用户解除时间上限：** 用户明确研究及“正式生产视频的时候也不要设置预算”。按该最新指令取消探针/每窗/案例及正式生产执行时间上限，原资源/一次采样/unknown不重试保持。研究None clock与资源门禁/恢复fixture通过，归档原case/文本绑定，case仅两个时间字段改null，新SHA5db7a7a4...，原文本缓存未变且0重编码。原FFN五阶段session86537运行中，生产时间策略另行实现与定向测试；本任务仍IN_PROGRESS，不因取消时限而视为资源/视频/生产通过。
+
+- **原FFN恢复实测（2026-11-01）：** 完整探针session53408退出1，结果full-dit-resource-probe-723406d612844f1c8ead7fd4c8d54680：三DiT前向和VAE编码已完成，93帧解码/finite/postprocess已计算，但末次Guard246.402秒超过240秒；无资源准入、无真实intent。最低commit12,626,620,416、物理18,070,351,872字节，内存本次满足。首窗/续窗80.786/94.858秒，50步投影超过3600秒。待确认仅时间修订：准备360秒、每窗7200秒、案例21600秒，原FFN/规格/步数/seed/资源阈值不变，具体R/time-budget-proposal.json及研究实录；尚未改case/cache/software。保留IN_PROGRESS，未把研究或任务记为完成。
+
+- **恢复定向证据（2026-11-01 19:36+08）：** 已应用交接中三行研究窗口初始化及两个旧媒体守卫fake更新，产品SHA8158c248...与隔离候选一致。交接指定四文件及两个媒体测试ID实际21 passed / 495.97s / exit0，日志test-69601399cb1142218249ad1076e87b3d。尚未运行新的五阶段资源检查或真实视频；原FFN资源检查为下一步，最终全库/生产16fps与整体验收仍未完成。
+
+- **Resume evidence（2026-11-01）：** 用户明确要求读取VCO-08交接并恢复继续尚未完成的VCO-08，已完整读取关联研究设计及pause handoff，登记 `PAUSED -> IN_PROGRESS`，保留交接为历史入口。按交接顺序消费本板、研究设计、handoff/research-results、active-regression及候选/RED日志；首步核实产品SHA仍为8b28f283...，应用三行GeometryDecoder初始化与两个媒体守卫fake更新，运行指定实际定向复验。随后按最新主机状态以原FFN验证完整五阶段资源，再处理freeze/layout/一次真实采样门槛；不重下模型、不重跑T5、不重启已停止全库基线，不改变正式16fps及原五项验收。
+
+- **Pause / conversation handoff（2026-11-01 19:17+08）：** 用户明确要求“把任务暂停，我要交接给下一个会话”。完整读取关联研究设计后，先写`docs/task-handoffs/VCO-08-handoff.md`，再登记 `IN_PROGRESS -> PAUSED` 并链接交接。原全库session89796的自有Python PID7624已按请求停止，launcher21160亦已退出；session返回1、bootstrap日志exit/script_exit=-1，部分输出5FAIL/8ERROR、无最终pytest总结，不能记全库通过。候选修复尚未应用，无实际视频采样。下一会话从该交接的三行初始化/两个fake修复及实际定向复验继续，不再等待旧session、不重下模型或重跑T5；正式16fps生产接入及整体验收仍未完成。
+
+- **Current research result（2026-11-01，暂停现场）：** 已关联`docs/task-designs/VCO-08-design.md`，只覆盖用户同意的LongCat前置研究。固定代码6b3f4b8、权重03b55529的23/23文件共77,577,230,776字节已下载校验；真实T5缓存、只读映射、单块48次重放及BF16磁盘KV探针通过。完整预训练模型前向曾因Windows commit最低4,234,903,552字节（约3.94GiB）低于4GiB阈值而停止，缺口约57.3MiB；最近主机快照余量回升，仍须完整五阶段模型重新取证，不能把单块通过或空闲主机快照代证完整模型。无case/window-start、视频intent/采样或新观看，资源准入门禁实测拒绝；当前源码尚待资源通过后新freeze/layout。详见`docs/task-designs/VCO-08-research-results.md`及最新pause handoff；研究目录`preparation-stop.json`为历史资源现场，`active-regression.json`已登记用户暂停。已中止全库日志test-6cbc7cce122d44e49274cd71238e166e保留；研究窗口初始化及旧媒体门禁夹具的隔离候选已验证，实际源码/测试尚未应用。恢复后先定向修复复验，再按最新主机状态以原FFN复验资源；未取得新准入不启动视频。
 
 - **Start evidence（2026-11-01）：** 以上明确继续请求同时作为READY -> IN_PROGRESS启动依据；无入口handoff。先核实基础LongCat的Windows/单卡分阶段加载路径、固定代码/权重清单和原生研究时基；研究允许独立可丢弃探针，不改写旧生产run、不声称已通过生产验收。
 

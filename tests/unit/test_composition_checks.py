@@ -84,6 +84,24 @@ def test_complete_staging_candidate_is_consumable_and_does_not_publish(fixture):
     assert after['stages']['composition']['status']=='completed'
     with pytest.raises(module().CompositionRefusal):module().compose_clips(config,run_dir=run)
 
+
+def test_unlimited_composition_receipts_are_readable_outside_production_scope(fixture,monkeypatch):
+    from dataclasses import replace
+    from datetime import datetime,timedelta
+    from video_ai.runtime.execution_limits import production_execution
+    from video_ai.media import composition_video
+    original=composition_video.run_logged
+    def slow_command(*a,**k):
+        result=original(*a,**k)
+        return replace(result,started_at=(datetime.fromisoformat(result.started_at)-timedelta(seconds=600)).isoformat())
+    monkeypatch.setattr(composition_video,'run_logged',slow_command)
+    run,config,_=fixture
+    result=production_execution(module().compose_clips)(config,run_dir=run)
+    assert result.passed
+    execution=json.loads((run/'logs/composition/execution.json').read_text(encoding='utf-8'))
+    assert all(r['timeout_seconds'] is None and r.get('time_limits')=='unlimited_v1' for r in execution['commands'])
+    assert module().load_committed_composition(run)['passed']
+
 @pytest.mark.parametrize('orphan',['.composition.lock','composition.json','staging/composition'])
 def test_orphan_and_foreign_lock_refuse_without_commands(fixture,orphan):
     run,config,store=fixture;path=run/orphan;path.parent.mkdir(parents=True,exist_ok=True)

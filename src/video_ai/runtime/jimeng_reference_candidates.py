@@ -14,6 +14,7 @@ from ..planning.production_scenes import canonical_digest
 from ..reference_config import require_url_budget
 from .manifest import hash_file, now, thaw
 from .production_inputs import _same_json
+from .execution_limits import execution_deadline
 from .production_state import ProductionRefused, RunLock, object_fields, run_path
 from .jimeng_candidates import (_Records, _read_bound, _verify_candidate, _verify_download,
                                 _inspect_original)
@@ -152,8 +153,9 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
     if terminal_path.exists():
         terminal = _read_bound(terminal_path, 'schema_version identity status'.split(), identity)
         raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
-    end = time.monotonic()+model.task_timeout_seconds
+    end = execution_deadline(model.task_timeout_seconds,time.monotonic())
     def remaining():
+        if end is None:return model.request_timeout_seconds
         seconds = end-time.monotonic()
         if seconds <= 0: raise TimeoutError('reference task budget expired; resume original task')
         return seconds

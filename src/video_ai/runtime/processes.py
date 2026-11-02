@@ -1,13 +1,13 @@
-"""Finite subprocess execution with live stdout/stderr evidence."""
+"""Subprocess execution with live evidence and explicit production wait policy."""
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
 from uuid import uuid4
 
-from ..adapters.common import positive_timeout
 from .environment import CACHE_LOCATIONS
 from .manifest import now
 from .paths import PathPolicy, _validate_spelling
+from .execution_limits import command_timeout
 
 
 @dataclass(frozen=True)
@@ -70,7 +70,7 @@ def stop_process(process):
 
 
 def run_logged(args, *, cwd, env, timeout, logger, stage, unit_id=None):
-    timeout = positive_timeout(timeout)
+    timeout = command_timeout(timeout)
     args, cwd = validate_command(args,cwd,env)
     token = uuid4().hex
     stdout_path, stdout = logger.open_exclusive(f'processes/{token}.stdout')

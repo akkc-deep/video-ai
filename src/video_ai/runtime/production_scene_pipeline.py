@@ -12,6 +12,7 @@ from .scene_pipeline_records import (ScenePipelineResult,common_inputs,record_co
     validate_common_record,error,run_of,load_scene_pipeline_progress)
 from .scene_revision_records import revision_validation,artifact,stable_bytes,require_scene_revision
 from ._scene_revision_copy import RevisionStore
+from .execution_limits import production_execution
 
 DEPENDENCIES = ('planner image_client_factory reference_storage reference_client_factory smtp_factory '
                 'wan_client_factory wan_service_factory upscale_client_factory upscale_service_factory').split()
@@ -140,6 +141,7 @@ def _restore_missing_aggregates(frozen,units,timeline,*,paths,logger,lock,deps):
         raise
 
 
+@production_execution
 @revision_validation
 def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=None,email_settings=None,dependencies=None):
     deps=_dependencies(dependencies);run=run_of(frozen);stage='preflight'

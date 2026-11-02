@@ -10,7 +10,7 @@ from source_clip_helpers import write
 from unit.test_upscale import source_input
 
 
-def setup(runtime_run, monkeypatch, mode='success', profile='fast', frames=2, clip_counts=None, clip_timeout=None,request_timeout=None):
+def setup(runtime_run, monkeypatch, mode='success', profile='fast', frames=2, clip_counts=None, clip_timeout=None,request_timeout=None,frame_timeout=None):
     from video_ai.runtime import upscale_checks as uc, _upscale_inputs as ui, _upscale_generation as ug
     from video_ai.config import load_config
     from video_ai.runtime.manifest import create_manifest, hash_file, thaw
@@ -26,6 +26,7 @@ def setup(runtime_run, monkeypatch, mode='success', profile='fast', frames=2, cl
     raw['media']['profile']=profile
     if clip_timeout is not None:raw.setdefault('timeouts',{})['upscale_clip']=clip_timeout
     if request_timeout is not None:raw.setdefault('timeouts',{})['comfy_request']=request_timeout
+    if frame_timeout is not None:raw.setdefault('timeouts',{})['upscale_frame']=frame_timeout
     model=run/'fixture-models/RealESRGAN_x4plus.pth';model.parent.mkdir();model.write_bytes(b'TEST ONLY upscale model; never loaded')
     raw['models']['upscale']=str(model)
     config=load_config(write(run/'fixture-config.json',raw));logger=RunLogger(run)

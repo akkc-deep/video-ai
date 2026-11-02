@@ -1,4 +1,4 @@
-"""Owned, serial once-only frame inference with absolute clip/frame budgets."""
+"""Owned, serial once-only frame inference with durable execution policy."""
 from datetime import datetime
 from pathlib import Path
 import time
@@ -17,17 +17,22 @@ from .service_specs import build_service_specs
 from .timeline_checks import _local,_again,_artifact
 from ._source_clip_generation import copy
 from ._upscale_inputs import fresh,same,graph,evidence,before_post,validate_remote
+from .execution_limits import execution_deadline,unlimited_execution
+from ._legacy_execution_policy import unlimited_policy
 
 
 def remaining(end):
+    if end is None:return None
     value=end-time.monotonic()
     if value<=0:raise TimeoutError('upscale absolute deadline exhausted; no retry')
     return value
 
 
 class DeadlineHttp(HttpClient):
-    def set_deadlines(self,clip_end,frame_end):self.end=frame_end if clip_end is None else min(clip_end,frame_end)
+    def set_deadlines(self,clip_end,frame_end):
+        self.end=None if unlimited_execution() else frame_end if clip_end is None else min(clip_end,frame_end)
     def remaining(self):
+        if self.end is None:return None
         value=self.end-time.monotonic()
         if hasattr(self,'wall_end'):value=min(value,self.wall_end-time.time())
         if value<=0:raise AdapterError(FailureKind.ambiguous,'upscale frame/clip deadline exhausted; no repost')
@@ -35,9 +40,11 @@ class DeadlineHttp(HttpClient):
     def request(self,*args,**kwargs):
         # Apply the recording reserve to legacy monotonic-only frames too:
         # coarse Windows ticks can overstate the durable wall-clock remainder.
-        budget=min(kwargs.get('timeout') or self.timeout,self.timeout,self.remaining()-.1)
+        left=self.remaining()
+        budget=min(kwargs.get('timeout') or self.timeout,self.timeout)
+        if left is not None:budget=min(budget,left-.1)
         if budget<=0:raise AdapterError(FailureKind.ambiguous,'upscale deadline recording reserve exhausted before HTTP; no repost')
-        if hasattr(self,'wall_end'):
+        if self.end is not None and hasattr(self,'wall_end'):
             # Windows monotonic may be coarser than durable wall timestamps. Reserve
             # recording time conservatively; replay still enforces exact bounds.
             budget=min(budget,self.wall_end-time.time()-.1)
@@ -70,7 +77,7 @@ def generate(config,run,store,logger,context,records,clips, *, resume=None, befo
         for plan,source in zip(context['plans'],context['source']['clips']):
             uid=plan.shot_id
             if resume is not None and uid in resume['completed_clips']:continue
-            clip_end=None if resume is not None or context.get('no_total_timeout') else time.monotonic()+clip_deadline_seconds(frame_count=plan.source_frames,base_seconds=config.timeouts['upscale_clip'])
+            clip_end=None if unlimited_execution() or resume is not None or context.get('no_total_timeout') else time.monotonic()+clip_deadline_seconds(frame_count=plan.source_frames,base_seconds=config.timeouts['upscale_clip'])
             original=Path(plan.source_identity['path'])
             if verify_integrity:fresh(thaw(plan.source_identity),run=run)
             reused=resume['partial'].get(uid) if resume is not None else None
@@ -86,7 +93,7 @@ def generate(config,run,store,logger,context,records,clips, *, resume=None, befo
             for row in rows:
                 index=row['index'];unit_id=f'{uid}:frame_{index:06d}'
                 if index<=len(frames):continue
-                frame_end=time.monotonic()+config.timeouts['upscale_frame']
+                frame_end=execution_deadline(config.timeouts['upscale_frame'],time.monotonic())
                 if clip_end is not None:frame_end=min(clip_end,frame_end)
                 remaining(frame_end)
                 store.record_unit('frame',unit_id,'running')
@@ -99,7 +106,7 @@ def generate(config,run,store,logger,context,records,clips, *, resume=None, befo
                 else:copied=copy(run,source_png,copy_path)
                 http=DeadlineHttp(config.services['comfyui'],config.timeouts['comfy_request'],logger)
                 http.set_deadlines(clip_end,frame_end);http.paths=[];http.unit_id=unit_id;http.template=context['template']
-                if resume is not None or context.get('no_total_timeout'):
+                if not unlimited_execution() and (resume is not None or context.get('no_total_timeout')):
                     started=store.snapshot()['units']['frame'][unit_id]['started_at']
                     http.wall_end=max(datetime.fromisoformat(started).timestamp(),copied.mtime_ns/1e9)+config.timeouts['upscale_frame']
                 client=ComfyClient(http,store,logger);client.validate_template(context['template'])
@@ -125,6 +132,7 @@ def generate(config,run,store,logger,context,records,clips, *, resume=None, befo
                     model_identity=thaw(context['identities']['model']),parameters=thaw(plan.parameters),
                     submission=dict(attempt_id=submission.attempt_id,prompt_id=submission.prompt_id,intent_identity=thaw(hash_file(Path(saved['request_path'])))),
                     output_identity=info['identity'],upscaled_frame_identity=thaw(upscaled),evidence_identities=names)
+                if unlimited_execution():checkpoint['execution_policy']=unlimited_policy()
                 path=logger.save_json(f'upscale/frame-{uid}-{index:06d}.json',checkpoint);checkpoint_id=hash_file(path)
                 evidence(run,records,[path]);frames.append(dict(checkpoint,checkpoint_identity=thaw(checkpoint_id)))
                 remaining(frame_end)
@@ -138,6 +146,7 @@ def generate(config,run,store,logger,context,records,clips, *, resume=None, befo
                 upscaled_identity=info['identity'],width=1920,height=1080,native_fps=16,source_frames=plan.source_frames,
                 upscaled_frames=plan.source_frames,parameters=thaw(plan.parameters),frames=frames,
                 evidence_identities=list(dict.fromkeys(base+[n for f in native_frames for n in f['evidence_identities']]+[Path(f['checkpoint_identity']['path']).relative_to(run).as_posix() for f in native_frames]+names)))
+            if unlimited_execution():clip['execution_policy']=unlimited_policy()
             path=logger.save_json(f'upscale/clip-{uid}.json',clip);evidence(run,records,[path]);clips.append(clip)
             if clip_end is not None:remaining(clip_end)
     finally:

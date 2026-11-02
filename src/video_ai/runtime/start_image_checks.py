@@ -27,6 +27,7 @@ from .services import ServiceManager,ServiceConflictError
 from .storyboard_checks import load_committed_storyboard,atomic_report
 from .timeline_checks import _run_path,_local,_fresh,_again,_artifact
 from .workflows import WorkflowTemplate
+from .execution_limits import execution_deadline,production_execution
 
 
 class StartImageRefusal(ValueError):
@@ -206,14 +207,16 @@ def _template(config, *, revision=None):
 
 
 class _DeadlineHttp(HttpClient):
-    """One shared per-image deadline, including pre-submit remote validation."""
-    def set_deadline(self,seconds):self.end=time.monotonic()+seconds
+    """Finite transport requests with optional legacy per-image execution end."""
+    def set_deadline(self,seconds):self.end=execution_deadline(seconds,time.monotonic())
     def remaining(self):
+        if self.end is None:return None
         remaining=self.end-time.monotonic()
         if remaining<=0:raise AdapterError(FailureKind.ambiguous,'image request deadline exhausted')
         return remaining
     def request(self,*args,**kwargs):
-        kwargs['timeout']=min(kwargs.get('timeout') or self.timeout,self.remaining())
+        left=self.remaining();cap=min(kwargs.get('timeout') or self.timeout,self.timeout)
+        kwargs['timeout']=cap if left is None else min(cap,left)
         return super().request(*args,**kwargs)
 
 
@@ -327,6 +330,7 @@ def _failure(run,store,logger,exc,count=0):
     return _result(run,status,count)
 
 
+@production_execution
 def prepare_start_images(config, *, run_dir:Path,image_inputs_path:Path|None=None,width:int=1280,height:int=720)->StartImagesResult:
     run=_run_path(run_dir)
     try:validate_dimensions(width,height)
@@ -656,6 +660,7 @@ def _review(run,path,draft,draft_identity):
     _again(identities);return identities
 
 
+@production_execution
 def finalize_start_images(config, *, run_dir:Path,review_path:Path)->StartImagesResult:
     run=_run_path(run_dir);review_path=_review_path(run,review_path);store=ManifestStore.open(run)
     with _exclusive(run) as owner:
@@ -813,6 +818,7 @@ def _verified_reused_images(config,run,board,snapshot,import_identity,reused_uni
     return result,{'image-import/'+path:identity for path,identity in import_source_identities(run).items()}
 
 
+@production_execution
 def resume_start_images(config, *, run_dir, reuse_context):
     """Prepare a mixed native/imported draft; complete visual review remains required."""
     from .pipeline_import import verify_reuse_context,load_pipeline_import

@@ -70,3 +70,23 @@ def test_comparable_region_cannot_claim_zero_sample_support(runtime_run):
     declared = dict(comparison_id='pair', kind='reference', left='reference', right='frame', region_ids=['subject'])
     with pytest.raises(ValueError, match='support'):
         validate_comparison(value, declared=declared, records=records, reader=ResearchReader())
+
+
+@pytest.mark.parametrize('packed',[False,True])
+def test_research_window_reads_inherited_json_and_geometry(runtime_run,packed):
+    from time import monotonic
+    from video_ai.media.research_pair_report import _ResearchWindow
+    from video_ai.media._continuity_storage import encode_document
+    from video_ai.runtime.logging import RunLogger
+    from video_ai.runtime.paths import create_run
+    from video_ai.runtime.manifest import hash_file,thaw
+    run,_,paths=runtime_run
+    value=dict(schema_version=1,algorithm='continuity_cv_v1',comparison=dict(regions=[dict(
+        geometry=dict(vectors=[[1.0,-0.0]],sampled_pairs=[[[1,2],[3,4]]]))]))
+    path=run/'input.json'
+    path.write_text(json.dumps(encode_document(value,packed=packed)),encoding='utf-8')
+    record=thaw(hash_file(path))
+    window=_ResearchWindow(paths,RunLogger(create_run(paths)),monotonic()+300,dict(fixture_only=True))
+    assert window.read_json(record)==value
+    assert str(path) in window.frozen
+    window.verify()

@@ -151,15 +151,16 @@ class ComfyClient:
             raise AdapterError(kind_error, str(exc), evidence) from exc
 
     def wait_for(self, submission, *, deadline_seconds, poll_seconds=2.0):
-        end = time.monotonic() + positive_timeout(deadline_seconds)
+        from ..runtime.execution_limits import execution_deadline
+        end = execution_deadline(deadline_seconds,time.monotonic())
         poll_seconds = positive_timeout(poll_seconds)
         saved = self.manifest.snapshot()['units'][submission.kind][submission.unit_id]['submission']
         if saved['attempt_id'] != submission.attempt_id or saved['prompt_id'] != submission.prompt_id or saved['state'] not in ('accepted','ambiguous'):
             raise AdapterError(FailureKind.ambiguous,'tracking requires matching saved accepted prompt_id')
         evidence = []
-        while time.monotonic() < end:
+        while end is None or time.monotonic() < end:
             try:
-                remaining = end-time.monotonic()
+                remaining = self.http.timeout if end is None else end-time.monotonic()
                 if remaining <= 0:
                     break
                 response = self.http.request('GET','/history/'+submission.prompt_id,max_bytes=JSON_LIMIT,
@@ -200,7 +201,7 @@ class ComfyClient:
                         self._tracking_failure(submission,FailureKind.invalid_result,str(exc),evidence)
                     self._submission_state(submission,'completed',response_path=response.evidence_path)
                     return HistoryResult(submission.prompt_id,tuple(deepcopy(outputs)),response.evidence_path)
-            remaining = end-time.monotonic()
+            remaining = self.http.timeout if end is None else end-time.monotonic()
             if remaining > 0:
                 try:
                     queue = self.http.request('GET','/queue',max_bytes=JSON_LIMIT,timeout=remaining,
@@ -208,8 +209,8 @@ class ComfyClient:
                     evidence.append(queue.evidence_path)
                 except AdapterError as exc:
                     evidence.extend(exc.evidence_paths)
-            if end > time.monotonic():
-                time.sleep(min(poll_seconds,end-time.monotonic()))
+            if end is None or end > time.monotonic():
+                time.sleep(poll_seconds if end is None else min(poll_seconds,end-time.monotonic()))
         self._tracking_failure(submission,FailureKind.ambiguous,'tracking deadline exceeded; task remains unknown',evidence)
 
     def _tracking_failure(self, submission, kind, message, evidence):

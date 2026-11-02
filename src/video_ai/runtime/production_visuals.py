@@ -14,6 +14,7 @@ from ..media.video import inspect_production_video,trim_production_video
 from ..planning.start_images import image_parameters
 from ..planning.production_visual_plan import plan_production_source_clips,production_frame_mapping
 from .manifest import thaw
+from .execution_limits import production_execution
 from .production_inputs import check_stage_space,_verify_identity
 from .production_state import ArtifactStamp,ProductionRefused,run_path,sync_file
 from .production_support import (read_report,recover_checkpoint,commit_checkpoint,stamps,sync_manifest_stage,
@@ -128,6 +129,7 @@ def _check_submission(cp,submission,req):
         raise ProductionRefused('checkpoint submission differs from original Comfy evidence')
 
 
+@production_execution
 def produce_start_images(frozen,storyboard,*,state,manifest,paths,logger):
     check_stage_space(frozen.config,frames=sum(s['end_frame']-s['start_frame'] for s in storyboard['shots']))
     inputs=stamps({'options':state.run_dir/'production/options.json','storyboard':state.run_dir/'production/storyboard.json'})
@@ -155,6 +157,7 @@ def produce_start_images(frozen,storyboard,*,state,manifest,paths,logger):
         return task.finish(dict(images=rows),inputs)
 
 
+@production_execution
 def produce_source_clips(frozen,storyboard,timeline,images,*,state,manifest,paths,logger):
     # This check occurs before starting the Wan stage, copying inputs or POSTing.
     # Legacy completed artifacts may be replayed; pending work always needs review.

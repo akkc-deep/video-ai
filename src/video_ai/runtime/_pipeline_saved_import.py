@@ -8,6 +8,7 @@ from ..planning.recovery import signature
 from .manifest import ManifestStore, create_manifest, hash_file, thaw, STAGES, now
 from .paths import RuntimePaths, create_run
 from .logging import RunLogger
+from .execution_limits import production_execution
 from .timeline_checks import _run_path, _artifact, _again
 from . import pipeline_import as imports
 from .pipeline_recovery import (
@@ -138,6 +139,7 @@ def reconciled_image_context(parent, rows):
         aspect_ratio='16:9',adaptation='contain_black_pad'),references=references,global_visual=board['global_visual'])
 
 
+@production_execution
 def derive_reconciled_run(config, *, parent_run_dir, plan, reconciliations):
     """Create one new child from every saved request in the affected stage.
 
@@ -275,7 +277,7 @@ def _write_saved_child(config,run,parent,snapshot,plan,stage,kind,prior_receipt,
     imports.write_exclusive(run,run/'logs/pipeline/pipeline-options.json',dict(schema_version=1,run_id=run.name,created_at=now(),
         input_identities=child_inputs,unit_review_identity=thaw(copied_review),image_inputs_identity=thaw(image_inputs),
         settings_identity=thaw(settings),output_path=options.get('output_path'),cpu_planner=options.get('cpu_planner',False),
-        execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=300)))
+        execution_policy=dict(gpu_management='disabled',total_timeout_seconds=None,media_command_timeout_seconds=None,time_limits='unlimited_v1')))
     sources={};imports.merge_sources(sources,admission_ids)
     copies=[];stage_rows=[];unit_rows=[];reports={};targets=set()
     complete=tuple(r.stage for r in plan.reused if r.unit_id is None and r.stage in imports.STAGE_FILES

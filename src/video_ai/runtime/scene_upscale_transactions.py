@@ -417,8 +417,9 @@ def _remote_validate(store,client,template,logger,timeout):
     except ValueError as exc: raise ProductionRefused('remote Wan template invalid: '+str(exc)) from exc
 
 
-def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_service,logger,timeout):
-    budget=positive_timeout(timeout); end=time.monotonic()+budget
+def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None):
+    from .execution_limits import execution_deadline, request_timeout
+    budget=positive_timeout(timeout); end=execution_deadline(timeout,time.monotonic())
     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
     completed=validate_scene_frame_submission(store,request,graph,template=template) if store.read(directory/'submission.json') is not None else None
     if completed is not None: return completed
@@ -427,14 +428,18 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
         store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
     verify=store.capture_guard(request,graph); cancelled=Event()
     def guard():
-        if cancelled.is_set() or time.monotonic()>=end: raise SceneSubmitUnknown('original frame tracking deadline exceeded')
+        if cancelled.is_set() or end is not None and time.monotonic()>=end: raise SceneSubmitUnknown('original frame tracking deadline exceeded')
         verify()
-        if cancelled.is_set() or time.monotonic()>=end: raise SceneSubmitUnknown('original frame tracking deadline exceeded')
+        if cancelled.is_set() or end is not None and time.monotonic()>=end: raise SceneSubmitUnknown('original frame tracking deadline exceeded')
     guard()
     def remaining():
-        guard(); result=end-time.monotonic()
+        guard()
+        if end is None:
+            seconds=request_timeout_seconds if request_timeout_seconds is not None else client.request_timeout
+            return request_timeout(None,seconds,time.monotonic())
+        result=end-time.monotonic()
         if result<=0: raise SceneSubmitUnknown('original scene tracking deadline exceeded')
-        return result
+        return result if request_timeout_seconds is None else min(result,positive_timeout(request_timeout_seconds))
     old_guard=getattr(client,'ownership_check',None)
     if old_guard is not None: client.ownership_check=guard
     service_ready=False

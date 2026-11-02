@@ -460,12 +460,12 @@ def _assessment(path, epoch, context, records, reader, *, historical=False):
     if value['binding'] != _binding(context,records,value['clip_id']): raise ProductionRefused('assessment production binding drift')
     manifest = reader.read(value['manifest'])
     validate_manifest_binding(manifest,value['binding'],config=context['frozen'].config,_reader=reader,
-        timeout=max(.001,reader.deadline-__import__('time').monotonic()))
+        timeout=reader.remaining())
     from ..media.continuity_report import validate_continuity_report
     verified = validate_continuity_report(value['report'], manifest=value['manifest'], config=context['frozen'].config,_budget=reader,
         expected_engine=epoch['intent']['engine'],
         expected_audit_run_dir=intent['audit_run_dir'], historical_engine=epoch['archive'] if historical else None,
-        timeout=max(.001,reader.deadline-__import__('time').monotonic()))
+        timeout=reader.remaining())
     if derive_concerns(verified['report']) != value['concerns']: raise ProductionRefused('assessment concerns differ from report')
     report_closure=verified['closure']
     archived=epoch['archive']['archives'] if historical else {}

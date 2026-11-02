@@ -15,6 +15,7 @@ from time import monotonic
 import zlib
 
 from .images import _deadline, _remaining
+from ..runtime.execution_limits import command_timeout
 from ..planning.production_scenes import canonical_digest
 from ..runtime.environment import build_child_env
 from ..runtime.logging import RunLogger
@@ -348,7 +349,7 @@ class _Session:
 
     def command(self, args, asset_id):
         self.verify()
-        timeout = min(300, _remaining(self.deadline, monotonic()))
+        timeout = command_timeout(_remaining(self.deadline, monotonic()),300)
         result = run_logged(tuple(str(a) for a in args), cwd=self.logger.run_dir,
             env=build_child_env(self.paths), timeout=timeout,
             logger=self.logger, stage='colorimetry', unit_id=asset_id)

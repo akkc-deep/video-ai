@@ -9,6 +9,7 @@ from .production_state import ProductionRefused,RunLock,run_path
 from ._scene_continuity_io import Reader,ContinuityStore,artifact,verify,run_for,uid,local
 from . import scene_color_repair_records as records
 from . import _scene_color_repair_validation as checks
+from .execution_limits import production_execution
 
 
 def boundary(point):
@@ -244,6 +245,7 @@ def _finish_recovered(store,relative,intent,*,frozen,reader):
     return _result(frozen,'awaiting_review',folder=folder,candidate_id=intent['candidate_id'])
 
 
+@production_execution
 def propose_scene_color_repair(frozen,units,timeline,request_path,*,paths,logger,lock=None,timeout=300):
     acquired=None;store=None;candidate=None;folder=None
     try:
@@ -277,6 +279,7 @@ def propose_scene_color_repair(frozen,units,timeline,request_path,*,paths,logger
         if acquired is not None:acquired.__exit__(None,None,None)
 
 
+@production_execution
 def consume_scene_color_repair_review(frozen,review_path,*,paths,logger,lock=None):
     acquired=None;folder=None;cid=None
     try:

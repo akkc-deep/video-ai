@@ -18,16 +18,20 @@ from .owned_cleanup import stop_owned_preserving_exception
 from .service_specs import build_service_specs
 from .timeline_checks import _local,_again,_artifact
 from ._source_clip_inputs import fresh,same,graph,evidence
+from .execution_limits import execution_deadline,unlimited_execution
+from ._legacy_execution_policy import unlimited_policy
 
 
 class DeadlineHttp(HttpClient):
-    def set_deadline(self,seconds):self.end=time.monotonic()+seconds
+    def set_deadline(self,seconds):self.end=execution_deadline(seconds,time.monotonic())
     def remaining(self):
+        if self.end is None:return None
         value=self.end-time.monotonic()
         if value<=0:raise AdapterError(FailureKind.ambiguous,'Wan attempt deadline exhausted; no repost')
         return value
     def request(self,*args,**kwargs):
-        kwargs['timeout']=min(kwargs.get('timeout') or self.timeout,self.remaining())
+        left=self.remaining();cap=min(kwargs.get('timeout') or self.timeout,self.timeout)
+        kwargs['timeout']=cap if left is None else min(cap,left)
         result=super().request(*args,**kwargs)
         self.remaining()
         return result
@@ -92,6 +96,7 @@ def generate(config,run,store,logger,context,records,clips):
                 item=dict(attempt_id=local,ordinal=ordinal,unit_id=unit_id,requested_frames=requested,status='short' if actual<required else 'selected',
                     submission=dict(attempt_id=submission.attempt_id,prompt_id=submission.prompt_id,intent_identity=thaw(hash_file(Path(saved['request_path'])))),
                     output_identity=info['identity'],actual_frames=actual,evidence_identities=names)
+                if unlimited_execution():item['execution_policy']=unlimited_policy()
                 attempts.append(item)
                 if actual<required:
                     error=dict(kind='known_short',message=f'decoded {actual} < required {required}',traceback_path=None,evidence_paths=[str(path) for path in logs])
@@ -108,6 +113,7 @@ def generate(config,run,store,logger,context,records,clips):
                     input_copy_identity=thaw(copied),selected_attempt_id=local,attempts=attempts,generated_identity=thaw(generated),source_identity=target['identity'],
                     width=p['width'],height=p['height'],native_fps=16,generated_frames=actual,source_frames=required,parameters=p,
                     evidence_identities=list(dict.fromkeys(base_names+[n for a in attempts for n in a['evidence_identities']]+names)))
+                if unlimited_execution():clip['execution_policy']=unlimited_policy()
                 checkpoint=logger.save_json(f'source-clips/clip-{uid}.json',clip)
                 clips.append(clip)
                 store.record_unit('shot_attempt',unit_id,'completed',artifacts=[_artifact(hash_file(checkpoint)),_artifact(generated),_artifact(hash_file(Path(target['identity']['path'])))])

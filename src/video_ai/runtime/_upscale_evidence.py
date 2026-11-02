@@ -13,6 +13,7 @@ from .timeline_checks import _local,_again,_fresh as artifact_fresh
 from .component_checks import output_path
 from ._source_clip_evidence import command,names
 from ._upscale_inputs import fresh,same,graph,validate_remote
+from ._legacy_execution_policy import unlimited_receipt,receipt_fields
 
 DRAFT_FIELDS='schema_version run_id created_at status passed source_clips_identity source_review_identity source_review_method source_validation effective_media clips requirement_clips frame_mappings model_identity workflow_identity mapping_identity provenance validation request_evidence'
 CLIP_FIELDS='shot_id primary_unit_id budget source_identity upscaled_identity width height native_fps source_frames upscaled_frames parameters frames evidence_identities'
@@ -34,18 +35,18 @@ def identity_equal(a,b):
     return all(same(a[k],b[k]) for k in ('path','bytes','sha256','mtime_ns'))
 
 
-def frame_command(record,args,run,covered, *, start,end,json_output=False):
+def frame_command(record,args,run,covered, *, start,end,json_output=False,unlimited=False):
     """Task10 commands must fit their total interval and report no raw errors."""
     out=command(record,args,run,covered)
     started=datetime.fromisoformat(record['started_at']).timestamp();finished=datetime.fromisoformat(record['finished_at']).timestamp()
-    if started<start or (end is not None and finished>end) or finished-started>300:
+    if started<start or (end is not None and finished>end) or (not unlimited and finished-started>300):
         raise ValueError('frame media command exceeds absolute deadline or durable frame completion')
     if Path(record['stderr_path']).read_bytes():raise ValueError('frame media command stderr reports errors contradicting success')
     if not json_output and out.read_bytes():raise ValueError('frame media command reports errors contradicting success')
     return out
 
 
-def png(config,run,path,record,covered,width,height, *, start,end):
+def png(config,run,path,record,covered,width,height, *, start,end,unlimited=False):
     keys(record,'info probe commands','PNG inspection');info=record['info']
     keys(info,'identity width height format pixel_format','PNG info')
     if not identity_equal(info['identity'],thaw(fresh(info['identity'],run=run,expected=path))):raise ValueError('PNG receipt differs')
@@ -58,12 +59,13 @@ def png(config,run,path,record,covered,width,height, *, start,end):
     if not isinstance(commands,list) or len(commands)!=2:raise ValueError('complete PNG probe/decode commands required')
     probe_args=(config.tools['ffprobe'],'-v','error','-count_frames','-show_streams','-show_format','-of','json',path)
     decode_args=(config.tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',path,'-f','null','-')
-    out=frame_command(commands[0],probe_args,run,covered,start=start,end=end,json_output=True)
+    out=frame_command(commands[0],probe_args,run,covered,start=start,end=end,json_output=True,unlimited=unlimited)
     if not same(read_json(out),record['probe']):raise ValueError('raw PNG stdout differs from inspection')
-    frame_command(commands[1],decode_args,run,covered,start=start,end=end)
+    frame_command(commands[1],decode_args,run,covered,start=start,end=end,unlimited=unlimited)
 
 
 def media(config,run,clip,source,records,snapshot, *, clip_start,clip_end,partial=False,v2=False,reused_frames=()):
+    unlimited=unlimited_receipt(clip)
     covered=names(clip['evidence_identities'],records);uid=clip['shot_id'];images={};extracts=[];encodes=[];videos=[]
     expected={};generated={}
     extraction=[read_json(run/n) for n in covered if n.startswith('logs/upscale/extract-') and n.endswith('.json')]
@@ -89,17 +91,19 @@ def media(config,run,clip,source,records,snapshot, *, clip_start,clip_end,partia
             if not path.name.startswith('media-'+uid+'-') and not path.name.startswith('media-'+uid+'_frame_'):raise ValueError('PNG inspection belongs to another clip')
             record=read_json(path);target=Path(record['info']['identity']['path'])
             if target not in expected:raise ValueError('PNG inspection targets an unregistered frame')
-            start,end=clip_start,clip_end
+            start,end=clip_start,clip_end;command_unlimited=unlimited
             if target in generated:
                 frame=generated[target];unit_id=f"{uid}:frame_{frame['frame_index']:06d}"
                 origin=frame_origin(frame,snapshot,v2)
                 start=max(start,origin)
-                frame_limit=min(origin+config.timeouts['upscale_frame'],frame['checkpoint_identity']['mtime_ns']/1e9,
+                command_unlimited=unlimited_receipt(frame)
+                frame_limit=min(frame['checkpoint_identity']['mtime_ns']/1e9,
                     datetime.fromisoformat(snapshot['units']['frame'][unit_id]['finished_at']).timestamp())
+                if not command_unlimited:frame_limit=min(frame_limit,origin+config.timeouts['upscale_frame'])
                 end=frame_limit if end is None else min(end,frame_limit)
             # Source extraction and later encoding-copy inspection use the clip interval.
             # Only the actual generated PNG belongs to the original frame interval.
-            png(config,run,target,record,covered,*expected[target],start=start,end=end);images.setdefault(target,[]).append(name)
+            png(config,run,target,record,covered,*expected[target],start=start,end=end,unlimited=command_unlimited);images.setdefault(target,[]).append(name)
         elif path.name.startswith('extract-'):extracts.append(read_json(path))
         elif path.name.startswith('encode-'):encodes.append(read_json(path))
         elif path.name.startswith('video-'):videos.append(read_json(path))
@@ -117,7 +121,7 @@ def media(config,run,clip,source,records,snapshot, *, clip_start,clip_end,partia
         if not same(frame['input_identity'],row['identity']):raise ValueError('checkpoint extraction input differs')
     if not identity_equal(extract['source_identity'],clip['source_identity']) or not same(extract['frames'],original) or not same([extract['width'],extract['height']],[source['width'],source['height']]):raise ValueError('ordered extraction frames/source differ')
     frame_command(extract['command'],(config.tools['ffmpeg'],'-nostdin','-n','-v','error','-xerror','-i',Path(clip['source_identity']['path']),
-        '-map','0:v:0','-vf','format=rgb24','-fps_mode','passthrough','-start_number','1',run/'shots'/uid/'frames/frame_%06d.png'),run,covered,start=clip_start,end=clip_end)
+        '-map','0:v:0','-vf','format=rgb24','-fps_mode','passthrough','-start_number','1',run/'shots'/uid/'frames/frame_%06d.png'),run,covered,start=clip_start,end=clip_end,unlimited=unlimited)
     for frame in clip['frames']:
         if f"{uid}:frame_{frame['frame_index']:06d}" in reused_frames:continue
         frame_names=names(frame['evidence_identities'],records)
@@ -134,7 +138,7 @@ def media(config,run,clip,source,records,snapshot, *, clip_start,clip_end,partia
         if type(row['index']) is not int or row['index']!=index or type(row['source_frame_index']) is not int or row['source_frame_index']!=index-1 or not identity_equal(row['identity'],frame['upscaled_frame_identity']):raise ValueError('encoding numeric frame mapping differs')
     target=Path(clip['upscaled_identity']['path'])
     frame_command(encoded['command'],(config.tools['ffmpeg'],'-nostdin','-n','-v','error','-xerror','-framerate','16','-start_number','1','-i',
-        run/'shots'/uid/'upscaled-frames/frame_%06d.png','-an','-c:v','libx264','-preset','medium','-crf','18','-pix_fmt','yuv420p','-fps_mode','passthrough',target),run,covered,start=clip_start,end=clip_end)
+        run/'shots'/uid/'upscaled-frames/frame_%06d.png','-an','-c:v','libx264','-preset','medium','-crf','18','-pix_fmt','yuv420p','-fps_mode','passthrough',target),run,covered,start=clip_start,end=clip_end,unlimited=unlimited)
     video=videos[0];keys(video,'info probe frames commands','video inspection');info=video['info']
     keys(info,'identity width height codec pixel_format fps frames duration','video info')
     metadata=validate_video_probe(video['probe'],video['frames'],width=1920,height=1080)
@@ -144,7 +148,7 @@ def media(config,run,clip,source,records,snapshot, *, clip_start,clip_end,partia
         (config.tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',target,'-f','null','-')]
     if not isinstance(video['commands'],list) or len(video['commands'])!=3:raise ValueError('complete video probe/PTS/decode commands required')
     for index,(c,a) in enumerate(zip(video['commands'],args)):
-        out=frame_command(c,a,run,covered,start=clip_start,end=clip_end,json_output=index<2)
+        out=frame_command(c,a,run,covered,start=clip_start,end=clip_end,json_output=index<2,unlimited=unlimited)
         if index<2 and not same(read_json(out),video['probe' if index==0 else 'frames']):raise ValueError('raw video probe/PTS differs')
 
 
@@ -166,8 +170,9 @@ def http(config,run,frame,saved,t,wanted,records,clip_end, *, frame_start=None,d
     if not isinstance(outputs,list) or len(outputs)!=1 or output_path(run,outputs[0])!=Path(frame['output_identity']['path']):raise ValueError('frame history mapped output differs')
     posts=0;remote=False;tracking=False
     if frame_start is None:frame_start=frame['input_copy_identity']['mtime_ns']/1e9
-    frame_end=frame_start+config.timeouts['upscale_frame']
-    if clip_end is not None:frame_end=min(frame_end,clip_end)
+    unlimited=unlimited_receipt(frame)
+    frame_end=None if unlimited else frame_start+config.timeouts['upscale_frame']
+    if clip_end is not None:frame_end=clip_end if frame_end is None else min(frame_end,clip_end)
     for name in covered:
         if not name.startswith('logs/http/') or not name.endswith('.request.json'):continue
         stem=name[:-len('.request.json')]
@@ -176,9 +181,11 @@ def http(config,run,frame,saved,t,wanted,records,clip_end, *, frame_start=None,d
         keys(req,'method url headers json_body timeout stage unit_id started_at','HTTP request');keys(res,'method url stage unit_id status headers bytes truncated finished_at error','HTTP response')
         _timestamp(req['started_at']);_timestamp(res['finished_at'])
         if datetime.fromisoformat(res['finished_at'])<datetime.fromisoformat(req['started_at']):raise ValueError('HTTP time reversed')
-        if type(req['timeout']) not in (int,float) or not math.isfinite(req['timeout']) or not 0<req['timeout']<=min(config.timeouts['comfy_request'],config.timeouts['upscale_frame']):raise ValueError('HTTP exceeds bounded frame/request budget')
+        cap=config.timeouts['comfy_request'] if unlimited else min(config.timeouts['comfy_request'],config.timeouts['upscale_frame'])
+        if type(req['timeout']) not in (int,float) or not math.isfinite(req['timeout']) or not 0<req['timeout']<=cap:raise ValueError('HTTP exceeds bounded frame/request budget')
         started=datetime.fromisoformat(req['started_at']).timestamp();finished=datetime.fromisoformat(res['finished_at']).timestamp()
-        if started<frame_start or finished>frame_end or req['timeout']>min(config.timeouts['comfy_request'],frame_end-started) or finished-started>req['timeout']:
+        if (started<frame_start or (frame_end is not None and (finished>frame_end or req['timeout']>min(config.timeouts['comfy_request'],frame_end-started)))
+                or finished-started>req['timeout']):
             raise ValueError('HTTP evidence exceeds absolute frame/clip deadline or request budget')
         if durable_end is not None and finished>durable_end:raise ValueError('HTTP response evidence postdates durable frame completion')
         if any(not same(req[k],res[k]) for k in ('method','url','stage','unit_id')) or req['stage']!='upscale' or req['unit_id']!=uid or type(res['bytes']) is not int or res['bytes']!=body.stat().st_size or type(res['truncated']) is not bool:raise ValueError('HTTP association/body bytes differ')
@@ -210,9 +217,8 @@ def validate(config,run,draft,context,snapshot, *, _partial=False,_reused_frames
     if not same(draft['validation'],validation(False)) or not same(draft['effective_media'],context['source']['effective_media']) or not same(draft['source_validation'],context['source']['validation']) or draft['source_review_method']!=context['source_review_method']:raise ValueError('source validation/review/media preservation differs')
     identities={}
     if v3:
-        from ._upscale_resume import policy,check_policy
-        check_policy(draft['execution_policy'])
-        if not same(draft['execution_policy'],policy(config)):raise ValueError('native upscale policy differs from config')
+        from ._upscale_resume import check_config_policy
+        check_config_policy(draft['execution_policy'],config)
         if _reused_frames is None and (draft['import_identity'] is not None or draft['reused_units']!={}):raise ValueError('imported upscale requires origin consumer')
     elif v2:
         from ._upscale_resume import replay
@@ -240,7 +246,7 @@ def validate(config,run,draft,context,snapshot, *, _partial=False,_reused_frames
     wanted_shots=[p.shot_id for p in plans]
     if not isinstance(clips,list) or [c.get('shot_id') for c in clips]!=(wanted_shots[:len(clips)] if _partial else wanted_shots):raise ValueError('upscale shot order/coverage differs')
     for clip,plan,source,mapped in zip(clips,plans,context['source']['clips'],context['source']['frame_mappings']):
-        keys(clip,CLIP_FIELDS,'upscale clip');uid=plan.shot_id
+        keys(clip,CLIP_FIELDS+receipt_fields(clip),'upscale clip');uid=plan.shot_id
         if _reused_clips is not None and uid in _reused_clips:
             if not same(clip,_reused_clips[uid]):raise ValueError('reused complete clip serializer differs')
             bind('video/'+uid,clip['upscaled_identity'],run/'shots'/uid/'upscaled.mp4',True)
@@ -262,9 +268,9 @@ def validate(config,run,draft,context,snapshot, *, _partial=False,_reused_frames
         if len(extraction_names)!=1:raise ValueError('one independent clip extraction required')
         clip_started=read_json(run/extraction_names[0])['command']['started_at'];_timestamp(clip_started)
         clip_start=datetime.fromisoformat(clip_started).timestamp()
-        clip_end=None if v2 else clip_start+clip_deadline_seconds(frame_count=plan.source_frames,base_seconds=config.timeouts['upscale_clip'])
+        clip_end=None if v2 or unlimited_receipt(clip) else clip_start+clip_deadline_seconds(frame_count=plan.source_frames,base_seconds=config.timeouts['upscale_clip'])
         for index,frame in enumerate(frames,1):
-            keys(frame,FRAME_FIELDS+' checkpoint_identity','upscale frame');unit_id=f'{uid}:frame_{index:06d}';units.add(unit_id)
+            keys(frame,FRAME_FIELDS+' checkpoint_identity'+receipt_fields(frame),'upscale frame');unit_id=f'{uid}:frame_{index:06d}';units.add(unit_id)
             if _reused_frames is not None and unit_id in _reused_frames:
                 if not same(frame,_reused_frames[unit_id]):raise ValueError('reused upscale frame serializer mismatch')
                 continue
@@ -284,9 +290,9 @@ def validate(config,run,draft,context,snapshot, *, _partial=False,_reused_frames
             if unit is None or unit['status']!='completed' or unit['submission'] is None or unit['submission']['state']!='completed':raise ValueError('frame terminal submission unit differs')
             saved=unit['submission'];sub=frame['submission'];keys(sub,'attempt_id prompt_id intent_identity','frame submission')
             origin=frame_origin(frame,snapshot,v2)
-            frame_end=origin+config.timeouts['upscale_frame']
-            if clip_end is not None:frame_end=min(frame_end,clip_end)
-            if datetime.fromisoformat(unit['finished_at']).timestamp()>frame_end or frame['checkpoint_identity']['mtime_ns']/1e9>frame_end:
+            frame_end=None if unlimited_receipt(frame) else origin+config.timeouts['upscale_frame']
+            if clip_end is not None:frame_end=clip_end if frame_end is None else min(frame_end,clip_end)
+            if frame_end is not None and (datetime.fromisoformat(unit['finished_at']).timestamp()>frame_end or frame['checkpoint_identity']['mtime_ns']/1e9>frame_end):
                 raise ValueError('durable frame/checkpoint exceeds absolute frame/clip deadline')
             durable_end=min(frame['checkpoint_identity']['mtime_ns']/1e9,datetime.fromisoformat(unit['finished_at']).timestamp())
             for key,seen in [('attempt_id',uuids),('prompt_id',prompts)]:

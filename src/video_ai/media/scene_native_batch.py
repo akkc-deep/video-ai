@@ -5,6 +5,7 @@ import hashlib
 
 from .frames import _command, _count, _directory, _sequence
 from .images import _deadline, _remaining, _record_name
+from ..runtime.execution_limits import command_timeout
 from .video import _dimensions, _video_path, inspect_video
 from .scene_upscale import _decode, verify_png
 from ..runtime.manifest import hash_file, thaw
@@ -29,7 +30,7 @@ def extract_native_scene_batch(source, directory, *, expected_frames, width, hei
     source = _video_path(source, logger, paths)
     directory = _directory(directory, logger, paths)
     before = hash_file(source)
-    remaining = lambda: min(300, _remaining(deadline, monotonic()))
+    remaining = lambda: command_timeout(_remaining(deadline, monotonic()),300)
     info, evidence = inspect_video(source, width=width, height=height, config=config, paths=paths,
         logger=logger, unit_id=unit_id, stage='upscale', timeout=remaining())
     if info['frames'] != expected_frames:

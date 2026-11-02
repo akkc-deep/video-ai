@@ -10,6 +10,7 @@ from ..planning.production_scenes import canonical_digest
 from .manifest import now,validate_run_dir
 from .production_state import ProductionRefused,RunLock,object_fields,run_path,timestamp
 from .scene_final_observations import build_scene_final_observation_template,validate_scene_final_observation
+from .execution_limits import production_execution
 
 
 def boundary(point):
@@ -252,6 +253,7 @@ from .scene_execution_records import verified_scene_execution_write
 
 @revision_validation
 @verified_scene_execution_write
+@production_execution
 def _entry(frozen,units,timeline,*,paths,logger,lock,stage,operation):
     from .scene_media_records import scene_media_context
     from .image_selection_records import _run

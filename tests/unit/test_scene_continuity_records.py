@@ -80,7 +80,7 @@ def test_initial_epoch_is_locked_idempotent_and_query_never_writes(epoch_setup):
     assert before=={str(p):p.read_bytes() for p in s['run'].rglob('*') if p.is_file()}
 
 
-def test_initial_epoch_budget_starts_after_source_admission(epoch_setup,monkeypatch):
+def test_initial_epoch_allows_slow_source_admission(epoch_setup,monkeypatch):
     from pathlib import Path
     from video_ai.runtime import production_scene_continuity as writer
     from video_ai.runtime import _scene_continuity_io as continuity_io
@@ -91,7 +91,7 @@ def test_initial_epoch_budget_starts_after_source_admission(epoch_setup,monkeypa
     original_context=writer._context
     def admitted_context(*args,**kwargs):
         result=original_context(*args,**kwargs)
-        clock[0]+=301  # A valid whole-scene admission can exceed the epoch IO budget.
+        clock[0]+=301  # Formal production also waits for a slow valid admission.
         return result
     monkeypatch.setattr(writer,'_context',admitted_context)
     with RunLock(s['run']) as held:
@@ -102,7 +102,7 @@ def test_initial_epoch_budget_starts_after_source_admission(epoch_setup,monkeypa
     assert intent['engine']==s['capture']['engine']
 
 
-def test_initial_epoch_keeps_shared_300_second_budget(epoch_setup,monkeypatch):
+def test_initial_epoch_outlives_previous_300_second_budget(epoch_setup,monkeypatch):
     from video_ai.runtime import production_scene_continuity as writer
     from video_ai.runtime import _scene_continuity_io as continuity_io
     from video_ai.runtime.production_state import RunLock
@@ -114,9 +114,13 @@ def test_initial_epoch_keeps_shared_300_second_budget(epoch_setup,monkeypatch):
         clock[0]+=301
         return original_capture()
     monkeypatch.setattr(report,'capture_engine_sources',slow_capture)
-    with RunLock(s['run']) as held,pytest.raises(TimeoutError,match='continuity deadline expired'):
-        writer.ensure_initial_epoch(s['frozen'],{},None,paths=s['paths'],logger=None,lock=held)
-    assert not list((s['run']/'production/scene-continuity/epochs').glob('*/commit.json'))
+    with RunLock(s['run']) as held:
+        committed=writer.ensure_initial_epoch(s['frozen'],{},None,paths=s['paths'],logger=None,lock=held)
+    import json
+    from pathlib import Path
+    value=json.loads(Path(committed['path']).read_text(encoding='utf-8'))
+    intent=json.loads(Path(value['intent']['path']).read_text(encoding='utf-8'))
+    assert intent['engine']==s['capture']['engine'] and intent['clip_ids']==['clip_a']
 
 
 @pytest.mark.parametrize('point',['epoch-intent','epoch-commit'])
