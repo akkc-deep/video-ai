@@ -19,7 +19,7 @@ def test_help_exposes_candidate_and_publication_commands(capsys):
 def test_stage_routing_paths_limits_and_exit_codes(monkeypatch, capsys, command, status, expected):
     from video_ai.config import load_config
     from video_ai.runtime import candidate_checks, publication
-    config = load_config(Path('D:/code/py/video-ai/config/production.example.json'))
+    config = load_config(Path('E:/code/py/video-ai/config/production.example.json'))
     monkeypatch.setattr('video_ai.cli._load_cli_config', lambda *args: config)
     module = candidate_checks if command == 'validate-candidate' else publication
     refusal = module.CandidateRefusal if command == 'validate-candidate' else module.PublicationRefusal

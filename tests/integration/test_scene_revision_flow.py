@@ -9,11 +9,54 @@ import pytest
 
 
 @pytest.fixture(scope='module')
-def revision_source(tmp_path_factory):
+def revision_source(tmp_path_factory, isolated_test_runtime):
     from video_ai.config import load_config
     from video_ai.runtime.paths import RuntimePaths,create_run
     from scene_pipeline_helpers import prepared_pipeline
     config=load_config(Path(__file__).resolve().parents[2]/'config/production.example.json')
+    from video_ai.runtime.manifest import thaw
+    import shutil
+    fixture = tmp_path_factory.mktemp('revision-resources')
+    raw = thaw(config.raw)
+    raw['workflows'] = thaw(config.workflows)
+    font = fixture/'fixture-font.ttc'
+    font.write_bytes(b'offline fixture font; never rendered')
+    raw['media']['font_file'] = str(font)
+    raw['tools'] = {}
+    for name, original in config.tools.items():
+        target = isolated_test_runtime/'shared/tools/revision-fixture'/name/original.name
+        if name.endswith('_root'):
+            target.mkdir(parents=True, exist_ok=True)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if name in ('ffmpeg', 'ffprobe'):
+                shutil.copy2(original, target)
+            else:
+                target.write_bytes(b'offline fixture; never executed')
+        raw['tools'][name] = str(target)
+    voice = thaw(config.voice.raw)
+    from production_helpers import wav_bytes
+    reference = fixture/'reference.wav'
+    reference.write_bytes(wav_bytes())
+    voice['reference_audio'] = str(reference)
+    voice['reference_sha256'] = hashlib.sha256(reference.read_bytes()).hexdigest()
+    for name in ('gpt_weights','sovits_weights','bert_root','hubert_root'):
+        target = isolated_test_runtime/'shared/models/revision-fixture'/name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if name.endswith('_root'):
+            target.mkdir(exist_ok=True)
+        else:
+            target.write_bytes(b'offline fixture weights; never loaded')
+        voice[name] = str(target)
+    voice_path = fixture/'voice.json'
+    voice_path.write_text(json.dumps(voice), encoding='utf-8')
+    raw['voice_config'] = str(voice_path)
+    yaml_path = isolated_test_runtime/'shared/config/tts-api.yaml'
+    yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(Path('E:/VideoAI/shared/config/tts-api.yaml'), yaml_path)
+    config_path = fixture/'production.json'
+    config_path.write_text(json.dumps(raw), encoding='utf-8')
+    config = load_config(config_path)
     paths=RuntimePaths.from_config(config)
     with pytest.MonkeyPatch.context() as patch:
         setup=prepared_pipeline((create_run(paths),config,paths),tmp_path_factory.mktemp('revision-source'),patch)

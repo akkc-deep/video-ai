@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-FFMPEG = Path('D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe')
+FFMPEG = Path('E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe')
 FFPROBE = FFMPEG.with_name('ffprobe.exe')
 
 

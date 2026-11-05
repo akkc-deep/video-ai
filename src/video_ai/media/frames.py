@@ -36,7 +36,7 @@ def _sequence(directory, count, logger):
 
 def _command(args, *, paths, logger, unit_id, timeout):
     result=run_logged(tuple(str(a) for a in args),cwd=logger.run_dir,
-        env=build_child_env(paths),timeout=command_timeout(timeout,300),logger=logger,stage='upscale',unit_id=unit_id)
+        env=build_child_env(paths, logger.run_dir),timeout=command_timeout(timeout,300),logger=logger,stage='upscale',unit_id=unit_id)
     if result.returncode!=0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: frame media command failed: {result.stderr_path}')
     return result

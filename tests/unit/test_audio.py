@@ -6,7 +6,7 @@ import pytest
 
 def media_config(runtime_run):
     run, config, paths = runtime_run
-    tools = dict(config.tools, ffmpeg=Path('D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe'), ffprobe=Path('D:/VideoSi/tools/ffmpeg/bin/ffprobe.exe'))
+    tools = dict(config.tools, ffmpeg=Path('E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe'), ffprobe=Path('E:/VideoAI/shared/tools/ffmpeg/bin/ffprobe.exe'))
     return run, replace(config, tools=tools), paths
 
 

@@ -132,7 +132,7 @@ def test_explicit_download_input_can_be_outside_runtime(intake, monkeypatch):
     from pathlib import Path
     import json
     module, root, row, _ = intake
-    outside = Path('D:/code/py/video-ai/.observation-intake-test.json')
+    outside = Path('E:/code/py/video-ai/.observation-intake-test.json')
     assert not outside.exists()
     outside.write_text(json.dumps(row),encoding='utf-8')
     try:

@@ -33,6 +33,7 @@ class ServiceSpec:
     env_overrides: Mapping[str,str] | None = None
     revision_run_dir: Path | None = None
     production_services: Mapping[str,str] | None = None
+    task_run_dir: Path | None = None
 
 
 def service_environment(paths, spec):
@@ -45,7 +46,7 @@ def service_environment(paths, spec):
         expected={'OLLAMA_HOST':urlsplit(urls['ollama']).netloc} if spec.name=='ollama' else {}
         if overrides!=expected or spec.revision_run_dir is not None:
             raise ValueError('service environment differs from frozen production binding')
-        env=build_child_env(paths)
+        env=build_child_env(paths, spec.task_run_dir)
         env.update(overrides)
         return env
     if overrides:
@@ -62,7 +63,7 @@ def service_environment(paths, spec):
             expected=build_service_specs(config,spec.revision_run_dir)['ollama']
             if expected!=spec:
                 raise ValueError('Ollama environment differs from current author-bound service specification')
-    env = build_child_env(paths)
+    env = build_child_env(paths, spec.task_run_dir)
     env.update(overrides)
     return env
 

@@ -47,7 +47,7 @@ def test_quantization_collapse_and_overlap_fail():
 
 def test_real_private_font_metrics_and_missing_glyph_refusal():
     from video_ai.media.font_metrics import PrivateFont
-    font=Path('D:/VideoSi/projects/video-ai/inputs/fonts/msyh.ttc')
+    font=Path('E:/VideoAI/shared/assets/fonts/msyh.ttc')
     with PrivateFont(font,'Microsoft YaHei',54) as m:
         assert m.face=='Microsoft YaHei'
         assert 90<m.measure('中文')<130
@@ -58,4 +58,4 @@ def test_real_private_font_metrics_and_missing_glyph_refusal():
 def test_font_file_must_contain_selected_face():
     from video_ai.media.font_metrics import PrivateFont
     with pytest.raises(ValueError):
-        with PrivateFont(Path('D:/VideoSi/projects/video-ai/inputs/fonts/msyh.ttc'),'Arial',54):pass
+        with PrivateFont(Path('E:/VideoAI/shared/assets/fonts/msyh.ttc'),'Arial',54):pass

@@ -185,7 +185,7 @@ def media_operation(context,operation,*,encoded=None,write=False,runner=None,log
     store.bind_artifact(store.artifact(path))
     def guarded_log_write():
         store.assert_write(); store.verify_global()
-    result=runner(tuple(intent['args']),cwd=Path(intent['cwd']),env=build_child_env(store.paths),timeout=300,
+    result=runner(tuple(intent['args']),cwd=Path(intent['cwd']),env=build_child_env(store.paths, store.run_dir),timeout=300,
         logger=_GuardedLogger(logger,guarded_log_write),stage='scene_composition',unit_id=_unit(operation,token))
     store.verify_global()
     if type(result.returncode) is not int or result.returncode!=0 or result.timed_out:

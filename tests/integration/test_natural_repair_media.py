@@ -22,7 +22,7 @@ def natural_media(runtime_run):
     from continuity_helpers import texture
     import numpy as np
     run,config,paths=runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     config=replace(config,tools=dict(config.tools,ffmpeg=actual.tools['ffmpeg'],ffprobe=actual.tools['ffprobe']))
     logger=RunLogger(create_run(paths));raw=run/'source.rgb';rgb=(170+texture(128,128)//3).astype(np.uint8)
     raw.write_bytes(rgb.tobytes()*4);video=run/'source.mp4'

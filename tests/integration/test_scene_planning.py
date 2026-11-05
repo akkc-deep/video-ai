@@ -571,7 +571,9 @@ def test_model_context_explicitly_reserves_room_for_full_prompt_and_output(scene
     assert body['options']['num_ctx'] >= prompt_bytes+schema_bytes+body['options']['num_predict']+2048
 
 
-def test_large_full_context_reaches_http_and_replays_without_input_truncation(scene_setup):
+def test_large_full_context_reaches_http_and_replays_without_input_truncation(scene_setup,monkeypatch):
+    import video_ai.runtime.production_scene_plan as module
+    monkeypatch.setattr(module,'use_grouped_compact',lambda *args:False)
     s=scene_setup
     s['units']['planner']=dict(original_evidence='全文不能截断'*10000)
     result=produce(s)
@@ -584,6 +586,48 @@ def test_large_full_context_reaches_http_and_replays_without_input_truncation(sc
     assert body['options']['num_predict']==-1
     assert produce(s)==result
     assert len(s['received'])==1
+
+
+@pytest.mark.parametrize('unused',[False,True])
+@pytest.mark.parametrize('same_environment',[False,True,'missing_alias'])
+def test_multiscene_partition_transport_replays_complete_plan(scene_setup,unused,same_environment,monkeypatch):
+    s=scene_setup
+    s['units']['planner']={'audit':'x'*40000}
+    wire=proposal()
+    if same_environment:
+        wire['scene_groups'].append(dict(deepcopy(wire['scene_groups'][0]),key='duplicate_lake'))
+        wire['scenes'][1]['scene_group_id']='absent_lake' if same_environment=='missing_alias' else 'duplicate_lake'
+    if unused:wire['entities']=[dict(key='earth',label='Earth',fixed_attributes=[],source_facts=[],creative_choices=[])]
+    rows=wire.pop('scenes')
+    slots={}
+    for index,row in enumerate(rows,1):
+        row.pop('paragraph_id')
+        row['end_unit']=row.pop('unit_ids')[-1]
+        slots[f'scene_{index:04d}']=row
+    wire['scenes']={'paragraph_0001':slots}
+    s['replies'].append(wire)
+    if same_environment=='missing_alias':
+        s['replies'].append(dict(scene_0002=dict(reuse='lake',change_sources=[])))
+    result=produce(s)
+    assert [row['unit_ids'] for row in result[1]['scenes']]==[['speech_0001','speech_0002'],['speech_0003']]
+    assert s['received'][0]['format']['$comment']=='video_ai_scene_partition_v3'
+    if unused:
+        receipt=json.loads((s['run']/'production/scene-planning/partition-v1/initial.catalog-pruning.json').read_bytes())
+        expected_removed=[dict(category='entities',key='earth')]
+        if same_environment:expected_removed.append(dict(category='scene_groups',key='duplicate_lake'))
+        assert receipt['removed']==expected_removed
+    assert produce(s)==result
+    assert len(s['received'])==(2 if same_environment=='missing_alias' else 1)
+    if same_environment=='missing_alias':
+        import video_ai.runtime.scene_environment_repair as repair_module
+        def unexpected_service(*args,**kwargs):raise AssertionError('cached repair started a model service')
+        monkeypatch.setattr(repair_module,'repair_planner',unexpected_service)
+        assert produce(dict(s,planner=None))==result
+        assert len(s['received'])==2
+    if same_environment:
+        assert len(result[0]['scene_groups'])==1
+        receipt='initial.environment-model-repair.json' if same_environment=='missing_alias' else 'initial.environment-aliases.json'
+        assert (s['run']/'production/scene-planning/partition-v1'/receipt).is_file()
 
 
 @pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',

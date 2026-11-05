@@ -1,4 +1,5 @@
 """Start-image preparation, visual review commit, and fresh downstream consumption."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -163,7 +164,7 @@ def _evidence(run,evidence,paths):
     return names
 
 
-TASK4_ACCEPTANCE=Path('D:/VideoSi/projects/video-ai/runs/20261004-040653-a0fcd961cc58/task4-acceptance.json')
+TASK4_ACCEPTANCE=(_PORTABLE_ROOT / 'shared/config/capabilities/task4-acceptance.json')
 
 
 def _revision(config,run):

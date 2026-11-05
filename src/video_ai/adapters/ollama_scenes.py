@@ -59,7 +59,7 @@ def _input(prompt, *, grouped=False):
 
 
 def is_environment_transport(body):
-    return body.get('format', {}).get('$comment') in (MARKER,GROUPED_MARKER,SOURCE_SET_MARKER)
+    return body.get('format', {}).get('$comment') in (MARKER,GROUPED_MARKER,SOURCE_SET_MARKER,'video_ai_scene_partition_v1','video_ai_scene_partition_v2','video_ai_scene_partition_v3')
 
 
 def project_scene_environment(prompt, schema, *, grouped=False,source_sets=False,source_nonempty=True):

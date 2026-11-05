@@ -18,7 +18,7 @@ def setup(runtime_run, monkeypatch, mode='success', profile='fast', frames=2, cl
     from video_ai.runtime.workflows import WorkflowTemplate
     from unit.test_video import make_video
     run, original, paths = runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     raw=thaw(original.raw);raw['voice_config']=str(original.voice.config_file)
     raw['workflows']={k:str(v) for k,v in original.workflows.items()}
     raw['services']['ollama']='http://127.0.0.1:11435'

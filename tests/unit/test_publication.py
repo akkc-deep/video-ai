@@ -164,7 +164,7 @@ def test_copy_failure_and_commit_drift_preserve_partial_files(publication_fixtur
     assert video.read_bytes()==retained
 
 
-@pytest.mark.parametrize('path',['D:/code/py/video-ai/not-allowed.mp4','C:/not-allowed.mp4','D:/VideoSi/output/video-ai/name:stream.mp4','//server/share/output.mp4','D:/VideoSi/output/video-ai/bad. /candidate.mp4'])
+@pytest.mark.parametrize('path',['E:/code/py/video-ai/not-allowed.mp4','C:/not-allowed.mp4','E:/VideoAI/output/name:stream.mp4','//server/share/output.mp4','E:/VideoAI/output/bad. /candidate.mp4'])
 def test_output_path_policy_refuses_without_stage_start(publication_fixture,path):
     from video_ai.runtime.publication import publish_candidate,PublicationRefusal
     run,config,store,review,acceptance=publication_fixture

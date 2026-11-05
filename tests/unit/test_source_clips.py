@@ -15,7 +15,7 @@ TEXT = '夜色渐渐安静下来，微风轻轻吹过树梢。\r\n远处的灯�
 
 
 def identity(name):
-    return dict(path=f'D:/VideoSi/fixture/{name}', bytes=123, mtime_ns=456,
+    return dict(path=f'E:/VideoAI/fixture/{name}', bytes=123, mtime_ns=456,
                 sha256='a'*64, verified_at='2026-10-04T10:00:00+08:00')
 
 

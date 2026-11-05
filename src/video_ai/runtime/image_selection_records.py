@@ -178,7 +178,13 @@ def _candidates(frozen, scene, manifest_path, *, _reference=None):
         canonical = run/'production/jimeng'/scene['scene_id']/'candidates.json'
         if Path(manifest_path) not in (canonical,Path(sidecar['view_artifact']['path'])):
             raise ProductionRefused('candidate path is not the registered inherited view')
-        if canonical.parent.exists() and any(canonical.parent.iterdir()): raise ProductionRefused('owned image competes with import')
+        from ._continuity_byte_guard import observe_inventory,observe_absence
+        if canonical.parent.exists():
+            children=list(canonical.parent.iterdir())
+            observe_inventory(canonical.parent,'children',children)
+            if children: raise ProductionRefused('owned image competes with import')
+        else:
+            observe_absence(canonical.parent)
         return deepcopy(sidecar['view_artifact']),imported['candidates']
     from ._scene_revision_origin_images import source_candidate_metadata
     metadata=source_candidate_metadata(frozen,scene,manifest_path)
@@ -459,7 +465,8 @@ def build_accepted(batch, normalized, *, source_submission_sha256, bible, accept
 
 def _submission(folder, sha):
     _sha(sha); path = folder/'submissions'/(sha+'.json')
-    try: raw = path.read_bytes()
+    from .verification import read_bytes
+    try: raw = read_bytes(path)
     except OSError as exc: raise ProductionRefused('accepted source submission missing') from exc
     if hashlib.sha256(raw).hexdigest() != sha: raise ProductionRefused('source submission SHA256 differs')
     try:

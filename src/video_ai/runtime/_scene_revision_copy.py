@@ -97,6 +97,17 @@ class RevisionStore:
     def save(self,path,value): return self.image(path,json_bytes(value))
 
 
+def copy_media(store,import_id,domain,key,media,*,guard):
+    """Batch origin checks; each file still verifies its own bytes and ownership."""
+    from .scene_revision_records import revision_checkpoint_transaction
+    with revision_checkpoint_transaction():
+        mappings=[]
+        for role,source in media:
+            local=copy_identity(store,import_id,domain,key,role,source,guard=guard)
+            mappings.append(dict(role=role,source=source,target=local))
+        return mappings
+
+
 def copy_identity(store,import_id,domain,key,role,source,*,guard):
     store.owned(); guard.verify_captured_bytes()
     if not getattr(store,'copies_preflighted',False):

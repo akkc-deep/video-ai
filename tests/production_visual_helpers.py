@@ -26,7 +26,7 @@ def comfy_server(config,run,paths,logger,*,mode='normal',upscale_mode=None):
     info={}
     for t in templates:info.update(remote_info(t))
     posts=[];gets=[];history={}
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     class Handler(BaseHTTPRequestHandler):
         def send(self,data,status=200):
             raw=json.dumps(data).encode();self.send_response(status);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
@@ -93,7 +93,7 @@ def comfy_server(config,run,paths,logger,*,mode='normal',upscale_mode=None):
 
 def configure_comfy(config,url,run):
     data=read_json(config.config_file);data['services']['comfyui']=url
-    actual=read_json(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=read_json(Path('E:/VideoAI/shared/config/production.json'))
     data['models']=actual['models'] # stamps only; test servers never load these files
     file=run/'all-service-config.json';file.write_text(json.dumps(data),encoding='utf-8')
     return load_config(file)

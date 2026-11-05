@@ -152,7 +152,7 @@ def _video_path(path, logger, paths):
 
 def _command(args, *, paths, logger, unit_id, stage='source_clips', timeout=300):
     result = run_logged(tuple(str(a) for a in args), cwd=logger.run_dir,
-                        env=build_child_env(paths), timeout=command_timeout(timeout,300), logger=logger,
+                        env=build_child_env(paths, logger.run_dir), timeout=command_timeout(timeout,300), logger=logger,
                         stage=stage, unit_id=unit_id)
     if result.returncode != 0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: video command failed: {result.stderr_path}')

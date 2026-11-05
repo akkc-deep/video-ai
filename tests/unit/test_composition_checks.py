@@ -17,7 +17,7 @@ def fixture(runtime_run,monkeypatch,request):
     from video_ai.config import load_config
     from video_ai.runtime import _composition_inputs as ci
     run,original,paths=runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     raw=thaw(original.raw);raw['voice_config']=str(original.voice.config_file)
     raw['workflows']={k:str(v) for k,v in original.workflows.items()}
     raw['tools']={k:str(actual.tools[k]) if k in ('ffmpeg','ffprobe') else str(v) for k,v in original.tools.items()}

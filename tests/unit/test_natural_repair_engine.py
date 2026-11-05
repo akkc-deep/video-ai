@@ -9,7 +9,7 @@ from test_natural_repair_statistics import constant,frame
 
 
 def conditional():
-    return json.loads(Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json').read_bytes())
+    return json.loads(Path('E:/VideoAI/shared/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json').read_bytes())
 
 
 def thresholds():

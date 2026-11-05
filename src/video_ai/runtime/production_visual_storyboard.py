@@ -22,6 +22,60 @@ from .services import ServiceConflictError
 from .owned_cleanup import stop_owned_preserving_exception
 
 
+def _with_subject_context(prompt):
+    header, separator, body = prompt.partition('\nVISUAL_INPUT_JSON\n')
+    if not separator:
+        return prompt
+    data = json.loads(body)
+    if data.get('scene_subject_policy') == 'per_shot_v1':
+        return prompt
+    data['scene_subject_policy'] = 'per_shot_v1'
+    for shot in data['shots']:
+        subject = shot.get('source_facts', {}).get('subject')
+        shot['scene_subject'] = subject
+        shot['subject_transition'] = ('explicit_subject' if subject else
+                                      'resolve_from_original_context')
+    global_visual=data.pop('global_visual',None)
+    if global_visual is not None:
+        data['visual_style']={key:global_visual[key] for key in ('style','color_palette','lighting') if key in global_visual}
+        data['entity_catalog']=[dict(entity_id=entity['entity_id']) for entity in global_visual.get('entities',[])]
+    data.pop('topic_context',None)
+    if all(shot['scene_subject'] for shot in data['shots']):data.pop('previous_scene',None)
+    header = (
+        'Write SHORT concrete English film scenes for the original Chinese source quotes. '
+        'Each scene field must be one complete sentence of 8-14 words, aiming for under 100 characters. '
+        'End the sentence naturally before reaching the format limit. '
+        'SUBJECT PRIORITY: Read each shot independently before applying continuity. '
+        'An explicit scene_subject takes priority over previous_scene and global entities. '
+        'When the subject changes, change the depicted subject and setting accordingly. '
+        'Name the specific subject in BOTH image_prompt and video_prompt, not just its generic category. '
+        'Translate 木星 as Jupiter, 土星 as Saturn, 天王星 as Uranus, 海王星 as Neptune, 木卫一 as Io. '
+        'Translate 旅行者2号 as Voyager 2, and 旅行者1号 as Voyager 1; never call them Traveler. '
+        'entity_catalog is an identity reference catalog, not a list of permitted scene subjects. '
+        'Use entity_ids=[] for an unregistered subject; still depict that subject in English. '
+        'Copy neither the previous scene nor spacecraft anatomy into a planet, moon or ground scene. '
+        'Use previous_scene only for compatible continuity, or resolve abstract narration from original context. '
+        'Keep action_start and action_end as visible physical states, never dates copied from another shot. '
+        'Never display words, subtitles, dates, labels or text on screen. Do not illustrate narration as writing. '
+        'Describe physical objects, their appearance and spatial setting. For a date or abstract transition, '
+        'show the prior physical scene continuing without text. '
+        'The renderer adds spacecraft hardware: describe its setting and action instead of listing anatomy. '
+        'Voyager is an uncrewed nuclear-powered probe: no solar panels, humanoid form, cockpit or passengers. '
+        'Return the supplied JSON structure. ')
+    if global_visual is not None:header+='Frozen global_visual is input only; do not emit it. Generate only shots.'
+    else:header+='Define global_visual using exact original source quotes; register recurring physical subjects from global_subject_sources.'
+    return header + separator + json.dumps(data, ensure_ascii=False)
+
+
+def _scene_repair_prompt(prompt, error):
+    if not error or not error.startswith('missing original visual subject '):
+        return None
+    return _with_subject_context(prompt) + '\nSCENE_REPAIR\n' + error + (
+        '\nRegenerate every shot from its own source quote. Translate 木星 as Jupiter, '
+        '土星 as Saturn, 木卫一 as Io. Show the named planet or moon itself. '
+        'Do not repeat the probe anatomy for planet scenes. Keep all fixed IDs and source facts unchanged.')
+
+
 def _batch_sources(batch,primary,facts):
     """Include the batch and the complete chain of its explicit source references."""
     needed={slot.primary_unit_id for slot in batch};pending=list(needed)
@@ -80,7 +134,7 @@ def _global_sources(primary,facts):
     return result
 
 
-def _visual_request(frozen,batch,primary,slots,facts,global_visual,shots,*,concise,constrain_entities=True,model_visual=False):
+def _visual_request(frozen,batch,primary,slots,facts,global_visual,shots,*,concise,constrain_entities=True,model_visual=False,subject_context=True):
     if concise:
         sources,batch_facts=_batch_sources(batch,primary,facts)
         schema=_concise_schema(make_model_schema(batch,semantic_specs=batch_facts,depiction_policy=GROUNDED_POLICY,source_slots=sources))
@@ -153,7 +207,12 @@ def _visual_request(frozen,batch,primary,slots,facts,global_visual,shots,*,conci
             'In every image_prompt name the actual scene/location; in video_prompt describe a small compatible motion. '
             'An abstract sentence continues the preceding concrete scene without invented events.')
     if global_visual is not None:schema['properties']['global_visual']['const']=deepcopy(global_visual)
-    return schema,instructions+'\nVISUAL_INPUT_JSON\n'+json.dumps(data,ensure_ascii=False)
+    if model_visual and subject_context:
+        schema['description']='model_visual_v3'
+        if global_visual is not None:
+            instructions+=' Frozen global_visual is supplied as input only; do not emit it. Generate only the requested shots.'
+    prompt=instructions+'\nVISUAL_INPUT_JSON\n'+json.dumps(data,ensure_ascii=False)
+    return schema,_with_subject_context(prompt) if model_visual and subject_context else prompt
 
 
 def _concise_run(logger):
@@ -219,15 +278,24 @@ def produce(frozen,units,timeline,slot_plan,*,state,manifest,paths,logger,manage
         for index,start in enumerate(range(0,len(primary),8),1):
             batch=primary[start:start+8];bid=f'storyboard_batch_{index:04d}'
             constrained=_entity_constraints(logger,bid+'_initial')
+            saved_intent=logger.path(f'storyboard/{bid}_initial.intent.json')
+            subject_context=(not saved_intent.exists() or
+                             '"scene_subject_policy": "per_shot_v1"' in read_json(saved_intent)['prompt'])
             schema,prompt=_visual_request(frozen,batch,primary,slots,facts,global_visual,shots,concise=concise,
-                                         constrain_entities=constrained,model_visual=model_visual)
+                                         constrain_entities=constrained,model_visual=model_visual,subject_context=subject_context)
             context=dict(script_identity=frozen.options['execution_policy']['input_identities']['script'],
                          shot_ranges=[dict(shot_id=s.shot_id,start_frame=s.start_frame,end_frame=s.end_frame,primary_unit_id=s.primary_unit_id) for s in batch],
                          units_stamp=inputs['units'],slots_stamp=inputs['slots'],global_visual=global_visual)
             last_error=None
-            for suffix in ('initial','correction','entityrepair'):
+            for suffix in ('initial','correction','entityrepair','scenerepair'):
                 uid=bid+'_'+suffix
-                if suffix=='entityrepair':
+                if suffix=='scenerepair':
+                    schema=deepcopy(schema)
+                    schema['description']='model_visual_v3'
+                    current_prompt=_scene_repair_prompt(prompt,last_error)
+                    if current_prompt is None:raise RuntimeError(last_error)
+                elif suffix=='entityrepair':
+                    if _scene_repair_prompt(prompt,last_error) is not None:continue
                     # Only the exhausted legacy unknown-ID failure reaches here.
                     # Original requests/checkpoints remain immutable; this has a
                     # distinct ID, durable intent and one bounded model request.
@@ -290,10 +358,12 @@ def produce(frozen,units,timeline,slot_plan,*,state,manifest,paths,logger,manage
                 if error is None:break
                 last_error=error
                 if suffix=='correction':
+                    if _scene_repair_prompt(prompt,error) is not None:continue
                     if (not constrained and global_visual is not None and error=='unknown entity identity'
                         and _entity_constraints(logger,bid+'_entityrepair')):continue
                     raise RuntimeError(f'{bid}: second completed response invalid: {error}')
                 if suffix=='entityrepair':raise RuntimeError(f'{bid}: entity repair response invalid: {error}')
+                if suffix=='scenerepair':raise RuntimeError(f'{bid}: scene repair response invalid: {error}')
             if global_visual is None:global_visual=deepcopy(content['global_visual'])
             shots.extend(content['shots'])
         expanded,_=expand_boundary_requirements(dict(schema_version=1,global_visual=global_visual,shots=shots),slots,

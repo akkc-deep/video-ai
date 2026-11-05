@@ -12,7 +12,7 @@ def run_gbk_console(script,env):
     # An owned, hidden subprocess forces the non-UTF-8 launch condition.
     # Capture bytes; strict decoding below tests the actual public boundary.
     return subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',str(script)],
-        env={**os.environ,**env},capture_output=True,timeout=30,
+        env={**os.environ,"VIDEO_AI_RUNTIME_ROOT":str(script.parent / "runtime"),**env},capture_output=True,timeout=30,
         creationflags=subprocess.CREATE_NO_WINDOW)
 
 
@@ -21,7 +21,7 @@ def test_native_utf8_text_and_log_remain_correct_from_gbk_console(tmp_path):
     helper.write_text("import sys\nprint('out中文',flush=True)\nprint('err中文',file=sys.stderr,flush=True)\nsys.exit(7)\n",encoding='utf-8')
     harness=tmp_path/'gbk-native.ps1'
     harness.write_text("[Console]::OutputEncoding=[Text.Encoding]::GetEncoding(936)\n"
-        ". 'D:/code/py/video-ai/scripts/bootstrap.ps1'\n"
+        f". '{ROOT.as_posix()}/scripts/bootstrap.ps1'\n"
         "Initialize-VideoAiEnvironment 'test-gbk-native'\n"
         "Invoke-VideoAiNative $env:VAI_ENCODING_PYTHON @('-B',$env:VAI_ENCODING_HELPER)\n"
         "[Console]::Error.WriteLine('probe-log='+$script:VideoAiLog)\n"
@@ -38,7 +38,7 @@ def test_native_utf8_text_and_log_remain_correct_from_gbk_console(tmp_path):
 def test_wrong_interpreter_diagnostic_is_utf8_from_gbk_console(tmp_path):
     harness=tmp_path/'gbk-install.ps1'
     harness.write_text("[Console]::OutputEncoding=[Text.Encoding]::GetEncoding(936)\n"
-        "& 'D:/code/py/video-ai/scripts/install_windows.ps1' -Python 'C:/Windows/System32/whoami.exe'\n"
+        f"& '{ROOT.as_posix()}/scripts/install_windows.ps1' -Python 'C:/Windows/System32/whoami.exe'\n"
         "exit $LASTEXITCODE\n",encoding='utf-8-sig')
     result=run_gbk_console(harness,{})
     assert result.returncode==1

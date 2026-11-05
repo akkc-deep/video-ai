@@ -8,6 +8,19 @@ from video_ai.adapters.common import AdapterError
 from video_ai.adapters.external_https import ExternalHttpsClient
 
 
+def test_http_failure_retains_bounded_response_without_leaking_in_error_string():
+    payload=b'{"code":50429,"message":"private-secret"}'
+    def transport(*args,**kwargs):
+        response=Response(payload)
+        response.status=429;response.headers={'Content-Length':str(len(payload))}
+        return response
+    with pytest.raises(AdapterError) as result:
+        ExternalHttpsClient(transport=transport).request('POST','https://store.example/object')
+    assert result.value.status_code==429
+    assert result.value.response_body==payload
+    assert 'private-secret' not in str(result.value)
+
+
 class Response(io.BytesIO):
     status = 200
     headers = {'Content-Length': '999', 'ETag': '"object"'}

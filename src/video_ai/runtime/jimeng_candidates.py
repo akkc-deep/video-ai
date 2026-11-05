@@ -90,7 +90,7 @@ def record_output_layout(store, folder, identity, task_id, urls):
     store.save(folder/('outputs-refresh-'+_digest(refresh)+'.json'), refresh)
 
 
-def _verify_candidate(value, request, task_id, index, folder, inspect, settings):
+def _verify_candidate(value, request, task_id, index, folder, inspect, settings, *, frozen=None):
     fields = ('candidate_id', 'request_id', 'task_id', 'req_key', 'path', 'bytes', 'sha256', 'width', 'height', 'format')
     object_fields(value, fields, 'Jimeng candidate')
     cid = f'{request["request_id"]}_image_{index:02d}'
@@ -98,7 +98,15 @@ def _verify_candidate(value, request, task_id, index, folder, inspect, settings)
             or value['req_key'] != settings.req_key or value['path'] != str(folder/(cid+'.original'))):
         raise ProductionRefused('candidate model/task/path identity differs')
     path = run_path(folder.parents[3], value['path'])
-    fresh = hash_file(path)
+    declared = None
+    if frozen is not None:
+        from ._scene_revision_origin_images import source_image_artifact
+        declared = source_image_artifact(frozen, value)
+    if declared is None:
+        fresh = hash_file(path)
+    else:
+        from types import SimpleNamespace
+        fresh = SimpleNamespace(bytes=value['bytes'], sha256=value['sha256'])
     if type(value['bytes']) is not int or (fresh.bytes, fresh.sha256) != (value['bytes'], value['sha256']):
         raise ProductionRefused('candidate image SHA256 differs')
     _verify_download(folder/(cid+'.download.json'), _digest(request), cid, fresh)
@@ -113,6 +121,25 @@ def _verify_download(receipt_path, identity, candidate_id, fresh):
     if (receipt['candidate_id'] != candidate_id or type(receipt['bytes']) is not int
             or (receipt['bytes'], receipt['sha256']) != (fresh.bytes, fresh.sha256)):
         raise ProductionRefused('downloaded original SHA256 differs from download receipt')
+
+
+def validate_completed_request(frozen,scene,folder):
+    """Verify a finished paid task even if the scene's candidate set is partial."""
+    from .scene_image_prompts import effective_image_prompt
+    run=Path(frozen.options['script_path']).parent.parent
+    folder=run_path(run,folder)
+    expected=dict(schema_version=2,run_id=run.name,scene_id=scene['scene_id'],request_id=folder.name,
+        prompt=effective_image_prompt(frozen,scene),image_generation=thaw(frozen.config.image_generation))
+    request=read_json(folder/'request.json')
+    if not _same_json(request,expected):raise ProductionRefused('completed request differs from frozen image inputs')
+    identity=_digest(request)
+    accepted=_read_bound(folder/'accepted.json',('schema_version','identity','task_id','request_id','diagnostic'),identity)
+    result=_read_bound(folder/'result.json',('schema_version','identity','task_id','candidates'),identity)
+    if result['task_id']!=accepted['task_id'] or not isinstance(result['candidates'],list) or not result['candidates']:
+        raise ProductionRefused('completed image task association differs')
+    for index,candidate in enumerate(result['candidates'],1):
+        _verify_candidate(candidate,request,accepted['task_id'],index,folder,None,frozen.config.image_generation,frozen=frozen)
+    return result['candidates']
 
 
 def _inspect_original(path, inspect, settings):
@@ -297,9 +324,12 @@ def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, 
             directory = run_path(run, folder/request['request_id']); directory.mkdir(exist_ok=True)
             completed = _request_candidates(store, directory, request, client, inspect, settings, sleep, phase='check')
             work.append((request, directory, completed))
-        for request, directory, completed in work:
+        # Keep at most one new task in flight; low-concurrency accounts reject
+        # a second submission even when all candidates belong to one scene.
+        for index,(request, directory, completed) in enumerate(work):
             if completed is None:
-                _request_candidates(store, directory, request, client, None, settings, sleep, phase='submit')
+                completed=_request_candidates(store, directory, request, client, inspect, settings, sleep)
+                work[index]=(request,directory,completed)
     except (ProductionRefused, AdapterError, TimeoutError):
         for request in requests:
             directory = run_path(run, folder/request['request_id'])

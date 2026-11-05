@@ -1,18 +1,19 @@
 # video-ai
 
-## 视频目录与过程数据清理
+## Portable storage (2026-11-07)
 
-新视频由 `make-video` 自动分配简单编号，例如 `0001-旅行者一号`。续作、选图、观察、返工和发布都用同一个 `--video 0001`，无需再查运行 ID；旧任务继续支持原 `--run-dir`。
+The default runtime root is `E:/VideoAI`. Set the process environment variable `VIDEO_AI_RUNTIME_ROOT` before launching to use another local drive or a path containing spaces. Python and PowerShell share this setting; source paths come from the current checkout.
 
 ```powershell
-.\scripts\start_windows.ps1 make-video --script D:/VideoSi/projects/video-ai/inputs/script.txt --title 旅行者一号
+$env:VIDEO_AI_RUNTIME_ROOT = 'F:/Video AI'
+.\scripts\start_windows.ps1 make-video --script 'F:/Video AI/shared/assets/script.txt' --title 'First video'
 .\scripts\start_windows.ps1 make-video --video 0001
 .\scripts\start_windows.ps1 storage report --video 0001
 ```
 
-制作文件集中在 `D:/VideoSi/projects/video-ai/productions/0001-旅行者一号/`；正式成片、字幕、文案和发布记录独立保存在 `D:/VideoSi/output/video-ai/0001-旅行者一号/v001/`。修订记录由程序管理，交付版本按修订号组织，未发布修订可能使版本号跳号。
+The root contains `shared/{models,tools,envs,config,assets}`, `work/<number-title>`, `output/<number-title>/vNNN`, and `scratch`. The index and sequence live in `shared/config/storage`. Each work bundle owns inputs, audio, images, clips, frames, service temporaries, and records across every revision. Internal recovery paths retain `process/revisions/01`. Published movies, subtitles, and delivery records live independently under output.
 
-正式发布后，确定不再需要原素材和进度返工时，先预览，再结束制作、清理：
+After publishing, preview and then close and clean the video:
 
 ```powershell
 .\scripts\start_windows.ps1 storage close --video 0001 --dry-run
@@ -21,11 +22,9 @@
 .\scripts\start_windows.ps1 storage clean --video 0001
 ```
 
-`close` 将完整制作包归入 `D:/VideoSi/disposable/video-ai/completed/`；`clean --video 0001` 只删除这个视频的过程数据，保留所有正式交付版本。制作包清理后无法恢复原进度。仍有模型/邮件未决请求、进程占用或其他视频引用时拒绝结束制作。
+`close` moves the entire bundle to `scratch/completed/<number-title>`. `clean` removes its process data while retaining deliveries and shared dependencies. Original progress cannot be resumed afterward. Active tasks, redirected directories, paths outside the managed root, and bundles still referenced by other videos are refused. Without `--video`, cleanup previews or removes eligible closed bundles and rebuildable caches.
 
-不指定 `--video` 的 `storage clean --dry-run` / `storage clean` 会预览/清理已结束视频以及已识别的共享缓存、下载和临时数据；活动测试会话与未分类测试/缓存目录保留。模型、工具、Python 环境、公共素材及现有旧版 runs 不自动删除。现有 cache 中的权重和基础解释器继续原位保护。
-
-双击入口也支持 `generate_video.cmd -Script 文案路径 -Title 视频名称`，续作用 `generate_video.cmd -Video 0001`。详细路径与旧数据归类见 [目录方案](docs/task-designs/storage-layout-design.md)。
+Implementation verification uses no model downloads, real video generation, or deletion of existing user data. Generation adds no model hashing, media decoding, or per-frame checks. Existing data is never automatically migrated or deleted. Old D:/VideoSi and runs paths below are historical examples; new tasks use this section.
 
 ## 一键迁移到其他电脑
 
@@ -37,7 +36,7 @@
 
 先依据 [jimeng.example.json](config/jimeng.example.json) 准备自己的运行配置，保留已确认的声音、工具、权重及工作流绝对路径，并设置 `production_strategy=paragraph_jimeng_v1`。样例中的 `jimeng_t2i_v40` 仅演示参数，不代表已选择或验证该账号模型。关联画面还需要经核验的参考能力档案和已有 TOS 桶；样例留空的参考设置会返回配置等待。
 
-AK/SK 和 QQ SMTP 授权码只通过运行进程的环境变量提供。样例变量名为 `VIDEO_AI_VOLC_ACCESS_KEY`、`VIDEO_AI_VOLC_SECRET_KEY`、`VIDEO_AI_SMTP_AUTH_CODE`；QQ 发件及收件均为 `318575094@qq.com`，SSL 465。配置只存变量名。将完整 UTF-8 文案保存为独立文件后启动：
+即梦 AK/SK 可直接填写到项目的 `config/secrets.local.json`，字段为 `VIDEO_AI_VOLC_ACCESS_KEY` 和 `VIDEO_AI_VOLC_SECRET_KEY`。参考模板为 `config/secrets.local.example.json`；本地密钥文件已被 Git 忽略。程序在使用凭据时读取，环境变量优先，不把密钥写入运行配置快照。QQ SMTP 授权码仍通过 `VIDEO_AI_SMTP_AUTH_CODE` 环境变量提供；QQ 发件及收件均为 `318575094@qq.com`，SSL 465。将完整 UTF-8 文案保存为独立文件后启动：
 
 ```powershell
 .\scripts\start_windows.ps1 make-video --config D:/VideoSi/projects/video-ai/config/jimeng-acceptance.json --script D:/VideoSi/projects/video-ai/inputs/jimeng-acceptance.txt --json

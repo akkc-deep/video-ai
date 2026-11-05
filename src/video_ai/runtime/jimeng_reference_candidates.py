@@ -270,9 +270,16 @@ def generate_reference_candidates(frozen, scene, bible, references, *, settings,
             completed = _request(store, directory, request, client,
                 lambda path: images._inspect_original(frozen, path), model, settings, presign, verify, phase='check')
             work.append((request, directory, completed))
-        for request, directory, completed in work:
+        # Old accepted tasks consume the account slot even when their request
+        # comes after a fresh request. Drain them before any new submission.
+        order=sorted(range(len(work)),key=lambda index:not (work[index][1]/'accepted.json').exists())
+        for index in order:
+            request,directory,completed=work[index]
             if completed is None:
                 _request(store, directory, request, client, None, model, settings, presign, verify, phase='submit')
+                completed=_request(store,directory,request,client,
+                    lambda path:images._inspect_original(frozen,path),model,settings,presign,verify)
+                work[index]=(request,directory,completed)
     except (ProductionRefused, AdapterError, TimeoutError):
         # A later source checkpoint can refuse new paid work after an earlier
         # task was accepted. Preserve its downloadable result before surfacing

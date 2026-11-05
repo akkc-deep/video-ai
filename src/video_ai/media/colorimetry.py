@@ -194,7 +194,7 @@ def _local_file(value):
         raise ValueError('path traversal/alias forbidden')
     path = Path(text)
     if not path.is_absolute() or not path.is_relative_to(RUNTIME_ROOT):
-        raise ValueError('explicit local D:/VideoSi file required')
+        raise ValueError('explicit local configured runtime file required')
     if path != path.resolve(strict=True) or any(p.is_symlink() or p.is_junction() for p in (path, *path.parents)):
         raise ValueError('redirected file path forbidden')
     if not path.is_file() or path.stat().st_nlink != 1:
@@ -351,7 +351,7 @@ class _Session:
         self.verify()
         timeout = command_timeout(_remaining(self.deadline, monotonic()),300)
         result = run_logged(tuple(str(a) for a in args), cwd=self.logger.run_dir,
-            env=build_child_env(self.paths), timeout=timeout,
+            env=build_child_env(self.paths, self.logger.run_dir), timeout=timeout,
             logger=self.logger, stage='colorimetry', unit_id=asset_id)
         self.outputs.extend([result.stdout_path, result.stderr_path])
         self.verify(budget=not result.timed_out)

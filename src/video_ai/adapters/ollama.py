@@ -8,6 +8,7 @@ from .common import AdapterError, FailureKind, HttpClient, JSON_LIMIT, strict_js
 from .ollama_units import project_units_schema, restore_units_content, UNITS_COVERAGE_NOTE
 from .ollama_visuals import is_model_visual,project as project_visuals,restore as restore_visuals
 from .ollama_scenes import is_environment_transport, project_scene_environment, restore_scene_content, compact_scene_prompt
+from .scene_partition import project as project_partition, restore as restore_partition, MARKER as PARTITION_MARKER
 
 
 class SceneCapacityError(ValueError):
@@ -206,7 +207,7 @@ def _scene_source_constraints(prompt, schema, *, key_constraints=True):
     return prompt+note,constrain(schema)
 
 
-def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False,scene_source_constraints=True,scene_reasoning=True,model='qwen3:8b',scene_key_constraints=True,scene_environment_constraints=True,scene_unlimited=True,scene_compact=False,scene_grouped=False,scene_source_sets=False,scene_source_nonempty=True,scene_direct=False,model_session=None):
+def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False,scene_source_constraints=True,scene_reasoning=True,model='qwen3:8b',scene_key_constraints=True,scene_environment_constraints=True,scene_unlimited=True,scene_compact=False,scene_grouped=False,scene_source_sets=False,scene_source_nonempty=True,scene_direct=False,model_session=None,scene_partition=False,scene_partition_exact_sources=True,scene_partition_exact_boundaries=True,scene_local_repair=False,scene_output_limit=None):
     if model_session not in (None,'owned_stage_v1'):raise ValueError('unsupported model session contract')
     model=parse_scene_planner_model(model)
     if not scene_planning and model!='qwen3:8b':
@@ -225,7 +226,9 @@ def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planni
         body['think']=scene_reasoning
         if scene_source_constraints:
             body['prompt'],body['format']=_scene_source_constraints(body['prompt'],body['format'],key_constraints=scene_key_constraints)
-        if scene_environment_constraints:
+        if scene_partition:
+            body['prompt'],body['format']=project_partition(body['prompt'],body['format'],exact_sources=scene_partition_exact_sources,exact_boundaries=scene_partition_exact_boundaries)
+        elif scene_environment_constraints:
             body['prompt'],body['format']=project_scene_environment(body['prompt'],body['format'],grouped=scene_grouped,source_sets=scene_source_sets,source_nonempty=scene_source_nonempty)
         if scene_compact:
             body['prompt']=compact_scene_prompt(body['prompt'])
@@ -243,7 +246,12 @@ def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planni
             body['options']['num_predict']=-1
         elif upper+body['options']['num_predict']>body['options']['num_ctx']:
             raise SceneCapacityError('scene planning context exceeds full-input capacity; no truncation or automatic retry')
-        if scene_direct:body['options'].pop('num_ctx')
+        if scene_direct or scene_partition or scene_local_repair:body['options'].pop('num_ctx')
+        if scene_local_repair:body['think']=False
+    if scene_output_limit is not None:
+        if not scene_planning or not scene_local_repair or type(scene_output_limit) is not int or scene_output_limit<=0:
+            raise ValueError('finite scene output budget requires a positive local scene limit')
+        body['options']['num_predict']=scene_output_limit
     return body
 
 
@@ -323,11 +331,14 @@ class OllamaFormatError(AdapterError):
 def _validate_request_id(request_id):
     if (not isinstance(request_id,str) or request_id not in ('initial','correction')
             and re.fullmatch(r'(units|storyboard)_batch_[0-9]{4}_(initial|correction)',request_id) is None
-            and re.fullmatch(r'storyboard_batch_[0-9]{4}_entityrepair',request_id) is None
+            and re.fullmatch(r'storyboard_batch_[0-9]{4}_(entityrepair|scenerepair)',request_id) is None
             and re.fullmatch(r'scene_plan_direct_attempt_[0-9]{4,}_(initial|correction)',request_id) is None
+            and re.fullmatch(r'scene_plan_partition_attempt_[0-9]{4,}_(initial|correction)',request_id) is None
+            and re.fullmatch(r'scene_plan_environment_repair_[0-9a-f]{12}_[0-9]{4}_(initial|correction)',request_id) is None
+            and re.fullmatch(r'scene_plan_focused_(?:(?:partition|visual2|visual3|visual4)_)?[0-9]{4,}_(initial|correction)',request_id) is None
             and request_id not in ('scene_plan_initial','scene_plan_correction','scene_plan_compact_initial','scene_plan_compact_correction',
                 'scene_plan_compact2_initial','scene_plan_compact2_correction','scene_plan_compact3_initial','scene_plan_compact3_correction',
-                'scene_plan_direct_initial','scene_plan_direct_correction')):
+                'scene_plan_direct_initial','scene_plan_direct_correction','scene_plan_partition_initial','scene_plan_partition_correction')):
         raise ValueError('invalid structured generation request ID')
 
 
@@ -349,7 +360,8 @@ def _completed_content(content, schema, evidence_paths, *, scene_prompt=None, wi
     try:
         if scene_prompt is not None:
             _response_schema_check(content,wire_schema)
-            content=restore_scene_content(content,scene_prompt)
+            content=(restore_partition(content,scene_prompt) if wire_schema.get('$comment') in (PARTITION_MARKER,'video_ai_scene_partition_v1','video_ai_scene_partition_v2')
+                     else restore_scene_content(content,scene_prompt))
         content=ollama_content(content,schema)
         _response_schema_check(content,schema)
         if _has_shared_grounding(schema,bounded=True) or is_model_visual(schema):_reject_repeated_visuals(content,schema)
@@ -455,7 +467,10 @@ class OllamaPlanner:
         body=ollama_body(prompt,schema,cpu_only=self.cpu_only,
             units_coverage=intent_context is not None and request_id.startswith('units_batch_'),
             scene_planning=request_id.startswith('scene_plan_'),model=self.model,
-            scene_compact=request_id.startswith(('scene_plan_compact_','scene_plan_compact2_','scene_plan_compact3_','scene_plan_direct_')),
+            scene_compact=request_id.startswith(('scene_plan_compact_','scene_plan_compact2_','scene_plan_compact3_','scene_plan_direct_','scene_plan_partition_')),
+            scene_partition=request_id.startswith('scene_plan_partition_'),
+            scene_local_repair=request_id.startswith(('scene_plan_environment_repair_','scene_plan_focused_')),
+            scene_output_limit=16384 if request_id.startswith(('scene_plan_focused_visual3_','scene_plan_focused_visual4_')) else None,
             scene_grouped=request_id.startswith(('scene_plan_compact2_','scene_plan_compact3_','scene_plan_direct_')),
             scene_source_sets=request_id.startswith(('scene_plan_compact3_','scene_plan_direct_')),
             scene_direct=request_id.startswith('scene_plan_direct_'),

@@ -23,7 +23,7 @@ def test_cli_forwards_continuity_review_without_advancing(monkeypatch):
         return SimpleNamespace(status='awaiting_continuity_review', run_dir=None,
                                error=None, exit_code=3, to_dict=lambda: {})
     monkeypatch.setattr(production, 'make_video', consume)
-    assert main(['make-video', '--run-dir', 'D:/VideoSi/projects/video-ai/runs/example',
+    assert main(['make-video', '--run-dir', 'E:/VideoAI/work/example',
                  '--continuity-review', 'review.json']) == 3
     assert captured[0]['continuity_review'] == 'review.json'
 
@@ -34,7 +34,7 @@ def test_cli_continuity_review_is_mutually_exclusive(monkeypatch, other):
     from video_ai.cli import main
     monkeypatch.setattr(production, 'make_video', lambda *a, **k: pytest.fail('conflicting action dispatched'))
     suffix = [other] if other == '--publish' else [other, 'another.json']
-    assert main(['make-video', '--run-dir', 'D:/VideoSi/projects/video-ai/runs/example',
+    assert main(['make-video', '--run-dir', 'E:/VideoAI/work/example',
                  '--continuity-review', 'review.json', *suffix]) == 2
 
 

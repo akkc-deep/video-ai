@@ -53,7 +53,7 @@ def test_config_load_resolves_nested_owner_and_preserves_input(tmp_path):
 
 @pytest.mark.parametrize('field,value', [
     ('schema_version', True), ('schema_version', 2), ('runtime_root', None),
-    ('runtime_root', 'C:/VideoSi'), ('cache_root', 'D:/code/py/video-ai/cache'),
+    ('runtime_root', 'C:/VideoSi'), ('cache_root', 'E:/code/py/video-ai/cache'),
     ('voice_config', ''), ('unexpected', 1),
 ])
 def test_invalid_top_level_field_has_actionable_location(tmp_path, field, value):

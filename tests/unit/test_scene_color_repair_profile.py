@@ -9,7 +9,7 @@ import pytest
 from video_ai.runtime._scene_continuity_io import Reader
 
 
-REAL = Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-repair-calibration-20261027-r2')
+REAL = Path('E:/VideoAI/shared/continuity-benchmark/AI-repair-calibration-20261027-r2')
 
 
 def module():

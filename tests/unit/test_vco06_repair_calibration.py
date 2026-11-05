@@ -146,11 +146,11 @@ def test_holdout_missing_coverage_is_not_vacuously_qualified():
 
 def test_project_experiment_root_is_accepted_but_source_tree_and_foreign_root_are_rejected(tmp_path):
     m=module()
-    project=Path('D:/VideoSi/projects/video-ai/continuity-benchmark/new-calibration-placeholder')
-    source=Path('D:/VideoSi/projects/video-ai/continuity-benchmark/old-experiment/inputs.json')
+    project=Path('E:/VideoAI/shared/continuity-benchmark/new-calibration-placeholder')
+    source=Path('E:/VideoAI/shared/continuity-benchmark/old-experiment/inputs.json')
     assert m.validate_root(project,source)==project.resolve()
     with pytest.raises(ValueError):m.validate_root(source.parent/'child',source)
-    with pytest.raises(ValueError):m.validate_root(Path('D:/code/py/video-ai/unsafe-output'),source)
+    with pytest.raises(ValueError):m.validate_root(Path('E:/code/py/video-ai/unsafe-output'),source)
 
 
 def prepared_study(m,tmp_path):

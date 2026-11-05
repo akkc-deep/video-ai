@@ -59,7 +59,10 @@ def source_image_artifact(frozen,value):
     if not path.is_relative_to(root):return None
     parts=path.relative_to(root).parts
     if len(parts)!=3 or not re.fullmatch(r'request_[0-9]{2}_image_[0-9]{2}\.original',parts[2]) or source_image_required(frozen,parts[0]):return None
-    metadata=source_candidate_metadata(frozen,{'scene_id':parts[0]},root/parts[0]/'candidates.json')
+    manifest = root/parts[0]/'candidates.json'
+    if not manifest.is_file():
+        return None
+    metadata=source_candidate_metadata(frozen,{'scene_id':parts[0]},manifest)
     if not any(all(row[k]==value[k] for k in ('path','bytes','sha256')) for row in metadata[1]):
         raise ProductionRefused('excluded sibling image differs from original batch metadata')
     return run_path(run,path)

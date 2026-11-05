@@ -16,12 +16,12 @@ def isolated_test_runtime(tmp_path_factory):
     import os
     from video_ai.runtime.production_state import process_started_at
     from video_ai.runtime.storage_files import write_record
-    root = Path('D:/VideoSi/disposable/video-ai/tests')/('s'+uuid.uuid4().hex[:12])/'runtime'
+    root = SOURCE/'.test-runtime'/('s'+uuid.uuid4().hex[:12])/'runtime'
     root.mkdir(parents=True)
     owner = dict(pid=os.getpid(),process_started_at=process_started_at(os.getpid()))
     write_record(root.parent/'owner.json',owner)
     basetemp = tmp_path_factory.getbasetemp()
-    if basetemp.is_relative_to(Path('D:/VideoSi/disposable/video-ai/tests')):
+    if basetemp.is_relative_to(Path('E:/VideoAI/scratch/tests')):
         write_record(basetemp/'owner.json',owner)
     with test_runtime_scope(root):
         yield root
@@ -84,8 +84,8 @@ def resource_config(tmp_path,isolated_test_runtime):
     from video_ai.config import load_config
     config = load_config(SOURCE / 'config/production.example.json')
     ident = uuid.uuid4().hex
-    tools_root = isolated_test_runtime/'tools/tests'/ident
-    model_root = isolated_test_runtime/'models/tests'/ident
+    tools_root = isolated_test_runtime/'shared/tools/tests'/ident
+    model_root = isolated_test_runtime/'shared/models/tests'/ident
     tools_root.mkdir(parents=True)
     model_root.mkdir(parents=True)
     tools = {}
@@ -127,9 +127,9 @@ def capability_runner():
     def run(args, *, cwd, env, timeout, stdout, stderr, **kwargs):
         assert Path(args[0]).is_absolute()
         assert Path(cwd).is_absolute() and any(Path(cwd).is_relative_to(root) for root in (
-            Path('D:/VideoSi/cache/video-ai'),Path('D:/VideoSi/disposable/video-ai/tests')))
+            Path('E:/VideoAI/scratch'),Path('E:/VideoAI/scratch/tests')))
         assert timeout == 30
-        assert Path(env['TEMP']).is_relative_to(Path('D:/VideoSi/disposable/video-ai'))
+        assert Path(env['TEMP']).is_relative_to(Path('E:/VideoAI/scratch'))
         flag = args[-1]
         if flag == '-encoders':
             data = ' V....D h264_nvenc NVIDIA\n V....D libx264 H264\n A..... aac AAC\n'

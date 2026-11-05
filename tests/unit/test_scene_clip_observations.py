@@ -85,6 +85,17 @@ def test_full_authored_leaf_observation_is_accepted_without_mutation(observation
         validate_scene_clip_observation(expected['template'], expected, now=NOW)
 
 
+def test_complete_frame_sequence_review_preserves_method_and_range(observation_context):
+    expected = expected_context(observation_context)
+    value = authored(expected['template'])
+    value.update(review_method='agent_frame_sequence',
+                 process_observation='All decoded frames viewed in chronological order; no real-time playback.')
+    assert validate_scene_clip_observation(value, expected, now=NOW) == value
+    value['playback']['clip_source_frames'] = [0, 92]
+    with pytest.raises(ProductionRefused):
+        validate_scene_clip_observation(value, expected, now=NOW)
+
+
 @pytest.mark.parametrize('path,replacement', [
     (('schema_version',), True), (('scope',), 'old_shot_pair'), (('clip_sha256',), 'b'*64),
     (('generated', 'sha256'), 'b'*64), (('selected_image', 'path'), 'other.png'),

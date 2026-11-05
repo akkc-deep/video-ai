@@ -20,6 +20,8 @@ _MAX_PROTECTED_FILES = 256
 _MODEL_SUFFIXES = frozenset(('.bin', '.ckpt', '.pth', '.pt', '.safetensors', '.gguf'))
 _whole_inputs = ContextVar('video_ai_whole_input_protection', default=None)
 _MAX_WHOLE_INPUTS = 32768
+_MAX_PROTECTED_CONTENT_BYTES = 1024**3
+_MAX_PROTECTED_TEXT_FILE_BYTES = 64 * 1024**2
 
 
 @lru_cache(maxsize=1)
@@ -100,6 +102,7 @@ class _NativeInput:
         if ((stat.st_dev,stat.st_ino,stat.st_size,stat.st_mtime_ns) != self.stamp[:4]
                 or self._metadata() != self.metadata or self._canonical_path() != path):
             raise OSError(f'file changed during verification: {path}')
+        return stat
 
     def close(self):
         if self.handle is not None:
@@ -126,6 +129,10 @@ class _WholeInputWindow:
         self.writable_roots = {}
         self.immutable_roots = frozenset(immutable_roots)
         self.continuity = None
+        self.byte_contents = {}
+        self.byte_content_size = 0
+        self.read_passes = {}
+        self.read_generation = 0
         for root in _writable_roots.get():
             self.writable_roots[root] = self.writable_roots.get(root,0)+1
 
@@ -150,7 +157,9 @@ class _WholeInputWindow:
             # comparison for each protected hit in a large revision closure.
             entry = None if self.closed else self.entries.get(path)
             if entry is not None:
-                entry.verify(path)
+                from ._protected_continuity_inputs import verify_entry_in_read_pass
+                if not verify_entry_in_read_pass(self, path, entry):
+                    entry.verify(path)
                 return entry.identity
         return None
 
@@ -179,6 +188,8 @@ class _WholeInputWindow:
     def enter_writer(self, root):
         with self.lock:
             if self.closed: return
+            from ._protected_continuity_inputs import invalidate_protected_read_pass
+            invalidate_protected_read_pass(self)
             # This state is shared with earlier copy_context workers. Their
             # context-local writable-root tuples cannot see a later writer.
             self.writable_roots[root] = self.writable_roots.get(root,0)+1
@@ -188,6 +199,8 @@ class _WholeInputWindow:
                 if path.is_relative_to(root) and not self._immutable(path):
                     entry.verify(path)
                     del self.entries[path]
+                    saved = self.byte_contents.pop(path, None)
+                    if saved is not None: self.byte_content_size -= len(saved[1])
                     entry.close()
 
     def leave_writer(self, root):
@@ -198,21 +211,28 @@ class _WholeInputWindow:
 
     def verify(self):
         with self.lock:
+            checked = self.continuity.verify() if self.continuity is not None else ()
             for path, entry in self.entries.items():
-                entry.verify(path)
-            if self.continuity is not None:
-                self.continuity.verify()
+                if id(entry) not in (checked or ()):
+                    entry.verify(path)
 
     def close(self):
         with self.lock:
+            from ._protected_continuity_inputs import invalidate_protected_read_pass
+            error = None
+            try:
+                invalidate_protected_read_pass(self)
+            except BaseException as exc:
+                error = exc
             self.closed = True
             entries = list(self.entries.values())
             if self.continuity is not None:
                 entries.append(self.continuity)
                 self.continuity = None
             self.entries.clear()
+            self.byte_contents.clear()
+            self.byte_content_size = 0
             self.writable_roots.clear()
-        error = None
         for entry in entries:
             try: entry.close()
             except OSError as exc:
@@ -247,7 +267,7 @@ def whole_input_protection(*, immutable_roots=()):
 
 
 @contextmanager
-def scene_input_protection(frozen):
+def scene_input_protection(frozen, *, review_only=False):
     """Protect sealed default-scene inputs without pinning mutable run outputs.
 
     Declaring a root never admits its bytes: its first hash still performs the
@@ -276,6 +296,18 @@ def scene_input_protection(frozen):
                 roots.append(path)
         roots.extend(path for path in (production/'jimeng').glob('scene_*')
                      if (path/'candidates.json').is_file())
+        if review_only and not getattr(frozen.config, 'raw', {}).get('scene_rendering', {}).get('mode'):
+            # Default review writes are append-only: existing facts, observations
+            # and receipts are never replaced. Roots permit creating new files;
+            # native leases start only after the first complete read/hash.
+            roots.extend(production/name for name in
+                ('reference-images', 'image-selection', 'reference-storage'))
+            roots.extend(production/name for name in
+                ('units.json', 'speech.json', 'timeline.json', 'visual-bible.json',
+                 'scene-plan.json', 'scene-plan-commit.json', 'scene-clips/inputs.json'))
+            for folder in (production/'scene-clips').glob('*'):
+                if not (folder/'clip.json').is_file(): continue
+                roots.append(folder)
         # Only already-sealed inputs enter the retained-handle policy. Outputs,
         # manifest.json and all unfinished scene directories stay movable.
         roots = tuple(dict.fromkeys(path for path in roots if path.exists()))
@@ -291,9 +323,17 @@ def protect_scene_inputs(function):
     return protected
 
 
+def protect_scene_reviews(function):
+    @wraps(function)
+    def protected(frozen, *args, **kwargs):
+        with scene_input_protection(frozen, review_only=True):
+            return function(frozen, *args, **kwargs)
+    return protected
+
+
 def _whole_cached_identity(path):
     window = _whole_inputs.get()
-    if (os.name != 'nt' or window is None or _current.get() is None
+    if (os.name != 'nt' or window is None
             or not isinstance(path,Path) or path.name.casefold() == 'manifest.json'):
         return None
     # Only an already canonical, still-live protected entry can skip a fresh
@@ -426,15 +466,18 @@ def protected_hash(path, compute):
     window = _whole_inputs.get()
     owned = (window.owned(path) if window is not None else
              any(path.is_relative_to(root) for root in _writable_roots.get()))
-    if entries is None or path.name.casefold() == 'manifest.json' or owned:
+    if path.name.casefold() == 'manifest.json' or owned:
         with _locked_reader(path) as file:
             return compute(file, path)
-    if path in entries:
+    if entries is not None and path in entries:
         file, stamp, identity = entries[path]
         check_path(path, file, stamp)
         return identity
     if window is not None:
         return window.hash(path,compute)
+    if entries is None:
+        with _locked_reader(path) as file:
+            return compute(file, path)
     # Small HTTP/JSON leaves are cheap to hash and can number in the tens of
     # thousands. Keep a bounded set of expensive leaves; the fallback performs
     # a fresh digest under a short-lived lock, never an unprotected hit. Windows
@@ -455,9 +498,89 @@ def protected_hash(path, compute):
         raise
 
 
+def _read_open_bytes(file, path):
+    """Read and fingerprint one immutable byte sequence in one file pass."""
+    import hashlib
+    from .manifest import FileIdentity, now
+    before = file_stamp(file)
+    raw = file.read()
+    check_path(path, file, before)
+    return raw, FileIdentity(str(path), len(raw), before[3], hashlib.sha256(raw).hexdigest(), now())
+
+
+def read_bytes(path):
+    """Use the operation's protected bytes, preserving plain reads outside it."""
+    if _whole_inputs.get() is None:
+        return Path(path).read_bytes()
+    return protected_bytes(path)[0]
+
+
+def protected_bytes(path):
+    """Share small JSON bytes only while their mandatory native lease is live."""
+    from ._continuity_byte_guard import observe_file
+    path = Path(path)
+    window = _whole_inputs.get()
+    # This branch consumes only previously captured bytes and a live native
+    # entry. It does not open/interpret a filesystem path; uncached reads keep
+    # canonical resolution and the strict original read protocol below.
+    if (window is not None and not window.closed and path.is_absolute()
+            and '..' not in path.parts):
+        with window.lock:
+            saved = window.byte_contents.get(path)
+            reusable = saved is not None and window.get(path) == saved[0]
+        if reusable:
+            observe_file(saved[0])
+            return saved[1], saved[0]
+    path = path.resolve(strict=True)
+    eligible = (os.name == 'nt' and window is not None and not window.closed
+                and path.name.casefold() != 'manifest.json'
+                and not window.owned(path) and path.stat().st_size <= _MAX_PROTECTED_TEXT_FILE_BYTES)
+    if eligible:
+        with window.lock:
+            saved = window.byte_contents.get(path)
+            reusable = saved is not None and window.get(path) == saved[0]
+        if reusable:
+            # Capture observers acquire their own locks before visiting native
+            # leases; never call them while holding the window lock.
+            observe_file(saved[0])
+            return saved[1], saved[0]
+    result = None
+    def compute(file, current):
+        nonlocal result
+        result = _read_open_bytes(file, current)
+        return result[1]
+    identity = protected_hash(path, compute)
+    if result is None:
+        # A preceding digest may have pinned this file before its bytes were needed.
+        with (_locked_reader(path) if os.name == 'nt' else path.open('rb')) as file:
+            result = _read_open_bytes(file, path)
+        if result[1].sha256 != identity.sha256:
+            raise OSError(f'file changed during verification: {path}')
+    if eligible:
+        with window.lock:
+            if window.get(path) == identity and window.byte_content_size + len(result[0]) <= _MAX_PROTECTED_CONTENT_BYTES:
+                previous = window.byte_contents.get(path)
+                if previous is None:
+                    window.byte_contents[path] = (identity, result[0])
+                    window.byte_content_size += len(result[0])
+    observe_file(identity)
+    return result[0], identity
+
+
 def verified_read(function):
     @wraps(function)
     def consume(*args, **kwargs):
         with validation_session():
             return function(*args, **kwargs)
+    return consume
+
+
+def protected_input_read(function):
+    """One protected input operation; reuse an outer window when supplied."""
+    @wraps(function)
+    def consume(*args, **kwargs):
+        with whole_input_protection(), validation_session():
+            from ._protected_continuity_inputs import protected_read_pass
+            with protected_read_pass():
+                return function(*args, **kwargs)
     return consume

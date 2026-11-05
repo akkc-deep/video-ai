@@ -217,7 +217,7 @@ def _media_operation(operation, inputs, materialized, candidate, *, frozen, stat
     uid = f'composition:{operation}:{token}'
     intent = dict(operation=operation, unit_id=uid, args=args, cwd=str(folder), inputs=inputs, output=str(output) if output else None)
     path = write_exclusive(intents_dir/f'{operation}-{token}.intent.json', intent)
-    result = run_logged(tuple(args), cwd=folder, env=build_child_env(paths), timeout=300,
+    result = run_logged(tuple(args), cwd=folder, env=build_child_env(paths, logger.run_dir), timeout=300,
         logger=logger, stage='composition', unit_id=uid)
     if type(result.returncode) is not int or result.returncode != 0 or result.timed_out:
         raise OSError(f'composition {operation} failed: {result.stderr_path}')

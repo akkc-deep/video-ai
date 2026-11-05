@@ -1,4 +1,5 @@
 """Small frozen inputs and necessary local checks, without historical consumers."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from dataclasses import dataclass, replace
 import hashlib
 import json
@@ -22,8 +23,9 @@ from .services import port_listening
 from .workflows import validate_workflow
 from ._scene_revision_freeze import revision_freeze_scope
 from .execution_limits import command_timeout
+from .verification import protected_input_read, read_bytes
 
-DEFAULT_CONFIG = Path('D:/VideoSi/projects/video-ai/config/production.json')
+DEFAULT_CONFIG = (_PORTABLE_ROOT / 'shared/config/production.json')
 GIB = 1024**3
 OPTION_FIELDS = ('schema_version', 'execution_mode', 'run_id', 'created_at', 'input_mode',
                  'input_source', 'script_path', 'config_snapshot', 'voice_snapshot', 'tts_yaml_path',
@@ -55,7 +57,7 @@ def validate_supported(config):
 def read_script(*, script=None, text=None, raw_bytes=None):
     if (script is None) == (text is None): raise ProductionRefused('provide exactly one of script or text')
     if text is not None and not isinstance(text, str): raise ProductionRefused('text must be a string')
-    raw = raw_bytes if raw_bytes is not None else (text.encode('utf-8') if text is not None else resolve_cli_path(str(script), Path.cwd()).read_bytes())
+    raw = raw_bytes if raw_bytes is not None else (text.encode('utf-8') if text is not None else read_bytes(resolve_cli_path(str(script), Path.cwd())))
     try: decoded = raw.decode('utf-8-sig', errors='strict')
     except UnicodeError as exc: raise ProductionRefused('script must be strict UTF-8 or UTF-8 BOM') from exc
     spans = segment_text(decoded)
@@ -231,6 +233,7 @@ def _verify_identity(data, run=None):
         raise ProductionRefused(f'frozen input changed: {path}')
 
 
+@protected_input_read
 def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=None, image_model=None):
     run = validate_run_dir(run_dir)
     if (run/'research/options.json').exists():
@@ -303,7 +306,7 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
             raise ProductionRefused('frozen scene continuity policy differs from configuration')
     if 'scene_rendering' in frozen.raw:
         from .scene_video_prompt_records import parse_contract_bytes
-        parse_contract_bytes(Path(records['scene_video_prompts']['path']).read_bytes())
+        parse_contract_bytes(read_bytes(Path(records['scene_video_prompts']['path'])))
     if modern != (frozen.production_strategy == STRATEGY): raise ProductionRefused('strategy/schema mismatch')
     expected_timeout = max(frozen.timeouts['ollama_request'], 1800) if options['cpu_planner'] else frozen.timeouts['ollama_request']
     if type(policy['ollama_request_seconds']) not in (int, float) or policy['ollama_request_seconds'] != expected_timeout:

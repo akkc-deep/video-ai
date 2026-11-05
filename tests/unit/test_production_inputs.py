@@ -19,7 +19,7 @@ def production_config(resource_config, runtime_run):
     data = thaw(resource_config.raw)
     data.update(voice_config=str(voice_file), tools=thaw(resource_config.tools), models=thaw(resource_config.models),
                 workflows=thaw(resource_config.workflows))
-    data['media']['font_file'] = 'D:/VideoSi/projects/video-ai/inputs/fonts/msyh.ttc'
+    data['media']['font_file'] = str(resource_config.media.font_file)
     config_file = run/'test-config.json'
     config_file.write_text(json.dumps(data), encoding='utf-8')
     return load_config(config_file)
@@ -61,7 +61,7 @@ def test_unspeakable_text_rejected(production_config, runtime_run, text):
     assert not (run/'production/options.json').exists()
 
 
-@pytest.mark.parametrize('target', ['C:/escape.mp4', 'D:/VideoSi/output/video-ai/../../../escape.mp4'])
+@pytest.mark.parametrize('target', ['C:/escape.mp4', 'E:/VideoAI/output/../../../escape.mp4'])
 def test_output_escape_rejected(production_config, runtime_run, target):
     from video_ai.runtime.production_inputs import freeze_inputs
     run, _, _ = runtime_run

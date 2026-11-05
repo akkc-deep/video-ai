@@ -218,7 +218,7 @@ def _command(store,folder,name,args,source,target,*,config,paths,logger,reader):
     from .environment import build_child_env
     store.owned();local(target,exists=False)
     if target.exists():raise ProductionRefused('partial repair output retained; explicit new UUID required')
-    result=run_logged(args,cwd=store.run_dir,env=build_child_env(paths),timeout=remaining(reader),logger=logger,stage='scene_color_repair',unit_id=folder.name)
+    result=run_logged(args,cwd=store.run_dir,env=build_child_env(paths, logger.run_dir),timeout=remaining(reader),logger=logger,stage='scene_color_repair',unit_id=folder.name)
     reader.check();store.owned()
     if result.returncode!=0 or result.timed_out:raise RuntimeError('repair command failed; retained stdout/stderr: '+str(result.stderr_path))
     receipt=dict(schema_version=1,command=thaw(result),source=source,target=artifact(target),tool=artifact(config.tools['ffmpeg'],runtime=False))
@@ -282,7 +282,7 @@ def render_media(store,folder,intent,fit,manifest,pairs,*,config,paths,logger,re
     from .processes import run_logged
     from .environment import build_child_env
     probe=run_logged([str(config.tools['ffprobe']),'-v','error','-select_streams','v:0','-show_streams','-show_frames','-of','json',str(master)],
-        cwd=store.run_dir,env=build_child_env(paths),timeout=remaining(reader),logger=logger,stage='repair_native_probe')
+        cwd=store.run_dir,env=build_child_env(paths, logger.run_dir),timeout=remaining(reader),logger=logger,stage='repair_native_probe')
     if probe.returncode!=0 or probe.timed_out:raise RuntimeError('candidate native probe failed')
     probe_json=reader.read(Path(probe.stdout_path));stream=probe_json['streams'][0];tb=stream['time_base'];native=probe_json['frames']
     if len(native)!=count or any(type(f.get('pts')) is not int or f['pts']*Fraction(tb)!=Fraction(i,16) for i,f in enumerate(native)):

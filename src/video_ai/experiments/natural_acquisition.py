@@ -1,4 +1,5 @@
 """Preregister new real-model material acquisition; never assigns natural labels."""
+from ..runtime.paths import RUNTIME_ROOT as _PORTABLE_ROOT
 import hashlib
 import json
 import os
@@ -11,7 +12,7 @@ from ..media._continuity_audit import png_bytes
 from ..runtime._scene_continuity_io import local
 from ..runtime.manifest import now
 
-COLLECTION_ROOT = Path('D:/VideoSi/projects/video-ai/vco06-natural-qualification')
+COLLECTION_ROOT = (_PORTABLE_ROOT / 'shared/config/research/vco06-natural-qualification')
 SCENES = ('ceramic_spheres', 'faceted_blocks', 'paper_folds', 'wooden_tiles',
           'woven_cushions', 'stone_pebbles', 'brushed_metal', 'plaster_arches')
 PROMPT = ('A very slow continuous horizontal camera slide across the exact still life in the reference. '

@@ -15,7 +15,7 @@ def test_unknown_run_has_no_identity_lock_or_log_side_effect(runtime_run):
     from uuid import uuid4
     from pathlib import Path
     from video_ai.runtime.production_scene_upscale import produce_scene_upscaled_clips
-    unknown=Path('D:/VideoSi/projects/video-ai/runs')/('unknown-'+uuid4().hex)
+    unknown=Path('E:/VideoAI/work')/('unknown-'+uuid4().hex)
     frozen=SimpleNamespace(options={'script_path':str(unknown/'inputs/script.txt')})
     result=produce_scene_upscaled_clips(frozen,[],None,paths=runtime_run[2],logger=None)
     assert result.status=='blocked' and result.run_id is None and result.run_dir is None and result.log_dir is None
@@ -145,7 +145,7 @@ def test_capture_admitted_extraction_json_binds_original_command_bytes(runtime_r
     stdout=logs/'command.stdout'; stdout.write_bytes(b'accepted raw probe stdout')
     stderr=logs/'command.stderr'; stderr.write_bytes(b'')
     record=logs.parent/'extraction.json'
-    record.write_text(json.dumps(dict(original_info=dict(identity=dict(path=str(run/'renamed-original-staging.png'),bytes=100,sha256='a'*64,mtime_ns=123)),command=dict(args=['D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe'],cwd=str(run),returncode=0,
+    record.write_text(json.dumps(dict(original_info=dict(identity=dict(path=str(run/'renamed-original-staging.png'),bytes=100,sha256='a'*64,mtime_ns=123)),command=dict(args=['E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe'],cwd=str(run),returncode=0,
         timed_out=False,stdout_path=str(stdout),stderr_path=str(stderr),started_at='2026-10-19T00:00:00+00:00',finished_at='2026-10-19T00:00:01+00:00'))),encoding='utf-8')
     with RunLock(run) as lock:
         store=SceneMediaStore(SimpleNamespace(options={'model_stamps':{}}),run,lock=lock)
@@ -273,7 +273,7 @@ def test_fixed_options_snapshot_binds_bytes_without_reinterpreting_external_sour
     run=runtime_run[0]; store=SceneMediaStore(SimpleNamespace(),run); options=run/'production/options.json'
     options.parent.mkdir(parents=True,exist_ok=True)
     options.write_text(json.dumps(dict(config_snapshot=dict(source_identity=dict(
-        path='D:/VideoSi/cache/old-config-source.json',bytes=100,sha256='a'*64,mtime_ns=123)))),encoding='utf-8')
+        path='E:/VideoAI/cache/old-config-source.json',bytes=100,sha256='a'*64,mtime_ns=123)))),encoding='utf-8')
     snapshot=store.snapshot_json(files=(options,))
     store.adopt_json_snapshot(snapshot)
     assert set(store.guard_paths)=={str(options)}

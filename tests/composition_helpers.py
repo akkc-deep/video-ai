@@ -11,7 +11,7 @@ from video_ai.planning.storyboard import UnitTiming, SemanticCue, SpeechTimingEv
 from video_ai.runtime.manifest import thaw
 
 def identity(name):
-    return dict(path=str(Path('D:/VideoSi/projects/video-ai/runs/20261005-000000-111111111111')/name),bytes=10,mtime_ns=1,sha256='a'*64,verified_at='2026-10-05T00:00:00+08:00')
+    return dict(path=str(Path('E:/VideoAI/work/20261005-000000-111111111111')/name),bytes=10,mtime_ns=1,sha256='a'*64,verified_at='2026-10-05T00:00:00+08:00')
 
 def inputs(fps=16,transition='cut',seconds=0):
     text='夜色渐深，周围渐静。\r\n水面有灯光倒影。'

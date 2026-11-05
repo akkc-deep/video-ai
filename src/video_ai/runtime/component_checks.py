@@ -73,7 +73,7 @@ def scan_isolation(config, *, logger=None):
     result={}
     roots=(config.tools['comfy_root'].parent,config.tools['tts_root'],config.tools['ffmpeg'].parent.parent,
            config.tools['ollama_executable'].parent,config.project_root/'config',SOURCE_ROOT,
-           RUNTIME_ROOT/'models',Path('C:/Users/qzw19/.cache'),Path('C:/Users/qzw19/.ollama'),
+           config.runtime_root/'shared/models',Path('C:/Users/qzw19/.cache'),Path('C:/Users/qzw19/.ollama'),
            Path('C:/Users/qzw19/.matplotlib'),Path('C:/Users/qzw19/.triton'),
            Path('C:/Users/qzw19/AppData/Local/NVIDIA/ComputeCache'),
            Path('C:/Users/qzw19/AppData/Roaming/nltk_data'),
@@ -272,13 +272,13 @@ def check_ollama(ctx):
             tags=http.get_json('/api/tags')
             http.get_json('/api/ps')
             model=next((x for x in tags.get('models',[]) if x.get('name')=='qwen3:8b'),None)
-            manifest=ctx.paths.runtime_root/'models/ollama/manifests/registry.ollama.ai/library/qwen3/8b'
+            manifest=ctx.paths.runtime_root/'shared/models/ollama/manifests/registry.ollama.ai/library/qwen3/8b'
             identity=ctx.model('ollama_manifest',manifest)
             if model is None or model.get('digest')!=identity.sha256:
                 raise OSError('Ollama qwen3:8b digest mismatch')
             definition=read_json(manifest)
             for layer in [definition['config'],*definition['layers']]:
-                file=ctx.paths.runtime_root/'models/ollama/blobs'/layer['digest'].replace(':','-')
+                file=ctx.paths.runtime_root/'shared/models/ollama/blobs'/layer['digest'].replace(':','-')
                 blob=hash_file(file)
                 if blob.sha256!=layer['digest'].split(':')[1] or blob.bytes!=layer['size']:
                     raise OSError('Ollama blob identity mismatch')

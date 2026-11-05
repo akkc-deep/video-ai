@@ -109,9 +109,39 @@ def request_fixture():
     plan = dict(scenes=scenes, total_frames=205, total_samples=613001, settings={'max_clip_seconds': 6}, batches=batches)
     plan['clips'] = production_visual_plan.plan_scene_clips(plan, max_clip_seconds=6)
     wan = dict(scenes=[dict(scene_id=s['scene_id'], candidate_id=f'candidate_{i:04d}',
-        path=f'D:/VideoSi/run/original_{i}.png', bytes=300+i, sha256=str(i)*64)
+        path=f'E:/VideoAI/run/original_{i}.png', bytes=300+i, sha256=str(i)*64)
         for i,s in enumerate(scenes, 1)])
     return frozen, bible, plan, timeline, wan
+
+
+def test_positive_override_replaces_complete_text_for_only_one_clip():
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    args = request_fixture()
+    original = build_scene_wan_plan(*args)
+    before = deepcopy(original)
+    assert build_scene_wan_plan(*args, positive_overrides={}) == before
+    changed = build_scene_wan_plan(*args, positive_overrides={
+        'scene_0002_clip_0002': 'Keep all components rigidly connected. Slow drift.'})
+    expected = deepcopy(before)
+    expected[2]['parameters']['positive'] = 'Keep all components rigidly connected. Slow drift.'
+    assert changed == expected
+    assert original == before
+
+
+@pytest.mark.parametrize('changes', [{'missing': 'Drift'}, {'scene_0001_clip_0001': ''},
+    {'scene_0001_clip_0001': 1}, {'scene_0001_clip_0001': 'https://example.com'}])
+def test_positive_override_cannot_silently_ignore_bad_keys_or_text(changes):
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    with pytest.raises(ValueError):
+        build_scene_wan_plan(*request_fixture(), positive_overrides=changes)
+
+
+def test_positive_override_refuses_contract_renderer_before_rendering():
+    from video_ai.planning.scene_clip_continuation import build_scene_wan_plan
+    args = request_fixture()
+    args[0].config.raw = {'scene_rendering': {'prompt_policy': 'visual_v2'}}
+    with pytest.raises(ValueError, match='legacy'):
+        build_scene_wan_plan(*args, positive_overrides={'scene_0001_clip_0001': 'Drift'})
 
 
 def test_shared_prompt_parameters_baselines_and_original_narration_with_nonzero_long_scene():
@@ -181,7 +211,7 @@ def _whole_execution(plan, timeline):
                                     clips=[dict(vars(c)) for c in timeline.clips])
     return build_scene_execution_budget(plan, timeline, run_id='run_123', mode='whole_scene_v1',
         rendering_identity_sha256='a'*64,
-        admission=dict(path='D:/VideoSi/run/evidence.json', bytes=100, sha256='b'*64))
+        admission=dict(path='E:/VideoAI/run/evidence.json', bytes=100, sha256='b'*64))
 
 
 def _whole_request_fixture():

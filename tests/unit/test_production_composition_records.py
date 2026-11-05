@@ -14,7 +14,7 @@ def stamp(run, name):
 
 
 def command(run):
-    return dict(args=['D:/VideoSi/tools/ffmpeg.exe', '-n'], cwd=str(run), returncode=0,
+    return dict(args=['E:/VideoAI/shared/tools/ffmpeg.exe', '-n'], cwd=str(run), returncode=0,
                 timed_out=False, stdout_path=str(run/'stdout'), stderr_path=str(run/'stderr'),
                 started_at=now(), finished_at=now())
 

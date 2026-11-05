@@ -3,19 +3,20 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PureWindowsPath
 import re
+import os
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 if TYPE_CHECKING:
     from ..config import ProjectConfig
 
-RUNTIME_ROOT = Path('D:/VideoSi')
-SOURCE_ROOT = Path('D:/code/py/video-ai')
-PROJECT_ROOT = RUNTIME_ROOT / 'projects/video-ai'
-OUTPUT_ROOT = RUNTIME_ROOT / 'output/video-ai'
-CACHE_ROOT = RUNTIME_ROOT / 'cache/video-ai'
-PRODUCTION_ROOT = PROJECT_ROOT / 'productions'
-DISPOSABLE_ROOT = RUNTIME_ROOT / 'disposable/video-ai'
+RUNTIME_ROOT = Path(os.environ.get('VIDEO_AI_RUNTIME_ROOT', 'E:/VideoAI')).absolute()
+SOURCE_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = RUNTIME_ROOT / 'shared'
+OUTPUT_ROOT = RUNTIME_ROOT / 'output'
+CACHE_ROOT = RUNTIME_ROOT / 'scratch'
+PRODUCTION_ROOT = RUNTIME_ROOT / 'work'
+DISPOSABLE_ROOT = RUNTIME_ROOT / 'scratch'
 _LOCAL_TIME = timezone(timedelta(hours=8), 'Asia/Shanghai')
 _RESERVED = re.compile(r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)', re.I)
 
@@ -63,27 +64,27 @@ class PathPolicy:
     def __post_init__(self):
         # Equal lexical roots would resolve identically. Supplied aliases still
         # require fresh resolution; validate_write also resolves every candidate.
-        runtime_root = Path(self.runtime_root)
-        if runtime_root != RUNTIME_ROOT and runtime_root.resolve() != RUNTIME_ROOT.resolve():
-            raise ValueError('runtime_root must be D:/VideoSi')
-        source_root = Path(self.source_root)
-        if source_root != SOURCE_ROOT and source_root.resolve() != SOURCE_ROOT.resolve():
-            raise ValueError('source_root must be D:/code/py/video-ai')
+        root = Path(_validate_spelling(self.runtime_root))
+        if not root.is_absolute():
+            raise ValueError('runtime_root must be absolute')
+        object.__setattr__(self, 'runtime_root', Path(os.path.abspath(root)))
+        if Path(self.source_root).resolve() != SOURCE_ROOT:
+            raise ValueError('source_root must identify this checkout')
 
     def validate_write(self, path: str | Path, category: str) -> Path:
         candidate = Path(_validate_spelling(path))
-        if not candidate.is_absolute() or candidate.drive.casefold() != 'd:':
-            raise ValueError('writes require an absolute local D: path')
+        if not candidate.is_absolute():
+            raise ValueError('writes require an absolute local path')
         candidate = candidate.resolve(strict=False)
+        root = Path(self.runtime_root)
         roots = {
-            'config': (PROJECT_ROOT / 'config',),
-            'input': (PROJECT_ROOT / 'inputs',),
-            'run': (PROJECT_ROOT / 'runs', PRODUCTION_ROOT),
-            'output': (OUTPUT_ROOT,),
-            'cache': (CACHE_ROOT, DISPOSABLE_ROOT),
-            'log': (CACHE_ROOT / 'logs', PROJECT_ROOT / 'runs', PRODUCTION_ROOT, DISPOSABLE_ROOT),
-            'tool-env': (RUNTIME_ROOT / 'tools', RUNTIME_ROOT / 'envs'),
-            'model': (RUNTIME_ROOT / 'models',),
+            'config': (root/'shared/config',),
+            'input': (root/'work', root/'shared/assets'),
+            'run': (root/'work',), 'output': (root/'output',),
+            'cache': (root/'scratch',root/'work'),
+            'log': (root/'scratch',root/'work'),
+            'tool-env': (root/'shared/tools',root/'shared/envs'),
+            'model': (root/'shared/models',),
         }
         if category not in roots:
             raise ValueError(f'unknown write category: {category}')
@@ -100,9 +101,15 @@ class PathPolicy:
                 'tool-env': (sandbox/'tools',sandbox/'envs'), 'model': (sandbox/'models',),
             }
             roots[category] += extra[category]
+            roots[category] += {
+                'config': (sandbox/'shared/config',), 'input': (sandbox/'work',sandbox/'shared/assets'),
+                'run': (sandbox/'work',), 'output': (sandbox/'output',),
+                'cache': (sandbox/'scratch',sandbox/'work'), 'log': (sandbox/'scratch',sandbox/'work'),
+                'tool-env': (sandbox/'shared/tools',sandbox/'shared/envs'), 'model': (sandbox/'shared/models',),
+            }[category]
         # Do not resolve trusted roots: a redirected root must fail closed too.
-        if candidate.is_relative_to(SOURCE_ROOT) or not any(candidate.is_relative_to(root) for root in roots[category]):
-            raise ValueError(f'{category}: path outside allowed D:/VideoSi subtree: {candidate}')
+        if not any(candidate.is_relative_to(root) for root in roots[category]):
+            raise ValueError(f'{category}: path outside allowed runtime subtree: {candidate}')
         return candidate
 
 
@@ -122,12 +129,12 @@ class RuntimePaths:
         from .storage import _sandbox
         sandbox = _sandbox.get()
         if sandbox is not None:
-            project = sandbox/'projects/video-ai'
-            return cls(config.runtime_root,project,project/'config',project/'inputs',project/'runs',
-                       sandbox/'output/video-ai',sandbox/'disposable/video-ai/cache',sandbox/'envs/video-ai')
+            project = sandbox/'shared'
+            return cls(sandbox,project,project/'config',sandbox/'work',sandbox/'work',
+                       sandbox/'output',sandbox/'scratch/cache',project/'envs/video-ai')
         return cls(config.runtime_root, config.project_root, config.project_root / 'config',
-                   config.project_root / 'inputs', config.project_root / 'runs',
-                   config.output_root, config.cache_root, config.runtime_root / 'envs/video-ai')
+                   config.runtime_root / 'work', config.runtime_root / 'work',
+                   config.output_root, config.cache_root, config.runtime_root / 'shared/envs/video-ai')
 
     @property
     def policy(self) -> PathPolicy:
@@ -136,7 +143,7 @@ class RuntimePaths:
     @property
     def comfy_directories(self) -> dict[str, Path]:
         """Planned service paths; a concrete run supplies output/temp/user later."""
-        return {'models': self.runtime_root / 'models/comfyui', 'input': self.input_root,
+        return {'models': self.runtime_root / 'shared/models/comfyui', 'input': self.input_root,
                 'output': self.runs_root, 'temp': self.cache_root / 'comfy/temp',
                 'user': self.cache_root / 'comfy/user'}
 
@@ -170,9 +177,13 @@ def create_run(paths: RuntimePaths) -> Path:
     raise FileExistsError('run ID collided three times; no existing run was overwritten')
 
 
-def shot_dir(run_dir: Path, shot_id: str) -> Path:
+def validate_shot_id(shot_id: str) -> None:
     if not re.fullmatch(r'shot_[0-9]{4,}', shot_id) or int(shot_id[5:]) == 0:
         raise ValueError('shot_id must be shot_ followed by at least four ASCII digits and a positive integer')
+
+
+def shot_dir(run_dir: Path, shot_id: str) -> Path:
+    validate_shot_id(shot_id)
     return PathPolicy().validate_write(run_dir / 'shots' / shot_id, 'run')
 
 

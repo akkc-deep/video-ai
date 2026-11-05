@@ -13,7 +13,7 @@ def retained_scene_fixture(frames=200):
     return {'total_frames': frames, 'clips': [dict(
         clip_id=c['clip_id'], scene_id=c['scene_id'], budget=c,
         frame_mapping=scene_clip_frame_mapping(c, actual_generated_frames=c['generated_frames']),
-        source={'path': f'D:/VideoSi/run/{c["clip_id"]}.mp4', 'bytes': 100, 'sha256': 'a'*64})
+        source={'path': f'E:/VideoAI/run/{c["clip_id"]}.mp4', 'bytes': 100, 'sha256': 'a'*64})
         for c in plan['clips']]}
 
 
@@ -52,7 +52,7 @@ def test_contribution_sequence_rebuilds_every_exact_technical_frame(count):
     from video_ai.planning.production_scenes import canonical_digest
     clips=retained_scene_fixture(count); rows=plan_scene_upscale(clips)
     frames=[dict(frame_id=r['frame_id'],mapping={k:v for k,v in r.items() if k!='source'},
-        output=dict(path=f'D:/VideoSi/run/frame_{i}.png',bytes=100,sha256='b'*64)) for i,r in enumerate(rows)]
+        output=dict(path=f'E:/VideoAI/run/frame_{i}.png',bytes=100,sha256='b'*64)) for i,r in enumerate(rows)]
     upscaled=dict(total_frames=count,frames=frames)
     result=plan_scene_contributions(clips,upscaled,SimpleNamespace(total_frames=count))
     assert [r['output_frame_index'] for r in result]==list(range(count))

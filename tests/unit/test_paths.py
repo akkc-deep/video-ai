@@ -33,17 +33,17 @@ def test_relative_paths_use_their_owner_and_leave_cwd(tmp_path):
 
 
 @pytest.mark.parametrize('value', [
-    'C:/Windows/out.mp4', 'D:/code/py/video-ai/out.mp4',
-    'D:/VideoSi-other/output/video-ai/out.mp4',
-    'D:/VideoSi/output/video-ai/../../../escaped.mp4',
-    '//server/share/out.mp4', '//?/D:/VideoSi/output/video-ai/a.mp4',
-    'D:relative.mp4', 'D:/VideoSi/output/video-ai/a.mp4:stream',
-    'D:/VideoSi/output/video-ai/NUL.mp4',
-    'D:/VideoSi/output/video-ai/CON .mp4',
-    'D:/VideoSi/output/video-ai/COM¹.mp4',
-    'D:/VideoSi/output/video-ai/LPT².mp4',
-    'D:/VideoSi/output/video-ai/control\x01.mp4',
-    'D:/VideoSi/output/video-ai/foo./out.mp4',
+    'C:/Windows/out.mp4', 'E:/code/py/video-ai/out.mp4',
+    'E:/VideoAI-other/output/video-ai/out.mp4',
+    'E:/VideoAI/output/../../../escaped.mp4',
+    '//server/share/out.mp4', '//?/E:/VideoAI/output/a.mp4',
+    'D:relative.mp4', 'E:/VideoAI/output/a.mp4:stream',
+    'E:/VideoAI/output/NUL.mp4',
+    'E:/VideoAI/output/CON .mp4',
+    'E:/VideoAI/output/COM¹.mp4',
+    'E:/VideoAI/output/LPT².mp4',
+    'E:/VideoAI/output/control\x01.mp4',
+    'E:/VideoAI/output/foo./out.mp4',
 ])
 def test_write_policy_rejects_escape_and_windows_aliases(value):
     with pytest.raises(ValueError):
@@ -52,53 +52,43 @@ def test_write_policy_rejects_escape_and_windows_aliases(value):
 
 def test_category_and_case_are_checked_by_components():
     policy = paths().PathPolicy()
-    assert policy.validate_write('d:/videosi/output/video-ai/movie.mp4', 'output').is_absolute()
+    assert policy.validate_write('e:/videoai/output/movie.mp4', 'output').is_absolute()
     with pytest.raises(ValueError):
-        policy.validate_write('D:/VideoSi/cache/video-ai/movie.mp4', 'output')
+        policy.validate_write('E:/VideoAI/scratch/movie.mp4', 'output')
 
 
-@pytest.mark.parametrize('field,root', [
-    ('runtime_root', 'D:/VideoSi'), ('source_root', 'D:/code/py/video-ai'),
-])
-def test_policy_supplied_roots_preserve_resolution_checks(field, root):
-    p = paths()
-    canonical = Path(root)
-    for supplied in (Path(root.lower()), canonical / '..' / canonical.name):
-        policy = p.PathPolicy(**{field: supplied})
-        assert getattr(policy, field) == supplied
-        assert policy.validate_write(p.OUTPUT_ROOT / 'root-check.mp4', 'output') == p.OUTPUT_ROOT / 'root-check.mp4'
-    with pytest.raises(ValueError, match=field):
-        p.PathPolicy(**{field: canonical / 'different-root'})
+def test_policy_configured_root_confines_categories(tmp_path):
+    root = tmp_path / 'configured root'
+    policy = paths().PathPolicy(root)
+    assert policy.validate_write(root/'output/movie.mp4','output') == root/'output/movie.mp4'
+    with pytest.raises(ValueError):
+        policy.validate_write(tmp_path/'outside/movie.mp4','output')
+    with pytest.raises(ValueError, match='source_root'):
+        paths().PathPolicy(source_root=tmp_path)
 
 
-@pytest.mark.parametrize('field,target', [
-    ('runtime_root', 'D:/VideoSi'), ('source_root', 'D:/code/py/video-ai'),
-])
-def test_policy_noncanonical_junction_root_uses_its_current_target(tmp_path, field, target):
-    junction = tmp_path / 'root-alias'
-    create_junction(junction, target)
+def test_policy_redirected_runtime_root_rejected(tmp_path):
+    target = tmp_path/'target'; target.mkdir()
+    junction = tmp_path/'root-alias'
+    create_junction(junction,target)
     try:
-        assert getattr(paths().PathPolicy(**{field: junction}), field) == junction
-        junction.rmdir()
-        create_junction(junction, tmp_path)
-        with pytest.raises(ValueError, match=field):
-            paths().PathPolicy(**{field: junction})
+        with pytest.raises(ValueError):
+            paths().PathPolicy(junction).validate_write(junction/'output/a.mp4','output')
     finally:
-        if junction.is_junction():
-            junction.rmdir()
+        junction.rmdir()
 
 
 def test_write_policy_resolves_again_after_junction_is_redirected(tmp_path):
-    policy = paths().PathPolicy()
-    allowed = tmp_path / 'allowed'
-    allowed.mkdir()
+    policy = paths().PathPolicy(tmp_path / 'allowed')
+    allowed = tmp_path / 'allowed' / 'scratch'
+    allowed.mkdir(parents=True)
     junction = tmp_path / 'write-alias'
     create_junction(junction, allowed)
     candidate = junction / 'candidate.log'
     try:
         assert policy.validate_write(candidate, 'cache') == allowed / 'candidate.log'
         junction.rmdir()
-        create_junction(junction, 'D:/code/py/video-ai')
+        create_junction(junction, 'E:/code/py/video-ai')
         with pytest.raises(ValueError):
             policy.validate_write(candidate, 'cache')
     finally:
@@ -113,7 +103,7 @@ def test_junction_to_source_is_rejected(tmp_path):
     result = subprocess.run(['powershell.exe', '-NoProfile', '-Command',
                              '$ErrorActionPreference="Stop"; New-Item -ItemType Junction -Path $env:VAI_TEST_JUNCTION -Target $env:VAI_TEST_TARGET | Out-Null'],
                             env={**os.environ, 'VAI_TEST_JUNCTION': str(junction),
-                                 'VAI_TEST_TARGET': 'D:/code/py/video-ai'}, capture_output=True, text=True)
+                                 'VAI_TEST_TARGET': 'E:/code/py/video-ai'}, capture_output=True, text=True)
     if result.returncode:
         pytest.skip('junction creation unavailable: ' + result.stderr)
     try:
@@ -147,7 +137,7 @@ def test_run_creation_does_not_overwrite_existing(monkeypatch):
 @pytest.mark.parametrize('shot', ['shot_0000', 'shot_0', 'shot_1', '../shot_0001', 'shot_0001/a', 'shot_０００１'])
 def test_shot_name_rejects_invalid_or_injected_id(shot):
     with pytest.raises(ValueError):
-        paths().shot_dir(Path('D:/VideoSi/projects/video-ai/runs/test'), shot)
+        paths().shot_dir(Path('E:/VideoAI/work/test'), shot)
 
 
 @pytest.mark.parametrize('existing', ['.mp4', '.srt'])
@@ -173,7 +163,7 @@ def test_output_pair_refuses_either_existing_file_without_modification(existing)
 
 
 def test_output_pair_calculates_srt_and_rejects_wrong_extension():
-    movie = Path('D:/VideoSi/output/video-ai') / (uuid.uuid4().hex + '.mp4')
+    movie = Path('E:/VideoAI/output') / (uuid.uuid4().hex + '.mp4')
     assert paths().validate_output_pair(movie) == (movie, movie.with_suffix('.srt'))
     with pytest.raises(ValueError):
         paths().validate_output_pair(movie.with_suffix('.avi'))

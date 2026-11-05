@@ -20,7 +20,7 @@ from video_ai.runtime.processes import run_logged
 @pytest.fixture
 def color_context(runtime_run,request):
     run, config, paths = runtime_run
-    actual = load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     config = replace(config, tools=dict(config.tools, ffmpeg=actual.tools['ffmpeg'], ffprobe=actual.tools['ffprobe']))
     logger=RunLogger(create_run(paths))
     context=dict(test=request.node.nodeid,source_run=str(run),audit_run=str(logger.run_dir))

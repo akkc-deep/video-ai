@@ -23,19 +23,22 @@ def _fields(value, fields, label):
 
 
 def validate_revision_request_fields(request):
-    """Keep legacy requests exact; accept explicit image-only corrections."""
-    extra = ['image_prompt_overrides'] if isinstance(request, dict) and 'image_prompt_overrides' in request else []
+    """Validate explicit corrections; return only the historical image mapping."""
+    extra = [key for key in ('image_prompt_overrides', 'clip_prompt_overrides')
+             if isinstance(request, dict) and key in request]
     _fields(request, REQUEST_FIELDS + extra, 'revision request')
-    if not extra:
-        return {}
-    changes = request['image_prompt_overrides']
-    if (request['kind'] != 'regenerate_images' or type(changes) is not dict or not changes
-            or type(request['scene_ids']) is not list
-            or any(type(sid) is not str or sid not in request['scene_ids'] for sid in changes)):
-        raise ValueError('image prompt overrides require targeted image regeneration')
-    if any(type(prompt) is not str or not prompt.strip() or '://' in prompt for prompt in changes.values()):
-        raise ValueError('image prompt override must be nonempty text without URLs')
-    return changes
+    for key, kind, targets, label in (
+            ('image_prompt_overrides', 'regenerate_images', 'scene_ids', 'image'),
+            ('clip_prompt_overrides', 'regenerate_clips', 'clip_ids', 'clip')):
+        if key not in request: continue
+        changes = request[key]
+        if (request['kind'] != kind or type(changes) is not dict or not changes
+                or type(request[targets]) is not list
+                or any(type(item) is not str or item not in request[targets] for item in changes)):
+            raise ValueError(label+' prompt overrides require targeted '+label+' regeneration')
+        if any(type(prompt) is not str or not prompt.strip() or '://' in prompt for prompt in changes.values()):
+            raise ValueError(label+' prompt override must be nonempty text without URLs')
+    return request.get('image_prompt_overrides', {})
 
 
 def _sha(value):
@@ -181,6 +184,10 @@ def identity_from_options(options, *, reference_settings_sha256=None):
 
 def _validate_request(request, snapshot, target):
     validate_revision_request_fields(request)
+    if 'clip_prompt_overrides' in request and (
+            'scene_rendering' in snapshot['source_options']['config_snapshot']['raw']
+            or target.get('rendering') is not None):
+        raise ValueError('clip prompt overrides require legacy Wan rendering')
     if type(request['schema_version']) is not int or request['schema_version'] != 2 or request['production_strategy'] != STRATEGY:
         raise ValueError('revision schema/strategy differs')
     if str(UUID(request['revision_id'])) != request['revision_id']: raise ValueError('canonical UUID required')
@@ -320,7 +327,17 @@ def plan_scene_revision(snapshot, request, target_identity):
             # admission, not narration, semantic planning or accepted images.
             planning_changed = (_planning_digest(snapshot['source_options']['config_snapshot']['raw'],ignore_admission=True)
                 != _planning_digest(classification['target_config'],ignore_admission=True))
-        if source['voice_sha256'] != target_identity['voice_sha256'] or source['font_sha256'] != target_identity['font_sha256'] or planning_changed:
+        transport_only=False
+        if planning_changed and classification is not None and classification['target_config'] is not None:
+            before=deepcopy(snapshot['source_options']['config_snapshot']['raw'])
+            after=deepcopy(classification['target_config'])
+            old_transport=before.pop('scene_planner_transport',None)
+            new_transport=after.pop('scene_planner_transport',None)
+            transport_only=(old_transport!=new_transport and new_transport=='focused_v1'
+                and _planning_digest(before,ignore_admission=True)==_planning_digest(after,ignore_admission=True))
+            if transport_only:roots.append('plan:all')
+        if (source['voice_sha256'] != target_identity['voice_sha256']
+                or source['font_sha256'] != target_identity['font_sha256'] or planning_changed and not transport_only):
             roots.append('common:all')
         if source['image_generation'] != target_identity['image_generation']:
             roots += [node('images', sid) for sid in scenes]

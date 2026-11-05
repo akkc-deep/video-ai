@@ -32,7 +32,7 @@ def test_review_paths_and_cli_errors(storyboard_run,monkeypatch,capsys,kind):
     from video_ai.runtime import storyboard_checks as sc
     run,config,store,timing,path=storyboard_run;mock_generation(monkeypatch);args=argv('plan-storyboard',config,run,path)
     if kind=='escape':args[-2]=str(run/'timing-review.json')
-    if kind=='source':args[-2]='D:/code/py/video-ai/timing-review.json'
+    if kind=='source':args[-2]='E:/code/py/video-ai/timing-review.json'
     if kind=='C':args[-2]='C:/timing-review.json'
     if kind=='relative':
         monkeypatch.chdir(run);args[args.index('--run-dir')+1]='.';args[-2]='logs/storyboard/timing-review.json'

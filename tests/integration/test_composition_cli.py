@@ -8,7 +8,7 @@ from video_ai.cli import main
 def test_cli_result_paths_staging_limits_and_exit_codes(monkeypatch,capsys,status,expected):
     from video_ai.runtime import composition_checks as cc
     from video_ai.config import load_config
-    config=load_config(Path('D:/code/py/video-ai/config/production.example.json'))
+    config=load_config(Path('E:/code/py/video-ai/config/production.example.json'))
     monkeypatch.setattr('video_ai.cli._load_cli_config',lambda *args:config)
     def compose(c,*,run_dir,settings_path):
         assert run_dir==Path.cwd()/'relative-run' and settings_path==Path.cwd()/'settings.json'

@@ -4,7 +4,7 @@ import pytest
 
 
 def recorder():
-    path = Path('D:/VideoSi/docs/video-ai/VAI-14-evidence/cli_result_recording.py')
+    path = Path('E:/VideoAI/docs/video-ai/VAI-14-evidence/cli_result_recording.py')
     assert path.is_file(), 'native CLI result validation is missing'
     spec = importlib.util.spec_from_file_location('cli_result_recording', path)
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
@@ -39,7 +39,7 @@ def test_real_review_required_contract_keeps_native_exit_one():
 
 def test_actual_phase_recorder_reports_first_failure(tmp_path,monkeypatch):
     import sys
-    root = Path('D:/VideoSi/docs/video-ai/VAI-14-evidence')
+    root = Path('E:/VideoAI/docs/video-ai/VAI-14-evidence')
     monkeypatch.syspath_prepend(str(root))
     spec = importlib.util.spec_from_file_location('source_to_upscale_recorder',root/'continue_confirmed_source_to_upscale_v1.py')
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)

@@ -29,4 +29,4 @@ def test_cli_rejects_conflicting_actions_before_make_video(monkeypatch,actions):
     from video_ai.cli import main
     import video_ai.production as production
     monkeypatch.setattr(production,'make_video',lambda *a,**kw:pytest.fail('invalid CLI called make_video'))
-    assert main(['make-video','--run-dir','D:/VideoSi/projects/video-ai/runs/missing',*actions])==2
+    assert main(['make-video','--run-dir','E:/VideoAI/work/missing',*actions])==2

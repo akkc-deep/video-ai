@@ -70,6 +70,16 @@ class ExternalResponse:
     headers: dict = field(default_factory=dict)
 
 
+class ExternalHttpStatusError(AdapterError):
+    """In-memory response details; callers must redact before recording them."""
+    def __init__(self,method,status,body,headers):
+        super().__init__(FailureKind.unavailable if method in ('GET','HEAD') else FailureKind.ambiguous,
+                         f'external HTTPS status {status}')
+        self.status_code=status
+        self.response_body=body[:65536]
+        self.response_headers=dict(headers)
+
+
 class ExternalHttpsClient:
     def __init__(self, *, transport=None):
         opener = build_opener(ProxyHandler({}), _Redirects(), _HTTPSHandler())
@@ -136,8 +146,7 @@ class ExternalHttpsClient:
             if method != 'HEAD' and length is not None and int(length) != size: raise ValueError('incomplete response')
             request._request_guard()
             if type(status) is not int or not (200 <= status < 300 or (allow_not_found and status == 404)):
-                raise AdapterError(FailureKind.unavailable if method in ('GET', 'HEAD') else FailureKind.ambiguous,
-                                   f'external HTTPS status {status}')
+                raise ExternalHttpStatusError(method,status,b''.join(chunks),response.headers)
             return ExternalResponse(status, b''.join(chunks), dict(response.headers.items()))
         except AdapterError:
             raise

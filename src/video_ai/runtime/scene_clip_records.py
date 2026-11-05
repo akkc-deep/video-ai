@@ -17,6 +17,7 @@ from .production_state import (ArtifactStamp, ProductionRefused, RunLock, intege
 from . import image_selection_records as images
 from .verification import verified_read
 from .execution_limits import command_timeout
+from .scene_review_control import review_checkpoint
 
 
 def equal(actual, expected, label):
@@ -60,14 +61,20 @@ class SceneClipStore:
 
     def read(self, relative):
         path = self.path(relative)
-        if not path.exists(): return None
+        if not path.exists():
+            from ._continuity_byte_guard import observe_absence
+            observe_absence(path)
+            return None
         return read_json(path)
 
     def write_bytes(self, relative, raw):
         self.assert_owned(); target = self.path(relative)
         if target.exists():
-            if target.read_bytes() != raw: raise ProductionRefused('immutable scene clip bytes differ: '+str(target))
+            from .verification import read_bytes
+            if read_bytes(target) != raw: raise ProductionRefused('immutable scene clip bytes differ: '+str(target))
             return target
+        from ._protected_continuity_inputs import invalidate_protected_read_pass
+        invalidate_protected_read_pass()
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path(target.with_name(target.name+'.'+uuid4().hex+'.tmp'))
         with temporary.open('xb') as stream:
@@ -178,6 +185,7 @@ class SceneClipStore:
 @verified_read
 def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     """Full batch preflight, also used by both read-only public entrypoints."""
+    review_checkpoint(force=True)
     from .scene_execution_records import rendering_mode
     if rendering_mode(frozen) == 'temporal_extension_v1':
         from .temporal_scene_records import temporal_context
@@ -217,9 +225,13 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     from .scene_video_prompt_records import load_prompt_contract,prompt_binding_context
     contract,prompt_artifact = load_prompt_contract(frozen)
     binding = prompt_binding_context(frozen,contract,bible,plan,wan) if contract is not None else None
+    from .scene_clip_prompts import effective_clip_prompt_overrides
+    positive_overrides = effective_clip_prompt_overrides(frozen)
     rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan,
-        prompt_contract=contract,prompt_binding_context=binding,execution=execution)
+        prompt_contract=contract,prompt_binding_context=binding,execution=execution,
+        positive_overrides=positive_overrides)
     for selected in wan['scenes']:
+        review_checkpoint()
         from ._scene_revision_origin_images import source_image_required
         if not source_image_required(frozen,selected['scene_id']):continue
         artifact = {k:selected[k] for k in ('path','bytes','sha256')}
@@ -250,6 +262,7 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         if path.exists(): store.guard_paths[str(path)] = store.artifact(path)
     # Bind every source selection/observation/provenance record, including comparison baselines.
     for directory in ('production/image-selection','production/reference-images','production/reference-storage','production/jimeng'):
+        review_checkpoint()
         inventory={str(path) for path in (run/directory).rglob('*.json')}
         store.guard_directories[str(run/directory)]=inventory
         for path in inventory: store.guard_paths[path] = store.artifact(path)
@@ -290,7 +303,11 @@ def scan_observation_sources(store,folder,template,created_at,*,now):
     """Read every durable authored source, including interrupted receipt commits."""
     from .scene_clip_observations import validate_scene_clip_observation
     rows=[]
-    for path in sorted((folder/'observations').glob('*.json')):
+    from ._continuity_byte_guard import observe_inventory
+    directory = folder/'observations'
+    paths = sorted(directory.glob('*.json'))
+    observe_inventory(directory,'json_direct',paths)
+    for path in paths:
         artifact=store.artifact(path)
         if path.name!=artifact['sha256']+'.json': raise ProductionRefused('observation original filename/SHA differs')
         value=read_json(path)
@@ -535,41 +552,63 @@ def validate_clip(context,row,parent=None):
 
 
 @verified_read
-def collect_progress(context):
+def collect_progress(context, *, scene_reader=None):
+    from .scene_revision_records import revision_read_transaction, revision_artifact_batch
+    with revision_read_transaction(), revision_artifact_batch():
+        return _collect_progress(context, scene_reader=scene_reader)
+
+
+def _collect_progress(context, *, scene_reader=None):
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .temporal_scene_records import temporal_progress_view
         return temporal_progress_view(context)
     store=context['store']; scenes=[]; records={}
     for scene in context['plan']['scenes']:
-        state=dict(scene_id=scene['scene_id'],status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=None,error=None)
-        parent=None; stopped=False
-        for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
-            cid=row['budget']['clip_id']; folder=store.clip_dir(cid)
-            if stopped:
-                if folder.exists() and any(folder.iterdir()): raise ProductionRefused('descendant evidence exists before parent acceptance')
-                continue
-            record=validate_clip(context,row,parent)
-            if record:
-                records[cid]=record; state['completed_clip_ids'].append(cid)
-                if record['rejected']:
-                    rejected=record['rejected']
-                    evidence=rejected['observation']['path'] if rejected.get('_raw_only') else str(folder/'observation-rejected.json')
-                    state.update(status='continuity_failed',waiting_clip_id=cid,error=dict(kind='continuity_failed',message='explicit process observation failed',evidence_paths=[evidence]))
-                    stopped=True
-                elif record['accepted']:
-                    state['accepted_clip_ids'].append(cid); parent=record; state['status']='ready'
-                else:
-                    state.update(status='awaiting_continuity_review',waiting_clip_id=cid); stopped=True
-            else:
-                terminal=store.read(folder/'terminal.json')
-                if terminal:
-                    state.update(status='failed',waiting_clip_id=cid,error=dict(kind=terminal['status'],message=terminal['reason'],evidence_paths=[str(folder/'terminal.json')]))
-                elif store.read(folder/'intent.json'):
-                    state.update(status='submit_unknown',waiting_clip_id=cid,error=dict(kind='submit_unknown',message='original task needs recovery',evidence_paths=[str(folder/'intent.json')]))
-                else: state.update(status='pending',waiting_clip_id=cid)
-                stopped=True
+        state, current = (scene_reader or scene_progress)(context,scene)
+        records.update(current)
         scenes.append(state)
     return dict(schema_version=2,run_id=store.run_dir.name,inputs_sha256=canonical_digest(context['inputs']),scenes=scenes),records
+
+
+def scene_progress(context, scene):
+    """Rebuild just one scene, retaining parent admission and descendant checks."""
+    from ._continuity_byte_guard import observe_inventory,observe_absence
+    store=context['store']; records={}
+    state=dict(scene_id=scene['scene_id'],status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=None,error=None)
+    parent=None; stopped=False
+    for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
+        review_checkpoint()
+        cid=row['budget']['clip_id']; folder=store.clip_dir(cid)
+        if stopped:
+            if folder.exists():
+                children=list(folder.iterdir())
+                observe_inventory(folder,'children',children)
+            else:
+                children=[]
+                observe_absence(folder)
+            if children: raise ProductionRefused('descendant evidence exists before parent acceptance')
+            continue
+        record=validate_clip(context,row,parent)
+        if record:
+            records[cid]=record; state['completed_clip_ids'].append(cid)
+            if record['rejected']:
+                rejected=record['rejected']
+                evidence=rejected['observation']['path'] if rejected.get('_raw_only') else str(folder/'observation-rejected.json')
+                state.update(status='continuity_failed',waiting_clip_id=cid,error=dict(kind='continuity_failed',message='explicit process observation failed',evidence_paths=[evidence]))
+                stopped=True
+            elif record['accepted']:
+                state['accepted_clip_ids'].append(cid); parent=record; state['status']='ready'
+            else:
+                state.update(status='awaiting_continuity_review',waiting_clip_id=cid); stopped=True
+        else:
+            terminal=store.read(folder/'terminal.json')
+            if terminal:
+                state.update(status='failed',waiting_clip_id=cid,error=dict(kind=terminal['status'],message=terminal['reason'],evidence_paths=[str(folder/'terminal.json')]))
+            elif store.read(folder/'intent.json'):
+                state.update(status='submit_unknown',waiting_clip_id=cid,error=dict(kind='submit_unknown',message='original task needs recovery',evidence_paths=[str(folder/'intent.json')]))
+            else: state.update(status='pending',waiting_clip_id=cid)
+            stopped=True
+    return state,records
 
 
 def complete_value(context,records):

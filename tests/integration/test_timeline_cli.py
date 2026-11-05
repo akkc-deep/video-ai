@@ -14,7 +14,7 @@ def test_real_stage_cli_relative_paths(timeline_run,monkeypatch,capsys):
     assert main(['plan-timeline','--config',str(config.config_file),'--run-dir',run.name])==2
 
 
-@pytest.mark.parametrize('run_path',['C:/bad','D:/code/py/video-ai','D:/VideoSi/projects/video-ai/runs/not-a-run'])
+@pytest.mark.parametrize('run_path',['C:/bad','E:/code/py/video-ai','E:/VideoAI/work/not-a-run'])
 def test_cli_invalid_run_argument(timeline_run,run_path):
     from video_ai.cli import main
     assert main(['plan-timeline','--config',str(timeline_run[1].config_file),'--run-dir',run_path])==2

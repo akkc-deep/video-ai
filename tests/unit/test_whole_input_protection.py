@@ -305,14 +305,14 @@ def test_copied_worker_cannot_pin_a_root_after_writer_entry(tmp_path,monkeypatch
     owned = root/'staging.json'; owned.write_bytes(b'original')
     external = tmp_path/'external.json'; external.write_bytes(b'external')
     hashed, resume = Event(), Event()
-    original = manifest._hash_open_file
+    original = verification._read_open_bytes
     def paused(file,path):
         value = original(file,path)
         if path == owned and timing == 'inflight':
             hashed.set()
             assert resume.wait(10)
         return value
-    monkeypatch.setattr(manifest,'_hash_open_file',paused)
+    monkeypatch.setattr(verification,'_read_open_bytes',paused)
     with verification.validation_session(), window():
         manifest.hash_file(external)
         copied = copy_context()  # Captured before this root becomes writable.
@@ -357,7 +357,7 @@ def frozen(mode):
     if mode is not None:
         rendering = dict(mode=mode,prompt_policy='visual_v2',prompt_contract='fixture.json')
         if mode == 'whole_scene_v1':
-            rendering['whole_scene_evidence'] = 'D:/VideoSi/fixture-evidence.json'
+            rendering['whole_scene_evidence'] = 'E:/VideoAI/fixture-evidence.json'
         raw['scene_rendering'] = rendering
     return SimpleNamespace(config=SimpleNamespace(raw=raw),options={})
 

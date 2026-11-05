@@ -296,9 +296,9 @@ def _native_saved_validation(config, run, stage, unit_id, saved, entry, actual_g
         source=next(c for c in context['source']['clips'] if c['shot_id']==shot_id)
         args=(config.tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',Path(plan.source_identity['path']),
             '-vf',f'select=eq(n\\,{index-1}),format=rgb24','-fps_mode','passthrough','-f','rawvideo','-pix_fmt','rgb24','-')
-        source_rgb=run_logged(tuple(str(v) for v in args),cwd=run,env=build_child_env(paths),timeout=300,logger=logger,stage='upscale',unit_id=unit_id)
+        source_rgb=run_logged(tuple(str(v) for v in args),cwd=run,env=build_child_env(paths, logger.run_dir),timeout=300,logger=logger,stage='upscale',unit_id=unit_id)
         args=(config.tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',original_path,'-f','rawvideo','-pix_fmt','rgb24','-')
-        input_rgb=run_logged(tuple(str(v) for v in args),cwd=run,env=build_child_env(paths),timeout=300,logger=logger,stage='upscale',unit_id=unit_id)
+        input_rgb=run_logged(tuple(str(v) for v in args),cwd=run,env=build_child_env(paths, logger.run_dir),timeout=300,logger=logger,stage='upscale',unit_id=unit_id)
         for command in (source_rgb,input_rgb):
             if command.returncode!=0 or command.timed_out or command.stderr_path.read_bytes():raise ValueError('saved source-frame full decode failed')
             leaves.extend((command.stdout_path,command.stderr_path))

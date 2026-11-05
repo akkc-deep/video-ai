@@ -12,7 +12,8 @@ from ..adapters.ollama_scenes import is_environment_transport
 from ..config import parse_scene_planner_model, parse_scene_planning, read_json
 from ..jimeng_config import STRATEGY
 from ..planning.production_scenes import (build_scene_plan, canonical_digest, make_scene_schema,
-                                          paragraphs_from_script, validate_scene_plan,prune_unused_visual_entries)
+                                          paragraphs_from_script, validate_scene_plan,prune_unused_visual_entries,
+                                          coalesce_unchanged_environments)
 from ..planning.production_timeline import validate_production_timeline
 from ..planning.segments import SegmentedScript, TextSpan
 from .manifest import ManifestStore, create_manifest, hash_file, thaw, validate_run_dir
@@ -39,11 +40,37 @@ def check_scene_context_log(path):
 def use_grouped_compact(folder, logger):
     """Recover prior results before starting an independent transport version."""
     prior=folder/'compact-v1'
+    if (prior/'retired.json').exists():
+        # Reuse the body-bound retirement audit, without changing old evidence.
+        # Unknown/live submissions must still be recovered in their original mode.
+        direct_attempt(prior,logger)
+        suffix='correction' if (prior/'correction.intent.json').exists() else 'initial'
+        original=read_json(prior/(suffix+'.intent.json'))
+        for path in logger.path('http').glob('*.request.json'):
+            request=read_json(path)
+            if request.get('unit_id')!=original['request_id']:continue
+            meta=path.with_name(path.name.removesuffix('.request.json')+'.response.json')
+            if not meta.exists():return False
+            response=read_json(meta)
+            status=response.get('status')
+            raw=path.with_name(path.name.removesuffix('.request.json')+'.body')
+            return (type(status) is int and status>=400 and response.get('error') is None
+                    and response.get('truncated') is False and raw.is_file()
+                    and response.get('bytes')==raw.stat().st_size
+                    and all(response.get(key)==request.get(key) for key in ('method','url','unit_id')))
+        return False
     if any((folder/name/'initial.intent.json').exists() for name in ('compact-v2','compact-v3','compact-v4')):return True
     if not (prior/'initial.intent.json').exists():return True
     if any((prior/name).exists() for name in ('proposal.json','initial.response.json','correction.intent.json')):
         return False
     return failed_empty_scene_request(logger,read_json(prior/'initial.intent.json'))
+
+
+def use_partition_compact(folder,logger):
+    if (folder/'partition-v1/initial.intent.json').exists():return True
+    if any((folder/name/'initial.intent.json').exists() for name in ('compact-v2','compact-v3','compact-v4')):
+        return False
+    return use_grouped_compact(folder,logger)
 
 
 def failed_empty_scene_request(logger,original):
@@ -92,19 +119,21 @@ def use_direct_compact(folder,logger):
     return False
 
 
-def direct_attempt(base,logger):
+def direct_attempt(base,logger,*,request_prefix='scene_plan_direct_'):
     """Only an explicit, body-bound retirement opens a new local attempt."""
     index=0
     while True:
         folder=base if index==0 else base/f'attempt_{index:04d}'
-        prefix='scene_plan_direct_' if index==0 else f'scene_plan_direct_attempt_{index:04d}_'
+        prefix=request_prefix if index==0 else f'{request_prefix}attempt_{index:04d}_'
         path=folder/'retired.json'
         if not path.exists():return folder,prefix
         if (folder/'proposal.json').exists():raise ProductionRefused('cannot retire a completed scene proposal')
         suffix='correction' if (folder/'correction.intent.json').exists() else 'initial'
-        if (folder/(suffix+'.response.json')).exists():raise ProductionRefused('cannot retire a completed scene response')
+        completed_response=(folder/(suffix+'.response.json')).exists()
         intent=read_json(folder/(suffix+'.intent.json'));record=read_json(path)
-        object_fields(record,('request_id','body_sha256','reason'),'explicit local attempt retirement')
+        rejection='rejected_response_sha256' in record
+        if completed_response and not rejection:raise ProductionRefused('cannot retire a completed scene response')
+        object_fields(record,('request_id','body_sha256','reason')+(('rejected_response_sha256',) if rejection else ()),'explicit local attempt retirement')
         if (record['request_id']!=intent['request_id'] or record['body_sha256']!=canonical_digest(intent['body'])
                 or not isinstance(record['reason'],str) or not record['reason'].strip()):
             raise ProductionRefused('explicit local attempt retirement differs from original request')
@@ -115,6 +144,7 @@ def direct_attempt(base,logger):
                 if request.get('json_body')!=intent['body']:raise ProductionRefused('retired local HTTP identity differs')
                 matches.append(request_path)
         if len(matches)>1:raise ProductionRefused('retired local HTTP evidence has duplicate submissions')
+        confirmed_invalid=False
         if matches:
             request_path=matches[0];token=request_path.name.removesuffix('.request.json')
             meta=request_path.with_name(token+'.response.json');raw=request_path.with_name(token+'.body')
@@ -122,7 +152,17 @@ def direct_attempt(base,logger):
                 response=read_json(meta);status=response.get('status')
                 if (type(status) is int and 200<=status<300 and response.get('error') is None
                         and response.get('truncated') is False and response.get('bytes')==raw.stat().st_size):
-                    raise ProductionRefused('cannot retire a completed original HTTP response')
+                    response_bytes=raw.read_bytes()
+                    if rejection and record['rejected_response_sha256']==hashlib.sha256(response_bytes).hexdigest():
+                        try:
+                            parse_completed_response(strict_json(response_bytes),schema=intent['schema'],
+                                request_id=intent['request_id'],evidence_paths=[str(request_path),str(meta),str(raw)],
+                                expected_model=intent['body']['model'],
+                                scene_prompt=intent['prompt'] if is_environment_transport(intent['body']) else None,
+                                wire_schema=intent['body']['format'])
+                        except OllamaFormatError:confirmed_invalid=True
+                    if not confirmed_invalid:raise ProductionRefused('cannot retire a completed original HTTP response')
+        if rejection and not confirmed_invalid:raise ProductionRefused('retirement lacks confirmed invalid completed response')
         index+=1
 
 
@@ -193,6 +233,22 @@ def _settings(store, folder, base, raw):
     return settings
 
 
+def _commit_outputs(store, run, bible, plan):
+    outputs = [(run/'production/visual-bible.json',bible), (run/'production/scene-plan.json',plan)]
+    commit = {k:plan[k] for k in ('schema_version','run_id','source_sha256','units_sha256',
+                                'timeline_sha256','settings','visual_bible_sha256')}
+    commit['scene_plan_sha256'] = canonical_digest(plan)
+    outputs.append((run/'production/scene-plan-commit.json',commit))
+    for path,value in outputs:
+        if path.exists() and not _same_json(read_json(path),value):
+            raise ProductionRefused('immutable scene output/commit identity differs')
+    if outputs[-1][0].exists() and not all(path.exists() for path,_ in outputs):
+        raise ProductionRefused('committed scene plan lacks required output')
+    for (path,value),point in zip(outputs,('visual-bible','scene-plan','commit')):
+        store.save(path,value); boundary(point); store.owned()
+    return bible,plan
+
+
 @production_execution
 @http_recovery_scope()
 def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, planner=None):
@@ -233,16 +289,29 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
     prompt = _prompt(script, units, timeline, settings)
     identity = dict(base, settings=asdict(settings), schema_sha256=canonical_digest(schema),
                     prompt_sha256=hashlib.sha256(prompt.encode('utf-8')).hexdigest())
+    from .focused_scene_planning import use_focused_transport, produce_focused_proposal
+    if use_focused_transport(folder, script, frozen.config.raw.get('scene_planner_transport')):
+        model=parse_scene_planner_model(frozen.config.raw.get('scene_planner_model','qwen3:8b'))
+        if planner is not None and (not isinstance(planner,OllamaPlanner)
+                or planner.http.logger is not logger or planner.http.base_url != frozen.config.services['ollama'].rstrip('/')
+                or planner.cpu_only != frozen.options['cpu_planner'] or planner.model != model):
+            raise ProductionRefused('scene planner differs from frozen local binding')
+        content=produce_focused_proposal(frozen=frozen,script=script,units=units,schema=schema,settings=settings,
+            folder=folder/'focused-v1',identity=identity,paths=paths,logger=logger,store=store,planner=planner)
+        bible,plan=build_scene_plan(script,bound_units,timeline,content,settings=settings)
+        validate_scene_plan(script,bound_units,timeline,bible,plan,settings=settings)
+        return _commit_outputs(store,run,bible,plan)
     # This selects a representation, never a source-length refusal. Historical
     # single-request evidence stays untouched in its original directory.
     compact=len(prompt.encode('utf-8'))>32768
+    partition=compact and settings.target_scenes_per_paragraph>1 and use_partition_compact(folder,logger)
     grouped=compact and settings.target_scenes_per_paragraph==1 and any(
         len(row['unit_ids'])>1 for row in paragraphs_from_script(script)) and use_grouped_compact(folder,logger)
     source_sets=grouped and use_source_set_compact(folder,logger)
     direct=source_sets and use_direct_compact(folder,logger)
-    if compact:folder=run_path(run,folder/('compact-v4' if direct else 'compact-v3' if source_sets else 'compact-v2' if grouped else 'compact-v1'))
+    if compact:folder=run_path(run,folder/('partition-v1' if partition else 'compact-v4' if direct else 'compact-v3' if source_sets else 'compact-v2' if grouped else 'compact-v1'))
     prefix=None
-    if direct:folder,prefix=direct_attempt(folder,logger)
+    if direct or partition:folder,prefix=direct_attempt(folder,logger,request_prefix='scene_plan_partition_' if partition else 'scene_plan_direct_')
     manager = None; handle = None
     model = parse_scene_planner_model(frozen.config.raw.get('scene_planner_model', 'qwen3:8b'))
     if planner is not None and (not isinstance(planner, OllamaPlanner)
@@ -252,12 +321,14 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
     try:
         last_error = None
         for suffix in ('initial', 'correction'):
-            uid = (prefix if direct else 'scene_plan_compact3_' if source_sets else 'scene_plan_compact2_' if grouped else 'scene_plan_compact_' if compact else 'scene_plan_')+suffix
+            uid = (prefix if direct or partition else 'scene_plan_compact3_' if source_sets else 'scene_plan_compact2_' if grouped else 'scene_plan_compact_' if compact else 'scene_plan_')+suffix
             current = prompt if suffix == 'initial' else prompt+'\nCORRECTION\n'+last_error
             intent_path = folder/(suffix+'.intent.json')
             if intent_path.exists():
                 intent = read_json(intent_path)
                 object_fields(intent, ('identity','request_id','prompt','schema','body','context'), 'scene intent')
+                if not isinstance(intent['body'],dict) or not isinstance(intent['body'].get('format'),dict):
+                    raise ProductionRefused('original scene planning intent/prompt differs')
                 context = intent['context']
                 object_fields(context, ('client_id','scene_identity')+
                               (('model_session',) if 'model_session' in context else ()), 'scene intent context')
@@ -272,7 +343,9 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                             scene_key_constraints=keys,scene_environment_constraints=environment,scene_unlimited=unlimited,
                             scene_compact=compact,scene_grouped=grouped,scene_source_sets=source_sets,
                             scene_source_nonempty=source_nonempty,scene_direct=direct,
-                            model_session=context.get('model_session'))
+                            model_session=context.get('model_session'),scene_partition=partition,
+                            scene_partition_exact_sources=intent['body']['format'].get('$comment')!='video_ai_scene_partition_v1',
+                            scene_partition_exact_boundaries=intent['body']['format'].get('$comment') not in ('video_ai_scene_partition_v1','video_ai_scene_partition_v2'))
                     except SceneCapacityError:
                         # An unused legacy representation can be larger than
                         # the durable compact request. It cannot match here.
@@ -293,7 +366,7 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                 intent = dict(identity=identity, request_id=uid, prompt=current, schema=schema,
                     body=ollama_body(current,schema,cpu_only=frozen.options['cpu_planner'],scene_planning=True,model=model,
                         scene_compact=compact,scene_grouped=grouped,scene_source_sets=source_sets,scene_direct=direct,
-                        model_session=context.get('model_session')), context=context)
+                        model_session=context.get('model_session'),scene_partition=partition), context=context)
                 store.save(intent_path,intent)
                 boundary('intent'); store.owned()
                 if planner is None:
@@ -311,7 +384,7 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                     if port_listening(frozen.config.services['ollama'],3):
                         raise ProductionRefused('external Ollama service at '+frozen.config.services['ollama'])
                     handle = manager.ensure(build_service_specs(frozen.config,run,production=True,
-                        frozen=frozen,store=manifest,planner_transport='llama_direct' if direct else None)['ollama'])
+                        frozen=frozen,store=manifest,planner_transport='llama_direct' if direct or partition else None)['ollama'])
                     if not handle.owned:
                         raise ProductionRefused('external Ollama service at '+handle.url)
                     planner = OllamaPlanner(HttpClient(frozen.config.services['ollama'],
@@ -358,10 +431,36 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
             try:
                 content = parse_completed_response(outer,schema=schema,request_id=uid,evidence_paths=evidence,expected_model=model,
                     scene_prompt=current if is_environment_transport(intent['body']) else None,wire_schema=intent['body']['format'])
+                alias_path=folder/(suffix+'.environment-aliases.json')
+                if partition and (suffix=='correction' or not (folder/'correction.intent.json').exists() or alias_path.exists()):
+                    normalized,aliases=coalesce_unchanged_environments(content)
+                    if aliases:
+                        store.save(alias_path,dict(schema_version=1,algorithm='reuse_identical_adjacent_physical_environment_v1',
+                            identity=identity,request_id=uid,response_sha256=response['response_sha256'],
+                            original_proposal_sha256=canonical_digest(content),normalized_proposal_sha256=canonical_digest(normalized),
+                            aliases=aliases))
+                        content=normalized
+                if partition and (suffix=='correction' or not (folder/'correction.intent.json').exists()):
+                    entity_keys={row['key'] for row in content['entities']}
+                    variant_keys={row['key'] for row in content['appearance_variants']}
+                    if all(set(row['entity_ids'])<=entity_keys and set(row['variant_ids'])<=variant_keys for row in content['scenes']):
+                        from .scene_environment_repair import repair_environment_links
+                        repaired=repair_environment_links(content,frozen=frozen,units=units,schema=schema,store=store,
+                            folder=folder/(suffix+'.environment-repair'),logger=logger,paths=paths,planner=planner)
+                        if repaired!=content:
+                            store.save(folder/(suffix+'.environment-model-repair.json'),dict(schema_version=1,
+                                identity=identity,request_id=uid,response_sha256=response['response_sha256'],
+                                original_proposal_sha256=canonical_digest(content),repaired_proposal_sha256=canonical_digest(repaired)))
+                            normalized,aliases=coalesce_unchanged_environments(repaired)
+                            if aliases:
+                                store.save(folder/(suffix+'.environment-repair-aliases.json'),dict(schema_version=1,
+                                    original_proposal_sha256=canonical_digest(repaired),normalized_proposal_sha256=canonical_digest(normalized),
+                                    aliases=aliases))
+                            content=normalized
                 try:
                     bible, plan = build_scene_plan(script,bound_units,timeline,content,settings=settings)
                 except ValueError as exc:
-                    if not direct or str(exc)!='unused proposal visual entry':raise
+                    if not (direct or partition) or str(exc)!='unused proposal visual entry':raise
                     if (suffix=='initial' and (folder/'correction.intent.json').exists()
                             and not (folder/'initial.catalog-pruning.json').exists()):raise
                     normalized,removed=prune_unused_visual_entries(content)
@@ -390,20 +489,7 @@ def produce_scene_plan(frozen, units, timeline, *, paths, logger, lock=None, pla
                             response_sha256=response['response_sha256'], proposal=content)
             store.save(folder/'proposal.json',proposal)
             boundary('proposal'); store.owned()
-            # Validate every existing output before filling any missing output.
-            outputs = [(run/'production/visual-bible.json',bible), (run/'production/scene-plan.json',plan)]
-            commit = {k:plan[k] for k in ('schema_version','run_id','source_sha256','units_sha256',
-                                        'timeline_sha256','settings','visual_bible_sha256')}
-            commit['scene_plan_sha256'] = canonical_digest(plan)
-            outputs.append((run/'production/scene-plan-commit.json',commit))
-            for path, value in outputs:
-                if path.exists() and not _same_json(read_json(path),value):
-                    raise ProductionRefused('immutable scene output/commit identity differs')
-            if outputs[-1][0].exists() and not all(path.exists() for path,_ in outputs):
-                raise ProductionRefused('committed scene plan lacks required output')
-            for (path,value),point in zip(outputs,('visual-bible','scene-plan','commit')):
-                store.save(path,value); boundary(point); store.owned()
-            return bible, plan
+            return _commit_outputs(store,run,bible,plan)
         raise ProductionRefused('scene planning failed')
     finally:
         stop_owned_preserving_exception(manager,handle,logger,'scene_planning')

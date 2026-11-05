@@ -175,9 +175,9 @@ def test_model_manifest_and_blobs_are_freshly_verified(tmp_path):
     from video_ai.runtime.storyboard_checks import _model_files
     from video_ai.runtime.paths import PathPolicy
     from video_ai.runtime.storage import _sandbox
-    root=_sandbox.get()/'models/tests'/uuid4().hex/'identity';manifest=root/'models/ollama/manifests/registry.ollama.ai/library/qwen3/8b'
+    root=_sandbox.get()/'shared/models/tests'/uuid4().hex/'identity';manifest=root/'shared/models/ollama/manifests/registry.ollama.ai/library/qwen3/8b'
     manifest.parent.mkdir(parents=True);data=b'model test blob';digest=hashlib.sha256(data).hexdigest()
-    blob=root/'models/ollama/blobs'/('sha256-'+digest);blob.parent.mkdir();blob.write_bytes(data)
+    blob=root/'shared/models/ollama/blobs'/('sha256-'+digest);blob.parent.mkdir();blob.write_bytes(data)
     definition=dict(config=dict(digest='sha256:'+digest,size=len(data)),layers=[])
     manifest.write_text(json.dumps(definition),encoding='utf-8');paths=SimpleNamespace(runtime_root=root,policy=PathPolicy())
     assert _model_files(paths)['blob_0'].sha256==digest

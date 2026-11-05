@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-REAL = Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-repair-calibration-20261027-r2')
+REAL = Path('E:/VideoAI/shared/continuity-benchmark/AI-repair-calibration-20261027-r2')
 
 def identity(path):
     return dict(path=str(path), bytes=path.stat().st_size,

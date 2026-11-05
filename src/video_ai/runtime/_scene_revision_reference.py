@@ -8,7 +8,7 @@ from ..planning.production_scenes import canonical_digest
 from ..reference_config import REFERENCE_FIELDS,ReferenceConfigurationRequired,parse_capability_paths
 from .manifest import thaw
 from .production_state import ProductionRefused
-from .scene_revision_records import require_scene_revision,stable_bytes,verify_artifact
+from .scene_revision_records import require_scene_revision,stable_bytes,verify_artifact,revision_read_transaction
 
 
 def marker_digest(marker):
@@ -17,6 +17,11 @@ def marker_digest(marker):
 
 def source_reference_context(frozen):
     """Follow an explicit settings import to its actual owned binding, locally."""
+    with revision_read_transaction():
+        return _source_reference_context(frozen)
+
+
+def _source_reference_context(frozen):
     run=Path(frozen.options['script_path']).parent.parent
     if 'scene_revision' in frozen.options:
         proof=require_scene_revision(frozen)
@@ -49,10 +54,11 @@ def target_reference_digest(frozen,source_context):
     values={key:thaw(frozen.config.raw.get(key)) for key in REFERENCE_FIELDS}
     if source_context is not None:
         for key in REFERENCE_FIELDS:
-            if values[key] is None:values[key]=deepcopy(source_context['values'][key])
+            if values[key] is None or key=='reference_capabilities' and values[key]=={}:
+                values[key]=deepcopy(source_context['values'][key])
     try:
         paths=parse_capability_paths(values['reference_capabilities']);raws={}
-        explicit=frozen.config.raw.get('reference_capabilities') is not None
+        explicit=bool(frozen.config.raw.get('reference_capabilities'))
         for key,path in paths.items():
             bound=frozen.options.get('execution_policy',{}).get('input_identities',{}).get('reference_capability/'+key)
             if bound is not None:

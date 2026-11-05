@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "runtime_root": "D:/VideoSi",
-  "project_root": "D:/VideoSi/projects/video-ai",
-  "output_root": "D:/VideoSi/output/video-ai",
-  "cache_root": "D:/VideoSi/cache/video-ai",
+  "runtime_root": "E:/VideoAI",
+  "project_root": "E:/VideoAI/shared",
+  "output_root": "E:/VideoAI/output",
+  "cache_root": "E:/VideoAI/scratch",
   "voice_config": "voice.example.json",
   "tools": {
-    "ffmpeg": "D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe",
-    "ffprobe": "D:/VideoSi/tools/ffmpeg/bin/ffprobe.exe",
-    "comfy_python": "D:/VideoSi/tools/ComfyUI_windows_portable/python_embeded/python.exe",
-    "comfy_root": "D:/VideoSi/tools/ComfyUI_windows_portable/ComfyUI",
-    "tts_python": "D:/VideoSi/tools/GPT-SoVITS/runtime/python.exe",
-    "tts_root": "D:/VideoSi/tools/GPT-SoVITS",
-    "ollama_executable": "D:/VideoSi/tools/ollama/ollama.exe"
+    "ffmpeg": "E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe",
+    "ffprobe": "E:/VideoAI/shared/tools/ffmpeg/bin/ffprobe.exe",
+    "comfy_python": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/python_embeded/python.exe",
+    "comfy_root": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI",
+    "tts_python": "E:/VideoAI/shared/tools/GPT-SoVITS/runtime/python.exe",
+    "tts_root": "E:/VideoAI/shared/tools/GPT-SoVITS",
+    "ollama_executable": "E:/VideoAI/shared/tools/ollama/ollama.exe"
   },
   "services": {
     "ollama": "http://127.0.0.1:11434",
@@ -26,12 +26,12 @@
     "upscale": "../workflows/upscale_api.json"
   },
   "models": {
-    "sdxl": "D:/VideoSi/models/comfyui/checkpoints/sd_xl_base_1.0.safetensors",
-    "wan_high": "D:/VideoSi/models/comfyui/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
-    "wan_low": "D:/VideoSi/models/comfyui/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
-    "text_encoder": "D:/VideoSi/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
-    "vae": "D:/VideoSi/models/comfyui/vae/wan_2.1_vae.safetensors",
-    "upscale": "D:/VideoSi/models/comfyui/upscale_models/RealESRGAN_x4plus.pth"
+    "sdxl": "E:/VideoAI/shared/models/comfyui/checkpoints/sd_xl_base_1.0.safetensors",
+    "wan_high": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+    "wan_low": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+    "text_encoder": "E:/VideoAI/shared/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+    "vae": "E:/VideoAI/shared/models/comfyui/vae/wan_2.1_vae.safetensors",
+    "upscale": "E:/VideoAI/shared/models/comfyui/upscale_models/RealESRGAN_x4plus.pth"
   },
   "media": {
     "profile": "fast",
@@ -48,7 +48,7 @@
     },
     "burn_subtitles": true,
     "music": null,
-    "font_file": "D:/VideoSi/projects/video-ai/inputs/fonts/msyh.ttc"
+    "font_file": "E:/VideoAI/shared/assets/fonts/msyh.ttc"
   },
   "timeouts": {
     "ollama_request": 120,

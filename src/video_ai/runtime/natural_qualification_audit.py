@@ -1,4 +1,5 @@
 """Replay delivered development evidence without inventing natural labels or qualification."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 import hashlib
 import json
 import os
@@ -14,7 +15,7 @@ from .manifest import now
 from .research_material_baseline import measure_natural_manifest
 from .research_material_records import ResearchReader, load_research_material_context
 
-AUDIT_ROOT = Path('D:/VideoSi/projects/video-ai/vco06-natural-qualification')
+AUDIT_ROOT = (_PORTABLE_ROOT / 'shared/config/research/vco06-natural-qualification')
 THRESHOLDS = ('noop_bias_ceiling', 'minimum_bias_improvement', 'maximum_frame_bias_regression',
               'maximum_off_axis_residual', 'maximum_temporal_bias_increase')
 
@@ -143,7 +144,7 @@ def write_qualification_audit(delivery_path, output_path, *, timeout=300):
     for identity in result['closure']:
         if monotonic() >= deadline:
             raise TimeoutError('qualification audit deadline expired before commit')
-        verify(identity, runtime=Path(identity['path']).is_relative_to(Path('D:/VideoSi')), empty=True)
+        verify(identity, runtime=Path(identity['path']).is_relative_to(_PORTABLE_ROOT), empty=True)
     local(output, exists=False)
     local(temporary)
     # Native Windows rename refuses a destination created by a concurrent writer.

@@ -1,3 +1,31 @@
+## Portable storage (2026-11-07)
+
+Long scripts without an existing planner submission now use source-bound local scene requests. Optional `"scene_planner_transport": "focused_v1"` explicitly selects this transport for a new run or a reconfiguration revision. It first chooses 1–target contiguous source slices per paragraph, then writes visuals for fixed literal source text. Existing submitted requests retain their original transport. A revision changing only this transport preserves narration and invalidates the scene plan and dependent visuals; it does not accept prior images automatically.
+
+The default runtime root is `E:/VideoAI`. Set the process environment variable `VIDEO_AI_RUNTIME_ROOT` before launching to use another local drive or a path containing spaces. Python and PowerShell share this setting; source paths come from the current checkout.
+
+```powershell
+$env:VIDEO_AI_RUNTIME_ROOT = 'F:/Video AI'
+.\scripts\start_windows.ps1 make-video --script 'F:/Video AI/shared/assets/script.txt' --title 'First video'
+.\scripts\start_windows.ps1 make-video --video 0001
+.\scripts\start_windows.ps1 storage report --video 0001
+```
+
+The root contains `shared/{models,tools,envs,config,assets}`, `work/<number-title>`, `output/<number-title>/vNNN`, and `scratch`. The index and sequence live in `shared/config/storage`. Each work bundle owns inputs, audio, images, clips, frames, service temporaries, and records across every revision. Internal recovery paths retain `process/revisions/01`. Published movies, subtitles, and delivery records live independently under output.
+
+After publishing, preview and then close and clean the video:
+
+```powershell
+.\scripts\start_windows.ps1 storage close --video 0001 --dry-run
+.\scripts\start_windows.ps1 storage close --video 0001
+.\scripts\start_windows.ps1 storage clean --video 0001 --dry-run
+.\scripts\start_windows.ps1 storage clean --video 0001
+```
+
+`close` moves the entire bundle to `scratch/completed/<number-title>`. `clean` removes its process data while retaining deliveries and shared dependencies. Original progress cannot be resumed afterward. Active tasks, redirected directories, paths outside the managed root, and bundles still referenced by other videos are refused. Without `--video`, cleanup previews or removes eligible closed bundles and rebuildable caches.
+
+Implementation verification uses no model downloads, real video generation, or deletion of existing user data. Generation adds no model hashing, media decoding, or per-frame checks. Existing data is never automatically migrated or deleted. Old D:/VideoSi and runs paths below are historical examples; new tasks use this section.
+
 # 配置样例
 
 新 `make-video` 的可见编号由存储管理器分配，例如 `0001-旅行者一号`；按 `--video 0001` 使用冻结配置续作。公共配置仍放在本目录，制作快照保存在该视频制作包中。正式交付独立保存，`storage close/clean --video 0001` 可以结束制作并删除过程包，详见 [README](../README.md#视频目录与过程数据清理)。旧 run 使用原路径和原冻结配置，不因新存储布局自动迁移。
@@ -8,7 +36,7 @@
 
 本地分镜模型可用可选顶层字段 `"scene_planner_model": "qwen3:14b"` 显式选择，当前仅允许 `qwen3:8b` 和 `qwen3:14b`；省略时为8B。须先把所选模型安装到本机Ollama模型目录。此字段只影响即梦策略的scene规划；原语音单元规划和旧storyboard仍使用8B。它随运行配置冻结，请求与响应模型必须精确匹配，旧run继续使用其原模型；切换模型须创建新run。图片模型仍由 `image_generation` 配置。更大模型的规划质量与显存需求须实际验证，预检通过不等于分镜或影片通过。
 
-使用独立配置启用 `production_strategy="paragraph_jimeng_v1"`，保留已经确认的 voice、Wan/RealESRGAN 权重、workflow、工具和媒体设置。复制样例到 `D:/VideoSi/projects/video-ai/config/` 后，将 `voice_config` 和各 workflow 改为真实绝对路径；相对路径以配置文件所在目录解析。不要覆盖默认 `production.json` 或已冻结 run。
+使用独立配置启用 `production_strategy="paragraph_jimeng_v1"`，保留已经确认的 voice、Wan/RealESRGAN 权重、workflow、工具和媒体设置。复制样例到 `E:/VideoAI/shared/config/` 后，将 `voice_config` 和各 workflow 改为真实绝对路径；相对路径以配置文件所在目录解析。不要覆盖默认 `production.json` 或已冻结 run。
 
 样例提供合法的字段结构，不包含账号凭证或真实模型能力声明。`image_generation.req_key="jimeng_t2i_v40"` 仅为示例，真实运行使用用户选择的 req_key 和完整参数；只支持既有智能视觉异步协议，未知模型不能由名称推断能力。`model_parameters.width/height` 是发送给服务端的尺寸，`output_width/output_height` 是下载后核验的预期尺寸，两者必须一致且横向 16:9。`candidates_per_scene=2` 表示每画面提交两次，各次返回的全部图都会保存。
 
@@ -57,7 +85,7 @@
 
 ## make-video 历史默认制作配置
 
-普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `D:/VideoSi/projects/video-ai/config/production.json`，也可用 `--config PATH` 指定现有配置。历史策略配置复用已安装 Ollama/qwen3:8b、GPT-SoVITS v2/CPU/非半精度声音、SDXL、Wan、RealESRGAN_x4plus 和 FFmpeg；Wan 前仍需实际图片审核。默认配置路径属于运行环境，源码中的 `production.example.json` 仅为配置样例。
+普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `E:/VideoAI/shared/config/production.json`，也可用 `--config PATH` 指定现有配置。历史策略配置复用已安装 Ollama/qwen3:8b、GPT-SoVITS v2/CPU/非半精度声音、SDXL、Wan、RealESRGAN_x4plus 和 FFmpeg；Wan 前仍需实际图片审核。默认配置路径属于运行环境，源码中的 `production.example.json` 仅为配置样例。
 
 首版支持单版 fast（768×432）或 quality（1280×720）源镜头，最终固定 1920×1080/native16、硬切、烧录字幕、无背景音乐。`media.fps` 非 16、最终尺寸非 1920×1080、transition 非 cut、burn_subtitles 为 false 或 music 非 null 会在预检指出确切字段并拒绝，不自动改配置。旧流程支持范围见后文。
 
@@ -83,7 +111,7 @@
 
 production.example.json 使用批准的新 D:/VideoSi 目标，引用同目录的声音样例和源码工作流模板。样例可直接加载；工具、权重、参考音频与字体未迁入时，doctor 必须报告缺失并返回 1。
 
-实际配置存于 D:/VideoSi/projects/video-ai/config。复制样例到该目录后，应将 workflows 中的路径改为源码模板的绝对路径，voice_config 改为实际声音 JSON。相对路径以各自 JSON 文件的目录解析；命令行路径以调用目录解析。实际素材位于项目 inputs，正式输出位于 D:/VideoSi/output/video-ai。
+实际配置存于 E:/VideoAI/shared/config。复制样例到该目录后，应将 workflows 中的路径改为源码模板的绝对路径，voice_config 改为实际声音 JSON。相对路径以各自 JSON 文件的目录解析；命令行路径以调用目录解析。实际素材位于项目 inputs，正式输出位于 E:/VideoAI/output。
 
 声音样例表达任务1盘点的当前 custom：v2 权重、CPU、非半精度、原参考转写与 SHA256。历史界面的 v3/v2ProPlus 选择未混入当前配置。模型实际加载及试听仍需后续验收。
 

@@ -38,7 +38,7 @@ class AudioInfo:
 
 
 def audio_command(args, *, paths, logger, unit_id, timeout=300):
-    result = run_logged(tuple(str(a) for a in args), cwd=logger.run_dir, env=build_child_env(paths),
+    result = run_logged(tuple(str(a) for a in args), cwd=logger.run_dir, env=build_child_env(paths, logger.run_dir),
                         timeout=timeout, logger=logger, stage='speech', unit_id=unit_id)
     if result.returncode != 0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: audio command failed; {result.stderr_path}')

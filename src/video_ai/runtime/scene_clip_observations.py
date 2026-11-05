@@ -92,8 +92,12 @@ def _artifact(value, run):
 
 def _media_identities(template):
     try:
-        run = validate_run_dir(PROJECT_ROOT/'runs'/template['run_id'])
-    except (TypeError, ValueError) as exc:
+        # Observation artifacts already bind an absolute run-local path. This
+        # also supports managed revisions and isolated test runtime roots.
+        generated = Path(template['generated']['path'])
+        run = validate_run_dir(next(parent for parent in generated.parents
+                                    if parent.name == template['run_id']))
+    except (KeyError, StopIteration, TypeError, ValueError) as exc:
         raise ProductionRefused('invalid observation run identity') from exc
     for field in ('generated', 'source', 'last_frame'):
         _artifact(template[field], run)
@@ -205,8 +209,8 @@ def validate_scene_clip_observation(value, expected, *, now):
     parent_end = template['playback']['parent_source_frames']
     if parent_end is not None:
         _interval(value['playback']['parent_source_frames'], parent_end[1], 'parent playback')
-    if value['review_method'] not in ('human_video', 'agent_video'):
-        raise ProductionRefused('actual human_video or agent_video playback review required')
+    if value['review_method'] not in ('human_video', 'agent_video', 'agent_frame_sequence'):
+        raise ProductionRefused('actual video playback or complete decoded-frame sequence review required')
     _nonempty(value['reviewer'], 'reviewer')
     if not isinstance(value['viewed_at'], str):
         raise ProductionRefused('viewed_at must be an ISO timestamp string')

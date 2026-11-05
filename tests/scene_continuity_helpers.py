@@ -61,7 +61,7 @@ def tiny_scene_context(runtime_run, monkeypatch, *, count=3, image=None, source_
     monkeypatch.setattr('video_ai.adapters.jimeng.JimengClient.submit', forbidden)
 
     run, base, paths = runtime_run
-    actual = load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     raw = thaw(base.raw)
     raw.update(production_strategy='paragraph_jimeng_v1', scene_continuity=POLICY)
     config = replace(base, raw=raw, production_strategy='paragraph_jimeng_v1', tools=dict(

@@ -80,6 +80,63 @@ def test_once_only_submission_and_readonly_reconstruction(transaction):
     assert set(store.threads)=={threading.get_ident()}
 
 
+def test_original_absent_from_fresh_views_does_not_poll_forever(transaction, monkeypatch):
+    from video_ai.runtime.scene_comfy_transactions import recover_or_submit_scene_clip, SceneSubmitUnknown
+    from video_ai.runtime.execution_limits import production_execution
+    store,request,graph,template=transaction; client=Client(store,request,graph)
+    client.queue=lambda **kw:client.response(dict(queue_running=[
+        [1,client.pid,graph,dict(client_id=client.cid),['108']]],queue_pending=[]))
+    client.history=lambda *args,**kw:(_ for _ in ()).throw(KeyboardInterrupt())
+    with pytest.raises(KeyboardInterrupt):
+        recover_or_submit_scene_clip(store,request,graph,client=client,template=template,ensure_service=lambda:None,logger=None,timeout=1)
+    calls=[]
+    client.queue=lambda **kw:client.response(dict(queue_running=[],queue_pending=[]))
+    def missing(*args,**kw):
+        calls.append(1)
+        return client.response({})
+    client.history=missing
+    def stop_polling(_):
+        assert len(calls)<2, 'kept polling after two fresh missing-original views'
+    monkeypatch.setattr('video_ai.runtime.scene_comfy_transactions.time.sleep',stop_polling)
+    with pytest.raises(SceneSubmitUnknown,match='absent.*queue.*history'):
+        production_execution(recover_or_submit_scene_clip)(store,request,graph,client=client,template=template,ensure_service=lambda:None,logger=None,timeout=1,request_timeout_seconds=1)
+    assert len(calls)==2 and client.posts==1
+    directory=store.clip_dir(request['clip_id'])
+    assert store.read(directory/'accepted.json')['prompt_id']==client.pid
+    assert store.read(directory/'submission.json') is None
+    assert store.read(directory/'terminal.json') is None
+
+
+def test_one_missing_view_can_still_recover_original_history(transaction, monkeypatch):
+    from video_ai.runtime.scene_comfy_transactions import recover_or_submit_scene_clip
+    store,request,graph,template=transaction; client=Client(store,request,graph)
+    original=client.history; calls=[]
+    client.queue=lambda **kw:client.response(dict(queue_running=[] if calls else [
+        [1,client.pid,graph,dict(client_id=client.cid),['108']]],queue_pending=[]))
+    def delayed(*args,**kw):
+        calls.append(1)
+        return client.response({}) if len(calls)==1 else original(*args,**kw)
+    client.history=delayed
+    monkeypatch.setattr('video_ai.runtime.scene_comfy_transactions.time.sleep',lambda _:None)
+    result=recover_or_submit_scene_clip(store,request,graph,client=client,template=template,ensure_service=lambda:None,logger=None,timeout=1)
+    assert result['prompt_id']==client.pid and client.posts==1 and len(calls)==2
+
+
+def test_queued_original_keeps_waiting_for_its_history(transaction, monkeypatch):
+    from video_ai.runtime.scene_comfy_transactions import recover_or_submit_scene_clip
+    store,request,graph,template=transaction; client=Client(store,request,graph)
+    original=client.history; calls=[]
+    client.queue=lambda **kw:client.response(dict(queue_running=[] if len(calls)>=3 else [
+        [1,client.pid,graph,dict(client_id=client.cid),['108']]],queue_pending=[]))
+    def delayed(*args,**kw):
+        calls.append(1)
+        return client.response({}) if len(calls)<3 else original(*args,**kw)
+    client.history=delayed
+    monkeypatch.setattr('video_ai.runtime.scene_comfy_transactions.time.sleep',lambda _:None)
+    result=recover_or_submit_scene_clip(store,request,graph,client=client,template=template,ensure_service=lambda:None,logger=None,timeout=1)
+    assert result['prompt_id']==client.pid and client.posts==1 and len(calls)==3
+
+
 def test_lost_post_response_recovers_original_identity_without_repost(transaction):
     from video_ai.runtime.scene_comfy_transactions import recover_or_submit_scene_clip, SceneSubmitUnknown
     store,request,graph,template=transaction; client=Client(store,request,graph,lose_response=True)

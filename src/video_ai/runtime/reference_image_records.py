@@ -49,11 +49,17 @@ def resolve_reference_prompt(frozen, scene, bible, capability):
     request_ids = {f'request_{i:02d}' for i in range(1, model.candidates_per_scene+1)}
     saved = []
     originals = {}
-    for folder in sorted(root.glob('request_*')):
+    from ._continuity_byte_guard import observe_inventory,observe_absence
+    from .manifest import hash_file
+    folders=sorted(root.glob('request_*'))
+    observe_inventory(root,'reference_requests',folders)
+    for folder in folders:
         if not folder.is_dir():
             continue
+        children=list(folder.iterdir())
+        observe_inventory(folder,'children',children)
         if folder.name not in request_ids:
-            if any(folder.iterdir()):
+            if children:
                 raise ProductionRefused('unexpected reference request evidence')
             continue
         path = folder/'request.json'
@@ -64,9 +70,13 @@ def resolve_reference_prompt(frozen, scene, bible, capability):
                 raise ProductionRefused('reference request prompt is not a known exact representation')
             saved.append(prompt)
             originals[folder.name] = value
-        elif any(folder.iterdir()):
-            raise ProductionRefused('reference request evidence lacks original logical request')
+        else:
+            observe_absence(path)
+            if children: raise ProductionRefused('reference request evidence lacks original logical request')
     provenance = run/'production/reference-images'/scene['scene_id']/'provenance.json'
+    for path in (provenance,root/'candidates.json'):
+        if path.exists(): hash_file(path)
+        else: observe_absence(path)
     if (root/'candidates.json').exists() and not provenance.exists():
         raise ProductionRefused('reference candidates lack original provenance')
     if (provenance.exists() or (root/'candidates.json').exists()) and not saved:
@@ -111,6 +121,8 @@ def _completed_reference_evidence(folder, request, settings, *, require_result):
                          ('result', 'schema_version identity task_id candidates')):
         path = folder/(name+'.json')
         if name == 'result' and not require_result and not path.exists():
+            from ._continuity_byte_guard import observe_absence
+            observe_absence(path)
             continue  # Recover by querying the accepted task, even after its input URLs expire.
         value = images._read(path)
         object_fields(value, fields.split(), 'completed reference '+name)
@@ -153,7 +165,7 @@ def _committed(frozen, scene, bible, plan):
     return run
 
 
-from .scene_revision_records import revision_read_transaction
+from .scene_revision_records import revision_read_transaction, _batch_revision_artifacts
 
 
 @revision_read_transaction()
@@ -196,7 +208,38 @@ def resolve_reference_bindings(frozen, bible, plan, scene, accepted_batches):
 def _prior(frozen, bible, plan, scene):
     index = next((i for i, ids in enumerate(plan['batches'], 1) if scene['scene_id'] in ids), None)
     if index is None: raise ProductionRefused('reference scene has no committed batch')
-    return images._load_accepted(frozen, None, None, bible, plan, before=index)
+    from .scene_revision_records import _artifact_batch
+    from ._continuity_byte_guard import capture_reads, observe_file, observe_inventory, observe_absence
+    from threading import get_ident
+    batch = _artifact_batch.get()
+    if batch is None or not batch['active'] or batch['thread'] != get_ident():
+        return images._load_accepted(frozen, None, None, bible, plan, before=index)
+    from .scene_revision_records import source_read_scope_identity
+    key = (id(frozen), canonical_digest(bible), canonical_digest(plan), index,
+           source_read_scope_identity())
+    cache = batch.setdefault('reference_prior_batches', {})
+    if key not in cache:
+        with capture_reads() as capture:
+            value = images._load_accepted(frozen, None, None, bible, plan, before=index)
+        guard = capture.finish()
+        # Anchor only native handles already held for these verified bytes.
+        from ._protected_continuity_inputs import verify_protected_continuity_file
+        for file in guard.files:
+            verify_protected_continuity_file(file, prepare_existing=True)
+        cache[key] = (deepcopy(value), guard)
+        batch.setdefault('reference_prior_guards', []).append(guard)
+    else:
+        value, guard = cache[key]
+        # This read-only batch already captured the first read. Its exit
+        # verifies every baseline; repeated hits only replay dependencies.
+        # Replay dependencies so an enclosing scene proof remains complete.
+        for file in guard.files:
+            observe_file({name: getattr(file, name) for name in ('path', 'bytes', 'mtime_ns', 'sha256', 'verified_at')})
+        for inventory in guard.inventories:
+            observe_inventory(inventory.path, inventory.kind, inventory.expected, pattern=inventory.pattern)
+        for path in guard.absences:
+            observe_absence(path)
+    return deepcopy(cache[key][0])
 
 
 def _format(value):
@@ -308,14 +351,27 @@ def validate_submit_evidence(folder, request, intent):
 
 
 def verify_reference_provenance(frozen, scene, bible, plan):
+    from .scene_revision_records import revision_cached_read,revision_read_identity
+    identity = (revision_read_identity(frozen),
+                canonical_digest(scene),canonical_digest(bible),canonical_digest(plan))
+    return revision_cached_read('reference_provenance',identity,
+        lambda:_verify_reference_provenance(frozen,scene,bible,plan))
+
+
+def _verify_reference_provenance(frozen, scene, bible, plan):
     from ._scene_revision_readers import proof_for
     proof = proof_for(frozen,'image',scene['scene_id'])
     if proof is not None:
-        from .production_inputs import load_frozen_inputs
-        from ._scene_revision_origins import common
-        from ..planning.production_timeline import ProductionTimeline
-        source = load_frozen_inputs(proof['source_run']); prefix = common(source)
-        old_bible,old_plan = images.load_committed_plan(source,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
+        from ._scene_revision_origins import common, origin_timeline
+        from .scene_revision_records import revision_cached_read,revision_read_identity
+        source = proof['source_frozen']
+        # The import guard covers source common/plan bytes and inventories.
+        # Replaying it on every use also exposes dependencies to capture observers.
+        proof['guard'].verify_captured_bytes()
+        def source_plan():
+            prefix = common(source)
+            return images.load_committed_plan(source, prefix['units'], origin_timeline(prefix['timeline']))
+        old_bible, old_plan = revision_cached_read('reference_source_plan',revision_read_identity(source),source_plan)
         old_scene = next(s for s in old_plan['scenes'] if s['scene_id']==scene['scene_id'])
         provenance = verify_reference_provenance(source,old_scene,old_bible,old_plan)
         proof['guard'].verify_captured_bytes()
@@ -358,6 +414,7 @@ def reference_candidates(frozen, scene, manifest_path):
 
 
 @revision_read_transaction()
+@_batch_revision_artifacts
 def build_reference_image_acceptance(frozen, units, timeline):
     complete = images.require_complete_image_acceptance(frozen, units, timeline)
     bible, plan = images.load_committed_plan(frozen, units, timeline)

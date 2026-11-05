@@ -135,7 +135,7 @@ def test_actual_config_validation_before_runtime(tmp_path, monkeypatch, capsys, 
 
 
 @pytest.mark.parametrize('command,field', REQUIRED_ARGUMENTS)
-@pytest.mark.parametrize('bad', ['', ' ', 'D:relative', '//server/share', 'D:/VideoSi/name:stream', 'D:/VideoSi/CON', 'D:/VideoSi/trailing.'])
+@pytest.mark.parametrize('bad', ['', ' ', 'D:relative', '//server/share', 'E:/VideoAI/name:stream', 'E:/VideoAI/CON', 'E:/VideoAI/trailing.'])
 def test_windows_aliases_refused_before_runtime(tmp_path, monkeypatch, command, field, bad):
     def forbidden(*args, **kwargs):
         pytest.fail('invalid path reached inference')

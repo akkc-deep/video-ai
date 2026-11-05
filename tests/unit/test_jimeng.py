@@ -13,6 +13,66 @@ class Response(io.BytesIO):
     def geturl(self): return 'https://visual.volcengineapi.com/'
 
 
+@pytest.mark.parametrize('status,reply,expected',[
+    (401,dict(code=50400,data=None,message='Access Denied: test-secret',request_id='denied'),'explicit'),
+    (401,dict(code=50400,data={},request_id='denied'),'explicit'),
+    (401,dict(code=50400,data={'task_id':'possibly-created'}),'ambiguous'),
+    (401,dict(code=50400,data=None,task_id='possibly-created'),'ambiguous'),
+    (401,{},'ambiguous'),
+    (504,{},'ambiguous'),
+])
+def test_definitive_auth_denial_is_not_an_unknown_submission(monkeypatch,status,reply,expected):
+    from video_ai.adapters.common import AdapterError
+    from video_ai.adapters.external_https import ExternalHttpsClient
+    from video_ai.adapters.jimeng import JimengClient
+    from video_ai.jimeng_config import parse_image_generation
+    monkeypatch.setenv('TEST_VOLC_AK','test-access')
+    monkeypatch.setenv('TEST_VOLC_SK','test-secret')
+    calls=[]
+    def transport(request,**kwargs):
+        calls.append(request)
+        response=Response(json.dumps(reply).encode())
+        response.status=status
+        return response
+    client=JimengClient(parse_image_generation(image_settings(),'test'),
+        http=ExternalHttpsClient(transport=transport),
+        sleep=lambda _:pytest.fail('authorization denial must not trigger automatic retry'))
+    with pytest.raises(AdapterError) as caught:
+        client.submit('scene')
+    assert caught.value.kind.value==expected
+    assert len(calls)==1
+    assert 'test-secret' not in json.dumps(caught.value.diagnostic)
+
+
+@pytest.mark.parametrize('mode',['recover','limited','ambiguous'])
+def test_only_explicit_rate_limit_rejections_are_retried(monkeypatch,mode):
+    from video_ai.adapters.common import AdapterError,FailureKind
+    from video_ai.adapters.external_https import ExternalHttpsClient
+    from video_ai.adapters.jimeng import JimengClient
+    from video_ai.jimeng_config import parse_image_generation
+    monkeypatch.setenv('TEST_VOLC_AK','test-access');monkeypatch.setenv('TEST_VOLC_SK','test-secret')
+    calls=[];delays=[]
+    def transport(request,**kwargs):
+        calls.append(request)
+        limited=mode!='recover' or len(calls)==1
+        value=(dict(code=50429,data={'task_id':'possibly-created'} if mode=='ambiguous' else None,
+                    message='test-access test-secret',request_id='rate-request') if limited
+               else dict(code=10000,data=dict(task_id='accepted-task'),request_id='ok-request'))
+        result=Response(json.dumps(value).encode());result.status=429 if limited else 200
+        return result
+    client=JimengClient(parse_image_generation(image_settings(),'test'),
+        http=ExternalHttpsClient(transport=transport),sleep=delays.append)
+    if mode=='recover':
+        result=client.submit('scene')
+        assert result['task_id']=='accepted-task' and len(calls)==2 and delays==[2]
+        assert 'test-secret' not in json.dumps(result['diagnostic'])
+    else:
+        with pytest.raises(AdapterError) as caught:client.submit('scene')
+        assert len(calls)==(3 if mode=='limited' else 1)
+        assert caught.value.kind==(FailureKind.explicit if mode=='limited' else FailureKind.ambiguous)
+        assert 'test-secret' not in json.dumps(caught.value.diagnostic)
+
+
 def test_signature_fixed_utf8_vector():
     from video_ai.adapters.jimeng import sign_request
     body = '{"prompt":"湖水","req_key":"jimeng_t2i_v40"}'.encode()

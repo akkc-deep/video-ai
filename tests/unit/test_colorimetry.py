@@ -105,7 +105,7 @@ def audit_context(runtime_run):
     from video_ai.runtime.paths import create_run
     from video_ai.runtime.logging import RunLogger
     run, config, paths = runtime_run
-    actual = load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     config = replace(config, tools=dict(config.tools, ffmpeg=actual.tools['ffmpeg'], ffprobe=actual.tools['ffprobe']))
     return run, dict(config=config, paths=paths, logger=RunLogger(create_run(paths)))
 
@@ -286,7 +286,7 @@ def test_command_timeout_preserves_timeout_exception_and_evidence(audit_context,
         session.deadline=c.monotonic()-1
         return CommandResult(tuple(args),kwargs['cwd'],-1,True,stdout,stderr,now(),now())
     monkeypatch.setattr(c,'run_logged',timeout)
-    with pytest.raises(subprocess.TimeoutExpired): session.command(['D:/VideoSi/tools/fake.exe'],'test')
+    with pytest.raises(subprocess.TimeoutExpired): session.command(['E:/VideoAI/shared/tools/fake.exe'],'test')
     assert (kw['logger'].root/'processes/timeout.stderr').read_bytes()==b'timeout'
 
 

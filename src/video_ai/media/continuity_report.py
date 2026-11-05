@@ -619,7 +619,7 @@ def validate_continuity_report(report_identity, manifest_identity=None, *, manif
         raise ValueError('canonical report input digest differs')
     if config is None:
         from ..config import load_config
-        config = load_config(RUNTIME_ROOT/'projects/video-ai/config/production.json')
+        config = load_config(RUNTIME_ROOT/'shared/config/production.json')
     record_paths = [f['record']['path'] for c in data['clips'] for f in c['frames']]
     record_paths += [f['record']['path'] for f in data['references']]
     # Only original metadata read through this window contributes to inputs.

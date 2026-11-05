@@ -1,7 +1,8 @@
-"""Per-child D: environment; never mutate the parent or machine settings."""
+"""Per-child runtime environment; never mutate the parent or machine settings."""
 import os
+from pathlib import Path
 
-from .paths import RuntimePaths, CACHE_ROOT
+from .paths import RuntimePaths
 
 CACHE_LOCATIONS = {
     'TEMP': 'temp', 'TMP': 'temp', 'TMPDIR': 'temp',
@@ -15,13 +16,13 @@ CACHE_LOCATIONS = {
 }
 
 
-def build_child_env(paths: RuntimePaths) -> dict[str, str]:
+def build_child_env(paths: RuntimePaths, run_dir=None) -> dict[str, str]:
     paths.validate()
     policy = paths.policy
     from .storage import test_root_for_paths
     test_root = test_root_for_paths(paths)
     runtime = test_root or paths.runtime_root
-    disposable = runtime/'disposable/video-ai'
+    disposable = policy.validate_write(Path(run_dir)/'service-runtime','run') if run_dir is not None else runtime/'scratch'
     dependencies = {
         'HF_HOME': ('huggingface','models/huggingface','model'),
         'HF_HUB_CACHE': ('huggingface/hub','models/huggingface/hub','model'),
@@ -34,18 +35,20 @@ def build_child_env(paths: RuntimePaths) -> dict[str, str]:
     for key,relative in CACHE_LOCATIONS.items():
         if key in dependencies:
             old,new,category = dependencies[key]
-            legacy = (runtime/'cache/video-ai' if test_root else CACHE_ROOT)/old
-            target = legacy if legacy.exists() else runtime/new
-            targets[key] = policy.validate_write(target,'cache' if target==legacy else category)
+            target = runtime/'shared'/new
+            targets[key] = policy.validate_write(target,category)
         else:
             target = disposable/'tmp' if key in ('TEMP','TMP','TMPDIR') else disposable/'cache'/relative
-            targets[key] = policy.validate_write(target,'cache')
-    targets['OLLAMA_MODELS'] = policy.validate_write(runtime/'models/ollama', 'model')
+            targets[key] = policy.validate_write(target,'run' if run_dir is not None else 'cache')
+    targets['OLLAMA_MODELS'] = policy.validate_write(runtime/'shared/models/ollama', 'model')
     # Validate the complete plan before creating any directory.
     for path in set(targets.values()):
         path.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env.update({key: str(path) for key, path in targets.items()})
+    env.pop('VIDEO_AI_TASK_RUN_DIR', None)
+    if run_dir is not None:
+        env['VIDEO_AI_TASK_RUN_DIR'] = str(policy.validate_write(run_dir, 'run'))
     env['PYTHONUTF8'] = '1'
     env['PYTHONDONTWRITEBYTECODE'] = '1'
     env['PIP_DISABLE_PIP_VERSION_CHECK'] = '1'

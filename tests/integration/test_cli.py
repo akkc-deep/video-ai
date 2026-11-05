@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 from pathlib import Path
 import subprocess
@@ -58,11 +58,25 @@ def test_powershell_start_keeps_json_clean_and_paths_relative_to_call_site(tmp_p
     raw['tools']['ffmpeg']=str(tmp_path/'absent-ffmpeg.exe')
     for name in raw['workflows']:
         raw['workflows'][name]=str((SOURCE/'config'/raw['workflows'][name]).resolve())
+    runtime = tmp_path / 'runtime with spaces'
+    raw.update(runtime_root=str(runtime), project_root=str(runtime/'shared'),
+               output_root=str(runtime/'output'), cache_root=str(runtime/'scratch'))
+    # Copy only the embedded interpreter bootstrap, never installed models.
+    import shutil
+    scripts = runtime/'shared/envs/video-ai/Scripts'
+    scripts.mkdir(parents=True)
+    interpreter_root = Path(sys.executable).parent
+    for item in interpreter_root.iterdir():
+        if item.is_file() and item.suffix.lower() in ('.exe', '.dll', '.pyd', '.zip', '._pth'):
+            shutil.copy2(item, scripts/item.name)
+    for pth in scripts.glob('*._pth'):
+        pth.write_text('python312.zip\n.\n' + str(SOURCE/'src') + '\nimport site\n', encoding='utf-8')
     config_path=tmp_path/'missing-resources.json'
     config_path.write_text(json.dumps(raw),encoding='utf-8')
     result = subprocess.run(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                              str(SOURCE / 'scripts/start_windows.ps1'), 'doctor', '--config',
                              os.path.relpath(config_path, tmp_path), '--json'],
+                            env={**os.environ, "VIDEO_AI_RUNTIME_ROOT":str(runtime)},
                             cwd=str(tmp_path), capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
     assert result.returncode == 1
     data = json.loads(result.stdout)

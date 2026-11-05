@@ -10,6 +10,7 @@ from pathlib import Path
 import stat
 from threading import RLock
 from time import monotonic
+from .scene_review_control import review_checkpoint
 
 
 class CaptureLimit(ValueError):
@@ -19,7 +20,7 @@ class CaptureLimit(ValueError):
 _captures = ContextVar('continuity_byte_captures', default=())
 _KINDS = frozenset(('children', 'json_direct', 'assessment_paths', 'job_intents',
                     'nonempty_files', 'revision_json', 'whole_files',
-                    'continuity_sources'))
+                    'continuity_sources', 'reference_requests'))
 
 
 def _safe(path):
@@ -62,6 +63,7 @@ class _Inventory:
 
 
 def _check_time(deadline):
+    review_checkpoint()
     if deadline is not None and monotonic() >= deadline:
         raise ValueError('byte proof verification interval exceeded')
 
@@ -123,6 +125,8 @@ def _scan(spec, deadline):
         paths = _assessment_paths(root, deadline, 'intent.json')
     elif spec.kind == 'continuity_sources':
         paths = root.glob('*continuity*.py')
+    elif spec.kind == 'reference_requests':
+        paths = root.glob('request_*')
     else:
         paths = root.rglob('*')
     items = []
@@ -179,16 +183,25 @@ class ByteGuard:
 
     def verify(self):
         from .manifest import hash_file
-        from ._protected_continuity_inputs import verify_protected_continuity_file
+        from ._protected_continuity_inputs import verify_protected_continuity_file, _current_read_pass
         from .execution_limits import execution_deadline
+        review_checkpoint(force=True)
+        state = _current_read_pass()
+        if state is not None:
+            with state['window'].lock:
+                if (_current_read_pass() is state
+                        and state['guards'].get(id(self)) is self):
+                    return
+        reusable = state is not None
         deadline = execution_deadline(300,monotonic())
         token = _captures.set(())
         try:
             for baseline in self.files:
                 _check_time(deadline)
-                if verify_protected_continuity_file(baseline):
+                if verify_protected_continuity_file(baseline, prepare_existing=True):
                     _check_time(deadline)
                     continue
+                reusable = False
                 path = _safe(baseline.path)
                 _check_time(deadline)
                 before = path.stat()
@@ -209,18 +222,23 @@ class ByteGuard:
                     raise ValueError('byte proof file changed: ' + baseline.path)
             for spec in self.inventories:
                 _check_time(deadline)
-                if _scan(spec, deadline) != spec.expected:
-                    raise ValueError('byte proof directory inventory changed: ' + spec.path)
+                from ._protected_continuity_inputs import verify_read_inventory
+                verify_read_inventory(spec, deadline)
                 _check_time(deadline)
             for name in self.absences:
-                _check_time(deadline)
-                path = _safe(name)
-                _check_time(deadline)
-                if path.exists():
-                    raise ValueError('byte proof absent path appeared: ' + name)
+                from ._protected_continuity_inputs import verify_read_absence
+                verify_read_absence(name, deadline)
             _check_time(deadline)
+        except BaseException:
+            from ._protected_continuity_inputs import fail_protected_read_pass
+            fail_protected_read_pass()
+            raise
         finally:
             _captures.reset(token)
+        if reusable:
+            with state['window'].lock:
+                if _current_read_pass() is state and len(state['guards']) < 32768:
+                    state['guards'][id(self)] = self
 
 
 class Capture:
@@ -232,6 +250,7 @@ class Capture:
         self._inventories = {}
         self._absences = set()
         self._inventory_entries = 0
+        self._replayed = {}
         self._lock = RLock()
         self._closed = False
         self._failed = False
@@ -248,6 +267,7 @@ class Capture:
             self._files.clear()
             self._inventories.clear()
             self._absences.clear()
+            self._replayed.clear()
 
     def finish(self):
         with self._lock:
@@ -288,6 +308,62 @@ def _builders():
             for capture in active:
                 capture._failed = True
             raise
+
+
+def replay_guard(guard: ByteGuard):
+    """Merge an already verified proof, without interpreting filesystem paths.
+
+    The caller verifies the immutable guard before replay. Ordinary observe_*
+    still qualifies arbitrary new reads and lazy inventories independently.
+    """
+    if not _captures.get():
+        return
+    review_checkpoint()
+    with _builders() as captures:
+        targets = [capture for capture in captures
+                   if capture._replayed.get(id(guard)) is not guard]
+        for capture in targets:
+            new_files = 0
+            for row in guard.files:
+                old = capture._files.get(row.path)
+                if row.path in capture._absences or (old is not None and old.key() != row.key()):
+                    raise ValueError('conflicting observed file identity')
+                new_files += old is None
+            if len(capture._files) + new_files > capture._maximum_files:
+                raise CaptureLimit('byte capture file limit exceeded')
+            new_specs = new_entries = 0
+            for row in guard.inventories:
+                key = row.path, row.kind, row.pattern or ''
+                old = capture._inventories.get(key)
+                if old is not None and old != row:
+                    raise ValueError('conflicting observed inventory')
+                if old is None:
+                    new_specs += 1
+                    new_entries += len(row.expected)
+            if len(capture._inventories) + new_specs > capture._maximum_files:
+                raise CaptureLimit('byte capture directory specification limit exceeded')
+            if capture._inventory_entries + new_entries > capture._maximum_inventory_entries:
+                raise CaptureLimit('byte capture inventory entry limit exceeded')
+            for name in guard.absences:
+                if name in capture._files:
+                    raise ValueError('conflicting observed absence')
+            new_absences = sum(name not in capture._absences for name in guard.absences)
+            if len(capture._absences) + new_absences > capture._maximum_files:
+                raise CaptureLimit('byte capture absence limit exceeded')
+        # Validate every builder before updating any of them. _builders poisons
+        # all active captures if a conflict/capacity error is caught by a caller.
+        for capture in targets:
+            for row in guard.files:
+                capture._files.setdefault(row.path, row)
+            for row in guard.inventories:
+                key = row.path, row.kind, row.pattern or ''
+                if key not in capture._inventories:
+                    capture._inventories[key] = row
+                    capture._inventory_entries += len(row.expected)
+            capture._absences.update(guard.absences)
+            # Retain the object to prevent id reuse, bounded by builder capacity.
+            if len(capture._replayed) < max(1, capture._maximum_files):
+                capture._replayed[id(guard)] = guard
 
 
 def observe_file(identity):

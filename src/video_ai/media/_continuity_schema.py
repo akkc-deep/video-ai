@@ -56,7 +56,7 @@ def identity(value):
     if any(value[k] is None for k in ('bytes','mtime_ns','sha256','verified_at')):raise ValueError('complete FileIdentity required')
     p=Path(_validate_spelling(value['path']))
     if not p.is_relative_to(RUNTIME_ROOT) or any(v in ('.','..') for v in re.split(r'[/\\]',value['path'])):
-        raise ValueError('explicit local D:/VideoSi identity required')
+        raise ValueError('explicit local configured runtime identity required')
     return value
 
 

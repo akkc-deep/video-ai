@@ -96,7 +96,7 @@ def test_plan_validation_rejects_scientific_shortcuts(collection, mutation):
 def test_root_escape_refused_before_creating_files(tmp_path):
     from video_ai.experiments.natural_acquisition import freeze_collection
     with pytest.raises(ValueError):
-        freeze_collection(Path('D:/VideoSi/output/invalid-acquisition'), Path('missing-config.json'))
+        freeze_collection(Path('E:/VideoAI/output/invalid-acquisition'), Path('missing-config.json'))
 
 
 def test_frozen_json_cannot_be_edited_and_resumed(collection):

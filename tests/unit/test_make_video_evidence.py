@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def audit():
-    spec = importlib.util.spec_from_file_location('make06_audit', 'D:/VideoSi/docs/video-ai/make-video-evidence/verify_make06.py')
+    spec = importlib.util.spec_from_file_location('make06_audit', 'E:/VideoAI/docs/video-ai/make-video-evidence/verify_make06.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

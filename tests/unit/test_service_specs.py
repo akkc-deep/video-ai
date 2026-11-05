@@ -27,7 +27,7 @@ def test_new_service_specs_bind_run_directories_and_ollama_host(runtime_run):
 def test_service_env_rejects_unapproved_overrides(runtime_run,overrides):
     from video_ai.runtime.services import ServiceSpec, service_environment
     run,_,paths=runtime_run
-    spec=ServiceSpec('ollama','http://127.0.0.1:11435',('D:/VideoSi/tools/ollama/ollama.exe','serve'),run,30,overrides)
+    spec=ServiceSpec('ollama','http://127.0.0.1:11435',('E:/VideoAI/shared/tools/ollama/ollama.exe','serve'),run,30,overrides)
     with pytest.raises(ValueError): service_environment(paths,spec)
 
 
@@ -35,7 +35,7 @@ def test_service_environment_leaves_parent_untouched(runtime_run,monkeypatch):
     from video_ai.runtime.services import ServiceSpec, service_environment
     run,_,paths=runtime_run
     monkeypatch.setenv('OLLAMA_HOST','parent-value')
-    spec=ServiceSpec('ollama','http://127.0.0.1:11435',('D:/VideoSi/tools/ollama/ollama.exe','serve'),run,30,{'OLLAMA_HOST':'127.0.0.1:11435'})
+    spec=ServiceSpec('ollama','http://127.0.0.1:11435',('E:/VideoAI/shared/tools/ollama/ollama.exe','serve'),run,30,{'OLLAMA_HOST':'127.0.0.1:11435'})
     result=service_environment(paths,spec)
     assert result['OLLAMA_HOST']=='127.0.0.1:11435'
     assert os.environ['OLLAMA_HOST']=='parent-value'

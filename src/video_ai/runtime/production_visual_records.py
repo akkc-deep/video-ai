@@ -136,7 +136,7 @@ def validate_visual_report(stage,payload,run):
 
 def validate_visual_checkpoint(stage,uid,payload,run):
     if stage=='storyboard':
-        if re.fullmatch(r'storyboard_batch_[0-9]{4}_(initial|correction|entityrepair)',uid) is None:raise ProductionRefused('invalid visual batch ID')
+        if re.fullmatch(r'storyboard_batch_[0-9]{4}_(initial|correction|entityrepair|scenerepair)',uid) is None:raise ProductionRefused('invalid visual batch ID')
         object_fields(payload,('batch_id','shot_ids','format_valid','content','error'),'visual batch payload')
         if payload['batch_id']!=uid.rsplit('_',1)[0] or type(payload['format_valid']) is not bool:raise ProductionRefused('invalid visual batch identity/status')
         if not isinstance(payload['shot_ids'],list) or not 1<=len(payload['shot_ids'])<=8 or len(set(payload['shot_ids']))!=len(payload['shot_ids']):raise ProductionRefused('batch fixed shots required')

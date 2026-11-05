@@ -146,6 +146,27 @@ def _catalog(rows):
     return result
 
 
+def coalesce_unchanged_environments(proposal):
+    """Reuse adjacent identical physical settings; never invent change evidence."""
+    result=deepcopy(proposal)
+    groups={group['key']:group for group in result['scene_groups']}
+    physical=('environment','time','lighting','spatial_relations')
+    previous=None;aliases=[]
+    for index,scene in enumerate(result['scenes']):
+        key=scene['scene_group_id']
+        if key not in groups:
+            previous=None
+            continue
+        group=groups[key]
+        if (previous is not None and key!=previous and not scene['change_sources'] and not group['change_sources']
+                and all(group[field]==groups[previous][field] for field in physical)
+                and group['creative_choices']==groups[previous]['creative_choices']):
+            aliases.append(dict(scene_index=index+1,original_group=key,canonical_group=previous))
+            scene['scene_group_id']=previous
+        previous=scene['scene_group_id']
+    return result,aliases
+
+
 def prune_unused_visual_entries(proposal):
     """Drop only unreachable declarations; never create or repair references."""
     categories=('entities','appearance_variants','scene_groups')

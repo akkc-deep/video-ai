@@ -1,4 +1,5 @@
 """Immutable identities for a single native twenty-second Wan experiment."""
+from ..runtime.paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
@@ -186,11 +187,11 @@ def prepare_case(source_run, scene_id, contract_path, root):
     cfg = frozen.config
     from ..runtime.production_visual_templates import validate_production_model_paths
     validate_production_model_paths(cfg)
-    validate_model_loading(cfg.models,'D:/VideoSi/models/comfyui',cfg.tools['comfy_root'])
+    validate_model_loading(cfg.models,str(_PORTABLE_ROOT / 'shared/models/comfyui'),cfg.tools['comfy_root'])
     runtime = dict(scene_id=scene_id, clip_id=clip['clip_id'],
         wan_seconds=cfg.timeouts['wan'], service_start_seconds=cfg.timeouts['service_start'],
         tools={k: str(cfg.tools[k]) for k in ('comfy_root','comfy_python','ffmpeg','ffprobe')},
-        model_root='D:/VideoSi/models/comfyui', seed_high=original['parameters']['seed_high'],
+        model_root=str(_PORTABLE_ROOT / 'shared/models/comfyui'), seed_high=original['parameters']['seed_high'],
         seed_low=original['parameters']['seed_low'], prompt_policy='visual_v2',
         noise_note='Changing length changes noise tensor; matching seed is not elementwise identical noise.')
     for key in ('wan_seconds', 'service_start_seconds'):

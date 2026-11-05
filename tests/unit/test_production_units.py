@@ -152,7 +152,7 @@ def payload_fixture():
     spans, specs = apply(script, [s for s in script.spans if s.kind == 'speech'],
         {'speech_0001': [item(3)], 'speech_0002': [item(8)]})
     return dict(decoded_text=text, has_bom=True, spans=[asdict(s) for s in spans], semantic_specs=specs,
-        planner=dict(model='qwen3:8b', request_paths=['D:/VideoSi/run/units_batch_0001_initial.json'],
+        planner=dict(model='qwen3:8b', request_paths=['E:/VideoAI/run/units_batch_0001_initial.json'],
         batches=[dict(batch_id='units_batch_0001', candidate_ids=['speech_0001', 'speech_0002'],
                       request_ids=['units_batch_0001_initial'])]))
 

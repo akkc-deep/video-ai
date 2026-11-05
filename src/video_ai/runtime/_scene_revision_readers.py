@@ -65,10 +65,17 @@ def inherited_clip_record(frozen,key,*,context=None,row=None,parent=None):
     if proof is None:return None
     run = Path(frozen.options['script_path']).parent.parent
     folder = run/'production/scene-clips'/key
-    if folder.exists() and any(folder.iterdir()): raise ProductionRefused('owned clip competes with imported clip')
-    from .production_inputs import load_frozen_inputs
+    from ._continuity_byte_guard import observe_inventory,observe_absence
+    if folder.exists():
+        children=list(folder.iterdir())
+        observe_inventory(folder,'children',children)
+        if children: raise ProductionRefused('owned clip competes with imported clip')
+    else:
+        observe_absence(folder)
     from ._scene_revision_origins import source_clip_record,remap_media
-    source = load_frozen_inputs(proof['source_run'])
+    proof['guard'].verify_frozen(frozen)
+    proof['guard'].verify_captured_bytes()
+    source = proof['source_frozen']
     record = source_clip_record(source,key)
     sidecar = proof['imports']['clip:'+key][0]
     if row is not None:

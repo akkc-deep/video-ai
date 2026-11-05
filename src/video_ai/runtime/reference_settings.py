@@ -33,9 +33,10 @@ def _options(frozen, supplement):
     if supplement is not None:
         object_fields(supplement, REFERENCE_FIELDS, 'reference settings supplement')
         for key, value in supplement.items():
-            if values[key] is not None and not _same_json(values[key], value):
+            missing=values[key] is None or key=='reference_capabilities' and values[key]=={}
+            if not missing and not _same_json(values[key], value):
                 raise ProductionRefused('reference supplement cannot replace frozen configuration')
-            if values[key] is None: values[key] = value
+            if missing: values[key] = value
     return values
 
 

@@ -17,7 +17,7 @@ from ..runtime.execution_limits import command_timeout
 def command(args,*,config,paths,logger,cwd,operation):
     cwd=_local(logger.run_dir,Path(cwd))
     timeout=command_timeout(300)
-    result=run_logged(tuple(str(x) for x in args),cwd=cwd,env=build_child_env(paths),timeout=timeout,logger=logger,stage='composition')
+    result=run_logged(tuple(str(x) for x in args),cwd=cwd,env=build_child_env(paths, logger.run_dir),timeout=timeout,logger=logger,stage='composition')
     # The historical receipt schema uses integer 300 even though run_logged
     # normalizes the process/event timeout to 300.0.
     record=dict(operation=operation,timeout_seconds=None if timeout is None else 300,**thaw(result))

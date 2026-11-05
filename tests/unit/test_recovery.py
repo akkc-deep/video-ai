@@ -8,13 +8,13 @@ from video_ai.planning.recovery import (
 from video_ai.runtime.manifest import STAGES
 
 
-def identity(path='D:/VideoSi/input.txt', sha='a'*64):
+def identity(path='E:/VideoAI/input.txt', sha='a'*64):
     return dict(path=path, bytes=10, sha256=sha, mtime_ns=1,
                 verified_at='2026-10-05T00:00:00+00:00')
 
 
 def inventory(**kwargs):
-    values = dict(run_dir=Path('D:/VideoSi/projects/video-ai/runs/20261005-000000-aaaaaaaaaaaa'),
+    values = dict(run_dir=Path('E:/VideoAI/work/20261005-000000-aaaaaaaaaaaa'),
         snapshot={'identity': identity(), 'run_id':'20261005-000000-aaaaaaaaaaaa'},
         config_projection={'voice':{'speed_factor':1}, 'media':{'fps':16},
                            'models':{'wan_high':'old','sdxl':'old','upscale':'old'}},
@@ -139,7 +139,7 @@ def test_failed_needs_explicit_retry_and_child():
 
 def test_signature_only_normalizes_identity_and_declared_graph_namespace_roles():
     a={'identity':identity(),'graph':{'1':{'inputs':{'filename_prefix':'run/a','seed':1}}}}
-    b={'identity':identity('D:/VideoSi/copy.txt'),'graph':{'1':{'inputs':{'filename_prefix':'run/b','seed':1}}}}
+    b={'identity':identity('E:/VideoAI/copy.txt'),'graph':{'1':{'inputs':{'filename_prefix':'run/b','seed':1}}}}
     roles={('graph','1','inputs','filename_prefix'):'output'}
     assert signature(a,graph_roles=roles)==signature(b,graph_roles=roles)
     assert signature(a)!=signature(b)

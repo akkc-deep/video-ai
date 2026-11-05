@@ -3,6 +3,7 @@
 Archived Python is data: it is hashed, never imported or executed. Current
 product Python is deliberately independent of that historical implementation.
 """
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 import hashlib
 import math
 import stat
@@ -14,7 +15,7 @@ from .production_state import ArtifactStamp, ProductionRefused, absolute_path, i
 from .scene_revision_records import safe_path, stable_bytes
 from .verification import verified_read
 
-PINNED_ROOT = Path('D:/VideoSi/cache/video-ai/logs/vco05-20261027-native321')
+PINNED_ROOT = (_PORTABLE_ROOT / 'shared/config/capabilities/whole-scene')
 PINNED_SHA256 = '527f08dd69d51b4c7f176284a768dbf9387deb273d644244920be70c79fcb653'
 # The original assessment links media/results, but its resource summary records
 # aggregates. Pin that original raw inventory as well so a rewritten sample

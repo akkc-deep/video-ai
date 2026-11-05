@@ -21,10 +21,10 @@ def test_cli_maps_pipeline_status_and_json(monkeypatch, capsys, status, expected
     from video_ai.cli import main
     from video_ai.config import load_config
     monkeypatch.setattr(pipeline, 'resume_pipeline', lambda *args, **kwargs:
-        pipeline.PipelineResult(Path('D:/VideoSi/projects/video-ai/runs/20261005-000000-111111111111'),
+        pipeline.PipelineResult(Path('E:/VideoAI/work/20261005-000000-111111111111'),
             None, status, 'validation', (), None, None, status=='published', None))
     assert main(['resume', '--config', 'config/production.example.json', '--run-dir',
-        'D:/VideoSi/projects/video-ai/runs/20261005-000000-111111111111', '--json']) == expected
+        'E:/VideoAI/work/20261005-000000-111111111111', '--json']) == expected
     result = json.loads(capsys.readouterr().out)
     assert result['schema_version'] == 1 and result['status'] == status
     assert result['published'] is (status == 'published')
@@ -42,7 +42,7 @@ def test_refusal_exception_emits_complete_json_result(monkeypatch,capsys):
     def refuse(*a,**k):raise pipeline.PipelineRefusal('TEST ONLY stale source')
     monkeypatch.setattr(pipeline,'resume_pipeline',refuse)
     assert main(['resume','--config','config/production.example.json','--run-dir',
-        'D:/VideoSi/projects/video-ai/runs/20261005-000000-111111111111','--json'])==2
+        'E:/VideoAI/work/20261005-000000-111111111111','--json'])==2
     value=json.loads(capsys.readouterr().out)
     assert value['status']=='refused' and value['published'] is False
     assert {'run_dir','parent_run_dir','active_stage','waiting_for','candidate_path','subtitle_path','report_path'}<=set(value)
@@ -88,7 +88,7 @@ def test_cli_raw_interrupt_retains_130_and_complete_json(monkeypatch,capsys):
     def interrupted(*a,**kw):raise KeyboardInterrupt('TEST ONLY original interruption')
     monkeypatch.setattr(pipeline,'resume_pipeline',interrupted)
     assert main(['resume','--config','config/production.example.json','--run-dir',
-        'D:/VideoSi/projects/video-ai/runs/20261005-000000-111111111111','--json'])==130
+        'E:/VideoAI/work/20261005-000000-111111111111','--json'])==130
     value=json.loads(capsys.readouterr().out)
     assert value['status']=='interrupted' and not value['published']
     assert value['validation']['full_film_acceptance']=='unverified'

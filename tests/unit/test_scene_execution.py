@@ -130,7 +130,7 @@ def test_unknown_execution_modes_are_rejected(mode):
 
 def expected_identity(mode='whole_scene_v1'):
     return dict(run_id='run_123', mode=mode, rendering_identity_sha256='a'*64,
-        admission=dict(path='D:/VideoSi/run/production/scene-rendering/whole-scene-evidence.json',
+        admission=dict(path='E:/VideoAI/run/production/scene-rendering/whole-scene-evidence.json',
                        bytes=1024, sha256='b'*64) if mode == 'whole_scene_v1' else None)
 
 
@@ -184,9 +184,9 @@ def test_validator_rejects_forged_whole_budget_even_with_valid_identity(field, v
 @pytest.mark.parametrize('field,value', [('run_id', ''), ('run_id', True),
     ('rendering_identity_sha256', 'A'*64), ('admission', None),
     ('admission', {'path': 'relative.json', 'bytes': 1, 'sha256': 'b'*64}),
-    ('admission', {'path': 'D:/VideoSi/a.json', 'bytes': True, 'sha256': 'b'*64}),
-    ('admission', {'path': 'D:/VideoSi/a.json', 'bytes': 0, 'sha256': 'b'*64}),
-    ('admission', {'path': 'D:/VideoSi/a.json', 'bytes': 1, 'sha256': 'invalid'})])
+    ('admission', {'path': 'E:/VideoAI/a.json', 'bytes': True, 'sha256': 'b'*64}),
+    ('admission', {'path': 'E:/VideoAI/a.json', 'bytes': 0, 'sha256': 'b'*64}),
+    ('admission', {'path': 'E:/VideoAI/a.json', 'bytes': 1, 'sha256': 'invalid'})])
 def test_builder_requires_complete_frozen_execution_identity(field, value):
     from video_ai.planning.scene_execution import build_scene_execution_budget
     plan, timeline = fixture(320)

@@ -145,11 +145,18 @@ def _artifact(image):
 
 
 def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_contract=None, prompt_binding_context=None,
-                         execution=None):
+                         execution=None, positive_overrides=None):
     """Keep fixed shared visual context, original narration and every baseline use."""
     clips = _budgets(plan, timeline, execution=execution)
     whole = execution is not None and execution['mode'] == 'whole_scene_v1'
     raw = getattr(frozen.config, 'raw', {})
+    overrides = {} if positive_overrides is None else positive_overrides
+    if not isinstance(overrides, Mapping): raise ValueError('positive overrides mapping required')
+    if overrides and ('scene_rendering' in raw or prompt_contract is not None or execution is not None):
+        raise ValueError('positive overrides require legacy Wan rendering')
+    if any(type(cid) is not str or cid not in {c['clip_id'] for c in clips}
+           or type(text) is not str or not text.strip() or '://' in text for cid,text in overrides.items()):
+        raise ValueError('positive overrides require known clips and nonempty text without URLs')
     rendering = raw.get('scene_rendering', {})
     mode = rendering.get('mode') if isinstance(rendering, Mapping) else None
     if ((execution is not None and mode != execution['mode'])
@@ -220,6 +227,7 @@ def build_scene_wan_plan(frozen, bible, plan, timeline, wan_inputs, *, prompt_co
     for index, clip in enumerate(clips):
         sid = clip['scene_id']; scene = scenes[sid]
         positive = render_scene_video_prompt(prompt_contract, bible, scene, clip['clip_id']) if visual else contexts[sid]
+        positive = overrides.get(clip['clip_id'], positive)
         parameters = dict(positive=positive, negative=WAN_NEGATIVE,
             seed_high=264244520398999+(seed_indices[sid] if whole else index), seed_low=0,
             width=profile.width, height=profile.height,

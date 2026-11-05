@@ -4,7 +4,6 @@ from contextvars import copy_context
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
-import os
 from pathlib import Path
 from queue import Queue, Empty
 import re
@@ -14,6 +13,7 @@ from urllib.parse import quote, urlencode
 
 from .common import AdapterError, FailureKind, positive_timeout
 from .external_https import ExternalHttpsClient
+from ..credentials import read_credentials
 
 
 def _safe_path(value):
@@ -54,7 +54,7 @@ class ReferenceStorage:
 
     def _credentials(self):
         s = self.settings
-        access, secret = os.environ.get(s['access_key_env']), os.environ.get(s['secret_key_env'])
+        access, secret = read_credentials(s['access_key_env'], s['secret_key_env'])
         if (not access or not secret or any(ord(c) <= 32 for c in access)
                 or '\r' in secret or '\n' in secret):
             raise AdapterError(FailureKind.explicit, 'TOS credentials unavailable')

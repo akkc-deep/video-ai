@@ -60,7 +60,7 @@ def test_request_detects_same_size_mtime_byte_drift(runtime_run):
 
 @pytest.mark.parametrize('value', [
     {'policy':'research_candidate_v1'}, {'production_eligible':False,'candidate_id':str(uuid4())},
-    {'source':{'path':'D:/VideoSi/runs/x/production/scene-color-repair/candidates/x/master.mp4'}},
+    {'source':{'path':'E:/VideoAI/runs/x/production/scene-color-repair/candidates/x/master.mp4'}},
     {'state':'research_candidate_reviewed'}, {'kind':'adopt_color_repair'}])
 def test_research_origin_refused_even_through_nested_production_source(value):
     with pytest.raises(ValueError,match='research|repair'): module().require_production_repair_origin(value)

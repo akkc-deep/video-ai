@@ -19,9 +19,9 @@ def test_partial_config_dispatch_uses_frozen_snapshot_without_dropping_mode(mode
     from video_ai.runtime.scene_execution_records import rendering_mode
     raw={}
     if mode is not None:
-        settings=dict(mode=mode,prompt_policy='visual_v2',prompt_contract='D:/VideoSi/prompt.json')
+        settings=dict(mode=mode,prompt_policy='visual_v2',prompt_contract='E:/VideoAI/prompt.json')
         if mode=='whole_scene_v1':
-            settings['whole_scene_evidence']='D:/VideoSi/cache/video-ai/logs/vco05-20261027-native321/final-assessment.json'
+            settings['whole_scene_evidence']='E:/VideoAI/scratch/logs/vco05-20261027-native321/final-assessment.json'
         raw['scene_rendering']=settings
     frozen=SimpleNamespace(config=SimpleNamespace(production_strategy='paragraph_jimeng_v1'),
         options={'config_snapshot':{'raw':raw}})

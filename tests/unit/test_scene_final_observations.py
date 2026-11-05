@@ -14,7 +14,7 @@ NOW = datetime(2026, 10, 19, 12, tzinfo=timezone.utc)
 
 
 def context(tmp_path,*,kind='continuation'):
-    artifact = dict(path='D:/VideoSi/example', bytes=1, sha256='a'*64)
+    artifact = dict(path='E:/VideoAI/example', bytes=1, sha256='a'*64)
     selected = dict(scene_id='scene_0001', candidate_id='candidate_0001', baseline_bindings=[dict(kind='character',id='hero')], **artifact)
     candidate = dict(candidate=artifact, subtitle=artifact, created_at='2026-10-19T10:00:00+00:00')
     scene = dict(scene_id='scene_0001', start_frame=0, end_frame=20,

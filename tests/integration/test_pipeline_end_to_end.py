@@ -20,7 +20,7 @@ def test_new_pipeline_actual_http_pcm_stops_for_voice_with_one_manifest(runtime_
     from video_ai.runtime.manifest import hash_file,thaw
     from video_ai.runtime.paths import RuntimePaths
     parent,original,paths=runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     script=parent/'TEST-ONLY-input.txt';script.write_text('一只红鸟，飞过蓝湖。',encoding='utf-8')
     review=unit_review(script,parent/'TEST-ONLY-units.json')
     with tts_server() as (url,requests):

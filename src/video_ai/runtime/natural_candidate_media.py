@@ -31,7 +31,7 @@ def _args(config,source,target,*,name,width=None,height=None):
 def _run(args,*,config,paths,logger,reader,stage):
     from .processes import run_logged
     from .environment import build_child_env
-    result=run_logged(args,cwd=logger.run_dir,env=build_child_env(paths),timeout=reader.remaining(),logger=logger,stage=stage)
+    result=run_logged(args,cwd=logger.run_dir,env=build_child_env(paths, logger.run_dir),timeout=reader.remaining(),logger=logger,stage=stage)
     if result.returncode!=0 or result.timed_out: raise ProductionRefused('natural media command failed; evidence retained:'+str(result.stderr_path))
     reader.check();return result
 

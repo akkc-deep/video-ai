@@ -6,6 +6,7 @@ import pytest
 
 from image_selection_helpers import setup_selection, candidate_manifest, save, notification_receipt
 from unit.test_reference_config import capability, storage_settings, write_json
+from unit.test_production_inputs import production_config
 
 
 def prepared_baseline(runtime_run, tmp_path, *, accept=True, original_format='png', proposal=None):
@@ -225,6 +226,56 @@ def test_actual_reference_requests_fixed_baseline_and_complete_wan_images(runtim
     with pytest.raises(ValueError): require_reference_image_acceptance(s['frozen'], s['units'], s['timeline'])
     provenance_path.write_bytes(provenance_raw)
     assert not (s['run']/'.make-video.lock').exists()
+
+
+def test_reference_batch_can_prepare_local_selection_without_sending_mail(runtime_run,tmp_path,monkeypatch,production_config):
+    import shutil
+    from unit.test_jimeng_config import configured
+    from video_ai.runtime.paths import RuntimePaths
+    from video_ai.runtime import image_selection_records as records
+    from video_ai.runtime.production_image_selection import _Records,_activation_value,_activate,_folder,_result
+    for tool in ('ffmpeg','ffprobe'):shutil.copy2(runtime_run[1].tools[tool],production_config.tools[tool])
+    production_config=configured(production_config,tmp_path,reference_capabilities={})
+    runtime_run=(runtime_run[0],production_config,RuntimePaths.from_config(production_config))
+    s=prepared_baseline(runtime_run,tmp_path)
+    cloud,smtp,kwargs=configured_cloud(s,monkeypatch)
+    original_request=cloud.official_request
+    active=set()
+    def single_slot(method,url,**kw):
+        if method=='POST' and 'CVSync2AsyncSubmitTask' in url:
+            assert not active,'reference tasks must finish before the next submit'
+            reply=original_request(method,url,**kw)
+            active.add(json.loads(reply.body)['data']['task_id'])
+            return reply
+        reply=original_request(method,url,**kw)
+        if method=='POST' and json.loads(reply.body)['data'].get('status')=='done':
+            active.discard(json.loads(kw['body'])['task_id'])
+        return reply
+    monkeypatch.setattr(cloud,'official_request',single_slot)
+    from video_ai.runtime import jimeng_reference_candidates as candidates
+    original_candidate_request=candidates._request
+    seeded=False
+    def existing_later_task(*args,**kw):
+        nonlocal seeded
+        if not seeded and kw.get('phase')=='check' and args[2]['request_id']=='request_02':
+            seeded=True
+            original_candidate_request(*args,**dict(kw,phase='submit'))
+        return original_candidate_request(*args,**kw)
+    monkeypatch.setattr(candidates,'_request',existing_later_task)
+    def local(frozen,units,timeline,manifests,*,batch_index,lock,**unused):
+        batch=records.build_batch(frozen,units,timeline,manifests,batch_index=batch_index)
+        store=_Records(s['run'],lock);folder=_folder(s['run'],batch['batch_id'])
+        activation=_activation_value(store,frozen,units,timeline,batch)
+        store.save(folder/'batch.json',batch)
+        store.save(folder/'selection-template.json',records.selection_template(batch))
+        _activate(store,frozen,units,timeline,batch,validated=activation)
+        return _result(s['run'],'awaiting_image_selection',batch)
+    result=produce(s,selection_preparer=local,**kwargs)
+    assert result.status=='awaiting_image_selection',result.error
+    assert len(cloud.submits)==4 and smtp.messages==[]
+    assert Path(result.selection_result['selection_template']).is_file()
+    assert produce(s,selection_preparer=local,**kwargs).status=='awaiting_image_selection'
+    assert len(cloud.submits)==4 and smtp.messages==[]
 
 
 def test_ambiguous_submit_resumes_without_second_paid_request(runtime_run, tmp_path, monkeypatch):

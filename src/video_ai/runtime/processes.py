@@ -46,11 +46,13 @@ def validate_command(args, cwd, env):
         except ValueError:
             pass
     if good_cwd is None or not good_cwd.is_dir():
-        raise ValueError('cwd must be an existing absolute D:/VideoSi directory')
+        raise ValueError('cwd must be an existing absolute configured runtime directory')
     for key in CACHE_LOCATIONS:
         if key not in env:
             raise ValueError(f'missing child cache location {key}')
-        policy.validate_write(env[key],'cache')
+        category = ('model' if key in ('HF_HOME','HF_HUB_CACHE','TRANSFORMERS_CACHE','TORCH_HOME','NLTK_DATA')
+                    else 'tool-env' if key == 'UV_PYTHON_INSTALL_DIR' else 'cache')
+        policy.validate_write(env[key],category)
     if 'OLLAMA_MODELS' not in env:
         raise ValueError('missing child Ollama model location')
     policy.validate_write(env['OLLAMA_MODELS'],'model')

@@ -33,7 +33,7 @@ def revision_fixture(kind='reselect_images'):
         model_stamps={}, workflow_snapshots={},
         execution_policy={'input_identities': {}})
     choices = [dict(scene_id=s['scene_id'], candidate_id='request_01_image_01',
-                    sha256='1'*64, path=f'D:/VideoSi/source/{s["scene_id"]}.png',
+                    sha256='1'*64, path=f'E:/VideoAI/source/{s["scene_id"]}.png',
                     bytes=123, req_key='image-v1', request_id='request_01', task_id='task-1')
                for s in scenes]
     clips = [dict(clip_id=c['clip_id'], record={'clip_id': c['clip_id']},
@@ -51,6 +51,23 @@ def revision_fixture(kind='reselect_images'):
         choices=[dict(scene_id='scene_0001', candidate_id='request_02_image_01', sha256='2'*64)],
         config_path=None, image_model=None, output_path=None, reason='Change baseline choice')
     return snapshot, request, identity
+
+
+def test_source_bound_transport_revision_keeps_audio_and_invalidates_bad_plan():
+    from video_ai.planning.scene_revision import plan_scene_revision,identity_from_options
+    snapshot,request,_=configure_revision(lambda identity:None)
+    original=identity_from_options(snapshot['source_options'])
+    target_options=deepcopy(snapshot['source_options'])
+    target_options['config_snapshot']['raw']['scene_planner_transport']='focused_v1'
+    target=identity_from_options(target_options)
+    snapshot['source_options']['_scene_revision_planning']=dict(identity=original,
+        completed_image_ids=[s['scene_id'] for s in snapshot['scene_plan']['scenes']],image_group_accepted=True,
+        target_config=target_options['config_snapshot']['raw'])
+    result=plan_scene_revision(snapshot,request,target)
+    assert result['dirty']['common']==[]
+    assert result['reusable']['common']==['all']
+    assert result['dirty']['plan']==['all']
+    assert result['dirty']['images']==[s['scene_id'] for s in snapshot['scene_plan']['scenes']]
 
 
 def test_reselected_baseline_invalidates_reference_descendants_but_preserves_unrelated_scene():
@@ -104,6 +121,47 @@ def test_image_prompt_override_keeps_audio_and_plan_but_invalidates_image_depend
 def test_prompt_override_cannot_be_attached_to_clip_regeneration():
     with pytest.raises(ValueError):
         invoke('regenerate_clips', image_prompt_overrides={'scene_0001': 'Changed'})
+
+
+def test_clip_prompt_override_preserves_static_inputs_and_existing_invalidation():
+    result, snapshot = invoke('regenerate_clips',
+        clip_prompt_overrides={'scene_0001_clip_0002': 'Rigid connected body drifts slowly.'})
+    assert result['dirty']['clips'] == ['scene_0001_clip_0002', 'scene_0001_clip_0003']
+    for domain in ('images', 'choices', 'image_group'):
+        assert result['dirty'][domain] == []
+    assert result['reusable']['common'] == result['reusable']['plan'] == ['all']
+    assert result['reusable']['clips'] == [c['clip_id'] for c in snapshot['scene_plan']['clips']
+        if c['clip_id'] not in result['dirty']['clips']]
+    from video_ai.planning.scene_revision import validate_revision_request_fields
+    _, request, _ = revision_fixture('regenerate_clips')
+    request.update(scene_ids=[], choices=[], clip_ids=['scene_0001_clip_0002'],
+        clip_prompt_overrides={'scene_0001_clip_0002': 'Slow drift.'})
+    assert validate_revision_request_fields(request) == {}  # image-map return contract
+
+
+@pytest.mark.parametrize('changes', [None, {}, [], {'scene_0001_clip_0001': 'Wrong target'},
+    {'scene_0001_clip_0002': ''}, {'scene_0001_clip_0002': '  '},
+    {'scene_0001_clip_0002': 7}, {'scene_0001_clip_0002': 'https://example.com'}])
+def test_clip_prompt_override_rejects_invalid_or_implicit_targets(changes):
+    with pytest.raises(ValueError):
+        invoke('regenerate_clips', clip_prompt_overrides=changes)
+
+
+def test_clip_prompt_override_requires_clip_regeneration():
+    with pytest.raises(ValueError):
+        invoke(clip_prompt_overrides={'scene_0001_clip_0002': 'Slow drift.'})
+
+
+@pytest.mark.parametrize('rendering', [dict(prompt_policy='visual_v2'),
+    dict(mode='segmented_v1'), dict(mode='whole_scene_v1'), dict(mode='temporal_extension_v1')])
+def test_clip_prompt_override_refuses_rendering_contracts(rendering):
+    from video_ai.planning.scene_revision import _validate_request
+    snapshot, request, identity = revision_fixture('regenerate_clips')
+    request.update(scene_ids=[], choices=[], clip_ids=['scene_0001_clip_0002'],
+        clip_prompt_overrides={'scene_0001_clip_0002': 'Slow drift.'})
+    snapshot['source_options']['config_snapshot']['raw']['scene_rendering'] = rendering
+    with pytest.raises(ValueError, match='legacy'):
+        _validate_request(request, snapshot, identity)
 
 
 def test_clip_regeneration_invalidates_only_parent_continuations_and_not_prior_or_other_scene():
@@ -164,7 +222,7 @@ def configure_revision(change):
     from video_ai.planning.scene_revision import identity_from_options
     snapshot, request, _ = revision_fixture('reconfigure')
     identity = identity_from_options(snapshot['source_options'])
-    request.update(scene_ids=[],choices=[],config_path='D:/VideoSi/config.json')
+    request.update(scene_ids=[],choices=[],config_path='E:/VideoAI/config.json')
     change(identity)
     return snapshot, request, identity
 
@@ -296,10 +354,10 @@ def test_voice_identity_binds_reference_content_and_not_the_frozen_copy_filename
     from video_ai.planning.scene_revision import identity_from_options
     snapshot,_,_=revision_fixture()
     source=snapshot['source_options']
-    source['voice_snapshot']['raw'].update(reference_audio='D:/VideoSi/source/reference.wav',prompt_text='原声参考')
-    source['execution_policy']['input_identities']['reference']=dict(path='D:/VideoSi/source/reference.wav',bytes=100,sha256='a'*64)
+    source['voice_snapshot']['raw'].update(reference_audio='E:/VideoAI/source/reference.wav',prompt_text='原声参考')
+    source['execution_policy']['input_identities']['reference']=dict(path='E:/VideoAI/source/reference.wav',bytes=100,sha256='a'*64)
     target=deepcopy(source)
-    target['voice_snapshot']['raw']['reference_audio']='D:/VideoSi/new-run/production/inputs/reference.wav'
+    target['voice_snapshot']['raw']['reference_audio']='E:/VideoAI/new-run/production/inputs/reference.wav'
     target['execution_policy']['input_identities']['reference']['path']=target['voice_snapshot']['raw']['reference_audio']
     assert identity_from_options(source)['voice_sha256']==identity_from_options(target)['voice_sha256']
     target['voice_snapshot']['raw']['prompt_text']='另一声线参考'

@@ -95,7 +95,9 @@ def test_owned_process_can_only_be_stopped_by_its_own_manager(run_store,runtime_
         nonlocal started
         started=True
         assert k['shell'] is False
-        assert k['env']['TEMP'].startswith('D:')
+        from pathlib import Path
+        from video_ai.runtime.storage import _sandbox
+        assert Path(k['env']['TEMP']).is_relative_to(_sandbox.get())
         return process
     monkeypatch.setattr(module.subprocess,'Popen',launch)
     handle=mgr.ensure(spec(runtime_run))

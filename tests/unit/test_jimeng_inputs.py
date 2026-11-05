@@ -13,7 +13,7 @@ def test_freeze_new_strategy_skips_missing_sdxl_and_locks_model(production_confi
     # Remove paths from a valid source configuration rather than mutate only resolved objects.
     data = json.loads(config.config_file.read_text(encoding='utf-8'))
     for group in ('models', 'workflows'):
-        data[group]['sdxl'] = 'D:/VideoSi/models/not-installed-sdxl' if group == 'models' else 'D:/code/py/video-ai/workflows/not-installed-sdxl.json'
+        data[group]['sdxl'] = 'E:/VideoAI/shared/models/not-installed-sdxl' if group == 'models' else 'E:/code/py/video-ai/workflows/not-installed-sdxl.json'
     config.config_file.write_text(json.dumps(data), encoding='utf-8')
     from video_ai.config import load_config
     config = load_config(config.config_file)

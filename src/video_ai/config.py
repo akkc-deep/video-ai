@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, localcontext
 import json
 import math
+import os
 from pathlib import Path
 import re
 from types import MappingProxyType
@@ -35,7 +36,9 @@ def read_json(file: Path) -> dict:
         _error(file, 'JSON', f'non-finite number {value}')
 
     try:
-        value = json.loads(file.read_text(encoding='utf-8-sig'), object_pairs_hook=pairs, parse_constant=constant)
+        from .runtime.verification import protected_bytes, _whole_inputs
+        raw = (protected_bytes(file)[0] if _whole_inputs.get() is not None else file.read_bytes())
+        value = json.loads(raw.decode('utf-8-sig'), object_pairs_hook=pairs, parse_constant=constant)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         _error(file, 'JSON', str(exc))
     if not isinstance(value, dict):
@@ -262,6 +265,17 @@ TIMEOUT_DEFAULTS = dict(ollama_request=120, tts_request=300, comfy_request=600,
 def load_voice_config(path: Path, *, raw: dict | None = None) -> VoiceConfig:
     path = path.resolve()
     data = read_json(path) if raw is None else raw
+    if os.environ.get('VIDEO_AI_RUNTIME_ROOT'):
+        def relocate(value):
+            if isinstance(value, dict):
+                return {key: relocate(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [relocate(item) for item in value]
+            if isinstance(value, str) and (value == 'E:/VideoAI' or value.startswith('E:/VideoAI/')):
+                return str(RUNTIME_ROOT).replace('\\', '/') + value[len('E:/VideoAI'):]
+            return value
+        data = relocate(data)
+
     fields = ('schema_version', 'gpt_weights', 'sovits_weights', 'bert_root', 'hubert_root',
               'reference_audio', 'reference_sha256', 'reference_text', 'text_language',
               'prompt_language', 'speed_factor', 'device', 'is_half', 'inference')
@@ -305,10 +319,21 @@ def load_voice_config(path: Path, *, raw: dict | None = None) -> VoiceConfig:
 def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | None = None) -> ProjectConfig:
     path = path.resolve()
     data = read_json(path) if raw is None else raw
+    if os.environ.get('VIDEO_AI_RUNTIME_ROOT'):
+        def relocate(value):
+            if isinstance(value, dict):
+                return {key: relocate(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [relocate(item) for item in value]
+            if isinstance(value, str) and (value == 'E:/VideoAI' or value.startswith('E:/VideoAI/')):
+                return str(RUNTIME_ROOT).replace('\\', '/') + value[len('E:/VideoAI'):]
+            return value
+        data = relocate(data)
+
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
                                   'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
-                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_rendering', 'scene_continuity'))
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_planner_transport', 'scene_rendering', 'scene_continuity'))
     _exact(data['schema_version'], 1, path, 'schema_version')
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
@@ -346,6 +371,9 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
         if strategy != STRATEGY:
             _error(path, 'scene_planner_model', 'requires paragraph_jimeng_v1 strategy')
         parse_scene_planner_model(data['scene_planner_model'])
+    if 'scene_planner_transport' in data:
+        if strategy != STRATEGY or data['scene_planner_transport'] != 'focused_v1':
+            _error(path, 'scene_planner_transport', 'requires paragraph_jimeng_v1 and focused_v1')
     if strategy == 'legacy' and 'selection_email' in data:
         _error(path, 'selection_email', 'requires paragraph_jimeng_v1 strategy')
     if strategy == STRATEGY:

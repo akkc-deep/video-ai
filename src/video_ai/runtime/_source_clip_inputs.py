@@ -1,4 +1,5 @@
 """Fresh input receipts and the accepted, complete fixed Wan graph."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 import json
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from .timeline_checks import load_committed_timeline
 from .start_image_checks import load_committed_start_images
 from .workflows import WorkflowTemplate
 
-TASK4_ACCEPTANCE = Path('D:/VideoSi/projects/video-ai/runs/20261004-040653-a0fcd961cc58/task4-acceptance.json')
+TASK4_ACCEPTANCE = (_PORTABLE_ROOT / 'shared/config/capabilities/task4-acceptance.json')
 MODEL_NAMES = ('wan_high', 'wan_low', 'text_encoder', 'vae')
 
 

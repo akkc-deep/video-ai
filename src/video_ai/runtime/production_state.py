@@ -106,6 +106,8 @@ def json_bytes(data):
 
 def write_exclusive(path, data):
     raw = json_bytes(data)
+    from ._protected_continuity_inputs import invalidate_protected_read_pass
+    invalidate_protected_read_pass()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('xb') as file:
         file.write(raw); file.flush(); os.fsync(file.fileno())
@@ -114,6 +116,8 @@ def write_exclusive(path, data):
 
 def sync_file(path):
     """Re-establish durability of an existing immutable artifact before cursor commit."""
+    from ._protected_continuity_inputs import invalidate_protected_read_pass
+    invalidate_protected_read_pass()
     # Windows CRT _commit requires a writable handle; r+b neither truncates nor edits.
     with path.open('r+b') as file:
         os.fsync(file.fileno())
@@ -258,7 +262,7 @@ def validate_checkpoint(data, run, stage, unit_id):
     validate_request(data['request'], run)
     if (stage in ('speech','start_images','source_clips') or
         stage=='units' and re.fullmatch(r'units_batch_[0-9]{4}_(initial|correction)',unit_id) or
-        stage=='storyboard' and re.fullmatch(r'storyboard_batch_[0-9]{4}_(initial|correction|entityrepair)',unit_id)) and data['request'] is None:
+        stage=='storyboard' and re.fullmatch(r'storyboard_batch_[0-9]{4}_(initial|correction|entityrepair|scenerepair)',unit_id)) and data['request'] is None:
         raise ProductionRefused('completed model checkpoint requires original request')
     if data['request'] is not None and data['request']['state'] != 'completed':
         raise ProductionRefused('checkpoint request is not completed')
@@ -425,8 +429,11 @@ def validate_state(data, run):
                     if record is None:raise ProductionRefused('completed storyboard lacks correction request')
                     cp=read_json(run_path(run,record['checkpoint_path']))
                     if not cp['payload']['format_valid']:
-                        if cp['payload']['error']!='unknown entity identity':raise ProductionRefused('completed storyboard has invalid correction')
-                        uid=f'storyboard_batch_{index:04d}_entityrepair';expected.add(uid)
+                        error=cp['payload']['error']
+                        if error=='unknown entity identity':suffix='entityrepair'
+                        elif isinstance(error,str) and error.startswith('missing original visual subject '):suffix='scenerepair'
+                        else:raise ProductionRefused('completed storyboard has invalid correction')
+                        uid=f'storyboard_batch_{index:04d}_{suffix}';expected.add(uid)
                         record=units.get(uid)
                         if record is None:raise ProductionRefused('completed storyboard lacks entity repair request')
                         cp=read_json(run_path(run,record['checkpoint_path']))

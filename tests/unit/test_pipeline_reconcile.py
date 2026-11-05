@@ -188,7 +188,7 @@ def test_checkpointless_native_saved_image_replays_parameters_and_real_full_png_
     from video_ai.planning.start_images import image_parameters
     from types import SimpleNamespace
     store=run_store;run=store.run_dir
-    base=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    base=load_config(Path('E:/VideoAI/shared/config/production.json'))
     config=replace(base,media=replace(base.media,profile=replace(base.media.profile,width=768,height=432)))
     board={'global_visual':{'style':'TEST ONLY','color_palette':'red','lighting':'day','entities':[]},
            'shots':[{'shot_id':'shot_0001','primary_unit_id':'speech_0001','image_prompt':'one red bird','entity_ids':[]}]}
@@ -250,7 +250,7 @@ def test_native_saved_source_replays_real_mp4_frames_and_refuses_stale_output_or
     from video_ai.config import load_config
     from video_ai.runtime.pipeline_recovery import _native_saved_validation
     from video_ai.runtime import _source_clip_inputs as owner
-    run=run_store.run_dir;config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    run=run_store.run_dir;config=load_config(Path('E:/VideoAI/shared/config/production.json'))
     original=run/'TEST-ONLY-start.png'
     subprocess.run([str(config.tools['ffmpeg']),'-nostdin','-v','error','-n','-f','lavfi','-i','color=red:s=768x432','-frames:v','1','-pix_fmt','rgb24',str(original)],check=True)
     copied=run/'comfy/input'/run.name/'source_clips/shot_0001/start.png';copied.parent.mkdir(parents=True);copied.write_bytes(original.read_bytes())
@@ -279,7 +279,7 @@ def test_native_saved_upscale_matches_real_source_frame_pixels_before_admitting_
     from video_ai.config import load_config
     from video_ai.runtime.pipeline_recovery import _native_saved_validation
     from video_ai.runtime import _upscale_inputs as owner
-    run=run_store.run_dir;config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    run=run_store.run_dir;config=load_config(Path('E:/VideoAI/shared/config/production.json'))
     source=run/'TEST-ONLY-source.mp4'
     subprocess.run([str(config.tools['ffmpeg']),'-nostdin','-v','error','-n','-f','lavfi','-i','color=red:s=768x432:r=16',
         '-frames:v','1','-c:v','libx264','-pix_fmt','yuv420p',str(source)],check=True)
@@ -321,7 +321,7 @@ def test_saved_wan_second_attempt_requires_exact_registered_known_short_origin(r
     from video_ai.runtime.timeline_checks import _artifact
     from video_ai.media.video import inspect_video
     from video_ai.planning.source_clips import supplement_frames
-    run=run_store.run_dir;config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    run=run_store.run_dir;config=load_config(Path('E:/VideoAI/shared/config/production.json'))
     original=run/'TEST-ONLY-start.png';original.write_bytes(b'explicit owner input fixture')
     copied=run/'comfy/input'/run.name/'source_clips/shot_0001/start.png';copied.parent.mkdir(parents=True);copied.write_bytes(original.read_bytes())
     plan=SimpleNamespace(shot_id='shot_0001',primary_unit_id='speech_0001',parameters=dict(width=768,height=432,length=13,seed=23),

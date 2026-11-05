@@ -52,7 +52,7 @@ def test_whole_resource_session_precedes_service_and_stops_on_cleanup(monkeypatc
         def summary(self): return {'verified_samples':1}
     monkeypatch.setattr('video_ai.runtime.resources.GpuLease',Lease)
     monkeypatch.setattr('video_ai.runtime.resources.ResourceSampler',Sampler)
-    logger=SimpleNamespace(run_dir='D:/VideoSi/projects/video-ai/runs/20261030-000000-abcdefabcdef',
+    logger=SimpleNamespace(run_dir='E:/VideoAI/work/20261030-000000-abcdefabcdef',
         save_json=lambda *a,**k:events.append('resource-summary'))
     frozen=SimpleNamespace(config=SimpleNamespace(raw={'scene_rendering':{'mode':'whole_scene_v1'}}))
     service=_OwnedService(frozen,None,logger,None)

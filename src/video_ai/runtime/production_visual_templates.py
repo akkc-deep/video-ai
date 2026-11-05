@@ -15,7 +15,7 @@ def validate_production_model_paths(config):
         if native_temporal(config) and role!='upscale':continue
         if role == 'sdxl' and config.production_strategy == 'paragraph_jimeng_v1': continue
         path=config.models[role]
-        expected=(RUNTIME_ROOT/'models/comfyui'/folder/path.name).resolve()
+        expected=(config.runtime_root/'shared/models/comfyui'/folder/path.name).resolve()
         if path.resolve()!=expected:
             raise ProductionRefused(f'models.{role}: actual Comfy loading requires {expected}; configured {path}')
 

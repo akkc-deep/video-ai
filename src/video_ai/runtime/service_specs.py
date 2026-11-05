@@ -35,7 +35,7 @@ def build_service_specs(config, run_dir, *, model_stage=None, production=False, 
     if model_stage is not None:
         from ._pipeline_model_paths import prepare_or_consume_model_binding
         model_binding=prepare_or_consume_model_binding(config,run,model_stage)
-    model_root=model_binding['root'] if model_binding is not None else RUNTIME_ROOT/'models/comfyui'
+    model_root=model_binding['root'] if model_binding is not None else config.runtime_root/'shared/models/comfyui'
     bindings={name:(urlsplit(url).hostname,str(urlsplit(url).port)) for name,url in config.services.items()}
     tools=config.tools
     args=[str(tools['comfy_python']),'-B','-s',str(tools['comfy_root']/'main.py'),
@@ -49,12 +49,12 @@ def build_service_specs(config, run_dir, *, model_stage=None, production=False, 
     args.extend(('--database-url','sqlite:///'+database.as_posix()))
     timeout=config.timeouts['service_start']
     return {
-        'comfyui':ServiceSpec('comfyui',config.services['comfyui'],tuple(args),tools['comfy_root'],timeout),
+        'comfyui':ServiceSpec('comfyui',config.services['comfyui'],tuple(args),tools['comfy_root'],timeout,task_run_dir=run),
         'tts':ServiceSpec('tts',config.services['tts'],(str(tools['tts_python']),'-B',str(tools['tts_root']/'api_v2.py'),
-                         '-a',bindings['tts'][0],'-p',bindings['tts'][1],'-c',str(config.project_root/'config/tts-api.yaml')),tools['tts_root'],timeout),
+                         '-a',bindings['tts'][0],'-p',bindings['tts'][1],'-c',str(config.project_root/'config/tts-api.yaml')),tools['tts_root'],timeout,task_run_dir=run),
         'ollama':ServiceSpec('ollama',config.services['ollama'],(str(tools['ollama_executable']),'serve'),
                             tools['ollama_executable'].parent,timeout,{'OLLAMA_HOST':urlsplit(config.services['ollama']).netloc},
-                            run if revision is not None else None),
+                            run if revision is not None else None,task_run_dir=run),
     }
 
 
@@ -79,16 +79,16 @@ def _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model
         '--ollama-executable',str(tools['ollama_executable']),'serve')
     specs={'ollama':ServiceSpec('ollama',urls['ollama'],ollama_args,
                 tools['ollama_executable'].parent,timeout,{'OLLAMA_HOST':urlsplit(urls['ollama']).netloc},
-                production_services=urls)}
+                production_services=urls,task_run_dir=run)}
     parts=urlsplit(urls['comfyui'])
     args=[str(tools['comfy_python']),'-B','-s',str(tools['comfy_root']/'main.py'),
-          '--listen',parts.hostname,'--port',str(parts.port),'--models-directory',str(RUNTIME_ROOT/'models/comfyui')]
+          '--listen',parts.hostname,'--port',str(parts.port),'--models-directory',str(config.runtime_root/'shared/models/comfyui')]
     for name in ('input','output','temp','user'):
         directory=policy.validate_write(run/'comfy'/name,'run')
         args.extend((f'--{name}-directory',str(directory)))
     database=policy.validate_write(run/'comfy/user/comfyui.db','run')
     args.extend(('--database-url','sqlite:///'+database.as_posix()))
-    specs['comfyui']=ServiceSpec('comfyui',urls['comfyui'],tuple(args),tools['comfy_root'],timeout,production_services=urls)
+    specs['comfyui']=ServiceSpec('comfyui',urls['comfyui'],tuple(args),tools['comfy_root'],timeout,production_services=urls,task_run_dir=run)
     if tts_yaml_path is not None:
         runtime=policy.validate_write(tts_yaml_path,'run')
         if (not runtime.is_relative_to(run/'logs/production/services') or not runtime.is_file()
@@ -97,5 +97,5 @@ def _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model
         parts=urlsplit(urls['tts'])
         specs['tts']=ServiceSpec('tts',urls['tts'],(str(tools['tts_python']),'-B',str(tools['tts_root']/'api_v2.py'),
                 '-a',parts.hostname,'-p',str(parts.port),'-c',str(runtime)),tools['tts_root'],timeout,
-                production_services=urls)
+                production_services=urls,task_run_dir=run)
     return specs

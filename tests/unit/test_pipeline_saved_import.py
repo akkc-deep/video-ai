@@ -14,7 +14,7 @@ def fixture(runtime_run,monkeypatch):
     from video_ai.runtime.manifest import create_manifest,hash_file,thaw,now
     from video_ai.planning.start_images import image_parameters
     from video_ai.runtime.pipeline_recovery import Reconciliation,_native_saved_validation
-    run,_,_=runtime_run;config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    run,_,_=runtime_run;config=load_config(Path('E:/VideoAI/shared/config/production.json'))
     model=run/'TEST-ONLY-model.bin';model.write_bytes(b'fixture model never loaded')
     raw=thaw(config.raw);raw['models']['sdxl']=str(model)
     raw['voice_config']=str(config.voice.config_file)

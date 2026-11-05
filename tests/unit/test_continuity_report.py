@@ -214,7 +214,7 @@ def test_historical_report_uses_archived_sources_without_current_capture(ordinar
     archives = {}
     for index, identity in enumerate(deps['package_files']):
         original = Path(identity['path'])
-        # Package records already live in D:/VideoSi; copy repository sources
+        # Package records already live in E:/VideoAI; copy repository sources
         # away from installation so archive lookup is exercised independently.
         target = original
         if not original.is_relative_to(RUNTIME_ROOT):

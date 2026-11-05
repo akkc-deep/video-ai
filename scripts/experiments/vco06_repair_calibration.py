@@ -22,7 +22,9 @@ ALGORITHM='AI_conditional_constant_color_repair_v1'
 LEVELS=(1/64,1/32,1/16,1/8,1/4,1/2,1.)
 OPERATIONS=('exposure','wb_r','wb_g','wb_b','chroma')
 GENRES={'people','animals','transport','outdoor','indoor','animation'}
-INPUT=Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-experimental-calibration-20261025/experiment-inputs.FROZEN.json')
+from video_ai.runtime.paths import RUNTIME_ROOT
+
+INPUT=(RUNTIME_ROOT/'shared/assets/continuity-benchmark/AI-experimental-calibration-20261025/experiment-inputs.FROZEN.json')
 PROTOCOL=dict(algorithm=ALGORITHM,levels=list(LEVELS),operations=list(OPERATIONS),
     samples_per_role=1024,maximum_fit_pairs=16384,minimum_pairs=81,
     p99_error_codes=2,maximum_error_codes=4,minimum_sources=6,required_genres=sorted(GENRES),
@@ -207,7 +209,7 @@ def prepare(root,*,index_path=INPUT):
         selected=[e for e in entries if e['split']==split]
         if len(selected)!=12 or any(sum(e['source']['genre']==g for e in selected)!=2 for g in GENRES):
             raise ValueError('preserved 12/12 and six-genre split required')
-    if not index_path.resolve().is_relative_to(Path('D:/VideoSi')):raise ValueError('source index must be local D:/VideoSi')
+    if not index_path.resolve().is_relative_to(RUNTIME_ROOT):raise ValueError('source index must be inside the configured runtime root')
     root.mkdir(parents=True,exist_ok=False)
     write_json(root/'protocol.FROZEN.json',dict(PROTOCOL,created_at=now(),
         operator_details='sRGB transfer; linear x*2**(a*d) or Y+2**a*(x-Y); clip then np.rint to uint8',
@@ -305,8 +307,8 @@ def pack_source(root,entry,deadline):
     from video_ai.media._continuity_controls import _truth
     from video_ai.media._continuity_schema import validate_regions
     source=entry['source'];sid=source['source_id']
-    cfg=SimpleNamespace(tools={'ffmpeg':Path('D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe'),
-                               'ffprobe':Path('D:/VideoSi/tools/ffmpeg/bin/ffprobe.exe')})
+    cfg=SimpleNamespace(tools={'ffmpeg':(RUNTIME_ROOT/'shared/tools/ffmpeg/bin/ffmpeg.exe'),
+                               'ffprobe':(RUNTIME_ROOT/'shared/tools/ffmpeg/bin/ffprobe.exe')})
     for stamp in source['frame_records']:
         # Verify original declared frame identities before opening the evidence window.
         current=identity(stamp['path'])

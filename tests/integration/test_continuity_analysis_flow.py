@@ -30,7 +30,7 @@ def _make_continuity_fixture(runtime_run,variation=0,variable_time=False):
     from video_ai.media.colorimetry import inspect_color_asset,decode_analysis_frame
     from video_ai.media._continuity_audit import png_bytes
     run,config,paths=runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     config=replace(config,tools=dict(config.tools,ffmpeg=actual.tools['ffmpeg'],ffprobe=actual.tools['ffprobe']))
     source_logger=RunLogger(run);audit_logger=RunLogger(create_run(paths))
     rgb=texture(64,36)+variation;source=run/'input.rgb';source.write_bytes(rgb.tobytes()*8);video=run/'input.mp4'

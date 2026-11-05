@@ -1,8 +1,9 @@
 """Explicit inherited views and origin byte guards, never external-path fallback."""
 from contextvars import ContextVar
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from functools import wraps
 from copy import deepcopy
+from dataclasses import is_dataclass
 import os
 from pathlib import Path
 import stat
@@ -14,6 +15,7 @@ from ..planning.production_scenes import canonical_digest
 from ..planning.scene_revision import validate_rendering_identity, DOMAINS, STRATEGY
 from .manifest import thaw, validate_run_dir
 from .verification import verified_read
+from .scene_review_control import review_checkpoint
 from .production_state import (ArtifactStamp, ProductionRefused, RunLock, integer,
                                object_fields, run_path, timestamp)
 
@@ -25,6 +27,214 @@ IMPORT_FIELDS = ('schema_version production_strategy run_id import_id domain key
 IMPORT_DOMAINS = ('common','plan','reference_settings','image','choice','image_group','clip','upscale')
 _context = ContextVar('scene_revision_context', default=None)
 _read_transaction = ContextVar('scene_revision_read_transaction', default=None)
+_guard_pass = ContextVar('scene_revision_guard_pass', default=None)
+_artifact_batch = ContextVar('scene_revision_artifact_batch', default=None)
+
+
+@contextmanager
+def revision_artifact_batch(*, recheck_bindings=True):
+    """Deduplicate immutable bindings in one local scan; recheck at exit."""
+    current = _artifact_batch.get()
+    if current is not None and current['active'] and current['thread'] == get_ident():
+        yield
+        return
+    state = dict(active=True, thread=get_ident(), bindings={}, binding_proofs={},
+                 inventories={}, inventory_proofs={}, captures={}, artifact_proofs={}, raw_inventories={}, ownership={}, timelines={})
+    token = _artifact_batch.set(state)
+    try:
+        yield
+    finally:
+        state['active'] = False
+        _artifact_batch.reset(token)
+        for guard in state.get('reference_prior_guards', ()):
+            guard.verify()
+        for _, guard in state.get('semantic_reads', {}).values():
+            guard.verify()
+        for path, expected in state['ownership'].items():
+            if _optional_path_identity(path) != expected:
+                raise ProductionRefused('revision captured file ownership changed')
+        if recheck_bindings:
+            for key, (value, root, empty) in state['bindings'].items():
+                proof = state['binding_proofs'].get(key)
+                if proof is None or any(row.path == value['path'] for row in proof.files):
+                    verify_artifact(value, root=root, allow_empty=empty)
+                    if proof is not None:
+                        # Artifact bindings promise bytes and ownership, not an
+                        # unchanged mtime. Additional declaration dependencies
+                        # still retain the full captured proof contract.
+                        from ._continuity_byte_guard import ByteGuard
+                        ByteGuard(tuple(row for row in proof.files if row.path != value['path']),
+                                  proof.inventories, proof.absences).verify()
+                else:
+                    # Declaration-only siblings need not exist on disk. Their
+                    # complete metadata closure is the binding, not raw media.
+                    proof.verify()
+        for (directory, root), expected in state['inventories'].items():
+            if tuple(revision_inventory(directory, root=root)) != expected:
+                raise ProductionRefused('revision evidence inventory changed')
+        for (directory, root), expected in state['raw_inventories'].items():
+            if tuple(revision_raw_inventory(directory, root=root)) != expected:
+                raise ProductionRefused('revision raw inventory changed')
+
+
+def _optional_path_identity(path):
+    try:
+        return path_identity(path)
+    except FileNotFoundError:
+        return None
+
+
+def replay_revision_reads(guard):
+    """Expose a memo's complete closure to any enclosing origin capture."""
+    from ._continuity_byte_guard import replay_guard
+    replay_guard(guard)
+
+
+def revision_cached_read(namespace, key, read):
+    """Reuse semantics only in an owning batch, retaining strict byte proofs.
+
+    Hits verify original dependencies and replay them into outer captures. Never
+    store an incomplete/failed read, or expose the mutable cached return value.
+    """
+    review_checkpoint()
+    batch = _artifact_batch.get()
+    if batch is None or not batch['active'] or batch['thread'] != get_ident():
+        return read()
+    cache = batch.setdefault('semantic_reads', {})
+    key = (namespace,key,source_read_scope_identity())
+    if key not in cache:
+        from ._continuity_byte_guard import capture_reads
+        with capture_reads() as capture:
+            value = read()
+        guard = capture.finish()
+        cache[key] = (deepcopy(value),guard)
+    else:
+        _, guard = cache[key]
+        guard.verify()
+        replay_revision_reads(guard)
+    return deepcopy(cache[key][0])
+
+
+def source_read_scope_identity():
+    """Separate full-content ancestry from declaration-only sibling reads."""
+    from ._scene_revision_origin_images import _source_images
+    from ._scene_revision_origin_clips import _scope
+    images = _source_images.get()
+    clips = _scope.get()
+    return ((images[0], images[1]) if images is not None else None,
+            (clips['identity'], clips['required'], clips['known']) if clips is not None else None)
+
+
+def revision_read_identity(frozen):
+    """Bind typed inputs as well as disk paths; test doubles have no typed state."""
+    value = thaw(frozen) if is_dataclass(frozen) else dict(
+        options=thaw(getattr(frozen,'options',{})),config=thaw(getattr(frozen,'config',None)))
+    return id(frozen),canonical_digest(value)
+
+
+def revision_raw_inventory(directory, *, root):
+    """Share historical media enumeration only within a local checked batch."""
+    state = _artifact_batch.get()
+    from ._continuity_byte_guard import _captures
+    if state is not None and state['active'] and state['thread'] == get_ident() and not _captures.get():
+        key = (str(directory), str(root))
+        saved = state['raw_inventories'].get(key)
+    else:
+        state = None
+        saved = None
+    if saved is None:
+        folder = safe_path(directory, root)
+        saved = tuple(sorted(safe_path(p, root) for p in folder.rglob('*')
+                             if p.is_file() and p.suffix != '.json'))
+        if state is not None:
+            state['raw_inventories'][key] = saved
+            state['ownership'].setdefault(str(folder), _optional_path_identity(folder))
+    return list(saved)
+
+
+def revision_inventory(directory, *, root):
+    """Snapshot once per local batch; capture observers still see every use."""
+    from ._continuity_byte_guard import observe_inventory, capture_reads
+    state = _artifact_batch.get()
+    if state is not None and state['active'] and state['thread'] == get_ident():
+        key = (str(directory), str(root))
+        if key in state['inventories']:
+            replay_revision_reads(state['inventory_proofs'][key])
+            return list(state['inventories'][key])
+    else:
+        state = None
+    with capture_reads() if state is not None else nullcontext() as capture:
+        folder = safe_path(directory, root)
+        saved = tuple(sorted(str(safe_path(p, root)) for p in folder.rglob('*.json')))
+        observe_inventory(folder, 'revision_json', saved)
+    if state is not None:
+        state['inventories'][key] = saved
+        state['inventory_proofs'][key] = capture.finish()
+        state['ownership'].setdefault(str(folder), _optional_path_identity(folder))
+    return list(saved)
+
+
+def _batch_revision_artifacts(function):
+    @wraps(function)
+    def read(*args, **kwargs):
+        with revision_artifact_batch():
+            return function(*args, **kwargs)
+    return read
+
+
+def _unique_guard_pass(function):
+    @wraps(function)
+    def verify(self):
+        from ._continuity_byte_guard import _captures
+        current = _guard_pass.get()
+        owner = current is None or not current['active'] or current['thread'] != get_ident()
+        if owner:
+            current = dict(active=True, thread=get_ident(), checked=set())
+            token = _guard_pass.set(current)
+        try:
+            version = None
+            if isinstance(self, RevisionGuard):
+                review_checkpoint()
+                self.verify_frozen(self.frozen)
+                version = self.dependency_version()
+            from .verification import _whole_inputs
+            window = _whole_inputs.get()
+            key = (self, _captures.get(), version,
+                   window.read_generation if window is not None else 0)
+            if key in current['checked']:
+                return
+            result = function(self)
+            current['checked'].add(key)
+            return result
+        finally:
+            if owner:
+                current['active'] = False
+                _guard_pass.reset(token)
+    return verify
+
+
+def _verify_read_boundary(state):
+    """One fresh ancestor traversal for all loaders and registered guards."""
+    current = dict(active=True, thread=get_ident(), checked=set())
+    token = _guard_pass.set(current)
+    # A checkpoint is fresh even if a caller has a larger local artifact
+    # batch. Keep that batch's original baselines, but never authenticate a
+    # boundary from its memoized artifacts or inventories.
+    artifact_token = _artifact_batch.set(None)
+    try:
+        # A new batch has no entry from the prior read window. Overlapping
+        # ancestor proofs share one fresh boundary read, never prior memo entries.
+        from ._protected_continuity_inputs import protected_read_pass
+        with protected_read_pass(fresh=True), revision_artifact_batch(recheck_bindings=False):
+            for expected, read, _ in tuple(state['inputs'].values()):
+                if canonical_digest(thaw(read())) != expected:
+                    raise ProductionRefused('revision local read input changed')
+            for guard in tuple(state['checked']):
+                guard.verify_captured_bytes()
+    finally:
+        _artifact_batch.reset(artifact_token)
+        current['active'] = False
+        _guard_pass.reset(token)
 
 
 @contextmanager
@@ -45,15 +255,13 @@ def revision_read_transaction():
     state = dict(active=True, thread=get_ident(), checked={}, inputs={})
     token = _read_transaction.set(state)
     try:
-        yield
+        from ._protected_continuity_inputs import protected_read_pass
+        with protected_read_pass():
+            yield
     finally:
         state['active'] = False
         _read_transaction.reset(token)
-        for expected, read in state['inputs'].values():
-            if canonical_digest(thaw(read())) != expected:
-                raise ProductionRefused('revision local read input changed')
-        for guard in state['checked']:
-            guard.verify_captured_bytes()
+        _verify_read_boundary(state)
 
 
 @contextmanager
@@ -68,12 +276,15 @@ def revision_checkpoint_transaction():
     contexts cannot reuse the admission.
     """
     with revision_read_transaction():
+        from ._protected_continuity_inputs import invalidate_protected_read_pass
+        invalidate_protected_read_pass()
         state = _read_transaction.get()
         previous = state.get('checkpoints', False)
         state['checkpoints'] = True
         try:
             yield
         finally:
+            invalidate_protected_read_pass()
             state['checkpoints'] = previous
 
 
@@ -93,11 +304,7 @@ def revision_read_checkpoint():
     # Disable memo reuse while checking, including any nested loader consumers.
     token = _read_transaction.set(None)
     try:
-        for expected, read in tuple(state['inputs'].values()):
-            if canonical_digest(thaw(read())) != expected:
-                raise ProductionRefused('revision local read input changed')
-        for guard in tuple(state['checked']):
-            guard.verify_captured_bytes()
+        _verify_read_boundary(state)
     finally:
         _read_transaction.reset(token)
 
@@ -106,17 +313,23 @@ def revision_read_matches(key, value, read):
     """Compare a local input; re-read its full loader at transaction exit.
 
     Retain only a canonical digest, so callers cannot mutate a cached object.
-    Outside a live local read scope, or during byte capture, always load fresh.
+    Capture the original loader's closure and replay it for nested consumers.
+    Outside a live local read scope always load fresh.
     """
-    from ._continuity_byte_guard import _captures
+    from ._continuity_byte_guard import capture_reads
     state = _read_transaction.get()
     if (state is None or not state['active'] or state['thread'] != get_ident()
-            or _captures.get()):
+            or not state.get('reuse_allowed', True)):
         return canonical_digest(thaw(value)) == canonical_digest(thaw(read()))
     previous = state['inputs'].get(key)
     if previous is None:
-        previous = (canonical_digest(thaw(read())), read)
+        with capture_reads() as capture:
+            digest = canonical_digest(thaw(read()))
+        previous = (digest, read, capture.finish())
         state['inputs'][key] = previous
+    else:
+        previous[2].verify()
+        replay_revision_reads(previous[2])
     return canonical_digest(thaw(value)) == previous[0]
 
 
@@ -152,6 +365,10 @@ def safe_path(path, root):
 
 def stable_bytes(path, *, root):
     path = safe_path(path, root)
+    from .verification import _whole_inputs, protected_bytes
+    if _whole_inputs.get() is not None:
+        raw, identity = protected_bytes(path)
+        return raw
     with path.open('rb') as stream:
         before = os.fstat(stream.fileno()); raw = stream.read(); after = os.fstat(stream.fileno())
     current = path.stat()
@@ -163,12 +380,40 @@ def stable_bytes(path, *, root):
 
 def artifact(path, *, root=None, allow_empty=False):
     path = Path(path); root = Path(root) if root is not None else path.parent
+    from ._continuity_byte_guard import capture_reads
+    batch = _artifact_batch.get()
+    if batch is not None and batch['active'] and batch['thread'] == get_ident():
+        scope = source_read_scope_identity()
+        key = (str(root), str(path), allow_empty, scope)
+        if key in batch['captures']:
+            replay_revision_reads(batch['artifact_proofs'][key])
+            return dict(batch['captures'][key])
+    else:
+        batch = None
+    if batch is None:
+        return _read_artifact(path, root=root, allow_empty=allow_empty)
+    with capture_reads() as capture:
+        result = _read_artifact(path, root=root, allow_empty=allow_empty)
+    proof = capture.finish()
+    batch['captures'][key] = dict(result)
+    batch['artifact_proofs'][key] = proof
+    for row in proof.files:
+        if row.path == str(path):
+            batch['ownership'].setdefault(str(path), row.ownership[:2])
+    binding_key = (str(root), allow_empty, canonical_digest(result), scope)
+    batch['bindings'][binding_key] = (dict(result), root, allow_empty)
+    batch['binding_proofs'][binding_key] = proof
+    return result
+
+
+def _read_artifact(path, *, root, allow_empty):
     safe_path(path, root)
     from .manifest import hash_file
     value=hash_file(path)
     safe_path(path,root)
     integer(value.bytes,'revision artifact bytes',0 if allow_empty else 1)
-    return dict(path=str(path),bytes=value.bytes,sha256=value.sha256)
+    result = dict(path=str(path),bytes=value.bytes,sha256=value.sha256)
+    return result
 
 
 def verify_artifact(value, *, root, allow_empty=False):
@@ -176,8 +421,20 @@ def verify_artifact(value, *, root, allow_empty=False):
     require_production_repair_origin(value)
     object_fields(value, ('path','bytes','sha256'), 'revision Artifact')
     integer(value['bytes'], 'revision artifact bytes',0 if allow_empty else 1)
+    batch = _artifact_batch.get()
+    if batch is not None and batch['active'] and batch['thread'] == get_ident():
+        key = (str(root), allow_empty, canonical_digest(value), source_read_scope_identity())
+        if key in batch['bindings']:
+            replay_revision_reads(batch['binding_proofs'][key])
+            return Path(value['path'])
+    else:
+        batch = None
     if artifact(value['path'],root=root,allow_empty=allow_empty) != value:
         raise ProductionRefused('revision captured bytes changed: '+value['path'])
+    if batch is not None:
+        batch['bindings'][key] = (deepcopy(value), root, allow_empty)
+        capture_key = (str(root), str(Path(value['path'])), allow_empty, source_read_scope_identity())
+        batch['binding_proofs'][key] = batch['artifact_proofs'][capture_key]
     return Path(value['path'])
 
 
@@ -191,7 +448,13 @@ class RevisionGuard:
         self.run = Path(frozen.options['script_path']).parent.parent
         self.options_sha256=canonical_digest(frozen.options)
         self.files, self.directories, self.absent, self.views = {}, {}, {}, {}
+        self._absence_proofs = {}
         self.ancestors = []
+        self._dependency_version = 0
+
+    def dependency_version(self):
+        return (self._dependency_version,
+                tuple((id(parent), parent.dependency_version()) for parent in self.ancestors))
 
     def capture(self, path, *, root, allow_empty=False, expected=None):
         value = artifact(path, root=root, allow_empty=allow_empty)
@@ -199,23 +462,35 @@ class RevisionGuard:
         if key in self.absent or (expected is not None and value != expected): raise ProductionRefused('revision captured bytes changed')
         previous = self.files.get(key)
         if previous is not None and previous[0] != value: raise ProductionRefused('revision captured bytes changed')
-        identity = path_identity(path)
+        from ._continuity_byte_guard import _captures
+        batch = _artifact_batch.get()
+        if (batch is not None and batch['active'] and batch['thread'] == get_ident()
+                and not _captures.get() and key in batch['ownership']):
+            identity = batch['ownership'][key]
+        else:
+            identity = path_identity(path)
         if previous is not None and previous[3] != identity: raise ProductionRefused('revision captured file ownership changed')
+        if previous is None:
+            self._dependency_version += 1
         self.files[key] = (value,str(root),allow_empty,identity)
         return value
 
     def capture_directory(self, path, *, root, expected=None):
-        folder = safe_path(path,root)
-        inventory = sorted(str(safe_path(p,root)) for p in folder.rglob('*.json'))
+        folder = Path(path)
+        inventory = revision_inventory(folder, root=root)
         key = str(folder)
         if (expected is not None and inventory != sorted(expected)) or (key in self.directories and self.directories[key][0] != inventory):
             raise ProductionRefused('revision evidence inventory changed')
+        if key not in self.directories:
+            self._dependency_version += 1
         self.directories[key] = (inventory,str(root))
         return inventory
 
     def capture_absent(self, path, *, root):
         path = safe_path(path,root)
         if path.exists() or str(path) in self.files: raise ProductionRefused('revision expected absent evidence changed')
+        if str(path) not in self.absent:
+            self._dependency_version += 1
         self.absent[str(path)] = str(root)
 
     def register(self, import_id, view):
@@ -237,29 +512,53 @@ class RevisionGuard:
             from .temporal_scene_admission import verify_temporal_frozen
             verify_temporal_frozen(frozen)
 
+    @verified_read
+    @_unique_guard_pass
     def verify_captured_bytes(self):
-        from ._continuity_byte_guard import observe_inventory, observe_absence, _captures
-        self.verify_frozen(self.frozen)
+        from ._continuity_byte_guard import capture_reads
+        review_checkpoint()
         transaction = _read_transaction.get()
         if (transaction is not None and transaction['active']
-                and transaction['thread'] == get_ident() and not _captures.get()):
-            if self in transaction['checked']:
+                and transaction['thread'] == get_ident()):
+            previous = transaction['checked'].get(self)
+            if (transaction.get('reuse_allowed', True) and previous is not None
+                    and previous[0] == self.dependency_version()):
+                replay_revision_reads(previous[1])
                 return
         else:
             transaction = None
+        if transaction is None:
+            self._verify_dependencies()
+        else:
+            with capture_reads() as capture:
+                self._verify_dependencies()
+            transaction['checked'][self] = (self.dependency_version(), capture.finish())
+
+    def _verify_dependencies(self):
+        from ._continuity_byte_guard import ByteGuard
+        from ._protected_continuity_inputs import verify_read_absence
         for ancestor in self.ancestors:ancestor.verify_captured_bytes()
         for value,root,empty,identity in self.files.values():
+            review_checkpoint()
             verify_artifact(value,root=root,allow_empty=empty)
             if path_identity(value['path'])!=identity: raise ProductionRefused('revision captured file ownership changed')
         for directory,(inventory,root) in self.directories.items():
-            current = sorted(str(safe_path(p,root)) for p in safe_path(directory,root).rglob('*.json'))
+            current = revision_inventory(directory, root=root)
             if current != inventory: raise ProductionRefused('revision evidence inventory changed')
-            observe_inventory(directory,'revision_json',current)
         for path,root in self.absent.items():
-            if safe_path(path,root).exists(): raise ProductionRefused('revision absent evidence appeared')
-            observe_absence(path)
-        if transaction is not None:
-            transaction['checked'][self] = None
+            current = Path(path)
+            if not current.is_absolute() or '..' in current.parts or not current.is_relative_to(root):
+                raise ProductionRefused('revision evidence path escapes root')
+            try:
+                verify_read_absence(path, None)
+            except ValueError as exc:
+                if str(exc).startswith('byte proof absent path appeared:'):
+                    raise ProductionRefused('revision absent evidence appeared') from exc
+                raise
+            proof = self._absence_proofs.get(path)
+            if proof is None:
+                proof = self._absence_proofs[path] = ByteGuard((), (), (path,))
+            replay_revision_reads(proof)
 
     def verify_global(self):
         self.verify_captured_bytes()
@@ -273,7 +572,12 @@ def token(domain,key): return canonical_digest(dict(domain=domain,key=key))
 
 
 def path_identity(path):
-    value = Path(path).stat()
+    from ._protected_continuity_inputs import path_identity_in_read_pass
+    path = Path(path)
+    held = path_identity_in_read_pass(path)
+    if held is not None:
+        return held
+    value = path.stat()
     return value.st_dev,value.st_ino
 
 
@@ -281,6 +585,25 @@ def validate_revision_structure(options, run):
     """Loader-safe byte/structure binding; no current FrozenInputs recursion."""
     value = options.get('scene_revision')
     if value is None: raise ProductionRefused('scene revision is not frozen')
+    active = _context.get()
+    admitted = active['validated'].get(str(Path(run))) if active is not None else None
+    # Reuse only an already completed admission in this invocation. The guard
+    # still checks the original captured bytes/inventories (and read-scope exit
+    # checks them again), instead of re-parsing every repeated import entry.
+    # Special rendering contracts retain their existing admission path.
+    mode = options.get('config_snapshot',{}).get('raw',{}).get('scene_rendering',{}).get('mode')
+    if admitted is not None and mode is None:
+        guard = admitted['guard']
+        if canonical_digest(thaw(options)) != guard.options_sha256:
+            raise ProductionRefused('revision proof frozen options changed')
+        guard.verify_captured_bytes()
+        return admitted
+    return _scan_revision_structure(options, run)
+
+
+@_batch_revision_artifacts
+def _scan_revision_structure(options, run):
+    value = options['scene_revision']
     root = Path(run)/'production/scene-revision'
     path = verify_artifact(value,root=root)
     if path != root/'commit.json': raise ProductionRefused('revision commit path differs')
@@ -314,6 +637,7 @@ def validate_revision_structure(options, run):
         raise ProductionRefused('revision invalidation identity differs')
     imports = {}
     for bound in index['imports']:
+        review_checkpoint()
         sidecar = _json(verify_artifact(bound,root=root),root=root)
         object_fields(sidecar,IMPORT_FIELDS,'revision import')
         timestamp(sidecar['created_at'])
@@ -351,7 +675,7 @@ def validate_revision_structure(options, run):
         for item in snapshot['inventories']:
             object_fields(item,('directory','paths'),'origin inventory')
             folder = safe_path(item['directory'],source)
-            if sorted(str(safe_path(p,source)) for p in folder.rglob('*.json')) != item['paths']:
+            if revision_inventory(folder, root=source) != item['paths']:
                 raise ProductionRefused('origin inventory changed')
         for item in snapshot['absent_paths']:
             if safe_path(item,source).exists(): raise ProductionRefused('origin absent evidence appeared')
@@ -402,7 +726,22 @@ def _same_whole_frozen(frozen,original):
     return canonical_digest(thaw(frozen))==canonical_digest(thaw(original))
 
 
+def _local_revision_read(function):
+    @wraps(function)
+    def read(*args, **kwargs):
+        frozen = args[0]
+        run = str(Path(frozen.options['script_path']).parent.parent)
+        active = _context.get()
+        admitted = active is not None and run in active['validated']
+        # A cold admission is entirely local. Its overlapping node captures
+        # share immutable baselines until the complete read boundary closes.
+        with (nullcontext() if admitted else revision_artifact_batch()), revision_read_transaction():
+            return function(*args, **kwargs)
+    return read
+
+
 @verified_read
+@_local_revision_read
 def require_scene_revision(frozen):
     """Admit original nodes and compare registered views under one recursion scope."""
     run = Path(frozen.options['script_path']).parent.parent
@@ -439,10 +778,14 @@ def require_scene_revision(frozen):
         from ._scene_revision_origins import capture_origin,verify_import_view
         from .production_inputs import load_frozen_inputs
         origin = load_frozen_inputs(source)
+        # Consumers may reuse this exact admitted input within the revision
+        # scope. Re-loading it per prompt repeats the complete import scan.
+        result['source_frozen'] = origin
         if 'scene_revision' in origin.options:
             guard.ancestors.append(require_scene_revision(origin)['guard'])
         originals={}
         for iid,(sidecar,bound) in result['imports'].items():
+            review_checkpoint()
             guard.capture(bound['path'],root=root,expected=bound)
             view_bound = sidecar['view_artifact']; guard.capture(view_bound['path'],root=root,expected=view_bound)
             snapshot = sidecar['source_json_snapshot']

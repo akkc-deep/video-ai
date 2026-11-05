@@ -165,7 +165,7 @@ def _storage_object(store, original, settings, storage, *, verify_remote):
 
 
 def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, reference_settings_path,
-             storage, client_factory, smtp_factory, email_settings):
+             storage, client_factory, smtp_factory, email_settings, selection_preparer=None):
     bible, plan = selection_records.load_committed_plan(frozen, units, timeline)
     integer(batch_index, 'reference batch index', 1)
     if batch_index > len(plan['batches']): raise ProductionRefused('reference batch outside committed plan')
@@ -235,7 +235,8 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
                                           paths=paths, logger=logger, lock=store.lock, storage=storage)
         boundary('reference-candidates')
         manifests.append(request_root/'candidates.json')
-    selection = prepare_image_batch(frozen, units, timeline, manifests, batch_index=batch_index, paths=paths,
+    prepare=selection_preparer if selection_preparer is not None else prepare_image_batch
+    selection = prepare(frozen, units, timeline, manifests, batch_index=batch_index, paths=paths,
         logger=logger, email_settings=email_settings, smtp_factory=smtp_factory, lock=store.lock)
     store.owned()
     if selection.status in ('failed', 'blocked', 'interrupted', 'email_delivery_unknown'):
@@ -255,9 +256,12 @@ from .scene_revision_records import revision_validation
 @production_execution
 @revision_validation
 def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logger, reference_settings_path=None,
-                            storage=None, client_factory=None, smtp_factory=None, email_settings=None, lock=None):
+                            storage=None, client_factory=None, smtp_factory=None, email_settings=None, lock=None,
+                            selection_preparer=None):
     run = None
     try:
+        if selection_preparer is not None and not callable(selection_preparer):
+            raise ProductionRefused('reference selection preparer must be callable')
         candidate_run = validate_run_dir(Path(frozen.options['script_path']).parent.parent)
         if frozen.config.production_strategy != STRATEGY or not _same_json(load_frozen_inputs(candidate_run), frozen):
             raise ProductionRefused('reference frozen inputs or strategy differ')
@@ -267,7 +271,7 @@ def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logg
             with RunLock(run) as held:
                 return produce_reference_batch(frozen, units, timeline, batch_index=batch_index, paths=paths, logger=logger,
                     reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
-                    smtp_factory=smtp_factory, email_settings=email_settings, lock=held)
+                    smtp_factory=smtp_factory, email_settings=email_settings, lock=held, selection_preparer=selection_preparer)
         store = _Records(run, lock); store.owned()
         if 'scene_revision' in frozen.options:
             from .scene_revision_records import require_scene_revision
@@ -276,7 +280,7 @@ def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logg
         with scene_input_protection(frozen):
             return _operate(frozen, units, timeline, store, batch_index=batch_index, paths=paths, logger=logger,
                 reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
-                smtp_factory=smtp_factory, email_settings=email_settings)
+                smtp_factory=smtp_factory, email_settings=email_settings, selection_preparer=selection_preparer)
     except (Exception, KeyboardInterrupt) as exc:
         status = ('awaiting_image_model_configuration' if isinstance(exc, ReferenceConfigurationRequired) else
                   'interrupted' if isinstance(exc, KeyboardInterrupt) else 'blocked' if isinstance(exc, ValueError) else 'failed')

@@ -1,4 +1,5 @@
 """Durable run evidence. Unknown submissions and existing locks never imply retry."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from collections.abc import Mapping
 from contextlib import contextmanager
 from copy import deepcopy
@@ -13,7 +14,7 @@ from threading import RLock
 from uuid import uuid4
 
 from ..config import read_json, ProjectConfig
-from .paths import PathPolicy, PROJECT_ROOT, shot_dir
+from .paths import PathPolicy, PROJECT_ROOT, validate_shot_id
 from .verification import validation_session, protected_hash, file_stamp, check_path, _whole_cached_identity
 
 STAGES = ('preflight', 'speech', 'timeline', 'storyboard', 'start_images',
@@ -57,7 +58,13 @@ def hash_file(path: Path) -> FileIdentity:
     protected = _whole_cached_identity(path)
     if protected is None:
         path = path.resolve(strict=True)
-        protected = protected_hash(path, _hash_open_file)
+        from .verification import _whole_inputs, protected_bytes, _MAX_PROTECTED_TEXT_FILE_BYTES
+        if (_whole_inputs.get() is not None and path.suffix.casefold() in ('.json', '.txt', '.yaml', '.yml', '.eml')
+                and path.stat().st_size <= _MAX_PROTECTED_TEXT_FILE_BYTES):
+            _, protected = protected_bytes(path)
+            return protected  # protected_bytes already observes the identity.
+        else:
+            protected = protected_hash(path, _hash_open_file)
     observe_file(protected)
     return protected
 
@@ -78,8 +85,8 @@ def validate_run_dir(run_dir: Path) -> Path:
     from .storage import managed_location, _test_runtimes
     if managed_location(run) is not None:
         return run
-    roots = [PROJECT_ROOT/'runs']
-    roots.extend(root/'projects/video-ai/runs' for root in _test_runtimes)
+    roots = [PROJECT_ROOT.parent/'work']
+    roots.extend(root/'work' for root in _test_runtimes)
     if run.parent not in roots or not re.fullmatch(r'[0-9]{8}-[0-9]{6}-[0-9a-f]{12}', run.name):
         raise ValueError('expected a concrete generated run directory')
     return run
@@ -89,7 +96,7 @@ def validate_unit(kind: str, unit_id: str):
     if kind not in ('speech', 'shot', 'frame', 'image', 'shot_attempt') or not isinstance(unit_id, str):
         raise ValueError('invalid unit kind/ID')
     if kind in ('shot', 'image'):
-        shot_dir(PROJECT_ROOT / 'runs', unit_id)
+        validate_shot_id(unit_id)
     elif kind == 'shot_attempt':
         match = re.fullmatch(r'shot_([0-9]{4}):attempt_([0-9]{4})', unit_id)
         if not match or int(match[1]) < 1 or int(match[2]) < 1:
@@ -98,7 +105,7 @@ def validate_unit(kind: str, unit_id: str):
         match = re.fullmatch(r'(shot_[0-9]{4,}):frame_([0-9]{6,})', unit_id)
         if not match or int(match[2]) < 1:
             raise ValueError('invalid frame ID')
-        shot_dir(PROJECT_ROOT / 'runs', match[1])
+        validate_shot_id(match[1])
     elif not re.fullmatch(r'[A-Za-z0-9_-]+', unit_id):
         raise ValueError('invalid speech ID')
 
@@ -213,7 +220,9 @@ def _services_resources(data,run):
             if key in service:_evidence_path(service[key],run)
         if 'cwd' in service:
             cwd=_absolute(service['cwd'])
-            if not cwd.is_relative_to(Path('D:/VideoSi')):raise ValueError('service cwd outside runtime')
+            from .storage import _test_runtimes
+            if not any(cwd.is_relative_to(root) for root in (_PORTABLE_ROOT, *_test_runtimes)):
+                raise ValueError('service cwd outside runtime')
         if 'args' in service:
             if not isinstance(service['args'],list) or not service['args'] or not all(isinstance(a,str) for a in service['args']):raise ValueError('invalid service args')
             _absolute(service['args'][0])

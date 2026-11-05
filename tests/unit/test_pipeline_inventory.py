@@ -4,7 +4,7 @@ from video_ai.runtime.pipeline_inventory import enrich_inventory
 from video_ai.runtime.manifest import STAGES
 
 
-def identity(path='D:/VideoSi/input.txt',sha='a'*64):
+def identity(path='E:/VideoAI/input.txt',sha='a'*64):
     return dict(path=path,bytes=1,sha256=sha,mtime_ns=1,verified_at='2026-10-05T00:00:00+00:00')
 
 
@@ -154,8 +154,8 @@ def test_copied_identity_path_and_run_graph_names_do_not_change_equivalence():
         target=row if stage=='start_images' else row['attempts'][0] if stage=='source_clips' else row['frames'][0]
         target['actual_graph']['1']['inputs']['image']='child/input.png'
         target['actual_graph']['3']['inputs']['filename_prefix']='child/output'
-    copied['speech']['report']['source']['path']='D:/VideoSi/copy.txt'
-    copied['start_images']['images'][0]['image_identity']['path']='D:/VideoSi/copy.png'
+    copied['speech']['report']['source']['path']='E:/VideoAI/copy.txt'
+    copied['start_images']['images'][0]['image_identity']['path']='E:/VideoAI/copy.png'
     _,derived=enrich_inventory(snapshot,copied,{})
     for stage in ('speech','start_images','source_clips','upscale'):
         assert original[stage]==derived[stage]
@@ -196,7 +196,7 @@ def test_complete_timeline_pcm_paths_in_composition_normalize_by_content():
     snapshot,consumed=fixture()
     consumed['timeline']['clips'][0]['pcm'].update(samples=4800,sample_rate=48000)
     _,original=enrich_inventory(snapshot,consumed,{})
-    consumed['timeline']['clips'][0]['pcm']['path']='D:/VideoSi/copied.wav'
+    consumed['timeline']['clips'][0]['pcm']['path']='E:/VideoAI/copied.wav'
     _,copied=enrich_inventory(snapshot,consumed,{})
     assert original['composition']==copied['composition']
 

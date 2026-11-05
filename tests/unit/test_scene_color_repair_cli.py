@@ -14,7 +14,7 @@ def command():
 
 
 def test_cli_invalid_relative_run_returns_exact_blocked_result(capsys):
-    assert command()(['propose','--run-dir','relative','--request','D:/VideoSi/missing.json'])==2
+    assert command()(['propose','--run-dir','relative','--request','E:/VideoAI/missing.json'])==2
     result=json.loads(capsys.readouterr().out)
     assert set(result)==set('schema_version run_id candidate_id status intent terminal review_template error'.split())
     assert result['status']=='blocked' and result['intent'] is None and result['terminal'] is None
@@ -23,5 +23,5 @@ def test_cli_invalid_relative_run_returns_exact_blocked_result(capsys):
 
 def test_cli_has_no_force_or_production_adoption_switch():
     with pytest.raises(SystemExit) as exc:
-        command()(['propose','--run-dir','D:/VideoSi/x','--request','D:/VideoSi/x.json','--force'])
+        command()(['propose','--run-dir','E:/VideoAI/x','--request','E:/VideoAI/x.json','--force'])
     assert exc.value.code==2

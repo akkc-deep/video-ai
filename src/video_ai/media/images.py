@@ -30,7 +30,7 @@ def _record_name(logger, prefix, unit_id, stage):
 
 
 def _command(args, *, config, paths, logger, unit_id, stage='start_images', timeout=300):
-    result=run_logged(tuple(str(a) for a in args),cwd=logger.run_dir,env=build_child_env(paths),
+    result=run_logged(tuple(str(a) for a in args),cwd=logger.run_dir,env=build_child_env(paths, logger.run_dir),
         timeout=command_timeout(timeout,300),logger=logger,stage=stage,unit_id=unit_id)
     if result.returncode != 0 or result.timed_out:
         raise RuntimeError(f'{unit_id}: image command failed: {result.stderr_path}')

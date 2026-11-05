@@ -14,7 +14,7 @@ def media_context(runtime_run):
     from video_ai.config import load_config
     from video_ai.runtime.logging import RunLogger
     run,config,paths=runtime_run
-    actual=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual=load_config(Path('E:/VideoAI/shared/config/production.json'))
     config=replace(config,tools=dict(config.tools,ffmpeg=actual.tools['ffmpeg'],ffprobe=actual.tools['ffprobe']))
     return run,dict(config=config,paths=paths,logger=RunLogger(run),unit_id='shot_0001')
 

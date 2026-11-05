@@ -1,4 +1,5 @@
 """Pure, reviewed clip visual instructions; audit sources never enter the prompt."""
+from ..runtime.paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from collections.abc import Mapping
 from copy import deepcopy
 import json
@@ -43,10 +44,10 @@ def parse_scene_rendering(value):
         evidence_field = 'temporal_evidence' if value['mode'] == 'temporal_extension_v1' else 'whole_scene_evidence'
         name = _text(value[evidence_field])
         path = PureWindowsPath(name)
-        if (not path.is_absolute() or not path.is_relative_to(PureWindowsPath('D:/VideoSi'))
+        if (not path.is_absolute() or not path.is_relative_to(PureWindowsPath(_PORTABLE_ROOT))
                 or '..' in path.parts or any(c in name for c in '*?')
                 or path.suffix.lower() != '.json' or ':' in name[2:]):
-            raise ValueError(evidence_field+' requires an exact absolute D:/VideoSi JSON file')
+            raise ValueError(evidence_field+' requires an exact absolute configured runtime JSON file')
     return deepcopy(thaw(value))
 
 

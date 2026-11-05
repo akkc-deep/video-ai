@@ -17,7 +17,7 @@ def ready_candidate(natural_media,monkeypatch):
     epoch=put_json(run/'fixture-epoch.json',dict(fixture_only=True))
     mref=put_json(run/'fixture-manifest.json',manifest)
     assessment=put_json(run/'fixture-assessment.json',dict(manifest=mref,report=artifact(report_path),created_at=now()))
-    cp=artifact(Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json'))
+    cp=artifact(Path('E:/VideoAI/shared/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json'))
     precheck=put_json(run/'fixture-precheck.json',dict(fixture_only=True))
     profile=put_json(run/'fixture-natural-profile.json',dict(fixture_only=True))
     context=dict(commit=material,epoch=epoch,assessment=assessment,source=artifact(video),frames=[f['record'] for f in manifest['clips'][0]['frames']])

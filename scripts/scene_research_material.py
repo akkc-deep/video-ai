@@ -8,6 +8,8 @@ from video_ai.runtime.paths import RuntimePaths
 from video_ai.runtime.research_material_records import verify_wan_material
 
 
+from video_ai.runtime.paths import RUNTIME_ROOT
+
 def _failure(args, request, exc):
     error = dict(kind=type(exc).__name__, message=str(exc) or type(exc).__name__)
     interrupted = isinstance(exc, KeyboardInterrupt)
@@ -19,7 +21,7 @@ def _failure(args, request, exc):
     material_id = request.get('material_id') if isinstance(request, dict) else None
     try:
         uid(material_id)
-        registry = Path('D:/VideoSi/projects/video-ai/research-material-imports')/(material_id+'.json')
+        registry = (RUNTIME_ROOT/'shared/assets/research-material-imports')/(material_id+'.json')
         if registry.exists():
             binding = ResearchReader().read(registry)
             run = Path(binding['run_dir'])

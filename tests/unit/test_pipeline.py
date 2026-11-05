@@ -466,7 +466,7 @@ def test_unregistered_pipeline_result_cannot_be_self_authorized(flow):
         load_pipeline_result(path)
 
 
-@pytest.mark.parametrize('field,value',[('status','invented'),('published',True),('active_stage','unknown'),('candidate_path','D:/VideoSi/foreign.mp4'),('waiting_for',[])])
+@pytest.mark.parametrize('field,value',[('status','invented'),('published',True),('active_stage','unknown'),('candidate_path','E:/VideoAI/foreign.mp4'),('waiting_for',[])])
 def test_registered_audit_rejects_inconsistent_result_fields(flow,field,value):
     from video_ai.runtime.pipeline_evidence import load_pipeline_result
     flow.committed('preflight',passed=True);flow.committed('speech')

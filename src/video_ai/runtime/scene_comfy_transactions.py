@@ -302,6 +302,9 @@ def validate_scene_submission(store,request,graph,*,media=True):
     submission=store.read(directory/'submission.json')
     if submission is None: return None
     if intent is None or accepted is None: raise ProductionRefused('submission lacks accepted intent')
+    if isinstance(submission,dict) and 'local_recovery_evidence' in submission:
+        from .scene_local_output_recovery import validate_local_scene_submission
+        return validate_local_scene_submission(store,request,graph,submission,media=media,loaded=(directory,intent,accepted,rows))
     _identity(submission,_SUBMISSION,request,'submission')
     if submission['intent_sha256']!=canonical_digest(intent) or submission['accepted_sha256']!=canonical_digest(accepted) or submission['prompt_id']!=accepted['prompt_id']: raise ProductionRefused('submission binding differs')
     store.validate_artifact(submission['history_evidence'])
@@ -407,6 +410,7 @@ def _remote_validate(store,client,template,logger,timeout,*,capability_cache=Non
 def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None,
                                  capability_cache=None,service_identity=None):
     from .execution_limits import execution_deadline, request_timeout
+    from .scene_review_control import review_checkpoint
     budget=positive_timeout(timeout); end=execution_deadline(timeout,time.monotonic())
     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
     completed=validate_scene_submission(store,request,graph)
@@ -433,10 +437,13 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
     try:
         if intent is None:
             cid=str(uuid4()); prompt_payload(graph,cid)  # Size rejection precedes intent.
+            review_checkpoint(force=True)
             guard(); ensure_service(); guard()
+            review_checkpoint(force=True)
             service_ready=True
             _remote_validate(store,client,template,logger,remaining(),capability_cache=capability_cache,
                 service_identity=service_identity,ownership_check=guard); guard()
+            review_checkpoint(force=True)
             store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
             intent=dict(schema_version=2,run_id=request['run_id'],clip_id=request['clip_id'],request_sha256=canonical_digest(request),graph_sha256=request['graph_sha256'],
                 input_sha256=request['input_sha256'],parent_sha256=canonical_digest(request['parent']) if request['parent'] is not None else None,
@@ -446,6 +453,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                 # The inference clock begins at the durable original intent;
                 # startup has its separate bound and recovery never resets it.
                 end=time.monotonic()+max(0,datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time())
+            review_checkpoint(force=True)
             row=_record_http(store,request,intent,'POST','/prompt',lambda t:client.submit(graph,client_id=cid,timeout=t),remaining(),graph)
             rows.append(row); value=_parse(row)
             if _post_rejected(row):
@@ -461,7 +469,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                     if accepted is not None and (accepted['prompt_id']!=value['prompt_id'] or accepted['number']!=value['number']):
                         _terminal(store,request,intent,'identity_conflict','POST acceptance identity conflict',[row['evidence']])
                     if accepted is None: accepted=_accept(store,request,intent,value['prompt_id'],value['number'],row['evidence'])
-        fetched=False; network_failed=False;tracker=_HistoryTracker(intent,graph)
+        fetched=False; network_failed=False;missing_views=0;tracker=_HistoryTracker(intent,graph)
         while True:
             try: pid,candidate,evidence=tracker.advance(rows,accepted)
             except ProductionRefused as exc: _terminal(store,request,intent,'identity_conflict',str(exc),[row['evidence'] for row in rows])
@@ -494,7 +502,7 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                             prompt_id=accepted['prompt_id'],history_evidence=candidate['history'],output=output)
                         store.assert_owned(); store.write(directory/'submission.json',result)
                         return validate_scene_submission(store,request,graph)
-            poll_queue=not fetched or accepted is None or network_failed or candidate is None
+            poll_queue=not fetched or accepted is None or network_failed or candidate is None or candidate.get('entry') is None
             if fetched:
                 if candidate is None and not network_failed: raise SceneSubmitUnknown('no unique original graph/client identity; no re-POST')
                 time.sleep(min(2,remaining()))
@@ -505,14 +513,29 @@ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_se
                 fetched=True
             # Every view is retained. A later success cannot erase a contradiction.
             network_failed=False
+            queue_value=None;history_value=None
             try:
                 if poll_queue:
                     row=_record_http(store,request,intent,'GET','/queue',lambda t:client.queue(timeout=t),remaining(),graph); rows.append(row)
-                    if not isinstance(_parse(row),dict): raise SceneSubmitUnknown('queue temporarily unavailable')
+                    queue_value=_parse(row)
+                    if not isinstance(queue_value,dict): raise SceneSubmitUnknown('queue temporarily unavailable')
                 route='/history'+('/'+accepted['prompt_id'] if accepted else '')
                 row=_record_http(store,request,intent,'GET',route,lambda t:client.history(accepted['prompt_id'] if accepted else None,timeout=t),remaining(),graph); rows.append(row)
-                if not isinstance(_parse(row),dict): raise SceneSubmitUnknown('history temporarily unavailable')
+                history_value=_parse(row)
+                if not isinstance(history_value,dict): raise SceneSubmitUnknown('history temporarily unavailable')
             except SceneSubmitUnknown:
                 remaining(); network_failed=True
+            # Historical queue membership is not evidence that a restarted
+            # service still owns the task. Confirm absence in two fresh pairs;
+            # retain the unknown outcome and original intent without re-POST.
+            if (not network_failed and accepted is not None and queue_value is not None
+                    and all(isinstance(queue_value.get(k),list) for k in ('queue_running','queue_pending'))):
+                active={r[1] for k in ('queue_running','queue_pending') for r in queue_value[k]
+                        if isinstance(r,list) and len(r)>1 and isinstance(r[1],str)}
+                pid=accepted['prompt_id']
+                missing_views=missing_views+1 if pid not in active and pid not in history_value else 0
+                if missing_views>=2:
+                    raise SceneSubmitUnknown('original task absent from two fresh queue and history views; outcome unknown; no re-POST')
+            else:missing_views=0
     finally:
         if old_guard is not None: client.ownership_check=old_guard

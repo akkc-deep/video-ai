@@ -1,4 +1,5 @@
 """Read-only Wan transaction evidence and explicitly non-production research contexts."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from datetime import datetime, timezone
 from fractions import Fraction
 import hashlib
@@ -63,7 +64,7 @@ class ResearchReader:
     def verify_all(self):
         for value in self.frozen.values():
             self.check()
-            verify(value, runtime=Path(value['path']).is_relative_to(Path('D:/VideoSi')), empty=True)
+            verify(value, runtime=Path(value['path']).is_relative_to(_PORTABLE_ROOT), empty=True)
 
 
 def _require(condition, message):

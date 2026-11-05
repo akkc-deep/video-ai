@@ -36,6 +36,8 @@ from video_ai.media.images import validate_start_png
 from video_ai.media.video import inspect_production_video
 
 
+from video_ai.runtime.paths import RUNTIME_ROOT
+
 def owned_service(frozen,run,manifest,logger,name):
     url=frozen.config.services[name]
     if port_listening(url,3):raise ProductionRefused('external service listening at '+url)
@@ -51,7 +53,7 @@ def plan(args):
     ids=args.shot_ids.split(',')
     if not 3<=len(ids)<=5 or len(set(ids))!=len(ids):raise ValueError('select 3 to 5 distinct representative shots')
     selected=[next(s for s in original['shots'] if s['shot_id']==sid) for sid in ids]
-    config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    config=load_config((RUNTIME_ROOT/'shared/config/production.json'))
     run=create_run(RuntimePaths.from_config(config));print('PREVIEW_RUN='+str(run),flush=True)
     frozen=freeze_inputs(config,run,script=source/'production/script.txt')
     config=frozen.config

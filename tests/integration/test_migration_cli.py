@@ -2,8 +2,8 @@ from video_ai.cli import main
 
 
 def test_migrate_requires_exactly_one_mode(capsys):
-    assert main(['migrate','--inventory','D:/VideoSi/docs/video-ai/VAI-01-inventory'])==2
-    assert main(['migrate','--inventory','D:/VideoSi/docs/video-ai/VAI-01-inventory','--execute','--dry-run'])==2
+    assert main(['migrate','--inventory','E:/VideoAI/docs/video-ai/VAI-01-inventory'])==2
+    assert main(['migrate','--inventory','E:/VideoAI/docs/video-ai/VAI-01-inventory','--execute','--dry-run'])==2
 
 
 def test_migration_dry_run_saves_plan_without_copy(runtime_run,monkeypatch,capsys):
@@ -16,7 +16,7 @@ def test_migration_dry_run_saves_plan_without_copy(runtime_run,monkeypatch,capsy
     from video_ai.runtime.storage import _sandbox
     target=_sandbox.get()/'tools/tests'/runtime_run[0].name/'dry.bin'
     monkeypatch.setattr(module,'build_copy_plan',lambda p:(CopyEntry(source,target,'tool-env',12,None),))
-    assert main(['migrate','--inventory','D:/VideoSi/docs/video-ai/VAI-01-inventory','--dry-run'])==0
+    assert main(['migrate','--inventory','E:/VideoAI/docs/video-ai/VAI-01-inventory','--dry-run'])==0
     assert not target.exists()
     report=json.loads(capsys.readouterr().out)
     assert report['capacity']['passed']
@@ -40,7 +40,7 @@ def test_migration_io_failure_records_terminal_manifest(monkeypatch,capsys):
     import video_ai.runtime.migration as module
     def failure(inventory):raise PermissionError('unreadable source subtree')
     monkeypatch.setattr(module,'build_copy_plan',failure)
-    assert main(['migrate','--inventory','D:/VideoSi/docs/video-ai/VAI-01-inventory','--execute'])==1
+    assert main(['migrate','--inventory','E:/VideoAI/docs/video-ai/VAI-01-inventory','--execute'])==1
     result=json.loads(capsys.readouterr().out)
     manifest=json.loads((Path(result['run_dir'])/'manifest.json').read_text(encoding='utf-8'))
     assert manifest['stages']['preflight']['status']=='failed'

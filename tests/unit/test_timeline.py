@@ -11,7 +11,7 @@ def make(text='甲，乙。\r\n丙。', samples=None, fps=16, settings=None):
     script = SegmentedScript(text, True, segment_text(text))
     speech = [s for s in script.spans if s.kind == 'speech']
     sizes = samples or [48000] * len(speech)
-    audio = {s.unit_id: AudioInfo(Path('D:/VideoSi/fixture')/s.unit_id, 'a'*64,
+    audio = {s.unit_id: AudioInfo(Path('E:/VideoAI/fixture')/s.unit_id, 'a'*64,
              n*2+44,48000,1,2,n) for s,n in zip(speech,sizes)}
     return build_timeline(script,audio,settings=settings or TimelineSettings(),fps=fps)
 

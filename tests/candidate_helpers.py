@@ -23,7 +23,7 @@ def write(path, data):
 
 def make_candidate_fixture(runtime_run, monkeypatch, *, fps=16):
     run, original, paths = runtime_run
-    actual = load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     raw = thaw(original.raw)
     raw['voice_config'] = str(original.voice.config_file)
     raw['workflows'] = {k: str(v) for k, v in original.workflows.items()}

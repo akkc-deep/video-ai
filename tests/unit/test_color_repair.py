@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 
-PROFILE = Path('D:/VideoSi/projects/video-ai/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json')
+PROFILE = Path('E:/VideoAI/shared/continuity-benchmark/AI-repair-calibration-20261027-r2/experimental-repair-profile.json')
 
 
 def repair():
@@ -25,7 +25,7 @@ def context(**changes):
     value = dict(comparable=True, intentional_lighting_change=False,
                  confirmed_motion_defect=False, subject_structure_intact=True,
                  operator_basis='Known green axis from original observation',
-                 review=dict(path='D:/VideoSi/precheck.json', bytes=10, sha256='a' * 64))
+                 review=dict(path='E:/VideoAI/precheck.json', bytes=10, sha256='a' * 64))
     value.update(changes)
     return value
 

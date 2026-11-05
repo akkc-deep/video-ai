@@ -1,4 +1,5 @@
 """Strict natural-study input identities and immutable, bounded local records."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from datetime import datetime,timezone
 import hashlib
 import json
@@ -12,7 +13,7 @@ from .manifest import now
 from .production_state import object_fields,ProductionRefused
 from .research_material_records import ResearchReader,load_research_material_context,ref
 
-STUDY_ROOT=Path('D:/VideoSi/projects/video-ai/vco06-natural-qualification/studies')
+STUDY_ROOT=(_PORTABLE_ROOT / 'shared/config/research/vco06-natural-qualification/studies')
 REQUEST='schema_version study_id config conditional_profile seen cases requested_at reason'
 CASE='case_id scene_group group_basis domain split material manifest observations'
 
@@ -47,11 +48,11 @@ class StudyReader(ResearchReader):
 
     def any(self,value):
         path=Path(value['path'] if isinstance(value,dict) else value)
-        return self.read(value,package=not path.is_relative_to(Path('D:/VideoSi')))
+        return self.read(value,package=not path.is_relative_to(_PORTABLE_ROOT))
 
     def cap(self,value):
         path=Path(value['path'] if isinstance(value,dict) else value)
-        result=self.capture(value,package=not path.is_relative_to(Path('D:/VideoSi')))
+        result=self.capture(value,package=not path.is_relative_to(_PORTABLE_ROOT))
         if result['bytes']==0: raise ProductionRefused('empty natural-study input')
         return result
 

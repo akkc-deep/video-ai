@@ -108,7 +108,7 @@ def _extract(task,plan):
     directory.mkdir(parents=True)
     command=run_logged(tuple(str(v) for v in (task.frozen.config.tools['ffmpeg'],'-nostdin','-n','-v','error','-xerror','-i',source.path,
         '-map','0:v:0','-vf','format=rgb24','-fps_mode','passthrough','-start_number','1',directory/'frame_%06d.png')),
-        cwd=state.run_dir,env=build_child_env(task.paths),timeout=300,logger=task.logger,stage='upscale',unit_id=uid)
+        cwd=state.run_dir,env=build_child_env(task.paths, state.run_dir),timeout=300,logger=task.logger,stage='upscale',unit_id=uid)
     if command.returncode!=0 or command.timed_out:raise RuntimeError(f'{uid}: extraction failed: {command.stderr_path}')
     expected=[directory/f'frame_{i:06d}.png' for i in range(1,plan.source_frames+1)]
     if {p.name for p in directory.iterdir()}!={p.name for p in expected}:raise ValueError('exact native PNG extraction sequence required')

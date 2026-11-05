@@ -117,7 +117,7 @@ def test_whole_native_320_mapping_uses_real_decoded_media(runtime_run):
     from video_ai.media.video import trim_scene_video,inspect_video
     from video_ai.config import load_config
     run,base,paths=runtime_run
-    config=load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    config=load_config(Path('E:/VideoAI/shared/config/production.json'))
     source=run/'whole-fixture-native321.mp4'; logger=RunLogger(run,production=True)
     command=run_logged(tuple(map(str,[config.tools['ffmpeg'],'-nostdin','-n','-v','error','-f','lavfi',
         '-i','testsrc2=size=64x36:rate=16','-frames:v','321','-c:v','libx264','-pix_fmt','yuv420p',source])),

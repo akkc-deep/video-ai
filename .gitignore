@@ -48,3 +48,7 @@ junit.xml
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+/.tools/
+/.test-runtime/
+/.superpowers/

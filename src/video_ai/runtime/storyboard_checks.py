@@ -311,7 +311,7 @@ def _unchanged(store,snapshot,identities,run,owner):
 
 
 def _model_files(paths):
-    root=paths.policy.validate_write(paths.runtime_root/'models/ollama','model')
+    root=paths.policy.validate_write(paths.runtime_root/'shared/models/ollama','model')
     manifest=root/'manifests/registry.ollama.ai/library/qwen3/8b'
     identity=hash_file(manifest);definition=read_json(manifest);identities={'manifest':identity}
     for i,layer in enumerate([definition['config'],*definition['layers']]):

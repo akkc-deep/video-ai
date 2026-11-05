@@ -10,7 +10,7 @@ from video_ai.planning.production_scenes import canonical_digest
 def rendering(mode):
     value = dict(mode=mode, prompt_policy='visual_v2', prompt_contract='reviewed.json')
     if mode == 'whole_scene_v1':
-        value['whole_scene_evidence'] = 'D:/VideoSi/cache/video-ai/logs/vco05-20261027-native321/final-assessment.json'
+        value['whole_scene_evidence'] = 'E:/VideoAI/scratch/logs/vco05-20261027-native321/final-assessment.json'
     return value
 
 
@@ -22,7 +22,7 @@ def test_explicit_rendering_exact_modes(mode):
 
 
 @pytest.mark.parametrize('path', ['relative.json', 'C:/VideoSi/final-assessment.json',
-    'D:/VideoSi/../outside.json', 'D:/VideoSi/x/*.json', '//host/share/final-assessment.json'])
+    'E:/VideoAI/../outside.json', 'E:/VideoAI/x/*.json', '//host/share/final-assessment.json'])
 def test_whole_evidence_requires_exact_local_runtime_path(path):
     from video_ai.planning.scene_video_prompts import parse_scene_rendering
     value = rendering('whole_scene_v1'); value['whole_scene_evidence'] = path
@@ -166,12 +166,12 @@ def whole_snapshot():
         production_strategy='paragraph_jimeng_v1', run_id=options['run_id'], mode='whole_scene_v1',
         scene_plan_sha256=canonical_digest(snapshot['scene_plan']), timeline_sha256='9'*64,
         rendering_identity_sha256=canonical_digest(identity),
-        admission=dict(path='D:/VideoSi/frozen/whole-scene-evidence.json', bytes=20, sha256='2'*64), clips=clips)
+        admission=dict(path='E:/VideoAI/frozen/whole-scene-evidence.json', bytes=20, sha256='2'*64), clips=clips)
     snapshot['clip_nodes'] = [dict(clip_id=c['clip_id'], record={'clip_id': c['clip_id']},
         acceptance={'verdict': 'passed'}, status='accepted') for c in clips]
     snapshot['upscale_nodes'] = [dict(frame_id=c['clip_id']+f':frame_{i+1:06d}', record={}, status='ready')
         for c in clips for i in range(c['retained_frames'])]
-    request.update(scene_ids=[], clip_ids=[], choices=[], config_path='D:/VideoSi/new/config.json')
+    request.update(scene_ids=[], clip_ids=[], choices=[], config_path='E:/VideoAI/new/config.json')
     target = deepcopy(identity)
     target['config_sha256'] = 'f'*64
     target['rendering'].update(mode='segmented_v1', whole_scene_evidence_sha256=None)
@@ -207,10 +207,10 @@ def test_schema3_media_index_keeps_all_native_whole_frames_once():
     snapshot, _, _ = whole_snapshot()
     budgets = snapshot['scene_execution']['clips']
     value = dict(schema_version=3, total_frames=52,
-        execution_budget=dict(path='D:/VideoSi/run/execution-budget.json', bytes=100, sha256='a'*64),
+        execution_budget=dict(path='E:/VideoAI/run/execution-budget.json', bytes=100, sha256='a'*64),
         clips=[dict(clip_id=c['clip_id'], scene_id=c['scene_id'], budget=c,
             frame_mapping=scene_clip_frame_mapping(c, actual_generated_frames=c['generated_frames']),
-            source=dict(path='D:/VideoSi/run/'+c['clip_id']+'.mp4', bytes=40, sha256='b'*64)) for c in budgets])
+            source=dict(path='E:/VideoAI/run/'+c['clip_id']+'.mp4', bytes=40, sha256='b'*64)) for c in budgets])
     rows = plan_scene_upscale(value)
     assert len(rows) == 52
     assert [r['output_frame_index'] for r in rows] == list(range(52))

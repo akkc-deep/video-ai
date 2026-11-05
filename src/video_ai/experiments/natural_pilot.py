@@ -1,4 +1,5 @@
 """A separate four-request, development-only stationary-material pilot."""
+from ..runtime.paths import RUNTIME_ROOT as _PORTABLE_ROOT
 import json
 from pathlib import Path
 import sys
@@ -10,7 +11,7 @@ from ..config import load_config
 from ..runtime._scene_continuity_io import local
 from ..runtime.manifest import now
 
-PILOT_ROOT = Path('D:/VideoSi/projects/video-ai/vco06-natural-qualification/pilots')
+PILOT_ROOT = (_PORTABLE_ROOT / 'shared/config/research/vco06-natural-qualification/pilots')
 FAMILIES = ('woven_display','stone_display','wood_display','tile_display')
 PROMPT = ('Locked-off tripod camera observing the exact rigid textured display in the reference. '
           'The camera and all objects remain still throughout the entire shot. '

@@ -91,6 +91,43 @@ def test_original_multimage_outputs_are_durable_and_replay_has_no_http(candidate
     assert not (candidate_setup[3]/'.make-video.lock').exists()
 
 
+@pytest.mark.parametrize('candidate_setup',[2],indirect=True)
+def test_candidate_requests_do_not_overlap_on_single_concurrency_accounts(candidate_setup,monkeypatch):
+    client=candidate_setup[1]
+    submit=client.submit;query=client.query
+    active=[False]
+    def serial_submit(*args,**kwargs):
+        assert not active[0], 'second candidate submitted before previous task completed'
+        result=submit(*args,**kwargs);active[0]=True
+        return result
+    def serial_query(*args,**kwargs):
+        result=query(*args,**kwargs)
+        if result['status']=='done':active[0]=False
+        return result
+    monkeypatch.setattr(client,'submit',serial_submit)
+    monkeypatch.setattr(client,'query',serial_query)
+    generate(candidate_setup)
+
+
+@pytest.mark.parametrize('candidate_setup',[2],indirect=True)
+def test_completed_request_can_be_verified_without_complete_candidate_batch(candidate_setup,monkeypatch):
+    import video_ai.runtime.jimeng_candidates as module
+    original=module._request_candidates
+    def stop_before_second(store,folder,*args,**kwargs):
+        if folder.name=='request_02' and kwargs.get('phase')!='check':raise KeyboardInterrupt()
+        return original(store,folder,*args,**kwargs)
+    monkeypatch.setattr(module,'_request_candidates',stop_before_second)
+    with pytest.raises(KeyboardInterrupt):generate(candidate_setup)
+    frozen,_,_,run=candidate_setup
+    folder=run/'production/jimeng/scene_0001/request_01'
+    assert not (folder.parent/'candidates.json').exists()
+    scene=dict(scene_id='scene_0001',image_prompt='湖水上的鸟')
+    assert len(module.validate_completed_request(frozen,scene,folder))==2
+    record=json.loads((folder/'result.json').read_bytes());record['identity']='0'*64
+    (folder/'result.json').write_text(json.dumps(record),encoding='utf-8')
+    with pytest.raises(ValueError):module.validate_completed_request(frozen,scene,folder)
+
+
 def test_accepted_then_interrupted_queries_original_task(candidate_setup, monkeypatch):
     import video_ai.runtime.jimeng_candidates as candidates
     def interrupt(point, identity):
@@ -298,12 +335,16 @@ def test_candidate_generation_refuses_live_foreign_run_lock(candidate_setup):
 
 
 def refreeze(setup, runtime_run, changes=None):
+    import shutil
+    from pathlib import Path
     from video_ai.config import load_config
     from video_ai.runtime.paths import create_run, RuntimePaths
     from video_ai.runtime.production_inputs import freeze_inputs
     path = setup[0].config.config_file
     data = json.loads(path.read_text(encoding='utf-8'))
-    for tool in ('ffmpeg', 'ffprobe'): data['tools'][tool] = str(runtime_run[1].tools[tool])
+    # Keep real decoder executables inside the isolated fixture's tool subtree.
+    for tool in ('ffmpeg', 'ffprobe'):
+        shutil.copy2(runtime_run[1].tools[tool],Path(data['tools'][tool]))
     if changes: data['image_generation'].update(changes)
     path.write_text(json.dumps(data), encoding='utf-8')
     config = load_config(path)

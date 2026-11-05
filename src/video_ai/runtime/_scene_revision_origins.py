@@ -10,8 +10,24 @@ from ..config import parse_scene_planning
 from .manifest import thaw
 from .production_state import ArtifactStamp, ProductionRefused, object_fields, timestamp
 from .scene_revision_records import (RevisionGuard, _json, artifact, require_scene_revision,
-    require_revision_import, safe_path, token)
-from .verification import verified_read
+    require_revision_import, safe_path, token, revision_raw_inventory)
+from .verification import verified_read, whole_input_protection
+
+
+
+def origin_timeline(value):
+    """Reuse an immutable typed common timeline only inside a local batch."""
+    from .scene_revision_records import _artifact_batch
+    from ._continuity_byte_guard import _captures
+    from threading import get_ident
+    batch = _artifact_batch.get()
+    if (batch is None or not batch['active'] or batch['thread'] != get_ident()
+            or _captures.get()):
+        return ProductionTimeline.from_dict(value)
+    key = canonical_digest(value)
+    if key not in batch['timelines']:
+        batch['timelines'][key] = ProductionTimeline.from_dict(value)
+    return batch['timelines'][key]
 
 
 def run_of(frozen): return Path(frozen.options['script_path']).parent.parent
@@ -33,7 +49,7 @@ def owned_common(frozen):
                 or value['run_id'] != run.name or value['stage'] != stage or value['status'] != 'completed'):
             raise ProductionRefused('source common report identity differs')
         timestamp(value['created_at']); values.append(value['payload'])
-    units,timeline = values[0],ProductionTimeline.from_dict(values[1])
+    units,timeline = values[0],origin_timeline(values[1])
     if (run/'production/production-state.json').exists():
         from .production_state import ProductionStateStore
         state=ProductionStateStore.open(run).snapshot()
@@ -135,11 +151,11 @@ def origin_media_context(frozen,units,timeline,*,scene_ids,clip_ids):
 def _origin_scene_ids(frozen,domain,key):
     prefix=common(frozen)
     from .image_selection_records import load_committed_plan
-    _,plan=load_committed_plan(frozen,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
+    _,plan=load_committed_plan(frozen,prefix['units'],origin_timeline(prefix['timeline']))
     if domain in ('image','choice'):sid=key
     else:
         from .production_scene_revision import _source_execution
-        execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+        execution=_source_execution(frozen,plan,origin_timeline(prefix['timeline']))
         clips=execution['clips'] if execution is not None else plan['clips']
         sid=next(c['scene_id'] for c in clips if c['clip_id']==key.split(':')[0])
     required=set()
@@ -154,9 +170,9 @@ def _origin_scene_ids(frozen,domain,key):
 def _origin_clip_ids(frozen,key):
     prefix=common(frozen)
     from .image_selection_records import load_committed_plan
-    _,plan=load_committed_plan(frozen,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
+    _,plan=load_committed_plan(frozen,prefix['units'],origin_timeline(prefix['timeline']))
     from .production_scene_revision import _source_execution
-    execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+    execution=_source_execution(frozen,plan,origin_timeline(prefix['timeline']))
     clips=execution['clips'] if execution is not None else plan['clips']
     by_id={c['clip_id']:c for c in clips};required=set();cid=key.split(':')[0]
     if by_id.get(cid,{}).get('protocol')=='longcat_native16_v1':
@@ -170,6 +186,12 @@ def _origin_clip_ids(frozen,key):
 
 @verified_read
 def source_clip_record(frozen,key):
+    from .scene_revision_records import revision_cached_read,revision_read_identity
+    identity = (revision_read_identity(frozen),key)
+    return revision_cached_read('source_clip',identity,lambda:_read_source_clip_record(frozen,key))
+
+
+def _read_source_clip_record(frozen,key):
     from ._scene_revision_origin_images import origin_image_scope
     from ._scene_revision_origin_clips import origin_clip_scope
     required,known=_origin_clip_ids(frozen,key)
@@ -180,12 +202,16 @@ def source_clip_record(frozen,key):
 def _source_clip_record(frozen, key):
     native=frozen.config.raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
     scene_id=key.split('_clip_',1)[0]
-    owned_native_chain=native and (run_of(frozen)/'production/scene-clips/chains'/scene_id/'result.json').exists()
+    chain_result=run_of(frozen)/'production/scene-clips/chains'/scene_id/'result.json'
+    owned_native_chain=native and chain_result.exists()
+    if native and not owned_native_chain:
+        from ._continuity_byte_guard import observe_absence
+        observe_absence(chain_result)
     if 'scene_revision' in frozen.options and not owned_native_chain:
         from ._scene_revision_readers import inherited_clip_record
         value = inherited_clip_record(frozen,key)
         if value is not None:return value
-    value = common(frozen); units = value['units']; timeline = ProductionTimeline.from_dict(value['timeline'])
+    value = common(frozen); units = value['units']; timeline = origin_timeline(value['timeline'])
     from .scene_clip_records import scene_context,validate_clip
     context = scene_context(frozen,units,timeline)
     target = next((row for row in context['rows'] if row['budget']['clip_id']==key),None)
@@ -222,7 +248,7 @@ def require_origin_node(frozen,domain,key):
 def _owned_origin_node(frozen,domain,key):
     prefix = common(frozen) if domain != 'common' else owned_common(frozen)
     if domain=='common': return prefix
-    units,timeline = prefix['units'],ProductionTimeline.from_dict(prefix['timeline'])
+    units,timeline = prefix['units'],origin_timeline(prefix['timeline'])
     from . import image_selection_records as images
     bible,plan = images.load_committed_plan(frozen,units,timeline)
     run = run_of(frozen)
@@ -264,7 +290,7 @@ def media_for_node(frozen,domain,key,value):
     run = run_of(frozen)
     def original(row): return {k:row[k] for k in ('path','bytes','sha256')}
     if domain=='common':
-        timeline = ProductionTimeline.from_dict(value['timeline'])
+        timeline = origin_timeline(value['timeline'])
         return [(f'pcm_{i:06d}',artifact(c.pcm.path,root=run)) for i,c in enumerate(timeline.clips,1)]
     if domain=='image': return [(f'candidate_{i:06d}',original(c)) for i,c in enumerate(value['candidates'],1)]
     if domain=='choice': return [('selected_image',original(value))]
@@ -328,7 +354,7 @@ def verify_import_view(frozen,sidecar,original,*,origin_frozen=None):
     wanted = make_import_view(run_of(frozen),domain,key,original,sidecar['local_artifacts'],common_view=common_view)
     if canonical_digest(wanted) != canonical_digest(sidecar['view']): raise ProductionRefused('inherited view changes original semantics')
     if domain=='common':
-        timeline = ProductionTimeline.from_dict(wanted['timeline'])
+        timeline = origin_timeline(wanted['timeline'])
         if timeline.original_text != frozen.script.text or thaw(timeline.effective_settings) != thaw(frozen.config.media.timeline):
             raise ProductionRefused('inherited common differs from target original/settings')
     if domain=='reference_settings':
@@ -341,9 +367,10 @@ def verify_import_view(frozen,sidecar,original,*,origin_frozen=None):
         settings = parse_scene_planning(wanted['scene_plan']['settings'])
         validate_scene_plan(frozen.script,dict(view['units'],run_id=frozen.options['run_id'],
             source_sha256=frozen.options['execution_policy']['input_identities']['script']['sha256']),
-            ProductionTimeline.from_dict(view['timeline']),wanted['bible'],wanted['scene_plan'],settings=settings)
+            origin_timeline(view['timeline']),wanted['bible'],wanted['scene_plan'],settings=settings)
 
 
+@whole_input_protection()
 @verified_read
 def capture_origin(frozen,domain,key):
     """Capture the node's source closure before admitting it; never entire later scenes."""
@@ -384,13 +411,13 @@ def capture_origin(frozen,domain,key):
                 references(state['units'].get(stage,{}))
                 if report.exists():
                     guard.capture(report,root=run);references(_json(report,root=run))
-    for clip in ProductionTimeline.from_dict(prefix['timeline']).clips: guard.capture(clip.pcm.path,root=run)
+    for clip in origin_timeline(prefix['timeline']).clips: guard.capture(clip.pcm.path,root=run)
     if domain != 'common':
         files |= {run/'production/visual-bible.json',run/'production/scene-plan.json',run/'production/scene-plan-commit.json'}
         directories.add(run/'production/scene-planning')
     if domain in ('image','choice','image_group','clip','upscale','reference_settings'):
         from .image_selection_records import load_committed_plan
-        bible,plan = load_committed_plan(frozen,prefix['units'],ProductionTimeline.from_dict(prefix['timeline']))
+        bible,plan = load_committed_plan(frozen,prefix['units'],origin_timeline(prefix['timeline']))
         closure = set()
         def include(sid):
             if sid in closure:return
@@ -428,7 +455,7 @@ def capture_origin(frozen,domain,key):
                         if sha is not None:directories.add(run/'production/reference-storage'/_sha(sha))
     if domain in ('clip','upscale'):
         from .production_scene_revision import _source_execution
-        execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
+        execution=_source_execution(frozen,plan,origin_timeline(prefix['timeline']))
         source_clips=execution['clips'] if execution is not None else plan['clips']
         if execution is not None:
             files.add(run/'production/scene-rendering/execution-budget.json')
@@ -482,10 +509,9 @@ def capture_origin(frozen,domain,key):
         paths = guard.capture_directory(directory,root=run)
         inventories.append(dict(directory=str(directory),paths=paths))
         files.update(Path(p) for p in paths)
-        for path in directory.rglob('*'):
-            if path.is_file() and path.suffix != '.json':
-                if directory in declaration_directories and path.suffix.lower() in ('.png','.mp4'):continue
-                raw.append(guard.capture(path,root=run,allow_empty=True))
+        for path in revision_raw_inventory(directory, root=run):
+            if directory in declaration_directories and path.suffix.lower() in ('.png','.mp4'):continue
+            raw.append(guard.capture(path,root=run,allow_empty=True))
     for path in sorted(files):
         if path.exists(): json_files.append(guard.capture(path,root=run))
         else: absent.add(path)

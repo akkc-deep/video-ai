@@ -1,4 +1,5 @@
 """Fresh source acceptance, fixed PyTorch graph and Task4 full-file inventory."""
+from .paths import RUNTIME_ROOT as _PORTABLE_ROOT
 from pathlib import Path
 import shutil
 
@@ -11,8 +12,8 @@ from .source_clip_checks import load_committed_source_clips
 from ._source_clip_inputs import fresh,same,evidence
 from .workflows import WorkflowTemplate
 
-TASK4_ACCEPTANCE=Path('D:/VideoSi/projects/video-ai/runs/20261004-040653-a0fcd961cc58/task4-acceptance.json')
-MODEL_PATH=Path('D:/VideoSi/models/comfyui/upscale_models/RealESRGAN_x4plus.pth')
+TASK4_ACCEPTANCE=(_PORTABLE_ROOT / 'shared/config/capabilities/task4-acceptance.json')
+MODEL_PATH=(_PORTABLE_ROOT / 'shared/models/comfyui/upscale_models/RealESRGAN_x4plus.pth')
 MODEL_SHA='4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1'
 TEMPLATE_SHA='a647f05940ce6b59de9bde8d5d53b9300bfe6b5174d900b3324eb6cd01680533'
 FIXED_GRAPH={

@@ -3,13 +3,14 @@ from datetime import datetime, timezone
 import hashlib
 import hmac
 import json
-import os
 import re
+import time
 from urllib.parse import urlencode
 
 from .common import AdapterError, FailureKind, strict_json
-from .external_https import ExternalHttpsClient, validate_https_url
+from .external_https import ExternalHttpsClient, ExternalHttpStatusError, validate_https_url
 from ..runtime.manifest import thaw
+from ..credentials import read_credentials
 
 HOST = 'visual.volcengineapi.com'
 VERSION = '2022-08-31'
@@ -62,27 +63,52 @@ def _identifier(value, label):
 
 
 class JimengClient:
-    def __init__(self, settings, *, http=None, ownership_check=None, download_ownership_check=None):
+    def __init__(self, settings, *, http=None, ownership_check=None, download_ownership_check=None, sleep=time.sleep):
         self.settings = settings
         self.http = http or ExternalHttpsClient()
         self.ownership_check = ownership_check
         self.download_ownership_check = download_ownership_check
+        self.sleep = sleep
 
     def check_credentials(self):
-        access = os.environ.get(self.settings.access_key_env)
-        secret = os.environ.get(self.settings.secret_key_env)
+        access, secret = read_credentials(self.settings.access_key_env, self.settings.secret_key_env)
         if not access or not secret:
-            raise ValueError('missing Jimeng AK/SK environment variables')
+            raise ValueError('missing Jimeng AK/SK: set environment variables or project config/secrets.local.json')
         return access, secret
 
     def _request(self, action, payload, timeout=None):
         access, secret = self.check_credentials()
         body = encode_body(payload)
         headers = sign_request(body, action, access, secret)
-        response = self.http.request('POST', 'https://'+HOST+'/?'+urlencode(dict(Action=action, Version=VERSION)),
-                                     body=body, headers=headers,
-                                     timeout=min(timeout, self.settings.request_timeout_seconds) if timeout is not None else self.settings.request_timeout_seconds,
-                                     **({'ownership_check': self.ownership_check} if self.ownership_check is not None else {}))
+        rejected=[]
+        for attempt in range(3):
+            try:
+                response = self.http.request('POST', 'https://'+HOST+'/?'+urlencode(dict(Action=action, Version=VERSION)),
+                    body=body, headers=headers,
+                    timeout=min(timeout, self.settings.request_timeout_seconds) if timeout is not None else self.settings.request_timeout_seconds,
+                    **({'ownership_check': self.ownership_check} if self.ownership_check is not None else {}))
+                break
+            except ExternalHttpStatusError as exc:
+                try: detail=strict_json(exc.response_body)
+                except (ValueError,UnicodeError):detail={}
+                diagnostic=redact(detail,(access,secret))
+                code=detail.get('code') if isinstance(detail,dict) else None
+                rate_limited=(exc.status_code==429 and type(code) is int and code in (50429,50430)
+                              and detail.get('data') in (None,{}))
+                if rate_limited:
+                    rejected.append(diagnostic)
+                    retry_after=next((v for k,v in exc.response_headers.items() if k.lower()=='retry-after'),None)
+                    try:delay=float(retry_after) if retry_after is not None else 2**(attempt+1)
+                    except (TypeError,ValueError):delay=60
+                    if attempt<2 and 0<=delay<=30:
+                        self.sleep(delay)
+                        continue
+                auth_denied=(exc.status_code==401 and type(code) is int and code==50400
+                             and detail.get('data') in (None,{}) and 'task_id' not in detail)
+                error=AdapterError(FailureKind.explicit if rate_limited or auth_denied else exc.kind,
+                    f'Jimeng HTTP {exc.status_code}; business code={code if type(code) is int else "unknown"}')
+                error.diagnostic=dict(http_status=exc.status_code,response=diagnostic,rejected_rate_limits=rejected)
+                raise error from None
         try:
             data = strict_json(response.body)
             if not isinstance(data, dict): raise ValueError()
@@ -90,6 +116,7 @@ class JimengClient:
             raise AdapterError(FailureKind.ambiguous if action == SUBMIT else FailureKind.invalid_result,
                                'malformed official JSON response') from None
         diagnostic = redact(data, (access, secret))
+        if rejected:diagnostic['rejected_rate_limits']=rejected
         code = data.get('code')
         request_id = data.get('request_id')
         if request_id is not None: request_id = _identifier(request_id, 'request_id')

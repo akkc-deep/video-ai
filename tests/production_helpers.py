@@ -55,7 +55,7 @@ def config_for_server(config, url, run):
     from video_ai.runtime.manifest import thaw
     data = thaw(config.raw)
     data['services'].update(ollama=url, tts=url)
-    actual = load_config(Path('D:/VideoSi/projects/video-ai/config/production.json'))
+    actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     for name in ('ffmpeg', 'ffprobe'):
         data['tools'][name] = str(actual.tools[name])
     file = run/'http-production-config.json'

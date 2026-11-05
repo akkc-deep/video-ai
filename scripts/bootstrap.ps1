@@ -1,13 +1,13 @@
 # Dot-source before executing any Python. These settings apply only to this process.
 $VideoAiSourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$VideoAiRuntimeRoot = 'D:\VideoSi'
-$VideoAiCacheRoot = 'D:\VideoSi\cache\video-ai'
-$VideoAiDisposableRoot = 'D:\VideoSi\disposable\video-ai'
-$VideoAiEnvRoot = 'D:\VideoSi\envs\video-ai'
+$VideoAiRuntimeRoot = if ($env:VIDEO_AI_RUNTIME_ROOT) { [IO.Path]::GetFullPath($env:VIDEO_AI_RUNTIME_ROOT) } else { 'E:\VideoAI' }
+$VideoAiCacheRoot = Join-Path $VideoAiRuntimeRoot 'scratch'
+$VideoAiDisposableRoot = Join-Path $VideoAiRuntimeRoot 'scratch'
+$VideoAiEnvRoot = Join-Path $VideoAiRuntimeRoot 'shared\envs\video-ai'
 $VideoAiPython = Join-Path $VideoAiEnvRoot 'Scripts\python.exe'
 
 function Enter-VideoAiStorageLease {
-    $lockPath = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'projects\video-ai\storage')
+    $lockPath = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'shared\config\storage')
     $lockPath = Join-Path $lockPath 'lifecycle.lock'
     $stream = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::ReadWrite)
     try { $stream.Lock(0, 1); return $stream }
@@ -20,11 +20,11 @@ function Exit-VideoAiStorageLease($Lease) {
 
 function Assert-VideoAiRuntimePath([string] $Path) {
     $absolute = [IO.Path]::GetFullPath($Path)
-    if (-not $absolute.StartsWith('D:\VideoSi\', [StringComparison]::OrdinalIgnoreCase)) {
-        throw "Runtime path is outside D:\VideoSi: $absolute"
+    if (-not $absolute.StartsWith(($VideoAiRuntimeRoot.TrimEnd('\') + '\'), [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Runtime path is outside ${VideoAiRuntimeRoot}: $absolute"
     }
     $cursor = $absolute
-    while ($cursor -and $cursor -ne 'D:\') {
+    while ($cursor -and $cursor -ne [IO.Path]::GetPathRoot($absolute)) {
         if (Test-Path -LiteralPath $cursor) {
             $item = Get-Item -LiteralPath $cursor -Force -ErrorAction Stop
             if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
@@ -60,19 +60,19 @@ function Initialize-VideoAiEnvironment([string] $CommandName) {
     }
     # Legacy caches can contain actual weights/base Python. Keep them until explicitly migrated.
     $dependencies = @{
-        HF_HOME=@('huggingface','models\huggingface')
-        HF_HUB_CACHE=@('huggingface\hub','models\huggingface\hub')
-        TRANSFORMERS_CACHE=@('huggingface\transformers','models\huggingface\transformers')
-        TORCH_HOME=@('torch','models\torch')
-        NLTK_DATA=@('nltk','models\nltk')
-        UV_PYTHON_INSTALL_DIR=@('uv-python','envs\python')
+        HF_HOME=@('huggingface','shared\models\huggingface')
+        HF_HUB_CACHE=@('huggingface\hub','shared\models\huggingface\hub')
+        TRANSFORMERS_CACHE=@('huggingface\transformers','shared\models\huggingface\transformers')
+        TORCH_HOME=@('torch','shared\models\torch')
+        NLTK_DATA=@('nltk','shared\models\nltk')
+        UV_PYTHON_INSTALL_DIR=@('uv-python','shared\envs\python')
     }
     foreach ($entry in $dependencies.GetEnumerator()) {
         $legacy = Join-Path $VideoAiCacheRoot $entry.Value[0]
-        $target = if (Test-Path -LiteralPath $legacy) { $legacy } else { Join-Path $VideoAiRuntimeRoot $entry.Value[1] }
+        $target = Join-Path $VideoAiRuntimeRoot $entry.Value[1]
         [Environment]::SetEnvironmentVariable($entry.Key, (New-VideoAiDirectory $target), 'Process')
     }
-    $env:OLLAMA_MODELS = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'models\ollama')
+    $env:OLLAMA_MODELS = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'shared\models\ollama')
     $env:PYTHONUTF8 = '1'
     $env:PYTHONDONTWRITEBYTECODE = '1'
     $env:PIP_DISABLE_PIP_VERSION_CHECK = '1'

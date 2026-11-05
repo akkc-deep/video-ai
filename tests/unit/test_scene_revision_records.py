@@ -47,7 +47,7 @@ def test_unregistered_external_view_is_not_inherited(runtime_run):
     run, _, _ = runtime_run
     frozen = SimpleNamespace(options={'script_path':str(run/'production/script.txt'), 'model_stamps':{}})
     guard = RevisionGuard(frozen)
-    assert not guard.is_registered({'path':'D:/VideoSi/unrelated.png','bytes':1,'sha256':'a'*64})
+    assert not guard.is_registered({'path':'E:/VideoAI/unrelated.png','bytes':1,'sha256':'a'*64})
 
 
 def test_unfrozen_sidecar_cannot_enable_import(runtime_run):
@@ -64,7 +64,7 @@ def test_guard_registration_compares_the_full_view_and_not_external_path_prefix(
     run, _, _ = runtime_run
     frozen = SimpleNamespace(options={'script_path':str(run/'production/script.txt'), 'model_stamps':{}})
     guard = RevisionGuard(frozen)
-    view = {'clip_id':'scene_0001_clip_0001','media':{'path':'D:/VideoSi/source.mp4','sha256':'a'*64}}
+    view = {'clip_id':'scene_0001_clip_0001','media':{'path':'E:/VideoAI/source.mp4','sha256':'a'*64}}
     guard.register('clip:scene_0001_clip_0001', view)
     assert guard.is_registered(view)
     assert not guard.is_registered(dict(view,clip_id='scene_0001_clip_0002'))
@@ -173,8 +173,8 @@ def test_image_decode_cache_is_one_invocation_and_rehashes_actual_bytes(runtime_
     from video_ai.runtime.scene_revision_records import revision_scope
     run,_,_=runtime_run
     path=run/'image.png';path.write_bytes(b'first image bytes')
-    frozen=SimpleNamespace(config=SimpleNamespace(tools={'ffprobe':Path('D:/VideoSi/tools/ffmpeg/bin/ffprobe.exe'),
-                                                        'ffmpeg':Path('D:/VideoSi/tools/ffmpeg/bin/ffmpeg.exe')}))
+    frozen=SimpleNamespace(config=SimpleNamespace(tools={'ffprobe':Path('E:/VideoAI/shared/tools/ffmpeg/bin/ffprobe.exe'),
+                                                        'ffmpeg':Path('E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe')}))
     calls=[]
     def command(args,**kwargs):
         calls.append(args)
@@ -348,7 +348,7 @@ def test_inherited_clip_reader_preserves_its_registered_import_identity(runtime_
     guard=RevisionGuard(frozen);clip=dict(clip_id=cid,source={'sha256':'a'*64})
     guard.register('clip:'+cid,clip)
     sidecar=dict(view=clip,local_artifacts=[])
-    proof=dict(guard=guard,source_run=run,imports={'clip:'+cid:(sidecar,{})})
+    proof=dict(guard=guard,source_run=run,source_frozen=frozen,imports={'clip:'+cid:(sidecar,{})})
     monkeypatch.setattr(inputs,'load_frozen_inputs',lambda path:frozen)
     monkeypatch.setattr(origins,'source_clip_record',lambda *args:dict(clip=clip,request={'request':'original'}))
     first=inherited_clip_record(frozen,cid,context=proof)

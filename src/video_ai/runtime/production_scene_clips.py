@@ -16,6 +16,8 @@ from .production_state import ProductionRefused,RunLock,object_fields,run_path
 from .scene_clip_records import (scene_context,graph_for,expected_request,validate_clip,collect_progress,
     complete_value,validate_media_receipt,technical_recipes,equal)
 from .scene_execution_records import verified_scene_execution_write
+from ._scene_review_batch import review_admission_batch, review_batch
+from .scene_review_control import review_admission_control,review_checkpoint
 
 
 def boundary(point):
@@ -187,6 +189,8 @@ class _OwnedService:
         guard()
         self._start_resources(manifest)
         self.handle=self.manager.ensure(build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui'])
+        from .production_state import process_started_at
+        self.process_identity = process_started_at(self.handle.pid) if self.handle.owned else None
         if not self.handle.owned: raise ProductionRefused('Comfy service is not owned by this run')
 
     def capability_identity(self):
@@ -195,7 +199,7 @@ class _OwnedService:
         handle=self.handle
         if (handle is None or not handle.owned or handle.process is None
                 or handle.process.poll() is not None
-                or process_started_at(handle.pid)!=handle.started_at):
+                or process_started_at(handle.pid)!=self.process_identity):
             raise ProductionRefused('owned Comfy service identity changed')
         return id(self),handle.pid,handle.started_at,handle.url
 
@@ -315,16 +319,19 @@ def _technical(context,row,submission,request,*,paths,logger):
     store.write(folder/'clip.json',clip); boundary('clip')
 
 
-def _finish(context,errors=None):
+def _finish(context,errors=None,*,snapshot=None):
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .production_temporal_scene_clips import finish_temporal_clips
         return finish_temporal_clips(context)
     store=context['store']; store.verify_global()
-    progress,records=collect_progress(context); scenes=progress['scenes']; templates=[]
+    progress,records=snapshot if snapshot is not None else collect_progress(context)
+    scenes=progress['scenes']; templates=[]
     for row in context['rows']:
         cid=row['budget']['clip_id']; record=records.get(cid)
         if record and not record['accepted'] and not record['rejected']:
             path=store.write(store.clip_dir(cid)/'observation-template.json',record['template'])
+            batch=review_batch(context)
+            if batch is not None: batch.wrote_template(cid,path)
             templates.append(str(path))
     for scene in scenes:
         if errors and scene['scene_id'] in errors:
@@ -346,6 +353,7 @@ def _finish(context,errors=None):
 
 
 def _produce(context,*,paths,logger,client_factory,service_factory):
+    review_checkpoint(force=True)
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .production_temporal_scene_clips import produce_temporal_clips
         return produce_temporal_clips(context,paths=paths,logger=logger)
@@ -356,7 +364,9 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
     logger=_GuardedLogger(logger,store.assert_owned)
     check_stage_space(context['frozen'].config,frames=sum(r['budget']['generated_frames'] for r in context['rows']))
     # All graphs, all existing chains and originals are validated before the first ensure or POST.
-    for row in context['rows']: graph_for(context,row)
+    for row in context['rows']:
+        review_checkpoint()
+        graph_for(context,row)
     store.write('inputs.json',context['inputs']); boundary('inputs')
     _restore_outer(context,paths=paths,logger=logger)
     progress,_=collect_progress(context)
@@ -373,15 +383,18 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
         return identify() if callable(identify) else None
     def ensure():
         nonlocal service
+        review_checkpoint(force=True)
         store.assert_owned()
         if service is None: service=(service_factory or _OwnedService)(context['frozen'],paths,logger,store.lock)
         service.ensure(); store.assert_owned()
+        review_checkpoint(force=True)
     try:
         for scene in context['plan']['scenes']:
             parent=None
             for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
                 b=row['budget']; cid=b['clip_id']; folder=store.clip_dir(cid)
                 store.assert_owned()
+                review_checkpoint(force=True)
                 old=validate_clip(context,row,parent)
                 if old:
                     if not old['accepted'] or old['rejected']: break
@@ -512,9 +525,14 @@ def _consume(context,observation_path):
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .production_temporal_scene_clips import consume_temporal_observation
         return consume_temporal_observation(context,observation_path)
+    batch=review_batch(context)
+    if batch is None:
+        with review_admission_batch(context):
+            return _consume(context,observation_path)
     from .scene_clip_observations import validate_scene_clip_observation
     from ..adapters.common import strict_json,JSON_LIMIT
-    store=context['store']; store.assert_owned(); progress,records=collect_progress(context)
+    store=context['store']; progress,records=batch.snapshot()
+    batch.verify(); batch.report('review_receiving')
     raw=Path(observation_path).read_bytes()
     if len(raw)>JSON_LIMIT: raise ProductionRefused('observation exceeds JSON_LIMIT')
     value=strict_json(raw)
@@ -531,10 +549,10 @@ def _consume(context,observation_path):
     # Every upstream record and original was fully admitted at entry. Exact raw
     # byte and inventory rechecks make that admission current without rerunning
     # the same decoders; this cache never crosses a public API invocation.
-    store.verify_global()
-    progress,records=collect_progress(context); record=records[cid]
+    progress,records=batch.refresh(cid,created=(original,)); record=records[cid]
     _check_observation_replacement(record,value)
     validate_scene_clip_observation(value,dict(template=record['template'],created_at=record['clip']['created_at']),now=current)
+    receipt_written=False
     if value['verdict'] in ('passed','failed'):
         filename='observation-accepted.json' if value['verdict']=='passed' else 'observation-rejected.json'
         time_key='accepted_at' if value['verdict']=='passed' else 'rejected_at'
@@ -543,10 +561,21 @@ def _consume(context,observation_path):
             store.write(folder/filename,dict(schema_version=2,run_id=store.run_dir.name,clip_id=cid,
                 clip_sha256=canonical_digest(record['clip']),request_sha256=canonical_digest(record['request']),
                 observation=store.artifact(original),observation_sha256=canonical_digest(value),**{time_key:current.isoformat()}))
+            receipt_written=True
         elif value['verdict']=='failed' or prior['observation_sha256']!=canonical_digest(value):
             raise ProductionRefused('accepted/rejected observation cannot be replaced')
         boundary('observation-receipt')
-    return _finish(context)
+        progress,records=batch.refresh(cid,created=(folder/filename,))
+    batch.checkpoint()
+    result=_finish(context,snapshot=(progress,records))
+    if receipt_written:
+        batch.received+=1; batch.report('review_receiving',clip_id=cid)
+    return result
+
+
+def _review_snapshot(context):
+    batch=review_batch(context)
+    return batch.snapshot() if batch is not None else collect_progress(context)
 
 
 def hashlib_sha(raw):
@@ -558,6 +587,7 @@ def hashlib_sha(raw):
 def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
     run=None; acquired=None; result=None
     try:
+        review_checkpoint(force=True)
         candidate=validate_run_dir(Path(frozen.options['script_path']).parent.parent)
         if (frozen.options['run_id']!=candidate.name or not candidate.is_dir()
                 or not run_path(candidate,candidate/'production/options.json').is_file()):
@@ -566,7 +596,10 @@ def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
         if logger.run_dir!=run or not logger.production: raise ProductionRefused('scene clips require matching production logger')
         if lock is None:
             acquired=RunLock(run); acquired.__enter__(); lock=acquired
-        context=scene_context(frozen,units,timeline,paths=paths,lock=lock); context['store'].assert_owned()
+        from .scene_revision_records import revision_artifact_batch,revision_read_transaction
+        with revision_artifact_batch(),revision_read_transaction():
+            context=scene_context(frozen,units,timeline,paths=paths,lock=lock)
+        context['store'].assert_owned()
         result=operation(context)
     except KeyboardInterrupt as exc: result=_result(run,'interrupted',error=_error(exc))
     except ProductionRefused as exc: result=_result(run,'blocked',error=_error(exc))
@@ -584,6 +617,7 @@ def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
 
 from .scene_revision_records import revision_validation
 from .execution_limits import production_execution
+from .verification import protect_scene_reviews
 
 
 @production_execution
@@ -595,6 +629,40 @@ def produce_scene_clips(frozen,units,timeline,*,paths,logger,client_factory=None
 
 @production_execution
 @revision_validation
+@protect_scene_reviews
 def consume_scene_clip_observation(frozen,units,timeline,observation_path,*,paths,logger,lock=None):
-    return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
-        operation=lambda context:_consume(context,observation_path))
+    from .scene_revision_records import revision_artifact_batch
+    with revision_artifact_batch():
+        return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
+            operation=lambda context:_consume(context,observation_path))
+
+@production_execution
+@revision_validation
+@protect_scene_reviews
+def consume_scene_clip_observations(frozen, units, timeline, observation_paths, *, paths, logger, lock=None,
+                                   stop_requested=None, notify=None):
+    """Admit authored reviews with one preflight; stop at the first failed admission.
+
+    Each review retains its original byte, media and receipt checks. This entry
+    never starts generation and does not enclose writes in a read transaction.
+    """
+    observations = tuple(observation_paths)
+    if not observations:
+        raise ProductionRefused('batch observation admission requires observations')
+    def consume(context):
+        if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+            for observation in observations:
+                review_checkpoint(force=True)
+                result=_consume(context,observation)
+                if result.status not in ('awaiting_continuity_review','source_clips_ready'): return result
+            return result
+        with review_admission_batch(context,stop_requested=stop_requested,notify=notify) as batch:
+            for observation in observations:
+                batch.checkpoint()
+                result = _consume(context, observation)
+                if result.status not in ('awaiting_continuity_review', 'source_clips_ready'):
+                    return result
+        return result
+    from .scene_revision_records import revision_artifact_batch
+    with review_admission_control(stop_requested=stop_requested),revision_artifact_batch():
+        return _entry(frozen, units, timeline, paths=paths, logger=logger, lock=lock, operation=consume)
