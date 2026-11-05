@@ -10,7 +10,7 @@ from types import MappingProxyType
 from uuid import uuid4
 
 from ..config import ProjectConfig, load_config, load_voice_config, parse_scene_continuity, read_json
-from ..jimeng_config import STRATEGY, active_models, active_workflows, override_image_model
+from ..jimeng_config import STRATEGY, active_models, active_workflows, override_image_model, native_temporal
 from ..planning.segments import SegmentedScript, segment_text
 from .environment import build_child_env
 from .manifest import FileIdentity, hash_file, now, thaw, validate_run_dir
@@ -98,7 +98,9 @@ def _same_json(left, right):
 
 
 def output_paths(config, run, output_path=None, *, check_existing=True):
-    target = output_path if output_path is not None else config.output_root/(run.name+'.mp4')
+    from .storage import managed_output, _sandbox
+    default_root = _sandbox.get()/'output/video-ai' if _sandbox.get() else config.output_root
+    target = output_path if output_path is not None else managed_output(run) or default_root/(run.name+'.mp4')
     movie = PathPolicy().validate_write(resolve_cli_path(str(target), Path.cwd()), 'output')
     if movie.suffix.lower() != '.mp4': raise ProductionRefused('output must have .mp4 extension')
     targets = dict(movie=str(movie), subtitle=str(movie.with_suffix('.srt')), receipt=str(movie.with_suffix('.delivery.json')))
@@ -162,6 +164,8 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
         identities['scene_video_prompts'] = thaw(copied)
         from .scene_execution_records import freeze_whole_scene_evidence
         freeze_whole_scene_evidence(config,run,identities,save=_save_bytes)
+        from .temporal_scene_admission import freeze_temporal_evidence
+        freeze_temporal_evidence(config,run,identities,save=_save_bytes)
     if config.production_strategy == STRATEGY and config.raw.get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths, parse_capability
         from ..adapters.common import strict_json
@@ -255,7 +259,8 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     elif type(policy['media_command_seconds']) is not int or policy['media_command_seconds'] != 300:
         raise ProductionRefused('legacy media command deadline must be 300')
     records = policy['input_identities']
-    roles = ('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping')
+    native = modern and options['config_snapshot']['raw'].get('scene_rendering',{}).get('mode') == 'temporal_extension_v1'
+    roles = ('upscale', 'upscale_mapping') if native else (('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping'))
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
     if 'scene_continuity' in options['config_snapshot']['raw']:
         required.add('scene_continuity_policy')
@@ -268,6 +273,8 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
         from ..planning.scene_video_prompts import parse_scene_rendering
         if parse_scene_rendering(options['config_snapshot']['raw']['scene_rendering']).get('mode')=='whole_scene_v1':
             required.update(('whole_scene_evidence','whole_scene_evidence_closure'))
+        if native:
+            required.update(('temporal_evidence','temporal_evidence_closure','temporal_runtime_bundle'))
     if modern and options['config_snapshot']['raw'].get('reference_capabilities') is not None:
         from ..reference_config import parse_capability_paths
         for req_key in parse_capability_paths(options['config_snapshot']['raw']['reference_capabilities']):
@@ -316,7 +323,7 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
         object_fields(record, ('path', 'source_identity'), 'workflow snapshot')
         run_path(run, record['path']); _identity(record['source_identity'])
         if record['path'] != records['workflow/'+role]['path']: raise ProductionRefused('workflow copy path differs')
-    for role in (('wan', 'upscale') if modern else ('sdxl', 'wan', 'upscale')):
+    for role in (('upscale',) if native else (('wan', 'upscale') if modern else ('sdxl', 'wan', 'upscale'))):
         mapping_role = 'wan_mapping' if role == 'wan' else role+'_mapping'
         validate_workflow(Path(workflows[role]['path']), Path(workflows[mapping_role]['path']), frozen.models)
     if options['tts_yaml_path'] != records['tts_yaml']['path']: raise ProductionRefused('TTS YAML path differs')
@@ -351,6 +358,8 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
         load_prompt_contract(result)
     from .scene_execution_records import verify_whole_scene_frozen
     verify_whole_scene_frozen(result)
+    from .temporal_scene_admission import verify_temporal_frozen
+    verify_temporal_frozen(result)
     return result
 
 

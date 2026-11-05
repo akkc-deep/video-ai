@@ -47,7 +47,7 @@ def test_original_task_resumes_without_refreshing_url_or_resubmitting(setup, fai
     s['state']['failure'] = None
     generate_reference(s)
     assert s['state']['queries'][1] == first_task
-    assert s['storage'].presigns == presigns+1  # only the second, previously unsubmitted request
+    assert s['storage'].presigns == presigns  # both accepted IDs survive; neither needs new input URLs
     assert len(s['state']['submits']) == 2
 
 
@@ -87,7 +87,10 @@ def test_source_change_after_intent_prevents_actual_submit(setup, monkeypatch):
     def change(point, identity):
         if point == 'intent': Path(s['accepted'][0]['selections'][0]['path']).write_bytes(b'changed')
     monkeypatch.setattr(module, 'boundary', change)
-    with pytest.raises(ValueError): generate_reference(s)
+    # A directly invoked generator now also holds native deny-write handles:
+    # either mutation is refused by Windows, or the source checkpoint refuses
+    # the changed bytes. Both paths must leave the paid transport untouched.
+    with pytest.raises((ValueError, PermissionError)): generate_reference(s)
     assert not s['state']['submits']
 
 
@@ -123,7 +126,23 @@ def test_jimeng_ownership_guard_blocks_send_after_dns(monkeypatch):
     assert not transmitted and len(errors) == 1
 
 
-@pytest.mark.parametrize('limits', [dict(max_prompt_bytes=1), dict(max_image_bytes=1),
+def test_reference_prompt_length_is_advisory_and_complete_prompt_replays(runtime_run, tmp_path, monkeypatch):
+    from video_ai.runtime.reference_image_records import verify_reference_provenance
+    s = reference_setup(runtime_run, tmp_path, monkeypatch, capability_changes=dict(max_prompt_bytes=1))
+    result = generate_reference(s)
+    assert len(result['candidates']) == 2
+    assert len(s['state']['submits']) == 2
+    for payload in s['state']['submits']:
+        assert payload['prompt'].startswith(s['scene']['image_prompt']+'\nVISUAL_')
+        assert '白鸟' in payload['prompt']
+        assert len(payload['prompt'].encode('utf-8')) > 1
+    assert verify_reference_provenance(s['frozen'], s['scene'], s['bible'], s['plan'])
+    before = deepcopy(s['state'])
+    assert generate_reference(s) == result
+    assert s['state'] == before
+
+
+@pytest.mark.parametrize('limits', [dict(max_image_bytes=1),
                                    dict(max_width=100), dict(formats=['jpeg'])])
 def test_verified_capability_limits_are_checked_before_intent(runtime_run, tmp_path, monkeypatch, limits):
     s = reference_setup(runtime_run, tmp_path, monkeypatch, capability_changes=limits)
@@ -208,3 +227,92 @@ def test_single_intent_hash_tampering_is_rejected(setup, change):
     else: intent['reference_urls'][0]['sha256'] = 'f'*64
     save(path, intent)
     with pytest.raises(ValueError): _candidates(s['frozen'], s['scene'], folder/'candidates.json')
+
+
+def test_completed_reference_recovery_shares_frozen_loads(setup, monkeypatch):
+    import video_ai.runtime.image_selection_records as images
+    import video_ai.runtime.reference_settings as settings
+    s = setup
+    original = generate_reference(s)
+    calls = []
+    load = images.load_frozen_inputs
+
+    def counted(run):
+        calls.append(run)
+        return load(run)
+
+    monkeypatch.setattr(images, 'load_frozen_inputs', counted)
+    monkeypatch.setattr(settings, 'load_frozen_inputs', counted)
+    before = deepcopy(s['state'])
+    assert generate_reference(s) == original
+    assert s['state'] == before
+    assert len(calls) == 2  # admission and full exit check, regardless of nested readers
+
+
+@pytest.mark.parametrize('change', ['source', 'settings', 'request'])
+def test_request_snapshot_change_after_dns_blocks_actual_send(setup, monkeypatch, change):
+    from http.client import HTTPSConnection
+    from video_ai.adapters.external_https import ExternalHttpsClient
+    from video_ai.adapters.common import AdapterError
+    s = setup
+    sent = []
+
+    class Socket:
+        def sendall(self, data): sent.append(data)
+        def close(self): pass
+        def shutdown(self, *a): pass
+
+    def connect(connection):
+        if change == 'source':
+            path = Path(s['accepted'][0]['selections'][0]['path'])
+        elif change == 'settings':
+            path = s['run']/'production/reference-images/settings.json'
+        else:
+            path = s['run']/'production/jimeng'/s['scene']['scene_id']/'request_01/request.json'
+        import os
+        metadata = path.stat()
+        raw = path.read_bytes()
+        path.write_bytes(bytes([raw[0] ^ 1])+raw[1:])
+        os.utime(path, ns=(metadata.st_atime_ns, metadata.st_mtime_ns))
+        connection.sock = Socket()
+
+    monkeypatch.setattr(HTTPSConnection, 'connect', connect)
+    s['client'].http = ExternalHttpsClient()
+    with pytest.raises((AdapterError, ValueError)):
+        generate_reference(s)
+    assert not sent
+    assert not list((s['run']/'production/jimeng'/s['scene']['scene_id']).rglob('accepted.json'))
+
+
+@pytest.mark.parametrize('event', ['intent', 'accepted'])
+def test_full_history_checkpoint_blocks_new_submit_and_retains_paid_result(setup, monkeypatch, event):
+    from types import SimpleNamespace
+    import video_ai.runtime.jimeng_reference_candidates as module
+    from video_ai.runtime.scene_revision_records import RevisionGuard
+    s = setup
+    history = s['run']/'history-source.json'
+    history.write_bytes(b'{"v":1}')
+    guard = RevisionGuard(SimpleNamespace(options={'script_path': str(s['run']/'production/script.txt')}))
+    guard.capture(history, root=s['run'])
+    original_request = module._request
+
+    def request(store, *a, **kw):
+        store.revision_guard = guard
+        guard.verify_captured_bytes()
+        return original_request(store, *a, **kw)
+
+    def change(point, identity):
+        if point == event:
+            history.write_bytes(b'{"v":2}')
+
+    monkeypatch.setattr(module, '_request', request)
+    monkeypatch.setattr(module, 'boundary', change)
+    with pytest.raises(ValueError, match='captured bytes changed'):
+        generate_reference(s)
+    assert len(s['state']['submits']) == (0 if event == 'intent' else 1)
+    folder = s['run']/'production/jimeng'/s['scene']['scene_id']
+    assert not (folder/'candidates.json').exists()
+    if event == 'accepted':
+        from video_ai.config import read_json
+        assert read_json(folder/'request_01/accepted.json')['task_id'] == 'task_1'
+        assert read_json(folder/'request_01/result.json')['task_id'] == 'task_1'

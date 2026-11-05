@@ -15,9 +15,11 @@ try {
         }
     }
     Assert-VideoAiPython $VideoAiPython
-    $pytestCache = New-VideoAiDirectory (Join-Path $VideoAiCacheRoot "pytest\$script:VideoAiCommandId")
-    $tempParent = New-VideoAiDirectory (Join-Path $VideoAiCacheRoot 'pytest-tmp')
-    $pytestTemp = Assert-VideoAiRuntimePath (Join-Path $tempParent $script:VideoAiCommandId)
+    $testRoot = New-VideoAiDirectory (Join-Path $VideoAiDisposableRoot 'tests')
+    $testSession = New-VideoAiDirectory (Join-Path $testRoot $script:VideoAiCommandId)
+    $pytestCache = New-VideoAiDirectory (Join-Path $testSession 'cache')
+    $pytestTemp = Assert-VideoAiRuntimePath (Join-Path $testSession 'temp')
+    @{pid=$PID; process_started_at='launcher'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $testSession 'owner.json') -Encoding UTF8
     Set-Location -LiteralPath $VideoAiSourceRoot
     $nativeArgs = @('-B', '-m', 'pytest') + $pytestArguments + @('-o', "cache_dir=$pytestCache", "--basetemp=$pytestTemp")
     Invoke-VideoAiNative $VideoAiPython $nativeArgs

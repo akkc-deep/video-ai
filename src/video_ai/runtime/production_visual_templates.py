@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from ..config import read_json
+from ..jimeng_config import native_temporal
 from .paths import SOURCE_ROOT,RUNTIME_ROOT
 from .production_state import ProductionRefused
 from .production_comfy import same
@@ -11,6 +12,7 @@ def validate_production_model_paths(config):
     folders=dict(sdxl='checkpoints',wan_high='diffusion_models',wan_low='diffusion_models',
                  text_encoder='text_encoders',vae='vae',upscale='upscale_models')
     for role,folder in folders.items():
+        if native_temporal(config) and role!='upscale':continue
         if role == 'sdxl' and config.production_strategy == 'paragraph_jimeng_v1': continue
         path=config.models[role]
         expected=(RUNTIME_ROOT/'models/comfyui'/folder/path.name).resolve()

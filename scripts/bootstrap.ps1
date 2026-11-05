@@ -2,8 +2,21 @@
 $VideoAiSourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $VideoAiRuntimeRoot = 'D:\VideoSi'
 $VideoAiCacheRoot = 'D:\VideoSi\cache\video-ai'
+$VideoAiDisposableRoot = 'D:\VideoSi\disposable\video-ai'
 $VideoAiEnvRoot = 'D:\VideoSi\envs\video-ai'
 $VideoAiPython = Join-Path $VideoAiEnvRoot 'Scripts\python.exe'
+
+function Enter-VideoAiStorageLease {
+    $lockPath = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'projects\video-ai\storage')
+    $lockPath = Join-Path $lockPath 'lifecycle.lock'
+    $stream = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::ReadWrite)
+    try { $stream.Lock(0, 1); return $stream }
+    catch { $stream.Dispose(); throw 'Video storage is occupied. Retry installation after the current operation finishes.' }
+}
+
+function Exit-VideoAiStorageLease($Lease) {
+    if ($Lease) { try { $Lease.Unlock(0, 1) } finally { $Lease.Dispose() } }
+}
 
 function Assert-VideoAiRuntimePath([string] $Path) {
     $absolute = [IO.Path]::GetFullPath($Path)
@@ -36,15 +49,28 @@ function Initialize-VideoAiEnvironment([string] $CommandName) {
     $script:OutputEncoding = $utf8
     [Console]::OutputEncoding = $utf8
     $locations = @{
-        TEMP='temp'; TMP='temp'; TMPDIR='temp'; PYTHONPYCACHEPREFIX='pycache'
-        HF_HOME='huggingface'; HF_HUB_CACHE='huggingface\hub'
-        TRANSFORMERS_CACHE='huggingface\transformers'; TORCH_HOME='torch'
-        PIP_CACHE_DIR='pip'; UV_CACHE_DIR='uv'; UV_PYTHON_INSTALL_DIR='uv-python'
-        XDG_CACHE_HOME='xdg'
+        TEMP='tmp'; TMP='tmp'; TMPDIR='tmp'; PYTHONPYCACHEPREFIX='cache\pycache'
+        PIP_CACHE_DIR='cache\pip'; UV_CACHE_DIR='cache\uv'; XDG_CACHE_HOME='cache\xdg'
+        CUDA_CACHE_PATH='cache\cuda'; TORCHINDUCTOR_CACHE_DIR='cache\torchinductor'
+        TRITON_CACHE_DIR='cache\triton'; MPLCONFIGDIR='cache\matplotlib'; NUMBA_CACHE_DIR='cache\numba'
     }
     foreach ($entry in $locations.GetEnumerator()) {
-        $directory = New-VideoAiDirectory (Join-Path $VideoAiCacheRoot $entry.Value)
+        $directory = New-VideoAiDirectory (Join-Path $VideoAiDisposableRoot $entry.Value)
         [Environment]::SetEnvironmentVariable($entry.Key, $directory, 'Process')
+    }
+    # Legacy caches can contain actual weights/base Python. Keep them until explicitly migrated.
+    $dependencies = @{
+        HF_HOME=@('huggingface','models\huggingface')
+        HF_HUB_CACHE=@('huggingface\hub','models\huggingface\hub')
+        TRANSFORMERS_CACHE=@('huggingface\transformers','models\huggingface\transformers')
+        TORCH_HOME=@('torch','models\torch')
+        NLTK_DATA=@('nltk','models\nltk')
+        UV_PYTHON_INSTALL_DIR=@('uv-python','envs\python')
+    }
+    foreach ($entry in $dependencies.GetEnumerator()) {
+        $legacy = Join-Path $VideoAiCacheRoot $entry.Value[0]
+        $target = if (Test-Path -LiteralPath $legacy) { $legacy } else { Join-Path $VideoAiRuntimeRoot $entry.Value[1] }
+        [Environment]::SetEnvironmentVariable($entry.Key, (New-VideoAiDirectory $target), 'Process')
     }
     $env:OLLAMA_MODELS = New-VideoAiDirectory (Join-Path $VideoAiRuntimeRoot 'models\ollama')
     $env:PYTHONUTF8 = '1'
@@ -55,8 +81,9 @@ function Initialize-VideoAiEnvironment([string] $CommandName) {
     $env:PYTEST_ADDOPTS = ''
     $env:PYTEST_PLUGINS = ''
     $script:VideoAiCommandId = [guid]::NewGuid().ToString('N')
-    $logs = New-VideoAiDirectory (Join-Path $VideoAiCacheRoot 'logs')
+    $logs = New-VideoAiDirectory (Join-Path $VideoAiDisposableRoot 'logs')
     $script:VideoAiLog = Join-Path $logs "$CommandName-$script:VideoAiCommandId.log"
+    $env:VIDEO_AI_ACTIVE_LOG = $script:VideoAiLog
     [IO.File]::WriteAllText($script:VideoAiLog, "command=$CommandName cwd=$((Get-Location).Path)`r`n", [Text.UTF8Encoding]::new($false))
     [Console]::Error.WriteLine("Log: $script:VideoAiLog")
 }

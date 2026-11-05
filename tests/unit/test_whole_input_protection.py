@@ -26,6 +26,135 @@ def test_default_small_inputs_remain_fully_rehashed(tmp_path):
         assert manifest.hash_file(path).sha256 != before.sha256
 
 
+def test_writer_ownership_cost_does_not_scale_with_sealed_root_count(tmp_path, monkeypatch):
+    from pathlib import Path
+    root = tmp_path/'run'
+    state = verification._WholeInputWindow(tuple(root/f'sealed-{i}' for i in range(1024)))
+    state.enter_writer(root)
+    candidate = root/'production/staging.json'
+    comparisons = []
+    equal = Path.__eq__
+
+    def counted(left, right):
+        comparisons.append(True)
+        return equal(left, right)
+
+    monkeypatch.setattr(Path, '__eq__', counted)
+    try:
+        assert state.owned(candidate)
+        # Classifying one mutable path should depend on its depth, not on
+        # enumerating 1,024 unrelated sealed roots and all their ancestors.
+        assert len(comparisons) <= 4*(len(candidate.parents)+1)
+    finally:
+        state.close()
+
+
+@pytest.mark.parametrize('relative,immutable', [
+    ('sealed', True), ('sealed/input.wav', True), ('sealed/sub/input.json', True),
+    ('SEALED/input.wav', True), ('sealed-other/input.wav', False),
+    ('ordinary.json', False), ('sealed.bin', True), ('sealed.bin.other', False),
+])
+def test_indexed_sealed_roots_preserve_windows_path_boundaries(tmp_path, relative, immutable):
+    state = verification._WholeInputWindow((tmp_path/'sealed', tmp_path/'sealed.bin'))
+    state.enter_writer(tmp_path)
+    try:
+        assert state.owned(tmp_path/relative) is not immutable
+    finally:
+        state.close()
+
+
+def test_declared_immutable_owned_inputs_keep_native_protection_and_hash_once(tmp_path, monkeypatch):
+    root = tmp_path/'run'; root.mkdir()
+    sealed = root/'sealed'; sealed.mkdir()
+    path = sealed/'pcm.wav'; path.write_bytes(b'original audio')
+    mutable = root/'staging.json'; mutable.write_bytes(b'first')
+    calls = []
+    digest = manifest._hash_open_file
+    def counted(stream, candidate):
+        if candidate == path: calls.append(candidate)
+        return digest(stream, candidate)
+    monkeypatch.setattr(manifest, '_hash_open_file', counted)
+    with verification.whole_input_protection(immutable_roots=[sealed]), verification.writable_validation_session(root):
+        first = manifest.hash_file(path)
+        for _ in range(3): assert manifest.hash_file(path).sha256 == first.sha256
+        with verification.writable_validation_session(root):
+            assert manifest.hash_file(path).sha256 == first.sha256
+            with pytest.raises(OSError): path.write_bytes(b'changed bytes!')
+        old = manifest.hash_file(mutable)
+        mutable.write_bytes(b'other')
+        assert manifest.hash_file(mutable).sha256 != old.sha256
+        mutable.rename(root/'published.json')
+        assert calls == [path]
+    path.write_bytes(b'afterwards')
+
+
+def test_closed_immutable_owned_window_never_reuses_old_digest(tmp_path):
+    root = tmp_path/'run'; root.mkdir()
+    path = root/'sealed.bin'; path.write_bytes(b'original')
+    with verification.whole_input_protection(immutable_roots=[path]), verification.writable_validation_session(root):
+        first = manifest.hash_file(path)
+        copied = copy_context()
+    path.write_bytes(b'changed!')
+    assert copied.run(manifest.hash_file, path).sha256 != first.sha256
+    path.write_bytes(b'after!!!')
+
+
+def test_immutable_declaration_never_pins_mutable_manifest(tmp_path):
+    path = tmp_path/'manifest.json'; path.write_bytes(b'first')
+    with verification.whole_input_protection(immutable_roots=[tmp_path]), verification.writable_validation_session(tmp_path):
+        first = manifest.hash_file(path)
+        path.write_bytes(b'other')
+        assert manifest.hash_file(path).sha256 != first.sha256
+
+
+def test_nested_window_cannot_expand_immutable_scope(tmp_path):
+    sealed = tmp_path/'sealed'; sealed.mkdir()
+    with verification.whole_input_protection(immutable_roots=[sealed]):
+        with verification.whole_input_protection(): pass
+        with verification.whole_input_protection(immutable_roots=[sealed]): pass
+        with pytest.raises(ValueError, match='cannot add immutable roots'):
+            with verification.whole_input_protection(immutable_roots=[tmp_path]): pass
+
+
+def test_earlier_worker_respects_declared_immutable_and_mutable_siblings(tmp_path):
+    root = tmp_path/'run'; root.mkdir()
+    sealed = root/'sealed.bin'; sealed.write_bytes(b'original')
+    mutable = root/'staging.bin'; mutable.write_bytes(b'first')
+    with verification.validation_session(), verification.whole_input_protection(immutable_roots=[sealed]):
+        copied = copy_context()
+        with verification.writable_validation_session(root):
+            copied.run(manifest.hash_file, sealed)
+            copied.run(manifest.hash_file, mutable)
+            with pytest.raises(OSError): sealed.write_bytes(b'changed!')
+            mutable.write_bytes(b'other')
+            mutable.rename(root/'published.bin')
+
+
+def test_https_worker_reuses_protected_owned_input_digest(tmp_path, monkeypatch):
+    import io
+    from video_ai.adapters.external_https import ExternalHttpsClient
+    root = tmp_path/'run'; root.mkdir()
+    path = root/'sealed.bin'; path.write_bytes(b'original')
+    calls = []
+    digest = manifest._hash_open_file
+    def counted(stream, candidate):
+        if candidate == path: calls.append(candidate)
+        return digest(stream, candidate)
+    monkeypatch.setattr(manifest, '_hash_open_file', counted)
+    class Response(io.BytesIO):
+        status = 200
+        headers = {}
+        def geturl(self): return 'https://cdn.example/image'
+    client = ExternalHttpsClient(transport=lambda request, **kwargs: Response(b'image'*40000))
+    with verification.whole_input_protection(immutable_roots=[path]), verification.writable_validation_session(root):
+        first = manifest.hash_file(path)
+        response = client.request('GET', 'https://cdn.example/image',
+            ownership_check=lambda: manifest.hash_file(path), timeout=5)
+        assert response.body == b'image'*40000
+        assert manifest.hash_file(path).sha256 == first.sha256
+        assert calls == [path]
+
+
 @pytest.mark.parametrize('change', ['write','replace','unlink'])
 def test_small_external_input_is_immutable_for_the_window(tmp_path, change):
     scope = window()
@@ -292,6 +421,10 @@ def test_continuity_entry_protects_admitted_inputs_through_the_operation(tmp_pat
 def test_continuity_shared_deadline_still_includes_preflight(monkeypatch):
     from types import SimpleNamespace
     from video_ai.runtime import _scene_continuity_io as io
+    from video_ai.runtime import execution_limits
+    # Exercise the historical finite reader explicitly; formal production now
+    # deliberately has no operation deadline, including its preflight.
+    monkeypatch.setattr(execution_limits,'unlimited_execution',lambda:False)
     writer = continuity_fixture(monkeypatch)
     clock = [0.]
     monkeypatch.setattr(io,'monotonic',lambda:clock[0])
@@ -303,3 +436,18 @@ def test_continuity_shared_deadline_still_includes_preflight(monkeypatch):
     result = writer._entry(frozen('whole_scene_v1'),[],None,
         lambda store,context,source,reader:reader.check(),paths=None,logger=None,lock=object())
     assert result.status == 'blocked' and result.error['kind'] == 'TimeoutError'
+
+
+def test_production_continuity_preflight_has_no_total_deadline(monkeypatch):
+    from video_ai.runtime import _scene_continuity_io as io
+    writer=continuity_fixture(monkeypatch);clock=[0.]
+    monkeypatch.setattr(io,'monotonic',lambda:clock[0])
+    def context(*args,**kwargs):
+        clock[0]+=36000
+        return {},{}
+    def operation(store,context,source,reader):
+        reader.check()
+        return 'completed-after-long-preflight'
+    monkeypatch.setattr(writer,'_context',context)
+    assert writer._entry(frozen('whole_scene_v1'),[],None,operation,
+        paths=None,logger=None,lock=object())=='completed-after-long-preflight'

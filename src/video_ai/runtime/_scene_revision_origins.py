@@ -159,6 +159,9 @@ def _origin_clip_ids(frozen,key):
     execution=_source_execution(frozen,plan,ProductionTimeline.from_dict(prefix['timeline']))
     clips=execution['clips'] if execution is not None else plan['clips']
     by_id={c['clip_id']:c for c in clips};required=set();cid=key.split(':')[0]
+    if by_id.get(cid,{}).get('protocol')=='longcat_native16_v1':
+        sid=by_id[cid]['scene_id']
+        return {clip['clip_id'] for clip in clips if clip['scene_id']==sid},set(by_id)
     while cid is not None:
         if cid in required or cid not in by_id:raise ProductionRefused('invalid original clip ancestry')
         required.add(cid);cid=by_id[cid]['parent_clip_id']
@@ -175,7 +178,10 @@ def source_clip_record(frozen,key):
 
 
 def _source_clip_record(frozen, key):
-    if 'scene_revision' in frozen.options:
+    native=frozen.config.raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
+    scene_id=key.split('_clip_',1)[0]
+    owned_native_chain=native and (run_of(frozen)/'production/scene-clips/chains'/scene_id/'result.json').exists()
+    if 'scene_revision' in frozen.options and not owned_native_chain:
         from ._scene_revision_readers import inherited_clip_record
         value = inherited_clip_record(frozen,key)
         if value is not None:return value
@@ -264,6 +270,11 @@ def media_for_node(frozen,domain,key,value):
     if domain=='choice': return [('selected_image',original(value))]
     if domain=='clip':
         record = source_clip_record(frozen,key)
+        if 'native_window' in record:
+            result=[('generated',value['generated']),('source',value['source']),('last_frame',record['last_frame']['image']),
+                ('native_frames',value['raw_frames']),('native_generator',value['generator'])]
+            if record['native_window']['budget']['ordinal']==1:result.append(('temporal_chain_viewing',record['native_chain']['viewing']))
+            return result
         return [('generated',value['generated']),('source',value['source']),('last_frame',record['last_frame']['image'])]
     if domain=='upscale': return [(role,value[role]) for role in ('input','input_copy','model_output','output')]
     return []
@@ -428,6 +439,11 @@ def capture_origin(frozen,domain,key):
                 verify_whole_scene_frozen(frozen)
                 records=frozen.options['execution_policy']['input_identities']
                 files.update(Path(records[role]['path']) for role in ('whole_scene_evidence','whole_scene_evidence_closure'))
+            elif execution['mode']=='temporal_extension_v1':
+                from .temporal_scene_admission import verify_temporal_frozen
+                verify_temporal_frozen(frozen)
+                records=frozen.options['execution_policy']['input_identities']
+                files.update(Path(records[role]['path']) for role in ('temporal_evidence','temporal_evidence_closure','temporal_runtime_bundle'))
         from .scene_continuity_records import load_continuity_policy
         if load_continuity_policy(frozen) is not None:
             # Retain late raw failures as well as receipts when media is inherited.
@@ -438,10 +454,16 @@ def capture_origin(frozen,domain,key):
             files.add(Path(frozen.options['execution_policy']['input_identities']['scene_video_prompts']['path']))
         files.add(run/'production/reference-images/wan-inputs.json')
         files.add(run/'production/scene-clips/inputs.json')
-        if domain=='upscale': relevant = source_clips
+        if domain=='upscale':
+            relevant = source_clips
+            directories.update(run/'production/scene-clips/chains'/clip['scene_id']
+                for clip in relevant if clip.get('protocol')=='longcat_native16_v1')
         else:
             target = next(c for c in source_clips if c['clip_id']==key)
             relevant = [c for c in source_clips if c['scene_id']==target['scene_id'] and c['ordinal']<=target['ordinal']]
+            if target.get('protocol')=='longcat_native16_v1':
+                relevant=[c for c in source_clips if c['scene_id']==target['scene_id']]
+                directories.add(run/'production/scene-clips/chains'/target['scene_id'])
         for clip in relevant:
             folder = run/'production/scene-clips'/clip['clip_id']; directories.add(folder)
             absent.add(folder/'observation-rejected.json')

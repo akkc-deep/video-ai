@@ -146,6 +146,25 @@ def _catalog(rows):
     return result
 
 
+def prune_unused_visual_entries(proposal):
+    """Drop only unreachable declarations; never create or repair references."""
+    categories=('entities','appearance_variants','scene_groups')
+    used=(set(key for row in proposal['scenes'] for key in row['entity_ids']),
+          set(key for row in proposal['scenes'] for key in row['variant_ids']),
+          set(row['scene_group_id'] for row in proposal['scenes']))
+    catalogs=[{row['key']:row for row in proposal[category]} for category in categories]
+    if any(len(catalog)!=len(proposal[category]) or not names<=set(catalog)
+           for category,catalog,names in zip(categories,catalogs,used)):
+        return deepcopy(proposal),[]
+    if any(catalogs[1][key]['entity_key'] not in used[0] for key in used[1]):
+        return deepcopy(proposal),[]
+    result=deepcopy(proposal);removed=[]
+    for category,names in zip(categories,used):
+        removed.extend(dict(category=category,key=row['key']) for row in result[category] if row['key'] not in names)
+        result[category]=[row for row in result[category] if row['key'] in names]
+    return result,removed
+
+
 def build_scene_plan(script, units, timeline, proposal: dict, *, settings: ScenePlanningSettings) -> tuple[dict,dict]:
     """Build deterministic scene math and shared references from a visual proposal."""
     try:

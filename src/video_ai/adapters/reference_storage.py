@@ -1,5 +1,6 @@
 """Content-addressed private TOS originals and in-memory TOS4 GET URLs."""
 from dataclasses import asdict, is_dataclass
+from contextvars import copy_context
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
@@ -34,7 +35,7 @@ def _signature(canonical, date, region, secret):
 
 
 class ReferenceStorage:
-    def __init__(self, settings, *, http=None, clock=None, ownership_check=None):
+    def __init__(self, settings, *, http=None, clock=None, ownership_check=None, download_ownership_check=None):
         self.settings = asdict(settings) if is_dataclass(settings) else dict(settings)
         s = self.settings
         if (s.get('provider') != 'volcengine_tos'
@@ -47,6 +48,9 @@ class ReferenceStorage:
         self.http = http or ExternalHttpsClient()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.ownership_check = ownership_check or (lambda: None)
+        self.download_ownership_check = download_ownership_check
+        self._verified_versions = set()
+        self._versions_lock = Lock()
 
     def _credentials(self):
         s = self.settings
@@ -116,6 +120,11 @@ class ReferenceStorage:
             self.ownership_check()
             remaining()
 
+        def download_guard():
+            remaining()
+            (self.download_ownership_check or self.ownership_check)()
+            remaining()
+
         def request(method):
             nonlocal put_attempted
             guard()
@@ -128,7 +137,8 @@ class ReferenceStorage:
             response = self.http.request(method, url, body=data if method == 'PUT' else None,
                          headers=self._headers(method, record, access, secret), timeout=remaining(),
                          max_bytes=record['bytes'] if method == 'GET' else 1024*1024,
-                         allow_not_found=method == 'HEAD', ownership_check=guard, strict_url=True)
+                         allow_not_found=method == 'HEAD',
+                         ownership_check=download_guard if method == 'GET' else guard, strict_url=True)
             guard()
             return response
 
@@ -139,10 +149,26 @@ class ReferenceStorage:
                     or headers.get('content-type') != record['content_type']
                     or not isinstance(headers.get('etag'), str) or not headers['etag'].strip()):
                 raise AdapterError(FailureKind.invalid_result, 'TOS object metadata conflict')
+            version = headers.get('x-tos-version-id')
+            # TOS suspended/unversioned buckets may return the mutable null
+            # version. ETags alone do not authorize reuse of a previous GET.
+            versioned = (isinstance(version, str) and bool(version) and version.strip() == version
+                         and not any(ord(c) <= 32 for c in version) and version.lower() != 'null')
+            version_key = (tuple(sorted(record.items())), version, headers['etag'])
+            if versioned:
+                with self._versions_lock:
+                    cached = version_key in self._verified_versions
+                if cached:
+                    guard()
+                    return dict(record, etag=headers['etag'])
             downloaded = request('GET')
             if (len(downloaded.body) != record['bytes']
                     or hashlib.sha256(downloaded.body).hexdigest() != record['sha256']):
                 raise AdapterError(FailureKind.invalid_result, 'TOS object byte identity conflict')
+            received = {k.lower(): v for k, v in downloaded.headers.items()}
+            if versioned and received.get('x-tos-version-id') == version and received.get('etag') == headers['etag']:
+                with self._versions_lock:
+                    self._verified_versions.add(version_key)
             return dict(record, etag=headers['etag'])
 
         def authorize():
@@ -168,7 +194,7 @@ class ReferenceStorage:
             except BaseException as error:
                 results.put(('error', error))
 
-        Thread(target=worker, name='video-ai-tos', daemon=True).start()
+        Thread(target=copy_context().run, args=(worker,), name='video-ai-tos', daemon=True).start()
         try:
             while True:
                 stage, value = results.get(timeout=remaining())

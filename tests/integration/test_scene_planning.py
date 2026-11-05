@@ -53,7 +53,9 @@ def scene_setup(production_config, runtime_run, tmp_path, request):
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
     thread = Thread(target=server.serve_forever, daemon=True); thread.start()
     try:
-        config = configured(production_config, tmp_path, **({'scene_planner_model': model} if model != 'qwen3:8b' else {}))
+        overrides={'scene_planner_model':model} if model!='qwen3:8b' else {}
+        if isinstance(parameter,dict) and 'scene_planning' in parameter:overrides['scene_planning']=parameter['scene_planning']
+        config = configured(production_config, tmp_path, **overrides)
         data = thaw(config.raw); data['services']['ollama'] = f'http://127.0.0.1:{server.server_port}'
         config.config_file.write_text(json.dumps(data), encoding='utf-8')
         config = load_config(config.config_file)
@@ -94,7 +96,7 @@ def test_compact_scene_response_replays_when_legacy_citation_body_exceeds_capaci
     schema = make_scene_schema(s['frozen'].script, s['units'], s['timeline'], settings)
     prompt = _prompt(s['frozen'].script, s['units'], s['timeline'], settings)
     with pytest.raises(ValueError, match='full-input capacity'):
-        ollama_body(prompt, schema, scene_planning=True, scene_environment_constraints=False)
+        ollama_body(prompt, schema, scene_planning=True, scene_environment_constraints=False,scene_unlimited=False)
     ollama_body(prompt, schema, scene_planning=True)
     wire = environment_wire()
     del wire['scenes']['scene_0002'], wire['scenes']['scene_0003']
@@ -214,6 +216,24 @@ def test_response_saved_before_proposal_recovers_original_http(scene_setup, monk
     assert len(scene_setup['received']) == 1
 
 
+def test_recovered_response_still_rejects_the_original_service_input_truncation(scene_setup, monkeypatch):
+    import video_ai.runtime.production_scene_plan as module
+    from video_ai.planning.production_scenes import canonical_digest
+    s=scene_setup
+    monkeypatch.setattr(module,'boundary',lambda point: (_ for _ in ()).throw(KeyboardInterrupt()) if point=='response' else None)
+    with pytest.raises(KeyboardInterrupt):produce(s)
+    folder=s['run']/'production/scene-planning'
+    intent=json.loads((folder/'initial.intent.json').read_bytes())
+    log=s['run']/'logs/production/truncated.stderr'
+    log.write_text('msg="truncating input prompt" limit=20482 prompt=176748\n',encoding='utf-8')
+    (folder/'initial.service.json').write_text(json.dumps(dict(request_id='scene_plan_initial',
+        body_sha256=canonical_digest(intent['body']),stderr_path=str(log))),encoding='utf-8')
+    monkeypatch.setattr(module,'boundary',lambda *args:None)
+    with pytest.raises(ValueError,match='truncat'):produce(s)
+    assert len(s['received'])==1
+    assert not (s['run']/'production/scene-plan-commit.json').exists()
+
+
 @pytest.mark.parametrize('point', ['completed', 'response'])
 @pytest.mark.parametrize('grounded,reasoning', [(False, False), (True, False), (True, True)])
 @pytest.mark.parametrize('scene_setup', ['qwen3:8b', 'qwen3:14b'], indirect=True)
@@ -222,7 +242,7 @@ def test_legacy_scene_wire_replays_original_body_without_new_http(scene_setup, m
     import video_ai.runtime.production_scene_plan as module
     body = adapter.ollama_body
     def legacy(*args, **kwargs):
-        result = body(*args, **dict(kwargs, scene_source_constraints=grounded,scene_reasoning=reasoning,scene_key_constraints=False))
+        result = body(*args, **dict(kwargs, scene_source_constraints=grounded,scene_reasoning=reasoning,scene_key_constraints=False,scene_unlimited=False))
         return result
     with monkeypatch.context() as patch:
         patch.setattr(adapter, 'ollama_body', legacy)
@@ -381,7 +401,7 @@ def test_source_correction_replays_exact_detailed_or_historical_feedback(scene_s
     original_source = scenes._source
     original_body = adapter.ollama_body
     def prior_body(*args, **kwargs):
-        return original_body(*args, **dict(kwargs, scene_reasoning=reasoning,scene_key_constraints=keys))
+        return original_body(*args, **dict(kwargs, scene_reasoning=reasoning,scene_key_constraints=keys,scene_unlimited=False))
     def without_notes(*args, **kwargs):
         try:
             return original_source(*args, **kwargs)
@@ -551,10 +571,180 @@ def test_model_context_explicitly_reserves_room_for_full_prompt_and_output(scene
     assert body['options']['num_ctx'] >= prompt_bytes+schema_bytes+body['options']['num_predict']+2048
 
 
-def test_oversized_full_context_refuses_before_intent_and_http(scene_setup):
+def test_large_full_context_reaches_http_and_replays_without_input_truncation(scene_setup):
     s=scene_setup
     s['units']['planner']=dict(original_evidence='全文不能截断'*10000)
-    with pytest.raises(ValueError,match='context|上下文'): produce(s)
-    assert s['received']==[]
-    assert not (s['run']/'production/scene-planning/initial.intent.json').exists()
-    assert not (s['run']/'production/scene-plan-commit.json').exists()
+    result=produce(s)
+    assert len(s['received'])==1
+    body=s['received'][0]
+    assert '湖面很静。白鸟停在石上。它望向远处。' in body['prompt']
+    intent=json.loads((s['run']/'production/scene-planning/compact-v1/initial.intent.json').read_bytes())
+    assert '全文不能截断'*10000 in intent['prompt']
+    assert body['options']['num_ctx']>len(body['prompt'].encode('utf-8'))
+    assert body['options']['num_predict']==-1
+    assert produce(s)==result
+    assert len(s['received'])==1
+
+
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_grouped_compact_plan_restores_all_units_and_replays(scene_setup):
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    wire=environment_wire(source_sets=True);del wire['scenes']['scene_0003']
+    s['replies'].append(wire)
+    result=produce(s)
+    assert [row['unit_ids'] for row in result[1]['scenes']]==[['speech_0001','speech_0002'],['speech_0003']]
+    assert len(s['received'])==1
+    assert s['received'][0]['format']['$comment']=='video_ai_scene_environment_v3'
+    assert (s['run']/'production/scene-planning/compact-v4/initial.intent.json').is_file()
+    assert produce(s)==result and len(s['received'])==1
+
+
+@pytest.mark.parametrize('point',['completed','response','http'])
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_existing_compact_v1_result_is_consumed_before_new_grouped_submission(scene_setup,monkeypatch,point):
+    import video_ai.runtime.production_scene_plan as module
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    old=proposal();old['scenes'][1]['paragraph_id']='paragraph_0002'
+    s['replies'].append(old)
+    with monkeypatch.context() as patch:
+        patch.setattr(module,'use_grouped_compact',lambda *args:False)
+        if point!='completed':
+            patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p=='response' else None)
+            with pytest.raises(KeyboardInterrupt):produce(s)
+        else:produce(s)
+    if point=='http':(s['run']/'production/scene-planning/compact-v1/initial.response.json').unlink()
+    assert len(produce(s)[1]['scenes'])==2
+    assert len(s['received'])==1
+    assert not (s['run']/'production/scene-planning/compact-v2/initial.intent.json').exists()
+
+
+@pytest.mark.parametrize('point',['completed','response','http','intent'])
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_existing_compact_v2_is_not_resubmitted_under_source_set_protocol(scene_setup,monkeypatch,point):
+    import video_ai.runtime.production_scene_plan as module
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    wire=environment_wire();del wire['scenes']['scene_0003'];s['replies'].append(wire)
+    with monkeypatch.context() as patch:
+        patch.setattr(module,'use_source_set_compact',lambda *args:False)
+        if point!='completed':
+            stop='intent' if point=='intent' else 'response'
+            patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p==stop else None)
+            with pytest.raises(KeyboardInterrupt):produce(s)
+        else:produce(s)
+    if point=='http':(s['run']/'production/scene-planning/compact-v2/initial.response.json').unlink()
+    if point=='intent':
+        with pytest.raises(ValueError):produce(s)
+        assert not s['received']
+    else:
+        assert len(produce(s)[1]['scenes'])==2
+        assert len(s['received'])==1
+    assert not (s['run']/'production/scene-planning/compact-v3/initial.intent.json').exists()
+
+
+@pytest.mark.parametrize('point',['completed','response'])
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_flat_v3_source_sets_replay_after_required_source_upgrade(scene_setup,monkeypatch,point):
+    import video_ai.adapters.ollama as adapter
+    import video_ai.runtime.production_scene_plan as module
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    wire=environment_wire(source_sets=True,source_nonempty=False);del wire['scenes']['scene_0003']
+    s['replies'].append(wire);original=adapter.ollama_body
+    def old_body(*args,**kwargs):return original(*args,**dict(kwargs,scene_source_nonempty=False))
+    with monkeypatch.context() as patch:
+        patch.setattr(adapter,'ollama_body',old_body);patch.setattr(module,'ollama_body',old_body)
+        patch.setattr(module,'use_direct_compact',lambda *args:False)
+        if point=='response':
+            patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p=='response' else None)
+            with pytest.raises(KeyboardInterrupt):produce(s)
+        else:produce(s)
+    assert len(produce(s)[1]['scenes'])==2
+    assert len(s['received'])==1
+
+
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_explicit_direct_retirement_uses_a_distinct_request_and_replays(scene_setup,monkeypatch):
+    import video_ai.runtime.production_scene_plan as module
+    from video_ai.planning.production_scenes import canonical_digest
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    with monkeypatch.context() as patch:
+        patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p=='intent' else None)
+        with pytest.raises(KeyboardInterrupt):produce(s)
+    with pytest.raises(ValueError):produce(s)
+    assert not s['received']
+    folder=s['run']/'production/scene-planning/compact-v4'
+    intent=json.loads((folder/'initial.intent.json').read_bytes())
+    (folder/'retired.json').write_text(json.dumps(dict(request_id=intent['request_id'],
+        body_sha256=canonical_digest(intent['body']),reason='known stopped before submission')))
+    wire=environment_wire(source_sets=True);del wire['scenes']['scene_0003'];s['replies'].append(wire)
+    result=produce(s)
+    assert len(result[1]['scenes'])==2 and len(s['received'])==1
+    current=json.loads((folder/'attempt_0001/initial.intent.json').read_bytes())
+    assert current['request_id']=='scene_plan_direct_attempt_0001_initial'
+    assert produce(s)==result and len(s['received'])==1
+
+
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_completed_direct_http_without_checkpoint_cannot_be_retired(scene_setup,monkeypatch):
+    import video_ai.runtime.production_scene_plan as module
+    from video_ai.planning.production_scenes import canonical_digest
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    wire=environment_wire(source_sets=True);del wire['scenes']['scene_0003'];s['replies'].append(wire)
+    with monkeypatch.context() as patch:
+        patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p=='response' else None)
+        with pytest.raises(KeyboardInterrupt):produce(s)
+    folder=s['run']/'production/scene-planning/compact-v4'
+    (folder/'initial.response.json').unlink()
+    intent=json.loads((folder/'initial.intent.json').read_bytes())
+    (folder/'retired.json').write_text(json.dumps(dict(request_id=intent['request_id'],
+        body_sha256=canonical_digest(intent['body']),reason='invalid retirement of recoverable HTTP')))
+    with pytest.raises(ValueError,match='completed'):produce(s)
+    assert len(s['received'])==1
+
+
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_direct_unused_catalog_pruning_is_recorded_and_replayed_without_post(scene_setup):
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    wire=environment_wire(source_sets=True);del wire['scenes']['scene_0003']
+    wire['entities']=[dict(key='earth',label='Earth',fixed_attributes=[],source_facts=[],creative_choices=[])]
+    s['replies'].append(wire)
+    result=produce(s)
+    assert result[0]['entities']==[] and len(result[1]['scenes'])==2
+    receipt=json.loads((s['run']/'production/scene-planning/compact-v4/initial.catalog-pruning.json').read_bytes())
+    assert receipt['removed']==[dict(category='entities',key='earth')]
+    assert receipt['original_proposal_sha256']!=receipt['normalized_proposal_sha256']
+    assert produce(s)==result and len(s['received'])==1
+
+
+@pytest.mark.parametrize('point',['completed','response'])
+@pytest.mark.parametrize('scene_setup',[dict(text='湖面很静。白鸟停在石上。\n它望向远处。',
+    scene_planning=dict(target_scenes_per_paragraph=1,max_clip_seconds=6))],indirect=True)
+def test_old_unused_entry_correction_is_not_bypassed_by_pruning(scene_setup,monkeypatch,point):
+    import video_ai.runtime.production_scene_plan as module
+    from unit.test_scene_environment_transport import environment_wire
+    s=scene_setup;s['units']['planner']={'audit':'x'*40000}
+    corrected=environment_wire(source_sets=True);del corrected['scenes']['scene_0003']
+    initial=deepcopy(corrected)
+    initial['entities']=[dict(key='earth',label='Earth',fixed_attributes=[],source_facts=[],creative_choices=[])]
+    s['replies'].extend([initial,corrected])
+    with monkeypatch.context() as patch:
+        patch.setattr(module,'prune_unused_visual_entries',lambda content:(content,[]))
+        if point=='response':
+            patch.setattr(module,'boundary',lambda p: (_ for _ in ()).throw(KeyboardInterrupt()) if p=='response' and len(s['received'])==2 else None)
+            with pytest.raises(KeyboardInterrupt):produce(s)
+        else:produce(s)
+    assert len(produce(s)[1]['scenes'])==2 and len(s['received'])==2
+    proposal_record=json.loads((s['run']/'production/scene-planning/compact-v4/proposal.json').read_bytes())
+    assert proposal_record['request_id']=='scene_plan_direct_correction'

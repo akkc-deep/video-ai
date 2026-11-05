@@ -126,12 +126,19 @@ def test_production_specs_accept_effective_run_local_inputs(production_config,ru
     from video_ai.runtime.production_inputs import freeze_inputs
     from video_ai.runtime.manifest import create_manifest
     from video_ai.runtime.service_specs import build_service_specs
-    run,_,_=runtime_run
+    run,_,paths=runtime_run
     frozen=freeze_inputs(production_config,run,text='湖水。')
     assert frozen.config.media.font_file!=production_config.media.font_file
     store=create_manifest(run,frozen.config,inputs={},models={},workflows={},verify_integrity=False)
     specs=build_service_specs(frozen.config,run,production=True,frozen=frozen,store=store)
     assert specs['ollama'].url==frozen.options['config_snapshot']['resolved']['services']['ollama']
+    from video_ai.runtime.processes import validate_command
+    from video_ai.runtime.services import service_environment
+    direct=build_service_specs(frozen.config,run,production=True,frozen=frozen,store=store,planner_transport='llama_direct')['ollama']
+    assert direct.args[:3]==(str(frozen.config.tools['comfy_python']),'-B','-s')
+    assert direct.args[3].endswith('ollama_direct.py')
+    assert direct.url==specs['ollama'].url
+    validate_command(direct.args,direct.cwd,service_environment(paths,direct))
     with pytest.raises(ValueError):
         build_service_specs(production_config,run,production=True,frozen=frozen,store=store)
 

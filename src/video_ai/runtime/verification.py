@@ -108,22 +108,47 @@ class _NativeInput:
                 raise self.api.ctypes.WinError(self.api.ctypes.get_last_error())
 
 
+def _within_roots(path, roots):
+    """Index canonical lexical roots by ancestor, preserving Path equality.
+
+    This only classifies protection ownership. It never authenticates bytes or
+    paths; all native handle and metadata checks remain at their original sites.
+    Sets/dicts keep the cost proportional to path depth rather than root count.
+    """
+    return bool(roots) and (path in roots or any(parent in roots for parent in path.parents))
+
+
 class _WholeInputWindow:
-    def __init__(self):
+    def __init__(self, immutable_roots=()):
         self.entries = {}
         self.lock = RLock()
         self.closed = False
         self.writable_roots = {}
+        self.immutable_roots = frozenset(immutable_roots)
         self.continuity = None
         for root in _writable_roots.get():
             self.writable_roots[root] = self.writable_roots.get(root,0)+1
 
+    def _immutable(self, path):
+        return _within_roots(path, self.immutable_roots)
+
     def _owned(self, path):
-        return any(path.is_relative_to(root) for root in self.writable_roots)
+        return (not self._immutable(path)
+                and _within_roots(path, self.writable_roots))
+
+    def owned(self, path):
+        with self.lock:
+            if self.closed:
+                return any(path.is_relative_to(root) for root in _writable_roots.get())
+            return self._owned(path)
 
     def get(self, path):
         with self.lock:
-            entry = None if self.closed or self._owned(path) else self.entries.get(path)
+            # Admission and writer promotion already maintain this invariant:
+            # every retained entry is eligible, and enter_writer evicts mutable
+            # entries under this same lock. Do not repeat every root/ancestor
+            # comparison for each protected hit in a large revision closure.
+            entry = None if self.closed else self.entries.get(path)
             if entry is not None:
                 entry.verify(path)
                 return entry.identity
@@ -160,7 +185,7 @@ class _WholeInputWindow:
             if self.continuity is not None:
                 self.continuity.enter_writer(root)
             for path, entry in tuple(self.entries.items()):
-                if path.is_relative_to(root):
+                if path.is_relative_to(root) and not self._immutable(path):
                     entry.verify(path)
                     del self.entries[path]
                     entry.close()
@@ -196,18 +221,22 @@ class _WholeInputWindow:
 
 
 @contextmanager
-def whole_input_protection():
+def whole_input_protection(*, immutable_roots=()):
     """Scope native read protection to an explicit whole-scene operation.
 
     Only a complete first digest under mandatory deny-write/delete sharing can
     enter this window. Every reuse checks the live handle metadata, canonical
-    handle path and path identity. Unprotected and owned files always rehash.
+    handle path and path identity. Owned files always rehash unless explicitly
+    declared sealed by immutable_roots; mutable manifests always rehash.
     """
+    immutable_roots = tuple(Path(root).resolve(strict=True) for root in immutable_roots)
     current = _whole_inputs.get()
     if current is not None and not current.closed:
+        if any(not current._immutable(root) for root in immutable_roots):
+            raise ValueError('nested protection cannot add immutable roots')
         yield
         return
-    window = _WholeInputWindow()
+    window = _WholeInputWindow(immutable_roots)
     token = _whole_inputs.set(window)
     try:
         yield
@@ -217,11 +246,55 @@ def whole_input_protection():
         window.close()
 
 
+@contextmanager
+def scene_input_protection(frozen):
+    """Protect sealed default-scene inputs without pinning mutable run outputs.
+
+    Declaring a root never admits its bytes: its first hash still performs the
+    complete mandatory-shared read. Existing windows retain their exact sealed
+    root policy; nested callers cannot widen it. No process/service is started.
+    """
+    options = getattr(frozen, 'options', {})
+    strategy = getattr(getattr(frozen, 'config', None), 'production_strategy',
+                       options.get('production_strategy'))
+    if strategy != 'paragraph_jimeng_v1':
+        yield
+        return
+    from .manifest import validate_run_dir
+    run = validate_run_dir(Path(options['script_path']).parent.parent)
+    current = _whole_inputs.get()
+    roots = []
+    if current is None or current.closed:
+        production = run/'production'
+        roots.extend(production/name for name in ('inputs', 'workflows', 'options.json', 'script.txt'))
+        revision = production/'scene-revision'
+        roots.extend(revision/name for name in ('imports', 'media', 'views', 'copy-ready', 'copy-intents'))
+        roots.extend(revision.glob('*.json'))
+        for identity in options.get('execution_policy', {}).get('input_identities', {}).values():
+            path = Path(identity['path'])
+            if path.is_relative_to(run):
+                roots.append(path)
+        roots.extend(path for path in (production/'jimeng').glob('scene_*')
+                     if (path/'candidates.json').is_file())
+        # Only already-sealed inputs enter the retained-handle policy. Outputs,
+        # manifest.json and all unfinished scene directories stay movable.
+        roots = tuple(dict.fromkeys(path for path in roots if path.exists()))
+    with whole_input_protection(immutable_roots=roots), writable_validation_session(run):
+        yield
+
+
+def protect_scene_inputs(function):
+    @wraps(function)
+    def protected(frozen, *args, **kwargs):
+        with scene_input_protection(frozen):
+            return function(frozen, *args, **kwargs)
+    return protected
+
+
 def _whole_cached_identity(path):
     window = _whole_inputs.get()
     if (os.name != 'nt' or window is None or _current.get() is None
-            or not isinstance(path,Path) or path.name.casefold() == 'manifest.json'
-            or any(path.is_relative_to(root) for root in _writable_roots.get())):
+            or not isinstance(path,Path) or path.name.casefold() == 'manifest.json'):
         return None
     # Only an already canonical, still-live protected entry can skip a fresh
     # path open. Relative names and aliases miss and take the original path.
@@ -330,7 +403,8 @@ def writable_validation_session(root):
             # external/ancestor inputs keep their existing mandatory handles.
             entries=_current.get()
             for path,(file,stamp,identity) in tuple(entries.items()):
-                if path.is_relative_to(root):
+                if (path.is_relative_to(root)
+                        and (window is None or window.owned(path))):
                     check_path(path,file,stamp)
                     del entries[path]
                     file.close()
@@ -349,15 +423,16 @@ def protected_hash(path, compute):
     if os.name != 'nt':
         with path.open('rb') as file:
             return compute(file, path)
-    if (entries is None or path.name.casefold() == 'manifest.json'
-            or any(path.is_relative_to(root) for root in _writable_roots.get())):
+    window = _whole_inputs.get()
+    owned = (window.owned(path) if window is not None else
+             any(path.is_relative_to(root) for root in _writable_roots.get()))
+    if entries is None or path.name.casefold() == 'manifest.json' or owned:
         with _locked_reader(path) as file:
             return compute(file, path)
     if path in entries:
         file, stamp, identity = entries[path]
         check_path(path, file, stamp)
         return identity
-    window = _whole_inputs.get()
     if window is not None:
         return window.hash(path,compute)
     # Small HTTP/JSON leaves are cheap to hash and can number in the tens of

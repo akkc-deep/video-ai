@@ -30,8 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest='command', required=True)
     automatic = commands.add_parser('make-video', help='automatically produce from UTF-8 text, or resume its frozen run')
     input_group = automatic.add_mutually_exclusive_group(required=True)
-    for name in ('script', 'text', 'run-dir'):
+    for name in ('script', 'text', 'run-dir', 'video'):
         input_group.add_argument('--'+name, metavar='TEXT' if name == 'text' else 'PATH')
+    automatic.add_argument('--title',help='name for a new video; its simple number is assigned automatically')
     automatic.add_argument('--config', metavar='PATH')
     automatic.add_argument('--output', metavar='PATH')
     automatic.add_argument('--cpu-planner', action='store_true', default=None)
@@ -44,6 +45,14 @@ def main(argv: list[str] | None = None) -> int:
     automatic.add_argument('--reference-settings',metavar='PATH')
     automatic.add_argument('--email-settings',metavar='PATH')
     automatic.add_argument('--json', action='store_true')
+    storage_parser = commands.add_parser('storage',help='report, close or clean a video by its simple number')
+    storage_commands = storage_parser.add_subparsers(dest='storage_action',required=True)
+    for action in ('report','close','clean'):
+        storage_action = storage_commands.add_parser(action)
+        storage_action.add_argument('--video',required=action=='close',help='video number or unique title')
+        storage_action.add_argument('--json',action='store_true')
+        if action != 'report':
+            storage_action.add_argument('--dry-run',action='store_true')
     for name in ('run', 'resume'):
         flow = commands.add_parser(name, help='coordinate stages with fresh recovery and explicit author checkpoints')
         flow.add_argument('--config', required=True, metavar='PATH')
@@ -128,9 +137,26 @@ def main(argv: list[str] | None = None) -> int:
     options=None
     try:
         options = parser.parse_args(argv)
+        if options.command == 'storage':
+            from .runtime.storage import VideoStorage
+            manager = VideoStorage()
+            action = getattr(manager,options.storage_action)
+            result = action(options.video,**({'dry_run':options.dry_run} if options.storage_action!='report' else {}))
+            if options.json:
+                print(json.dumps(result,ensure_ascii=False,indent=2))
+            elif options.storage_action == 'report':
+                for item in result['videos']:
+                    print(f'{item["number"]} {item["title"]}: {item["state"]}; {item["logical_bytes"]/1024**3:.2f} GiB; {item["directory"]}')
+                for item in result.get('shared',[]):
+                    print(f'{item["category"]}: {item["logical_bytes"]/1024**3:.2f} GiB; {item["directory"]}')
+                if not result['videos']: print('No managed videos. Legacy runs are retained.')
+            else:
+                print(json.dumps(result,ensure_ascii=False))
+            return 0
         if options.command == 'make-video':
-            from .production import make_video
-            result = make_video(options.config, script=options.script, text=options.text, run_dir=options.run_dir,
+            from .managed_production import make_managed_video
+            result = make_managed_video(options.config,video=options.video,title=options.title,
+                                script=options.script, text=options.text, run_dir=options.run_dir,
                                 output_path=options.output, cpu_planner=options.cpu_planner, image_model=options.image_model,
                                 image_selection=options.image_selection,reference_settings=options.reference_settings,
                                 email_settings=options.email_settings,clip_observation=options.clip_observation,
@@ -140,7 +166,11 @@ def main(argv: list[str] | None = None) -> int:
             if options.json:
                 print(json.dumps(result.to_dict(), ensure_ascii=False, allow_nan=False))
             else:
-                print(f'{result.status}: stage={getattr(result,"active_stage",None)}; run={result.run_dir}')
+                if getattr(result,'video_number',None):
+                    print(f'Video {result.video_number} {result.video_title}: {result.status}; stage={getattr(result,"active_stage",None)}')
+                    print(f'Production: {result.production_directory}')
+                else:
+                    print(f'{result.status}: stage={getattr(result,"active_stage",None)}; run={result.run_dir}')
                 if getattr(result,'movie',None) is not None: print(f'MP4: {result.movie}\nSRT: {result.subtitle}\nReceipt: {result.receipt_path}')
                 if getattr(result,'selection_template',None) is not None: print(f'Image selection: {result.selection_template}')
                 if getattr(result,'selection_result',None) is not None and result.selection_result.get('selection_template'):
@@ -154,7 +184,10 @@ def main(argv: list[str] | None = None) -> int:
                     print(f'MP4: {receipt["movie"]["path"]}\nSRT: {receipt["subtitle"]["path"]}\nReceipt: {result.delivery_receipt}')
                 if result.error is not None: print(result.error['message'], file=sys.stderr)
                 if result.run_dir is not None:
-                    print(f'Resume: video-ai make-video --run-dir "{result.run_dir}"')
+                    if getattr(result,'video_number',None):
+                        print(f'Resume: video-ai make-video --video {result.video_number}')
+                    else:
+                        print(f'Resume: video-ai make-video --run-dir "{result.run_dir}"')
             return result.exit_code
         if options.command in ('run', 'resume'):
             from .pipeline import run_pipeline, resume_pipeline
@@ -381,6 +414,8 @@ def main(argv: list[str] | None = None) -> int:
         print('Interrupted', file=sys.stderr)
         return 130
     except (ConfigError, ValueError) as exc:
+        if options is not None and options.command in ('storage','make-video') and options.json:
+            print(json.dumps(dict(status='blocked',error=str(exc)),ensure_ascii=False))
         if options is not None and options.command in ('run','resume') and options.json:
             print(json.dumps(dict(schema_version=1,run_dir=str(_lexical_cli_path(options.run_dir,invocation_cwd)) if options.command=='resume' else None,
                 parent_run_dir=None,status='refused',active_stage=None,waiting_for=[],candidate_path=None,subtitle_path=None,
@@ -389,6 +424,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f'Configuration/argument error: {exc}', file=sys.stderr)
         return 2
     except OSError as exc:
+        if options is not None and options.command in ('storage','make-video') and options.json:
+            print(json.dumps(dict(status='failed',error=str(exc)),ensure_ascii=False))
         if options is not None and options.command in ('run','resume') and options.json:
             print(json.dumps(dict(schema_version=1,run_dir=str(_lexical_cli_path(options.run_dir,invocation_cwd)) if options.command=='resume' else None,
                 parent_run_dir=None,status='failed',active_stage=None,waiting_for=[],candidate_path=None,subtitle_path=None,

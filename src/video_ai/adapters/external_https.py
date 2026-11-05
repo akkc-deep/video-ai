@@ -1,5 +1,6 @@
 """Finite external HTTPS, without raw request/response logging or POST replay."""
 from dataclasses import dataclass, field
+from contextvars import copy_context
 from http.client import HTTPSConnection
 import ipaddress
 from queue import Queue, Empty
@@ -100,7 +101,7 @@ class ExternalHttpsClient:
                 result.put((self._perform(request, method, url, end, max_bytes, cancelled, allow_not_found), None))
             except BaseException as exc:
                 result.put((None, exc))
-        Thread(target=perform, name='video-ai-https', daemon=True).start()
+        Thread(target=copy_context().run, args=(perform,), name='video-ai-https', daemon=True).start()
         try:
             response, error = result.get(timeout=max(.000001, end-time.monotonic()))
         except Empty:

@@ -128,7 +128,8 @@ def test_revision_must_not_reserve_the_original_unpublished_output(revision_sour
     setup=revision_source
     path,value=revision_request(setup)
     from video_ai.runtime.manifest import thaw
-    model=Path('D:/VideoSi/models/tests')/uuid4().hex/'RealESRGAN_x4plus.pth'
+    from video_ai.runtime.storage import _sandbox
+    model=_sandbox.get()/'models/tests'/uuid4().hex/'RealESRGAN_x4plus.pth'
     model.parent.mkdir(parents=True);model.write_bytes(b'test model identity only; never loaded')
     raw=thaw(setup['frozen'].options['config_snapshot']['raw']);raw['models']['upscale']=str(model)
     config=path.with_name('target-config-'+path.name);config.write_text(json.dumps(raw),encoding='utf-8')

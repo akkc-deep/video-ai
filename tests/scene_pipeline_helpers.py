@@ -10,8 +10,8 @@ def persist_prepared_common(setup):
     return setup
 
 
-def prepared_pipeline(runtime_run,tmp_path,monkeypatch):
-    """13 native first-scene frames committed as 5/4/4, plus an independent scene."""
+def prepared_pipeline(runtime_run,tmp_path,monkeypatch,*,speech_samples=None):
+    """Accepted local images/PCM; optional long PCM exercises native revisions."""
     from copy import deepcopy
     import wave
     import json
@@ -38,7 +38,8 @@ def prepared_pipeline(runtime_run,tmp_path,monkeypatch):
         units=dict(decoded_text=script.text,has_bom=script.has_bom,spans=thaw(script.spans),
             semantic_specs={s.unit_id:dict(facts={}) for s in script.spans if s.kind=='speech'})
         audio={}
-        for span,samples in zip((s for s in script.spans if s.kind=='speech'),[19501,19501,6001,6001]):
+        for span,samples in zip((s for s in script.spans if s.kind=='speech'),
+                [19501,19501,6001,6001] if speech_samples is None else speech_samples):
             pcm=run/'audio'/span.unit_id/'pcm.wav';pcm.parent.mkdir(parents=True,exist_ok=True)
             with wave.open(str(pcm),'wb') as stream:
                 stream.setparams((1,2,48000,0,'NONE',''));stream.writeframes(b'\x01\x00'*samples)
@@ -57,8 +58,9 @@ def prepared_pipeline(runtime_run,tmp_path,monkeypatch):
         save(run/'production/visual-bible.json',bible);save(run/'production/scene-plan.json',plan)
         commit={k:plan[k] for k in ('schema_version','run_id','source_sha256','units_sha256','timeline_sha256','settings','visual_bible_sha256')}
         save(run/'production/scene-plan-commit.json',dict(commit,scene_plan_sha256=canonical_digest(plan)))
-        assert plan['scenes'][0]['end_frame']==13
-        assert [c['retained_frames'] for c in plan['clips'][:3]]==[5,4,4]
+        if speech_samples is None:
+            assert plan['scenes'][0]['end_frame']==13
+            assert [c['retained_frames'] for c in plan['clips'][:3]]==[5,4,4]
         assert plan['scenes'][-1]['reference_bindings']==[]
         return dict(run=run,frozen=frozen,units=units,timeline=timeline,bible=bible,plan=plan,paths=paths,config=config)
     with monkeypatch.context() as patch:

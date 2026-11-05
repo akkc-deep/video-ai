@@ -77,6 +77,22 @@ def inherited_clip_record(frozen,key,*,context=None,row=None,parent=None):
             if canonical_digest(row[field])!=canonical_digest(request[field]): raise ProductionRefused('inherited clip parameters/coverage differ')
         if parent is not None and request['parent']['clip_id']!=parent['clip']['clip_id']:
             raise ProductionRefused('inherited continuation parent differs')
+    if 'native_window' in record:
+        from .temporal_scene_origins import remap_temporal_window,remap_temporal_chain
+        original_record=record
+        original_template=deepcopy(record['template'])
+        mappings=[item for sidecar,_ in proof['imports'].values() for item in sidecar['local_artifacts']]
+        record=remap_media(record,mappings)
+        record['request']=deepcopy(original_record['request'])
+        record['native_window']=remap_temporal_window(original_record['native_window'],mappings)
+        record['native_chain']=remap_temporal_chain(original_record['native_chain'],mappings)
+        record['clip']=require_revision_import(frozen,'clip',key,context=proof)
+        record['template']=original_template
+        record['native_window'].update(origin_template=original_template,origin_clip_view=record['clip'],
+            origin_chain={name:deepcopy(value) for name,value in record['native_chain'].items() if name not in ('windows','origin_template')})
+        record['native_chain']['origin_template']=original_template
+        proof['guard'].verify_captured_bytes()
+        return record
     record = remap_media(record,sidecar['local_artifacts'])
     record['clip'] = require_revision_import(frozen,'clip',key,context=proof)
     for name in ('request','last_frame','accepted','template'):

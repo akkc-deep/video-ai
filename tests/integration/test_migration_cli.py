@@ -13,7 +13,8 @@ def test_migration_dry_run_saves_plan_without_copy(runtime_run,monkeypatch,capsy
     from video_ai.runtime.migration import CopyEntry
     source=runtime_run[0]/'test-source.bin'
     source.write_bytes(b'dry-run only')
-    target=Path('D:/VideoSi/tools/tests')/runtime_run[0].name/'dry.bin'
+    from video_ai.runtime.storage import _sandbox
+    target=_sandbox.get()/'tools/tests'/runtime_run[0].name/'dry.bin'
     monkeypatch.setattr(module,'build_copy_plan',lambda p:(CopyEntry(source,target,'tool-env',12,None),))
     assert main(['migrate','--inventory','D:/VideoSi/docs/video-ai/VAI-01-inventory','--dry-run'])==0
     assert not target.exists()

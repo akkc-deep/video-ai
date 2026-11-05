@@ -45,6 +45,9 @@ def _clip(clip):
 
 def scene_clip_frame_mapping(clip, *, actual_generated_frames):
     """Map every generated frame, explicitly discarding continuation head/tail."""
+    if isinstance(clip, Mapping) and clip.get('protocol') == 'longcat_native16_v1':
+        from .scene_temporal import temporal_frame_mapping
+        return temporal_frame_mapping(clip, actual_generated_frames=actual_generated_frames)
     clip = _clip(clip)
     _integer(actual_generated_frames, 'actual_generated_frames', 1)
     if actual_generated_frames != clip['generated_frames']:

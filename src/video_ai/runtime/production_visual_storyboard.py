@@ -16,7 +16,7 @@ from .manifest import thaw
 from .production_state import ProductionRefused,object_fields
 from .production_inputs import check_stage_space
 from .production_support import (read_report,recover_checkpoint,recover_http,commit_checkpoint,stamps,
-                                 mark_request_error,sync_manifest_stage)
+                                 mark_request_error,sync_manifest_stage,http_recovery_scope)
 from .service_specs import build_service_specs
 from .services import ServiceConflictError
 from .owned_cleanup import stop_owned_preserving_exception
@@ -188,17 +188,20 @@ def _entity_constraints(logger,uid):
 
 def _intent(path, uid, prompt, schema, context, frozen):
     value=read_json(Path(path));object_fields(value,('request_id','body','schema','prompt','context'),'visual intent')
-    actual=value['context'];object_fields(actual,(*context,'client_id'),'visual context')
+    actual=value['context'];object_fields(actual,(*context,'client_id',*(('model_session',) if 'model_session' in actual else ())), 'visual context')
+    session=actual.get('model_session')
+    if session not in (None,'owned_stage_v1'):raise ProductionRefused('unsupported model session contract')
     if (value['request_id']!=uid or value['schema']!=schema or value['prompt']!=prompt or
-        {k:v for k,v in actual.items() if k!='client_id'}!=context): raise ProductionRefused('visual intent differs from fixed batch')
+        {k:v for k,v in actual.items() if k not in ('client_id','model_session')}!=context): raise ProductionRefused('visual intent differs from fixed batch')
     expected=dict(model='qwen3:8b',prompt=prompt+(_GROUNDING_NOTE if _has_shared_grounding(schema) else ''),
-                  stream=False,format=ollama_schema(schema),keep_alive=0,think=False,options=dict(temperature=0,num_predict=8192))
+                  stream=False,format=ollama_schema(schema),keep_alive='5m' if session else 0,think=False,options=dict(temperature=0,num_predict=8192))
     if frozen.options['cpu_planner']: expected['options']['num_gpu']=0
     if json.dumps(value['body'],sort_keys=True,allow_nan=False)!=json.dumps(expected,sort_keys=True,allow_nan=False):
         raise ProductionRefused('original visual request body changed')
     return value
 
 
+@http_recovery_scope()
 def produce(frozen,units,timeline,slot_plan,*,state,manifest,paths,logger,manager_factory,port_probe):
     report=read_report(state,'storyboard');complete=state.snapshot()['stages']['storyboard']['status']=='completed'
     if complete and report is None: raise ProductionRefused('completed storyboard has no report')
@@ -253,13 +256,13 @@ def produce(frozen,units,timeline,slot_plan,*,state,manifest,paths,logger,manage
                     def on_intent(path,body):
                         state.record_unit('storyboard',uid,status='running',request=dict(state='intent',intent_path=str(path),client_id=client,prompt_id=None,response_paths=[]))
                     print(f'[make-video] storyboard {bid} {suffix}: Ollama',file=sys.stderr,flush=True)
-                    try:planner.generate(current_prompt,schema=schema,request_id=uid,intent_context=dict(context,client_id=client),on_intent=on_intent)
+                    try:planner.generate(current_prompt,schema=schema,request_id=uid,intent_context=dict(context,client_id=client,model_session='owned_stage_v1'),on_intent=on_intent)
                     except OllamaFormatError:pass # Reparse the complete original response below.
                     except AdapterError as exc:mark_request_error(state,'storyboard',uid,exc)
                     intent=_intent(intent_path,uid,current_prompt,schema,context,frozen)
                     req=state.snapshot()['units']['storyboard'][uid]['request']
                 try:
-                    raw,_,evidence=recover_http(logger,uid=uid,url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'])
+                    raw,_,evidence=recover_http(logger,uid=uid,url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'],evidence_paths=req['response_paths'] or None)
                 except AdapterError as exc:mark_request_error(state,'storyboard',uid,exc)
                 error=None;content=None
                 try:outer=strict_json(raw)

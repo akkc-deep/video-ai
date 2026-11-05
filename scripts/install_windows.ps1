@@ -5,7 +5,9 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'bootstrap.ps1')
 $exitCode = 1
+$storageLease = $null
 try {
+    $storageLease = Enter-VideoAiStorageLease
     Initialize-VideoAiEnvironment 'install'
     if (-not $Python) {
         $Python = (Get-Command python.exe -ErrorAction Stop).Source
@@ -31,5 +33,6 @@ try {
     [Console]::Error.WriteLine($_.ToString())
 } finally {
     if ($script:VideoAiLog) { Write-VideoAiLog "script_exit=$exitCode" }
+    Exit-VideoAiStorageLease $storageLease
 }
 exit $exitCode

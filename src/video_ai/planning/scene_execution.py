@@ -12,7 +12,7 @@ from .source_clips import _integer, _same, _wan_frames
 
 
 ALGORITHM = 'scene_execution_v1'
-MODES = ('segmented_v1', 'whole_scene_v1')
+MODES = ('segmented_v1', 'whole_scene_v1', 'temporal_extension_v1')
 EXPECTED_FIELDS = 'run_id mode rendering_identity_sha256 admission'.split()
 BUDGET_FIELDS = ('schema_version algorithm production_strategy run_id mode scene_plan_sha256 '
                  'timeline_sha256 rendering_identity_sha256 admission clips').split()
@@ -20,7 +20,7 @@ BUDGET_FIELDS = ('schema_version algorithm production_strategy run_id mode scene
 
 def _mode(mode):
     if not isinstance(mode, str) or mode not in MODES:
-        raise ValueError('explicit segmented_v1 or whole_scene_v1 execution mode required')
+        raise ValueError('explicit supported scene execution mode required')
 
 
 def _frames(timeline):
@@ -68,6 +68,9 @@ def derive_scene_execution_clips(plan, timeline, *, mode) -> list[dict]:
     total = _frames(timeline)
     if _integer(plan.get('total_frames'), 'plan.total_frames', 1) != total:
         raise ValueError('scene plan differs from timeline frame count')
+    if mode == 'temporal_extension_v1':
+        from .scene_temporal import derive_temporal_clips
+        return derive_temporal_clips(plan, timeline)
     if mode == 'segmented_v1':
         view = SimpleNamespace(total_frames=total) if isinstance(timeline, Mapping) else timeline
         return deepcopy(thaw(_budgets(plan, view)))
@@ -104,7 +107,8 @@ def build_scene_execution_budget(plan, timeline, *, run_id, mode, rendering_iden
     identity = dict(run_id=run_id, mode=mode, rendering_identity_sha256=rendering_identity_sha256, admission=admission)
     _identity(identity)
     clips = derive_scene_execution_clips(plan, timeline, mode=mode)
-    return dict(schema_version=1, algorithm=ALGORITHM, production_strategy='paragraph_jimeng_v1',
+    native = mode == 'temporal_extension_v1'
+    return dict(schema_version=2 if native else 1, algorithm='scene_execution_v2' if native else ALGORITHM, production_strategy='paragraph_jimeng_v1',
         run_id=run_id, mode=mode, scene_plan_sha256=canonical_digest(thaw(plan)),
         timeline_sha256=canonical_digest(_timeline_value(timeline)),
         rendering_identity_sha256=rendering_identity_sha256, admission=deepcopy(thaw(admission)), clips=clips)

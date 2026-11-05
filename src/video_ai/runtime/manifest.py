@@ -75,7 +75,12 @@ class ManifestBusyError(RuntimeError):
 
 def validate_run_dir(run_dir: Path) -> Path:
     run = PathPolicy().validate_write(run_dir, 'run')
-    if run.parent != PROJECT_ROOT / 'runs' or not re.fullmatch(r'[0-9]{8}-[0-9]{6}-[0-9a-f]{12}', run.name):
+    from .storage import managed_location, _test_runtimes
+    if managed_location(run) is not None:
+        return run
+    roots = [PROJECT_ROOT/'runs']
+    roots.extend(root/'projects/video-ai/runs' for root in _test_runtimes)
+    if run.parent not in roots or not re.fullmatch(r'[0-9]{8}-[0-9]{6}-[0-9a-f]{12}', run.name):
         raise ValueError('expected a concrete generated run directory')
     return run
 
@@ -156,6 +161,8 @@ def _config_snapshots(data):
     for group,names in (('tools',TOOL_FIELDS),('models',MODEL_FIELDS),('workflows',WORKFLOW_FIELDS)):
         expected = set(names)
         if modern and group in ('models', 'workflows') and 'sdxl' not in resolved[group]: expected.remove('sdxl')
+        native = modern and data['config_snapshot']['raw'].get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
+        if native and group=='workflows' and set(resolved[group])=={'upscale'}:expected={'upscale'}
         if not isinstance(resolved[group],dict) or set(resolved[group])!=expected:
             raise ValueError(f'invalid resolved {group}')
         for path in resolved[group].values():_absolute(path)

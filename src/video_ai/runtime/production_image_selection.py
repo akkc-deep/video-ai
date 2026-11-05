@@ -75,11 +75,16 @@ class ImageSelectionResult:
 
 class _Records:
     def __init__(self,run,lock): self.run,self.lock=run,lock;self.revision_guard=None
-    def owned(self):
+    def lock_owned(self):
         if (not isinstance(self.lock,RunLock) or self.lock.run_dir != self.run
                 or not self.lock.path.is_file() or read_json(self.lock.path) != self.lock.owner):
             raise ProductionRefused('image selection lost held run lock')
-        if self.revision_guard is not None:self.revision_guard.verify_captured_bytes()
+
+    def owned(self):
+        self.lock_owned()
+        from .scene_revision_records import revision_checkpoints_active
+        if self.revision_guard is not None and not revision_checkpoints_active():
+            self.revision_guard.verify_captured_bytes()
     def bytes(self,path,raw,*,replace=False):
         self.owned(); path=run_path(self.run,path)
         if path.exists() and not replace:
@@ -123,13 +128,16 @@ def _invoke(frozen,logger,lock,operation):
         if lock is None:
             with RunLock(run) as held: return _invoke(frozen,logger,held,operation)
         store=_Records(run,lock); store.owned()
-        if frozen.config.production_strategy!=STRATEGY or not _same_json(load_frozen_inputs(run),frozen):
-            raise ProductionRefused('image selection frozen input/run identity differs')
-        if 'scene_revision' in frozen.options:
-            from .scene_revision_records import require_scene_revision
-            store.revision_guard=require_scene_revision(frozen)['guard']
         if logger.run_dir!=run or not logger.production: raise ProductionRefused('matching production logger required')
-        return operation(store)
+        from .verification import scene_input_protection
+        from .scene_revision_records import revision_checkpoint_transaction, revision_read_matches, require_scene_revision
+        with scene_input_protection(frozen), revision_checkpoint_transaction():
+            if (frozen.config.production_strategy!=STRATEGY or not revision_read_matches(
+                    ('frozen-inputs', str(run)), frozen, lambda: load_frozen_inputs(run))):
+                raise ProductionRefused('image selection frozen input/run identity differs')
+            if 'scene_revision' in frozen.options:
+                store.revision_guard=require_scene_revision(frozen)['guard']
+            return operation(store)
     except (Exception,KeyboardInterrupt) as exc:
         status=('interrupted' if isinstance(exc,KeyboardInterrupt) else
                 'blocked' if isinstance(exc,(ValueError,EmailPreconditionError,EmailRejected)) else 'failed')
@@ -173,9 +181,13 @@ def _activation_value(store,frozen,units,timeline,batch):
     return value
 
 
-def _activate(store,frozen,units,timeline,batch):
-    value=_activation_value(store,frozen,units,timeline,batch)
+def _activate(store,frozen,units,timeline,batch,*,validated=None):
     root=store.run/'production/image-selection';path=root/'active-batch.json'
+    # An unchanged active cursor requires no forward transition. Its source
+    # admission already ran before the immutable batch comparisons above.
+    if validated is not None and path.exists() and read_json(path)==validated:
+        return
+    value=_activation_value(store,frozen,units,timeline,batch)
     if path.exists() and read_json(path)==value:return
     store.save(root/f"active-batch-{batch['batch_index']:04d}.json",value)
     store.save(path,value,replace=True); boundary('active-batch')
@@ -268,7 +280,8 @@ def _attempt_state(run,batch,row,folder):
     keys=('schema_version','run_id','batch_id','part','attempt','message_id','mime_sha256','transport','created_at')
     object_fields(intent,keys,'SMTP intent')
     attempt=int(folder.name.split('_')[1]); raw=(folder/'message.eml').read_bytes()
-    expected_id=f"<{run.name}.{batch['batch_id']}.part_{row['part']:04d}.attempt_{attempt:04d}@video-ai.local>"
+    from ..adapters.selection_email import message_identity
+    expected_id='<'+message_identity(batch,row['part'],attempt)+'@video-ai.local>'
     if (type(intent['schema_version']) is not int or intent['schema_version']!=2 or intent['run_id']!=run.name
             or intent['batch_id']!=batch['batch_id'] or type(intent['part']) is not int or intent['part']!=row['part']
             or type(intent['attempt']) is not int or intent['attempt']!=attempt
@@ -316,7 +329,7 @@ def notification_delivery_state(run,batch):
     return 'accepted' if all(s=='accepted' for s in statuses) else 'unsent'
 
 
-def _send_page(store,batch,row,folder,settings,smtp_factory):
+def _send_page(store,batch,row,folder,settings,smtp_factory,*,sender=None):
     raw=run_path(store.run,folder/'message.eml').read_bytes()
     attempt=int(folder.name.split('_')[1]); message=BytesParser(policy=policy.SMTP).parsebytes(raw)
     if attempt==1 and (len(raw)!=row['bytes'] or hashlib.sha256(raw).hexdigest()!=row['sha256']):
@@ -324,10 +337,13 @@ def _send_page(store,batch,row,folder,settings,smtp_factory):
     intent=dict(schema_version=2,run_id=store.run.name,batch_id=batch['batch_id'],part=row['part'],attempt=attempt,
         message_id=message['Message-ID'],mime_sha256=hashlib.sha256(raw).hexdigest(),transport=thaw(settings),created_at=now())
     def before_data():
+        from .scene_revision_records import revision_checkpoints_active, revision_read_checkpoint
+        if revision_checkpoints_active(): revision_read_checkpoint()
         store.owned(); store.save(folder/'intent.json',intent); boundary('intent'); store.owned()
     store.owned()
     try:
-        response=SmtpSender(settings,smtp_factory=smtp_factory,ownership_check=store.owned).send(raw,before_data=before_data)
+        sender=sender or SmtpSender(settings,smtp_factory=smtp_factory,ownership_check=store.lock_owned)
+        response=sender.send(raw,before_data=before_data)
     except EmailDeliveryUnknown:
         return 'unknown'
     except EmailRejected as exc:
@@ -344,6 +360,12 @@ def _send_page(store,batch,row,folder,settings,smtp_factory):
 
 def _deliver(store,frozen,batch,notification,*,email_settings,smtp_factory):
     settings=_transport_settings(frozen,batch,email_settings)
+    sender=SmtpSender(settings,smtp_factory=smtp_factory,ownership_check=store.lock_owned)
+    with sender.session():
+        return _deliver_pages(store,batch,notification,settings,smtp_factory,sender)
+
+
+def _deliver_pages(store,batch,notification,settings,smtp_factory,sender):
     for row in notification['parts']:
         attempts=_attempts(store.run,batch,row)
         if not attempts: raise ProductionRefused('notification missing initial MIME')
@@ -352,7 +374,7 @@ def _deliver(store,frozen,batch,notification,*,email_settings,smtp_factory):
             if outcomes[-1]!='accepted': raise ProductionRefused('accepted SMTP page has later attempt')
             continue
         if outcomes[-1] in ('unknown','rejected'): return outcomes[-1]
-        state=_send_page(store,batch,row,attempts[-1],settings,smtp_factory)
+        state=_send_page(store,batch,row,attempts[-1],settings,smtp_factory,sender=sender)
         if state!='accepted': return state
     return 'accepted'
 
@@ -384,10 +406,17 @@ def prepare_image_batch(frozen,units,timeline,candidate_manifests,*,batch_index,
         batch=records.build_batch(frozen,units,timeline,candidate_manifests,batch_index=batch_index)
         folder=_folder(store.run,batch['batch_id'])
         # Validate forward movement before exposing any new batch records.
-        _activation_value(store,frozen,units,timeline,batch)
+        activation=_activation_value(store,frozen,units,timeline,batch)
+        from .scene_revision_records import revision_read_checkpoint
+        if not (folder/'batch.json').exists(): revision_read_checkpoint()
         store.save(folder/'batch.json',batch); boundary('batch')
         store.save(folder/'selection-template.json',records.selection_template(batch)); boundary('selection-template')
-        _activate(store,frozen,units,timeline,batch)
+        _activate(store,frozen,units,timeline,batch,validated=activation)
+        if (folder/'accepted.json').exists():
+            accepted=records.load_accepted_batches(frozen,units,timeline,bible=None,plan=None)
+            current=next((a for a in accepted if a['batch_id']==batch['batch_id']),None)
+            if current is not None and 'local_review' in records._submission(folder,current['source_submission_sha256']):
+                return _accepted_result(store,frozen,units,timeline,batch)
         notification=_notification(store,frozen,batch,paths=paths,logger=logger)
         state=_deliver(store,frozen,batch,notification,email_settings=email_settings,smtp_factory=smtp_factory)
         if state=='unknown': return _result(store.run,'email_delivery_unknown',batch,error=dict(
@@ -420,11 +449,12 @@ def consume_image_selection(frozen,units,timeline,selection_path,*,paths,logger,
         if (type(active['schema_version']) is not int or active['schema_version']!=2 or active['run_id']!=store.run.name
                 or active['batch_id']!=batch['batch_id'] or active['batch_sha256']!=canonical_digest(batch)):
             raise ProductionRefused('selection must target current active batch')
-        notification=validate_notification(store.run,batch)
-        state=notification_delivery_state(store.run,batch)
-        if state=='unknown': return _result(store.run,'email_delivery_unknown',batch,error=dict(
-            kind='EmailDeliveryUnknown',message='SMTP DATA outcome unknown; explicit retry required.',evidence_paths=[]))
-        if state!='accepted': raise ProductionRefused('all notification pages need valid SMTP acceptance receipts')
+        if 'local_review' not in value:
+            notification=validate_notification(store.run,batch)
+            state=notification_delivery_state(store.run,batch)
+            if state=='unknown': return _result(store.run,'email_delivery_unknown',batch,error=dict(
+                kind='EmailDeliveryUnknown',message='SMTP DATA outcome unknown; explicit retry required.',evidence_paths=[]))
+            if state!='accepted': raise ProductionRefused('all notification pages need valid SMTP acceptance receipts')
         accepted=records.load_accepted_batches(frozen,units,timeline,bible,plan)
         normalized=records.validate_selection(frozen,bible,plan,batch,value,accepted_batches=accepted)
         folder=_folder(store.run,batch['batch_id']); digest=hashlib.sha256(raw).hexdigest()
@@ -438,6 +468,8 @@ def consume_image_selection(frozen,units,timeline,selection_path,*,paths,logger,
             if old['selections']!=proposed['selections'] or old['baseline_bindings']!=proposed['baseline_bindings']:
                 raise ProductionRefused('accepted image choices cannot change; create a revision run')
         else:
+            from .scene_revision_records import revision_read_checkpoint
+            revision_read_checkpoint()
             store.save(target,proposed); boundary('accepted')
         accepted=records.load_accepted_batches(frozen,units,timeline,bible,plan)
         covered={r['scene_id'] for a in accepted for r in a['selections']}
@@ -447,7 +479,10 @@ def consume_image_selection(frozen,units,timeline,selection_path,*,paths,logger,
             complete=records.build_complete_acceptance(frozen,bible,plan,accepted,obs,observation_submission_sha256=digest)
             target=store.run/'production/image-selection/complete-acceptance.json'
             if target.exists(): records.require_complete_image_acceptance(frozen,units,timeline)
-            else: store.save(target,complete); boundary('complete-acceptance')
+            else:
+                from .scene_revision_records import revision_read_checkpoint
+                revision_read_checkpoint()
+                store.save(target,complete); boundary('complete-acceptance')
         return _accepted_result(store,frozen,units,timeline,batch)
     return _invoke(frozen,logger,lock,operation)
 
@@ -510,7 +545,8 @@ def retry_notification(frozen,batch_id,part,*,expected_attempt_sha256,email_sett
         settings=_transport_settings(frozen,batch,email_settings)
         attempt=len(attempts)+1; folder=attempts[-1].parent/f'attempt_{attempt:04d}'
         parsed=BytesParser(policy=policy.SMTP).parsebytes((attempts[-1]/'message.eml').read_bytes())
-        parsed.replace_header('Message-ID',f'<{store.run.name}.{batch_id}.part_{part:04d}.attempt_{attempt:04d}@video-ai.local>')
+        from ..adapters.selection_email import message_identity
+        parsed.replace_header('Message-ID','<'+message_identity(batch,part,attempt)+'@video-ai.local>')
         from email.utils import format_datetime
         from datetime import datetime
         parsed.replace_header('Date',format_datetime(datetime.now().astimezone()))

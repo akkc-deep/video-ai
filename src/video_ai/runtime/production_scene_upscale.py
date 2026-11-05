@@ -12,6 +12,7 @@ from .scene_clip_records import equal
 from .production_scene_clips import _GuardedLogger,_OwnedService,_error
 from ._scene_upscale_records import (clip_rows,extraction_recipe,validate_extraction,validate_upscale_frames,
     validate_frame,validate_png_receipt,validate_png,graph_for,expected_request,complete_value)
+from ._scene_upscale_records import png_content_key
 from ..planning.production_scenes import canonical_digest
 
 
@@ -57,6 +58,12 @@ def _extract(context,clip,logger,*,recovery_directory=None):
         indexed={k:row[k] for k in ('retained_frame_index','generated_frame_index','output_frame_index')}
         stage_frames.append(dict(**indexed,image=image))
         target_frames.append(dict(**indexed,image=dict(image,path=str(target/Path(image['path']).name))))
+    # The extractor has proved every source/PNG pixel. The promotion validator
+    # still hashes every target and the source before using this invocation-only
+    # content proof; changing paths during rename does not change pixel content.
+    store.media_cache.add(('scene-native',canonical_digest(clip['source']),canonical_digest(target_frames)))
+    for item in target_frames:
+        store.media_cache.add(png_content_key(store,item['image'],width=p.width,height=p.height))
     store.write(folder/'extraction-ready.json',dict(schema_version=2,run_id=store.run_dir.name,clip_id=clip['clip_id'],
         source=clip['source'],staging_directory=str(stage),target_directory=str(target),staging_frames=stage_frames,
         target_frames=target_frames,recipe=extraction_recipe(context,clip),evidence=_evidence(store,evidence),created_at=now()))
@@ -72,9 +79,14 @@ def _copy(context,row,operation,source):
     if target.exists(): raise ProductionRefused('unregistered PNG target already exists')
     store.verify_global(); store.validate_artifact(source)
     stage.parent.mkdir(parents=True,exist_ok=True)
-    with Path(source['path']).open('rb') as src,stage.open('xb') as dst:
-        while chunk:=src.read(1024*1024): dst.write(chunk)
-        dst.flush(); os.fsync(dst.fileno())
+    from .storage import managed_location
+    if managed_location(store.run_dir) is not None:
+        from .storage_files import materialize_immutable
+        materialize_immutable(source['path'],stage)
+    else:
+        with Path(source['path']).open('rb') as src,stage.open('xb') as dst:
+            while chunk:=src.read(1024*1024): dst.write(chunk)
+            dst.flush(); os.fsync(dst.fileno())
     store.verify_global(); store.validate_artifact(source); artifact=store.artifact(stage)
     equal({k:artifact[k] for k in ('bytes','sha256')},{k:source[k] for k in ('bytes','sha256')},'copied PNG bytes')
     p=context['frozen'].config.media.profile
@@ -99,7 +111,10 @@ def _produce(context,logger,client_factory,service_factory):
     if store.read('complete.json') is not None:
         equal(store.read('complete.json'),complete_value(context,validate_upscale_frames(context)),'complete replay')
         return _result(context,'upscale_ready')
-    service=None
+    service=None;capability_cache={}
+    def service_identity():
+        identify=getattr(service,'capability_identity',None)
+        return identify() if callable(identify) else None
     def ensure():
         nonlocal service
         store.verify_global()
@@ -124,12 +139,13 @@ def _produce(context,logger,client_factory,service_factory):
                 # recovery always keeps the original intent. Production has
                 # no startup/frame limit, and each HTTP request stays bounded.
                 if whole and service is None and store.read(folder/'intent.json') is None:ensure()
-                client_options={'send_checks_only':True} if whole and client_factory is None else {}
+                client_options={'send_checks_only':True} if client_factory is None else {}
                 client=(client_factory or SceneComfyClient)(context['frozen'].config.services['comfyui'],
                     request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph),**client_options)
                 submission=recover_or_submit_scene_frame(store,request,graph,client=client,template=context['template'],
                     ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['upscale_frame'],
-                    request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'])
+                    request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'],
+                    capability_cache=capability_cache,service_identity=service_identity)
                 try: validate_png(store,submission['output'],width=1920,height=1080)
                 except InvalidScenePng as exc:
                     # Only definitive media validation is terminal; missing tools/OSError remains recoverable.

@@ -1,5 +1,6 @@
 """Deterministic local MIME building and bounded, explicitly authorized SMTP DATA."""
 from datetime import datetime, timezone
+from contextlib import contextmanager
 from email import policy
 from email.message import EmailMessage
 from email.utils import format_datetime
@@ -61,10 +62,10 @@ def _read_media(row, cache):
             data = Path(path).read_bytes()
         except OSError:
             raise EmailPreconditionError('mail media unavailable') from None
-        cache[path] = data
-    data = cache[path]
+        cache[path] = data, hashlib.sha256(data).hexdigest()
+    data, digest = cache[path]
     if (type(row['bytes']) is not int or len(data) != row['bytes']
-            or hashlib.sha256(data).hexdigest() != row['sha256']):
+            or digest != row['sha256']):
         raise EmailPreconditionError('mail media identity mismatch')
     return data
 
@@ -108,8 +109,17 @@ def _purposes(batch, scene, baseline_roles):
     return result or ['当前批基准/候选选择；以已提交的 visual-bible 基准关系为准。']
 
 
-def _encode(batch, media, entries, *, part, total, attempt, date, sender, recipient, cache, baseline_roles):
+def message_identity(batch, part, attempt):
     identity = f'{batch["run_id"]}.{batch["batch_id"]}.part_{part:04d}.attempt_{attempt:04d}'
+    if re.fullmatch(r'[0-9]{2,}',batch['run_id']):
+        # New short revisions are local to a video. Batch paths/digests qualify the mail globally.
+        digest = hashlib.sha256(json.dumps(batch,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode('utf-8')).hexdigest()[:24]
+        identity = digest+'.'+identity
+    return identity
+
+
+def _encode(batch, media, entries, *, part, total, attempt, date, sender, recipient, cache, baseline_roles):
+    identity = message_identity(batch,part,attempt)
     message_id = f'<{identity}@video-ai.local>'
     message = EmailMessage(policy=policy.SMTP)
     message['From'], message['To'], message['Date'] = sender, recipient, date
@@ -249,9 +259,19 @@ def build_messages(batch, media, *, created_at, sender, recipient, max_mime_byte
             seen_sources.add(key)
         _read_media(sheet, cache)
 
+    encoded = {}
     def encode(group, part, total):
-        return _encode(batch, media, group, part=part, total=total, attempt=attempt, date=date,
-                       sender=sender, recipient=recipient, cache=cache, baseline_roles=baseline_roles)
+        # Entries change attachment while fitting. Include the complete chosen
+        # media identity, page numbers and order in this invocation-local key.
+        key = (tuple((e['scene']['scene_id'], e['candidate']['candidate_id'],
+                      json.dumps(e['attachment'], sort_keys=True)) for e in group), part, total)
+        # Retain just the latest trial per page. Keeping every provisional
+        # grouping would retain many complete 15-MiB MIME copies per page.
+        if part not in encoded or encoded[part][0] != key:
+            value = _encode(batch, media, group, part=part, total=total, attempt=attempt, date=date,
+                            sender=sender, recipient=recipient, cache=cache, baseline_roles=baseline_roles)
+            encoded[part] = key, value
+        return encoded[part][1]
 
     def fit_single(entry, part, total):
         for alternative in entry['alternatives']:
@@ -293,9 +313,40 @@ class SmtpSender:
         self.settings = settings if isinstance(settings, SelectionEmailSettings) else parse_selection_email(settings)
         self.smtp_factory = smtp_factory or smtplib.SMTP_SSL
         self.ownership_check = ownership_check or (lambda: None)
+        self._session = None
+
+    @contextmanager
+    def session(self):
+        """Reuse only acknowledged SMTP connections within one caller scope.
+
+        Each send keeps its own deadline, authorization handshake and DATA
+        outcome. Cancelled/late workers cannot return a connection to a closed
+        session; any unacknowledged transaction permanently poisons the scope.
+        """
+        if self._session is not None:
+            raise EmailPreconditionError('SMTP session is already active')
+        state = dict(active=True, owner=threading.get_ident(), client=None,
+                     poisoned=False, lock=threading.Lock())
+        self._session = state
+        try:
+            yield self
+        finally:
+            with state['lock']:
+                state['active'] = False
+                client, state['client'] = state['client'], None
+            self._session = None
+            if client is not None:
+                try: client.close()
+                except Exception: pass
 
     def send(self, mime_bytes, *, before_data) -> dict:
         settings = self.settings
+        session = self._session
+        if session is not None:
+            with session['lock']:
+                if (not session['active'] or session['poisoned']
+                        or session['owner'] != threading.get_ident()):
+                    raise EmailPreconditionError('SMTP session is unavailable')
         password = os.environ.get(settings.smtp_password_env)
         if not password or '\r' in password or '\n' in password:
             raise EmailPreconditionError('SMTP credential unavailable')
@@ -305,6 +356,7 @@ class SmtpSender:
         transition_lock = threading.Lock()
         phase = 'preparing'
         connection = []
+        confirmed = False
 
         def remaining():
             result = deadline - time.monotonic()
@@ -338,15 +390,21 @@ class SmtpSender:
             client = None
             outcome = ('precondition', None)
             try:
-                client = self.smtp_factory(settings.smtp_host, settings.smtp_port,
-                                           timeout=remaining(), context=ssl.create_default_context())
+                if session is not None:
+                    with session['lock']:
+                        client, session['client'] = session['client'], None
+                fresh = client is None
+                if fresh:
+                    client = self.smtp_factory(settings.smtp_host, settings.smtp_port,
+                                               timeout=remaining(), context=ssl.create_default_context())
                 connection.append(client)
                 socket_timeout(client)
-                code, _ = client.ehlo()
-                if not 200 <= code < 300:
-                    raise ValueError
-                socket_timeout(client)
-                client.login(settings.sender, password)
+                if fresh:
+                    code, _ = client.ehlo()
+                    if not 200 <= code < 300:
+                        raise ValueError
+                    socket_timeout(client)
+                    client.login(settings.sender, password)
                 socket_timeout(client)  # Late connection/authentication cannot start MAIL.
                 self.ownership_check()
                 remaining()
@@ -388,6 +446,15 @@ class SmtpSender:
             except BaseException:
                 outcome = ('unknown' if sending() else 'precondition', None)
             finally:
+                if session is not None:
+                    with transition_lock, session['lock']:
+                        if (outcome[0] == 'accepted' and not cancelled.is_set()
+                                and time.monotonic() < deadline and session['active']):
+                            session['client'] = client
+                            connection.remove(client)
+                            client = None
+                        else:
+                            session['poisoned'] = True
                 if client is not None:
                     try:
                         client.close()
@@ -416,6 +483,7 @@ class SmtpSender:
                         raise EmailPreconditionError('SMTP intent authorization failed') from None
                     permit.set()
                 elif stage == 'accepted':
+                    confirmed = True
                     return {'smtp_code': code}
                 elif stage == 'rejected':
                     raise EmailRejected(smtp_code=code)
@@ -425,6 +493,17 @@ class SmtpSender:
                     raise EmailPreconditionError('SMTP preparation failed')
         finally:
             cancel()
+            if session is not None:
+                with session['lock']:
+                    # Only a completed accepted outcome can leave a reusable
+                    # connection. A timed-out worker may still be unwinding.
+                    abandoned = None
+                    if not confirmed:
+                        session['poisoned'] = True
+                        abandoned, session['client'] = session['client'], None
+                if abandoned is not None:
+                    try: abandoned.close()
+                    except Exception: pass
             # Closing a normal socket interrupts outstanding I/O; late DNS clients close in worker.
             for client in connection:
                 sock = getattr(client, 'sock', None)

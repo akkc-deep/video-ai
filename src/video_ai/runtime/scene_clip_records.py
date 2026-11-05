@@ -83,6 +83,9 @@ class SceneClipStore:
         return self.write_bytes(target, (json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2)+'\n').encode())
 
     def artifact(self, path):
+        from .temporal_scene_origins import bound_temporal_artifact
+        original=bound_temporal_artifact(self,path)
+        if original is not None:return original
         path = run_path(self.run_dir, path)
         from ._scene_revision_origin_clips import media_declaration
         declared=media_declaration(self.frozen,path)
@@ -95,6 +98,8 @@ class SceneClipStore:
         from .scene_color_repair_records import require_production_repair_origin
         require_production_repair_origin(value)
         object_fields(value, ('path', 'bytes', 'sha256'), 'scene Artifact')
+        from .temporal_scene_origins import bound_temporal_artifact
+        if bound_temporal_artifact(self,value['path'],value) is not None:return Path(value['path'])
         integer(value['bytes'], 'artifact bytes', 1); images._sha(value['sha256'])
         from ._scene_revision_origin_images import source_image_artifact
         declared=source_image_artifact(self.frozen,value)
@@ -173,6 +178,10 @@ class SceneClipStore:
 @verified_read
 def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     """Full batch preflight, also used by both read-only public entrypoints."""
+    from .scene_execution_records import rendering_mode
+    if rendering_mode(frozen) == 'temporal_extension_v1':
+        from .temporal_scene_records import temporal_context
+        return temporal_context(frozen, units, timeline, paths=paths, lock=lock)
     from ..planning.scene_clip_continuation import build_scene_wan_plan
     from .reference_image_records import require_reference_image_acceptance
     from .production_visual_templates import validate_fixed_visual_template, validate_production_model_paths
@@ -418,6 +427,15 @@ def _validate_input(context,row,parent,*,media=True):
 
 def validate_clip(context,row,parent=None):
     """Reconstruct one original technical clip and its observation, without mutation."""
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .temporal_scene_records import temporal_progress_view
+        sid=row['budget']['scene_id']
+        rows=[value for value in context['rows'] if value['budget']['scene_id']==sid]
+        original=next((value for value in rows if value['budget']['clip_id']==row['budget']['clip_id']),None)
+        if original is None or canonical_digest(original)!=canonical_digest(row):raise ProductionRefused('native snapshot row differs from frozen plan')
+        scoped=dict(context,rows=rows,plan=dict(context['plan'],scenes=[scene for scene in context['plan']['scenes'] if scene['scene_id']==sid]))
+        _,records=temporal_progress_view(scoped)
+        return records.get(row['budget']['clip_id'])
     from ._scene_revision_readers import inherited_clip_record
     imported = inherited_clip_record(context['frozen'],row['budget']['clip_id'],
         context=context['store'].revision_context,row=row,parent=parent)
@@ -518,6 +536,9 @@ def validate_clip(context,row,parent=None):
 
 @verified_read
 def collect_progress(context):
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .temporal_scene_records import temporal_progress_view
+        return temporal_progress_view(context)
     store=context['store']; scenes=[]; records={}
     for scene in context['plan']['scenes']:
         state=dict(scene_id=scene['scene_id'],status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=None,error=None)
@@ -552,6 +573,10 @@ def collect_progress(context):
 
 
 def complete_value(context,records):
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .temporal_scene_records import complete_temporal_value
+        windows=[records[row['budget']['clip_id']]['native_window'] for row in context['rows']]
+        return complete_temporal_value(context,windows)
     from ..planning.scene_clip_continuation import validate_scene_clip_frame_mappings
     if any(r['budget']['clip_id'] not in records or not records[r['budget']['clip_id']]['accepted'] for r in context['rows']):
         raise ProductionRefused('all source clips and process observations required')
@@ -587,7 +612,12 @@ def _require_scene_clip_base_acceptance(frozen,units,timeline):
     """Validate the immutable schema-2 admission as historical evidence."""
     context=scene_context(frozen,units,timeline); store=context['store']
     if store.read('inputs.json') is None: raise ProductionRefused('scene clip inputs missing')
-    _,records=collect_progress(context); expected=complete_value(context,records); value=store.read('complete.json')
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .temporal_scene_records import collect_temporal_progress,complete_temporal_value
+        progress=collect_temporal_progress(context);expected=complete_temporal_value(context,progress['records'])
+    else:
+        _,records=collect_progress(context); expected=complete_value(context,records)
+    value=store.read('complete.json')
     if value is None: raise ProductionRefused('complete source clip admission missing')
     equal(value,expected,'complete admission')
     return value

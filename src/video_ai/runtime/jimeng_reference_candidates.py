@@ -16,12 +16,23 @@ from .manifest import hash_file, now, thaw
 from .production_inputs import _same_json
 from .execution_limits import execution_deadline
 from .production_state import ProductionRefused, RunLock, object_fields, run_path
-from .jimeng_candidates import (_Records, _read_bound, _verify_candidate, _verify_download,
+from .jimeng_candidates import (_Records as CandidateRecords, _read_bound, _verify_candidate, _verify_download,
                                 _inspect_original)
 from . import image_selection_records as images
 from .reference_image_records import (reference_requests, reference_candidates,
                                      validate_reference_inputs, validate_reference_intent,
                                      submit_evidence, validate_submit_evidence)
+from .scene_revision_records import (revision_checkpoint_transaction, revision_checkpoints_active,
+                                     revision_read_checkpoint, revision_validation)
+from .verification import protect_scene_inputs
+
+
+class _Records(CandidateRecords):
+    def owned(self):
+        if revision_checkpoints_active():
+            self.lock_owned()
+        else:
+            super().owned()
 
 
 def boundary(point, identity):
@@ -83,25 +94,28 @@ def _submission_guard(store, request, evidence, model, settings):
         if path.exists():
             stamp = hash_file(path); snapshots.append((path, stamp.bytes, stamp.sha256))
     def guard():
-        store.owned(); _remaining_lifetime(evidence, model, settings)
+        store.lock_owned(); _remaining_lifetime(evidence, model, settings)
         for path, size, sha in snapshots:
             fresh = hash_file(path)
             if (fresh.bytes, fresh.sha256) != (size, sha):
                 raise ProductionRefused('reference source/object/settings changed before actual HTTP send')
-        store.owned(); _remaining_lifetime(evidence, model, settings)
+        store.lock_owned(); _remaining_lifetime(evidence, model, settings)
     return guard
 
 
-def _request(store, folder, request, client, inspect, model, settings, presign, verify):
+def _request(store, folder, request, client, inspect, model, settings, presign, verify, *, phase='collect'):
     identity = canonical_digest(request)
     store.save(folder/'request.json', request)
     accepted_path, intent_path = folder/'accepted.json', folder/'intent.json'
     if accepted_path.exists():
         accepted = _read_bound(accepted_path, 'schema_version identity task_id request_id diagnostic'.split(), identity)
     else:
+        if (folder/'terminal.json').exists() or (folder/'result.json').exists():
+            raise ProductionRefused('reference result/terminal lacks durable task_id; no automatic resubmission')
         if intent_path.exists():
             validate_reference_intent(images._read(intent_path), request, settings)
             raise ProductionRefused('submit_unknown: reference intent has no durable task_id; no automatic resubmission')
+        if phase == 'check': return None
         if hasattr(client, 'check_credentials'): client.check_credentials()
         urls, evidence = presign()
         payload = dict(thaw(model.model_parameters), req_key=model.req_key, prompt=request['prompt'], image_urls=urls)
@@ -129,7 +143,7 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
             # Accepted-task query/download recovery uses the original task even
             # after its reference input URLs expire. In-flight HTTPS requests
             # retain their captured submission guard after this reset.
-            if isinstance(client, JimengClient): client.ownership_check = store.owned
+            if isinstance(client, JimengClient): client.ownership_check = store.lock_owned
         accepted = dict(schema_version=2, identity=identity, task_id=response['task_id'],
                         request_id=response['request_id'], diagnostic=redact(response['diagnostic']))
         store.save(accepted_path, accepted)
@@ -141,6 +155,10 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
     task_id = accepted['task_id']
     if not isinstance(task_id, str) or not re.fullmatch(r'[A-Za-z0-9_.:-]{1,256}', task_id):
         raise ProductionRefused('invalid persisted reference task ID')
+    terminal_path = folder/'terminal.json'
+    if terminal_path.exists():
+        terminal = _read_bound(terminal_path, 'schema_version identity status'.split(), identity)
+        raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
     result_path = folder/'result.json'
     if result_path.exists():
         result = _read_bound(result_path, 'schema_version identity task_id candidates'.split(), identity)
@@ -149,10 +167,7 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
         for index, candidate in enumerate(result['candidates'], 1):
             _verify_candidate(candidate, request, task_id, index, folder, inspect, model)
         return result['candidates']
-    terminal_path = folder/'terminal.json'
-    if terminal_path.exists():
-        terminal = _read_bound(terminal_path, 'schema_version identity status'.split(), identity)
-        raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
+    if phase in ('check', 'submit'): return None
     end = execution_deadline(model.task_timeout_seconds,time.monotonic())
     def remaining():
         if end is None:return model.request_timeout_seconds
@@ -170,8 +185,8 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
             raise ProductionRefused('official task '+response['status']+'; no automatic resubmission')
         time.sleep(min(delay, remaining())); delay = min(delay*2, 15)
     urls = response['image_urls']
-    store.save(folder/'outputs.json', dict(schema_version=2, identity=identity,
-        sources=[canonical_digest(urlsplit(url)._replace(query='', fragment='').geturl()) for url in urls]))
+    from .jimeng_candidates import record_output_layout
+    record_output_layout(store, folder, identity, task_id, urls)
     candidates = []
     for index, url in enumerate(urls, 1):
         cid = f'{request["request_id"]}_image_{index:02d}'
@@ -197,6 +212,9 @@ def _request(store, folder, request, client, inspect, model, settings, presign, 
     return candidates
 
 
+@protect_scene_inputs
+@revision_validation
+@revision_checkpoint_transaction()
 def generate_reference_candidates(frozen, scene, bible, references, *, settings, capability, client,
                                   paths, logger, lock, storage=None):
     """Generate/recover reference candidates; supplied lock belongs to the caller."""
@@ -216,7 +234,9 @@ def generate_reference_candidates(frozen, scene, bible, references, *, settings,
     images._equal(capability, settings['capability'], 'supplied reference capability')
     if client is None: client = JimengClient(model)
     if not _same_json(client.settings, model): raise ProductionRefused('reference client model differs')
-    if isinstance(client, JimengClient): client.ownership_check = store.owned
+    if isinstance(client, JimengClient):
+        client.ownership_check = store.lock_owned
+        client.download_ownership_check = store.lock_owned
     requests = reference_requests(frozen, scene, prompt, references, model)
     provenance = dict(schema_version=2, production_strategy=STRATEGY, run_id=run.name, scene_id=scene['scene_id'],
         scene_plan_sha256=canonical_digest(plan), visual_bible_sha256=canonical_digest(bible), model_settings=thaw(model),
@@ -239,13 +259,42 @@ def generate_reference_candidates(frozen, scene, bible, references, *, settings,
         return _live_urls(storage, references, settings, model)
     candidates = []
     def verify():
+        revision_read_checkpoint()
         validate_reference_inputs(frozen, scene, bible, plan, references, settings)
-    for request in requests:
-        directory = run_path(run, folder/request['request_id']); directory.mkdir(exist_ok=True)
-        candidates.extend(_request(store, directory, request, client,
+    work = []
+    # Check every old request before starting any new paid work. Recoverable
+    # completed results are decoded once; unknown/terminal evidence stops here.
+    try:
+        for request in requests:
+            directory = run_path(run, folder/request['request_id']); directory.mkdir(exist_ok=True)
+            completed = _request(store, directory, request, client,
+                lambda path: images._inspect_original(frozen, path), model, settings, presign, verify, phase='check')
+            work.append((request, directory, completed))
+        for request, directory, completed in work:
+            if completed is None:
+                _request(store, directory, request, client, None, model, settings, presign, verify, phase='submit')
+    except (ProductionRefused, AdapterError, TimeoutError):
+        # A later source checkpoint can refuse new paid work after an earlier
+        # task was accepted. Preserve its downloadable result before surfacing
+        # the refusal; recovery never needs a replacement paid submission.
+        for request in requests:
+            directory = run_path(run, folder/request['request_id'])
+            if (directory/'accepted.json').exists() and not (directory/'result.json').exists():
+                try:
+                    _request(store, directory, request, client,
+                        lambda path: images._inspect_original(frozen, path), model, settings, presign, verify)
+                except Exception:
+                    pass  # The accepted ID remains the durable recovery anchor.
+        raise
+    for request, directory, completed in work:
+        candidates.extend(completed if completed is not None else _request(store, directory, request, client,
             lambda path: images._inspect_original(frozen, path), model, settings, presign, verify))
     result = dict(schema_version=2, run_id=run.name, scene_id=scene['scene_id'],
                   identity=canonical_digest(requests), candidates=candidates)
+    # Completed scenes only need the normal scope-exit checkpoint. A new
+    # manifest must not commit before source changes during cloud work surface.
+    if not manifest_path.exists():
+        revision_read_checkpoint()
     provenance_path.parent.mkdir(parents=True, exist_ok=True)
     store.save(provenance_path, provenance); boundary('provenance', provenance['scene_id'])
     store.save(manifest_path, result)

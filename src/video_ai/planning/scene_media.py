@@ -9,7 +9,12 @@ from .production_scenes import canonical_digest
 def plan_scene_upscale(scene_clips):
     if not isinstance(scene_clips, Mapping): raise ValueError('scene clips object required')
     allowed=set('schema_version production_strategy run_id inputs_sha256 scene_plan_sha256 visual_bible_sha256 wan_inputs_sha256 timeline_sha256 total_frames scenes clips'.split())
-    if type(scene_clips.get('schema_version')) is int and scene_clips['schema_version'] == 3:
+    native = type(scene_clips.get('schema_version')) is int and scene_clips['schema_version']==4
+    if native:
+        allowed.update(('execution_budget','protocol','temporal_chains'))
+        if set(scene_clips)!=allowed or scene_clips['protocol']!='longcat_native16_v1':raise ValueError('exact native index schema/protocol required')
+        _artifact(scene_clips['execution_budget'])
+    elif type(scene_clips.get('schema_version')) is int and scene_clips['schema_version'] == 3:
         allowed.add('execution_budget')
         budget = scene_clips.get('execution_budget')
         if not isinstance(budget, Mapping) or set(budget) != {'path','bytes','sha256'}:
@@ -21,11 +26,35 @@ def plan_scene_upscale(scene_clips):
     total = _integer(scene_clips.get('total_frames'), 'total_frames', 1)
     clips = scene_clips.get('clips')
     if not isinstance(clips, (list, tuple)) or not clips: raise ValueError('ordered clips required')
+    chains={}
+    if native:
+        if not isinstance(scene_clips['temporal_chains'],(list,tuple)):raise ValueError('ordered native chain acceptances required')
+        for chain in scene_clips['temporal_chains']:
+            if not isinstance(chain,Mapping) or set(chain)!=set(('scene_id','result','acceptance','frame_range')) or chain['scene_id'] in chains:
+                raise ValueError('exact unique native chain required')
+            _artifact(chain['result']);_artifact(chain['acceptance'])
+            bounds=chain['frame_range']
+            if not isinstance(bounds,(list,tuple)) or len(bounds)!=2 or any(type(n) is not int for n in bounds) or not 0<=bounds[0]<bounds[1]:
+                raise ValueError('native chain frame scope invalid')
+            chains[chain['scene_id']]=chain
     rows = []; cursor = 0; identities = set()
     for clip in clips:
         allowed=set('clip_id scene_id budget narration_bindings generated source frame_mapping last_frame clip_sha256 observation_acceptance_sha256'.split())
+        if native:allowed.add('temporal_chain')
         if not isinstance(clip,Mapping) or set(clip)-allowed: raise ValueError('unknown scene clip fields')
-        budget = clip['budget']; mapping = scene_clip_frame_mapping(budget, actual_generated_frames=budget['generated_frames'])
+        budget = clip['budget']
+        if (budget.get('protocol')=='longcat_native16_v1') is not native:raise ValueError('native budget requires exact schema4 index')
+        mapping = scene_clip_frame_mapping(budget, actual_generated_frames=budget['generated_frames'])
+        if native:
+            if set(clip)!=allowed:raise ValueError('native source index requires complete clip fields')
+            chain=chains.get(clip['scene_id']);receipt=clip['temporal_chain']
+            if chain is None or not isinstance(receipt,Mapping) or set(receipt)!=set(('acceptance','source_frame_range')):
+                raise ValueError('native clip must bind complete chain acceptance')
+            a,z=chain['frame_range']
+            if (not _same(receipt['acceptance'],chain['acceptance']) or clip['observation_acceptance_sha256']!=chain['acceptance']['sha256']
+                    or not a<=budget['start_frame']<budget['end_frame']<=z
+                    or not _same(receipt['source_frame_range'],[budget['start_frame']-a,budget['end_frame']-a])):
+                raise ValueError('native clip contribution/complete playback scope differs')
         if (not _same(mapping, clip['frame_mapping']) or budget['start_frame'] != cursor
                 or clip['clip_id'] != budget['clip_id'] or clip['scene_id'] != budget['scene_id']
                 or clip['clip_id'] in identities): raise ValueError('exact ordered native mapping required')
@@ -38,6 +67,13 @@ def plan_scene_upscale(scene_clips):
                 output_frame_index=cursor+k,source=deepcopy(source)))
         cursor = budget['end_frame']
     if cursor != total: raise ValueError('retained frames must cover full timeline exactly')
+    if native:
+        scene_ids=list(dict.fromkeys(c['scene_id'] for c in clips))
+        if list(chains)!=scene_ids:raise ValueError('native chain order/coverage differs')
+        for sid in scene_ids:
+            scoped=[c['budget'] for c in clips if c['scene_id']==sid]
+            if not _same(chains[sid]['frame_range'],[scoped[0]['start_frame'],scoped[-1]['end_frame']]):
+                raise ValueError('native chain must cover full scene contribution')
     return rows
 
 

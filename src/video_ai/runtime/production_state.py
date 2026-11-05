@@ -642,6 +642,16 @@ class RunLock:
                 if not has_error: raise
 
     def __enter__(self):
+        from .storage import managed_lease
+        self._storage_lease = managed_lease(self.run_dir)
+        self._storage_lease.__enter__()
+        try:
+            return self._enter_owned()
+        except BaseException:
+            self._storage_lease.__exit__(*sys.exc_info())
+            raise
+
+    def _enter_owned(self):
         if self.path.exists():
             try:
                 with self._reclaim_guard():
@@ -666,8 +676,13 @@ class RunLock:
 
     def __exit__(self, exc_type, exc, tb):
         try:
-            if read_json(self.path) != self.owner: raise ProductionRefused('lock owner changed; lock retained')
-            run_path(self.run_dir, self.path).unlink()
-        except (OSError, ValueError):
-            if exc is None: raise
+            try:
+                if read_json(self.path) != self.owner: raise ProductionRefused('lock owner changed; lock retained')
+                run_path(self.run_dir, self.path).unlink()
+            except (OSError, ValueError):
+                if exc is None: raise
+        finally:
+            lease = getattr(self, '_storage_lease', None)
+            if lease is not None:
+                lease.__exit__(exc_type, exc, tb)
         return False

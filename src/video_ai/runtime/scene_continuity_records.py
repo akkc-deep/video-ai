@@ -167,6 +167,13 @@ def _binding(context, records, clip_id):
         if b['scene_id'] != budget['scene_id']: continue
         record = records.get(cid)
         if record is None: raise SceneContinuityPending('technical continuity prefix incomplete')
+        if 'native_window' in record:
+            window=record['native_window'];folder=Path(window['result']['path']).parent
+            prefix.append(dict(clip_id=cid,clip_record=window['result'],request=artifact(folder/'request.json'),
+                generated=window['generated'],source=window['source'],mapping=window['result'],last_frame=window['result'],
+                source_frames=[0,b['retained_frames']],output_frames=[b['start_frame'],b['end_frame']]))
+            if cid==clip_id:break
+            continue
         # Imported records retain origin paths in the original media declaration.
         folder = _metadata_folder(context['frozen'],cid,record,proof=getattr(store,'revision_context',None))
         prefix.append(dict(clip_id=cid, clip_record=artifact(folder/'clip.json'), request=artifact(folder/'request.json'),
@@ -175,6 +182,10 @@ def _binding(context, records, clip_id):
             output_frames=[b['start_frame'],b['end_frame']]))
         if cid == clip_id: break
     r = records[clip_id]
+    if 'native_window' in r:
+        return dict(scene_id=budget['scene_id'],clip_id=clip_id,clips=prefix,
+            selected_image=deepcopy(r['native_window']['selected_image']),comparison_images=deepcopy(next(row for row in context['rows'] if row['budget']['clip_id']==clip_id)['comparison_images']),
+            visual_bible_sha256=context['inputs']['visual_bible_sha256'])
     return dict(scene_id=budget['scene_id'], clip_id=clip_id, clips=prefix,
         selected_image=deepcopy(r['request']['selected_image']), comparison_images=deepcopy(r['request']['comparison_images']),
         visual_bible_sha256=context['inputs']['visual_bible_sha256'])
@@ -182,6 +193,7 @@ def _binding(context, records, clip_id):
 
 def _metadata_folder(frozen,cid,record,*,proof=None):
     """Imported media copies retain their original technical-record provenance."""
+    if 'native_window' in record:return Path(record['native_window']['result']['path']).parent
     if 'scene_revision' in getattr(frozen,'options',{}):
         from .scene_revision_records import require_scene_revision
         proof=proof or require_scene_revision(frozen)
@@ -233,7 +245,10 @@ def validate_manifest_binding(manifest, binding, *, config, timeout=300, _reader
         for clip, expected in zip(manifest['clips'], binding['clips']):
             if len(clip['frames']) != expected['source_frames'][1]: raise ProductionRefused('continuity retained frames incomplete')
             mapping = budget_reader.read(expected['mapping'])
-            origin=budget_reader.read(expected['clip_record'])['source']
+            origin_record=budget_reader.read(expected['clip_record'])
+            if origin_record.get('algorithm')=='temporal_native_window_v1':
+                mapping=mapping['frame_mapping'];origin=origin_record['artifacts']['source_movie']
+            else:origin=origin_record['source']
             for i, frame in enumerate(clip['frames']):
                 rec = reader.records[frame['record']['path']] if hasattr(reader, 'records') else reader._records[frame['record']['path']]
                 if (rec['source']['sha256'] != expected['source']['sha256'] or rec['source']['path'] not in (expected['source']['path'],origin['path'])
@@ -265,6 +280,10 @@ def validate_manifest_binding(manifest, binding, *, config, timeout=300, _reader
     return manifest
 
 
+def _continuity_last_image(value):
+    return value['artifacts']['last_frame'] if value.get('algorithm')=='temporal_native_window_v1' else value['image']
+
+
 def derive_concerns(report):
     result = {}
     for row in report['detectors']:
@@ -281,6 +300,9 @@ def derive_concerns(report):
 
 def _prefix(value, expected, video, reviewer, at, reader):
     binding = expected['binding']
+    if expected.get('video_expected',{}).get('template',{}).get('scope')=='scene_temporal_chain_process':
+        if value!=expected['video_observation']:raise ProductionRefused('native complete playback must be its own prefix observation')
+        return video
     if len(binding['clips']) <= 2:
         if value != expected['video_observation']: raise ProductionRefused('prefix must equal clip observation')
         return video
@@ -344,8 +366,12 @@ def validate_continuity_review(value, expected, *, now):
         raise ProductionRefused('review current assessment differs')
     uid(value['assessment_id']); verify(value['assessment'])
     video = reader.read(value['video_observation'])
-    from .scene_clip_observations import validate_scene_clip_observation
-    video = validate_scene_clip_observation(video, expected['video_expected'], now=now)
+    if expected['video_expected']['template'].get('scope')=='scene_temporal_chain_process':
+        from .temporal_scene_observations import validate_temporal_observation
+        video=validate_temporal_observation(video,expected['video_expected'],now)
+    else:
+        from .scene_clip_observations import validate_scene_clip_observation
+        video = validate_scene_clip_observation(video, expected['video_expected'], now=now)
     nonempty(value['reviewer'])
     if value['reviewer'] != video['reviewer']: raise ProductionRefused('review author differs from playback author')
     at = instant(value['reviewed_at'])
@@ -476,7 +502,7 @@ def _assessment(path, epoch, context, records, reader, *, historical=False):
     mandatory = report_closure+[value['manifest']]
     for row in value['binding']['clips']:
         mandatory += [row[k] for k in ('clip_record','request','generated','source','mapping','last_frame')]
-        mandatory.append(reader.read(row['last_frame'])['image'])
+        mandatory.append(_continuity_last_image(reader.read(row['last_frame'])))
     closure = sorted({r['path']:r for r in mandatory}.values(),key=lambda r:r['path'])
     if value['closure'] != closure: raise ProductionRefused('assessment evidence closure differs')
     for ref in closure:
@@ -503,7 +529,8 @@ def _review_expected(context, records, assessment, path, reader):
         epoch=next((e for e in chain if e['artifact']==value.get('epoch')),None)
         if epoch is None:raise ProductionRefused('prefix historical assessment has no verified epoch')
         return _assessment(Path(ref['path']),epoch,context,records,reader,historical=True)
-    expected_video=dict(template=record['template'],created_at=record['clip']['created_at'])
+    if record['template'] is None:raise SceneContinuityPending('native full chain must be assembled before dynamic continuity review')
+    expected_video=dict(template=record['template'],created_at=record['native_chain']['created_at'] if 'native_window' in record else record['clip']['created_at'])
     if 'scene_revision' in getattr(context['frozen'],'options',{}):
         from .scene_revision_records import require_scene_revision
         proof=require_scene_revision(context['frozen'])
@@ -540,9 +567,13 @@ def _reviews(context,records,assessment,path,reader):
             raise ProductionRefused('review receipt lacks terminal author evidence')
         if instant(receipt['created_at']) < instant(item[0]['reviewed_at']): raise ProductionRefused('receipt precedes review')
         clip = records[assessment['clip_id']]
-        name = 'observation-rejected.json' if reader.read(item[0]['video_observation'])['verdict']=='failed' else 'observation-accepted.json'
-        actual = _metadata_folder(context.get('frozen'),assessment['clip_id'],clip) if context.get('frozen') is not None else Path(clip['clip']['source']['path']).parent
-        if receipt['video_receipt'] != artifact(actual/name): raise ProductionRefused('review original video receipt differs')
+        if 'native_window' in clip:
+            chain=clip['native_chain']
+            if chain is None or chain.get('acceptance')!=receipt['video_receipt']:raise ProductionRefused('review original native chain receipt differs')
+        else:
+            name = 'observation-rejected.json' if reader.read(item[0]['video_observation'])['verdict']=='failed' else 'observation-accepted.json'
+            actual = _metadata_folder(context.get('frozen'),assessment['clip_id'],clip) if context.get('frozen') is not None else Path(clip['clip']['source']['path']).parent
+            if receipt['video_receipt'] != artifact(actual/name): raise ProductionRefused('review original video receipt differs')
         original_video=reader.read(receipt['video_receipt'])
         original_ref=original_video['observation'];review_ref=item[0]['video_observation']
         verify(original_ref);verify(review_ref)

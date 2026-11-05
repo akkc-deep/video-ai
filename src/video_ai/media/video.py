@@ -3,6 +3,10 @@ from fractions import Fraction
 from pathlib import Path
 import re
 from time import monotonic
+from contextlib import contextmanager
+from contextvars import ContextVar
+from copy import deepcopy
+from threading import get_ident
 
 from .images import _deadline, _remaining, _record_name as _media_record_name
 
@@ -12,6 +16,30 @@ from ..runtime.manifest import hash_file, thaw
 from ..runtime.processes import run_logged
 from ..runtime.timeline_checks import _again, _local
 from ..runtime.execution_limits import command_timeout
+
+_inspections=ContextVar('scene_video_inspections',default=None)
+
+
+def _inspection_cache():
+    state=_inspections.get()
+    return (state['cache'] if state is not None and state['active']
+        and state['owner']==get_ident() else None)
+
+
+@contextmanager
+def inspection_reuse():
+    """Reuse complete inspections only in an explicit media transaction.
+
+    Every lookup authenticates current file bytes and tool identities. No
+    caller-authored source_info or persisted summary can populate this cache.
+    """
+    if _inspection_cache() is not None:
+        yield;return
+    state=dict(cache={},active=True,owner=get_ident())
+    token=_inspections.set(state)
+    try:yield
+    finally:
+        state['active']=False;state['cache'].clear();_inspections.reset(token)
 
 
 def _integer(value, label, *, minimum=0):
@@ -137,6 +165,15 @@ def inspect_video(path, *, width, height, config, paths, logger, unit_id, stage=
     path = _video_path(path, logger, paths)
     name = _record_name(logger, 'video', unit_id, stage)
     identity = hash_file(path)
+    cache=_inspection_cache();key=None
+    if cache is not None:
+        from ..runtime.production_state import ArtifactStamp
+        tools=tuple(ArtifactStamp.read(config.tools[k]) for k in ('ffmpeg','ffprobe'))
+        key=(identity.bytes,identity.sha256,width,height,tools)
+        if key in cache:
+            info,evidence=deepcopy(cache[key]);info['identity']=thaw(identity)
+            _again({'video':identity})
+            return info,evidence
     kwargs = dict(paths=paths, logger=logger, unit_id=unit_id,stage=stage)
     probe = _command((config.tools['ffprobe'], '-v', 'error', '-count_frames',
                       '-show_streams', '-show_format', '-of', 'json', path), timeout=_remaining(deadline,monotonic()), **kwargs)
@@ -152,7 +189,9 @@ def inspect_video(path, *, width, height, config, paths, logger, unit_id, stage=
     record = logger.save_json(name, dict(info=info, probe=data, frames=frame_data,
                                         commands=[thaw(c) for c in commands]))
     _remaining(deadline,monotonic())
-    return info, [record, *[p for c in commands for p in (c.stdout_path, c.stderr_path)]]
+    evidence=[record, *[p for c in commands for p in (c.stdout_path, c.stderr_path)]]
+    if cache is not None:cache[key]=deepcopy((info,evidence))
+    return info,evidence
 
 
 def trim_video(source, target, *, frames, width, height, config, paths, logger, unit_id, stage='source_clips', timeout=300):

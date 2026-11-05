@@ -1,5 +1,7 @@
 # 配置样例
 
+新 `make-video` 的可见编号由存储管理器分配，例如 `0001-旅行者一号`；按 `--video 0001` 使用冻结配置续作。公共配置仍放在本目录，制作快照保存在该视频制作包中。正式交付独立保存，`storage close/clean --video 0001` 可以结束制作并删除过程包，详见 [README](../README.md#视频目录与过程数据清理)。旧 run 使用原路径和原冻结配置，不因新存储布局自动迁移。
+
 即梦段落视频配置见 [jimeng.example.json](jimeng.example.json) 和 [候选图片说明](../docs/jimeng-candidates.md)。`make-video` 已接通段落规划、官方出图、邮件选择、Wan 连续观察、超分、候选合成和显式发布。省略 `production_strategy` 时仍使用 `legacy`；[production.example.json](production.example.json) 保留历史默认策略，已有冻结运行不迁移。
 
 ## 即梦策略实际配置

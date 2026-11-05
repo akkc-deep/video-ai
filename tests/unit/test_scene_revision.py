@@ -95,6 +95,17 @@ def test_regenerated_baseline_invalidates_own_candidates_and_all_reference_desce
     assert result['reusable']['images'] == ['scene_0004']
 
 
+def test_image_prompt_override_keeps_audio_and_plan_but_invalidates_image_dependents():
+    result, _ = invoke(image_prompt_overrides={'scene_0001': 'Earth behind the departing probe'})
+    assert result['dirty']['images'] == ['scene_0001', 'scene_0002', 'scene_0003']
+    assert result['reusable']['common'] == result['reusable']['plan'] == ['all']
+
+
+def test_prompt_override_cannot_be_attached_to_clip_regeneration():
+    with pytest.raises(ValueError):
+        invoke('regenerate_clips', image_prompt_overrides={'scene_0001': 'Changed'})
+
+
 def test_clip_regeneration_invalidates_only_parent_continuations_and_not_prior_or_other_scene():
     result, snapshot = invoke('regenerate_clips')
     clips = snapshot['scene_plan']['clips']

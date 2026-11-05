@@ -1,4 +1,4 @@
-"""Local finite HTTP requests, raw evidence, and conservative failure classes."""
+"""Local HTTP requests with optional limits, raw evidence and failure classes."""
 from dataclasses import dataclass
 from enum import Enum
 from http.client import IncompleteRead, HTTPConnection
@@ -93,16 +93,18 @@ class _DeadlineConnection(HTTPConnection):
     """Interrupt header parsing as well as body reads at the total deadline."""
     def __init__(self, host, **kwargs):
         super().__init__(host,**kwargs)
-        self.end=time.monotonic()+self.timeout
+        self.end=None if self.timeout is None else time.monotonic()+self.timeout
         self._deadline_socket=None
-        self.timer=Timer(self.timeout,self.expire)
-        self.timer.daemon=True
-        self.timer.start()
+        self.timer=None
+        if self.timeout is not None:
+            self.timer=Timer(self.timeout,self.expire)
+            self.timer.daemon=True
+            self.timer.start()
 
     def connect(self):
         super().connect()
         self._deadline_socket=self.sock
-        if time.monotonic()>=self.end:
+        if self.end is not None and time.monotonic()>=self.end:
             self.expire()
             raise TimeoutError('HTTP connection deadline exceeded')
 
@@ -127,7 +129,7 @@ class _DeadlineHandler(HTTPHandler):
             response=self.do_open(factory,request)
         except BaseException:
             for connection in connections:
-                connection.timer.cancel()
+                if connection.timer is not None: connection.timer.cancel()
                 connection.expire()
             raise
         response._deadline_connection=connections[0]
@@ -143,18 +145,19 @@ class HttpClient:
         self.transport = transport or self._opener.open
 
     def request(self, method, path, *, json_body=None, max_bytes=JSON_LIMIT,
-                timeout=None, stage=None, unit_id=None):
+                timeout=None, stage=None, unit_id=None, unlimited=False):
         method = method.upper()
         parts = urlsplit(path)
         if (method not in {'GET', 'POST'} or not path.startswith('/') or path.startswith('//')
                 or parts.scheme or parts.netloc or parts.fragment or '\\' in path
                 or '..' in unquote(parts.path).split('/') or any(ord(c) <= 32 for c in path)):
             raise ValueError('invalid method or request path')
-        if type(max_bytes) is not int or max_bytes < 1:
-            raise ValueError('max_bytes must be positive integer')
-        budget = min(self.timeout, positive_timeout(timeout)) if timeout is not None else self.timeout
+        if max_bytes is not None and (type(max_bytes) is not int or max_bytes < 1):
+            raise ValueError('max_bytes must be positive integer or None')
+        if type(unlimited) is not bool: raise ValueError('unlimited must be bool')
+        budget = None if unlimited else min(self.timeout, positive_timeout(timeout)) if timeout is not None else self.timeout
         body = None if json_body is None else json.dumps(json_body, allow_nan=False, ensure_ascii=False).encode('utf-8')
-        if body is not None and len(body) > JSON_LIMIT:
+        if max_bytes is not None and body is not None and len(body) > JSON_LIMIT:
             raise ValueError('JSON request exceeds 32MiB')
         headers = {'Accept':'application/json'}
         if body is not None:
@@ -167,7 +170,7 @@ class HttpClient:
                                                   timeout=budget, stage=stage, unit_id=unit_id, started_at=now()))
         evidence = [request_path]
         response, status, response_headers, chunks, error, truncated = None, None, {}, [], None, False
-        end = time.monotonic() + budget
+        end = None if budget is None else time.monotonic() + budget
         try:
             try:
                 response = self.transport(request, timeout=budget)
@@ -180,9 +183,9 @@ class HttpClient:
                 raise ValueError('redirect left configured origin')
             size = 0
             while True:
-                if time.monotonic() >= end:
+                if end is not None and time.monotonic() >= end:
                     raise TimeoutError('HTTP response deadline exceeded')
-                remaining = end - time.monotonic()
+                remaining = None if end is None else end - time.monotonic()
                 stream = getattr(response, 'fp', None)
                 if hasattr(stream, 'fp'):
                     stream = stream.fp
@@ -191,9 +194,9 @@ class HttpClient:
                     sock.settimeout(remaining)
                 read = getattr(response, 'read1', response.read)
                 try:
-                    chunk = read(min(65536, max_bytes + 1 - size))
+                    chunk = read(65536 if max_bytes is None else min(65536, max_bytes + 1 - size))
                 except IncompleteRead as exc:
-                    partial = exc.partial[:max_bytes + 1 - size]
+                    partial = exc.partial if max_bytes is None else exc.partial[:max_bytes + 1 - size]
                     chunks.append(partial)
                     truncated = True
                     raise
@@ -201,7 +204,7 @@ class HttpClient:
                     break
                 chunks.append(chunk)
                 size += len(chunk)
-                if size > max_bytes:
+                if max_bytes is not None and size > max_bytes:
                     truncated = True
                     raise ValueError('response exceeds byte budget; truncated')
             content_length = next((v for k,v in response_headers.items() if k.lower() == 'content-length'), None)
@@ -212,7 +215,7 @@ class HttpClient:
         finally:
             if response is not None:
                 connection=getattr(response,'_deadline_connection',None) or getattr(getattr(response,'fp',None),'_deadline_connection',None)
-                if connection is not None:
+                if connection is not None and connection.timer is not None:
                     connection.timer.cancel()
                 try:
                     response.close()

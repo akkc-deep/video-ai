@@ -7,7 +7,7 @@ from ..config import parse_scene_planner_model
 from .common import AdapterError, FailureKind, HttpClient, JSON_LIMIT, strict_json
 from .ollama_units import project_units_schema, restore_units_content, UNITS_COVERAGE_NOTE
 from .ollama_visuals import is_model_visual,project as project_visuals,restore as restore_visuals
-from .ollama_scenes import is_environment_transport, project_scene_environment, restore_scene_content
+from .ollama_scenes import is_environment_transport, project_scene_environment, restore_scene_content, compact_scene_prompt
 
 
 class SceneCapacityError(ValueError):
@@ -206,7 +206,8 @@ def _scene_source_constraints(prompt, schema, *, key_constraints=True):
     return prompt+note,constrain(schema)
 
 
-def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False,scene_source_constraints=True,scene_reasoning=True,model='qwen3:8b',scene_key_constraints=True,scene_environment_constraints=True):
+def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planning=False,scene_source_constraints=True,scene_reasoning=True,model='qwen3:8b',scene_key_constraints=True,scene_environment_constraints=True,scene_unlimited=True,scene_compact=False,scene_grouped=False,scene_source_sets=False,scene_source_nonempty=True,scene_direct=False,model_session=None):
+    if model_session not in (None,'owned_stage_v1'):raise ValueError('unsupported model session contract')
     model=parse_scene_planner_model(model)
     if not scene_planning and model!='qwen3:8b':
         raise ValueError('alternate planner model requires scene planning')
@@ -217,7 +218,7 @@ def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planni
             prefix,payload=prompt.split(marker,1);prompt=prefix+note+marker+payload
         else:prompt=note+'\n'+prompt
     body=dict(model=model,prompt=prompt+(_GROUNDING_NOTE if _has_shared_grounding(schema) else ''),
-        stream=False,format=ollama_schema(schema,units_coverage=units_coverage),keep_alive=0,
+        stream=False,format=ollama_schema(schema,units_coverage=units_coverage),keep_alive='5m' if model_session else 0,
         think=False,options=dict(temperature=0,num_predict=8192))
     if cpu_only:body['options']['num_gpu']=0
     if scene_planning:
@@ -225,17 +226,24 @@ def ollama_body(prompt,schema,*,cpu_only=False,units_coverage=False,scene_planni
         if scene_source_constraints:
             body['prompt'],body['format']=_scene_source_constraints(body['prompt'],body['format'],key_constraints=scene_key_constraints)
         if scene_environment_constraints:
-            body['prompt'],body['format']=project_scene_environment(body['prompt'],body['format'])
+            body['prompt'],body['format']=project_scene_environment(body['prompt'],body['format'],grouped=scene_grouped,source_sets=scene_source_sets,source_nonempty=scene_source_nonempty)
+        if scene_compact:
+            body['prompt']=compact_scene_prompt(body['prompt'])
+            body['think']=False
         # qwen3 byte-level tokenization cannot exceed one token per UTF-8
         # byte. Count schema bytes too, even though grammar need not enter
         # the prompt, and reserve template/system plus the entire output.
-        # This intentionally rejects large inputs rather than allowing
-        # Ollama's implicit truncation of the beginning of the original.
+        # New requests grow with their complete inputs. The old fixed budget
+        # is retained only for exact reconstruction of historical intents.
         body['options']['num_ctx']=32768
         upper=(len(body['prompt'].encode('utf-8'))+
                len(json.dumps(body['format'],ensure_ascii=False,allow_nan=False).encode('utf-8'))+2048)
-        if upper+body['options']['num_predict']>body['options']['num_ctx']:
+        if scene_unlimited:
+            body['options']['num_ctx']=max(body['options']['num_ctx'],upper+8192)
+            body['options']['num_predict']=-1
+        elif upper+body['options']['num_predict']>body['options']['num_ctx']:
             raise SceneCapacityError('scene planning context exceeds full-input capacity; no truncation or automatic retry')
+        if scene_direct:body['options'].pop('num_ctx')
     return body
 
 
@@ -316,7 +324,10 @@ def _validate_request_id(request_id):
     if (not isinstance(request_id,str) or request_id not in ('initial','correction')
             and re.fullmatch(r'(units|storyboard)_batch_[0-9]{4}_(initial|correction)',request_id) is None
             and re.fullmatch(r'storyboard_batch_[0-9]{4}_entityrepair',request_id) is None
-            and request_id not in ('scene_plan_initial','scene_plan_correction')):
+            and re.fullmatch(r'scene_plan_direct_attempt_[0-9]{4,}_(initial|correction)',request_id) is None
+            and request_id not in ('scene_plan_initial','scene_plan_correction','scene_plan_compact_initial','scene_plan_compact_correction',
+                'scene_plan_compact2_initial','scene_plan_compact2_correction','scene_plan_compact3_initial','scene_plan_compact3_correction',
+                'scene_plan_direct_initial','scene_plan_direct_correction')):
         raise ValueError('invalid structured generation request ID')
 
 
@@ -436,20 +447,28 @@ class OllamaPlanner:
         context_fields=({'client_id','scene_identity'} if request_id.startswith('scene_plan_') else
                         {'client_id','script_identity','shot_ranges','units_stamp','slots_stamp','global_visual'}
                         if request_id.startswith('storyboard_batch_') else {'client_id','script_identity','candidate_ranges'})
+        if intent_context is not None and 'model_session' in intent_context:context_fields|={'model_session'}
         if intent_context is not None and (not isinstance(intent_context,dict) or set(intent_context)!=context_fields):
             raise ValueError('intent context must contain exact production identity fields')
         if on_intent is not None and not callable(on_intent): raise ValueError('on_intent must be callable')
         evidence=[]
         body=ollama_body(prompt,schema,cpu_only=self.cpu_only,
             units_coverage=intent_context is not None and request_id.startswith('units_batch_'),
-            scene_planning=request_id.startswith('scene_plan_'),model=self.model)
+            scene_planning=request_id.startswith('scene_plan_'),model=self.model,
+            scene_compact=request_id.startswith(('scene_plan_compact_','scene_plan_compact2_','scene_plan_compact3_','scene_plan_direct_')),
+            scene_grouped=request_id.startswith(('scene_plan_compact2_','scene_plan_compact3_','scene_plan_direct_')),
+            scene_source_sets=request_id.startswith(('scene_plan_compact3_','scene_plan_direct_')),
+            scene_direct=request_id.startswith('scene_plan_direct_'),
+            model_session=intent_context.get('model_session') if intent_context else None)
         try:
             intent=dict(request_id=request_id,body=body)
             if intent_context is not None:
                 intent.update(schema=schema,prompt=prompt,context=intent_context)
             evidence.append(self._save(f'storyboard/{request_id}.intent.json',intent))
             if on_intent is not None: on_intent(evidence[-1],deepcopy(body))
-            response=self.http.request('POST','/api/generate',json_body=body,max_bytes=JSON_LIMIT,stage='storyboard',unit_id=request_id)
+            scene=request_id.startswith('scene_plan_')
+            response=self.http.request('POST','/api/generate',json_body=body,max_bytes=None if scene else JSON_LIMIT,
+                stage='storyboard',unit_id=request_id,unlimited=scene)
             evidence.append(response.evidence_path)
             outer=self.http.parse_json(response,method='POST',stage='storyboard',unit_id=request_id)
             evidence.append(self._save(f'storyboard/{request_id}.outer.json',outer))

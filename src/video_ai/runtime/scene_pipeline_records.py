@@ -1,5 +1,7 @@
 """Immutable coordinator inputs/common prefix and strictly read-only diagnostics."""
 from dataclasses import dataclass
+from contextlib import contextmanager,ExitStack
+import os
 from pathlib import Path
 
 from ..adapters.jimeng import redact
@@ -8,7 +10,9 @@ from ..jimeng_config import STRATEGY
 from ..planning.production_scenes import canonical_digest
 from .manifest import now,thaw,validate_run_dir
 from .production_state import ProductionRefused,object_fields,run_path,timestamp
-from .scene_revision_records import artifact,require_scene_revision,load_scene_common_prefix,revision_validation
+from .scene_revision_records import (artifact,require_scene_revision,load_scene_common_prefix,
+                                    revision_validation,revision_read_transaction)
+from .verification import protect_scene_inputs
 from ._scene_revision_origins import owned_common
 from ._scene_revision_copy import RevisionStore
 
@@ -91,34 +95,73 @@ def common_value(frozen,units,timeline,mode,inputs,*,created_at):
         pcm=[dict(unit_id=c.unit_id,audio=artifact(c.pcm.path,root=run),samples=c.samples) for c in timeline.clips],created_at=created_at)
 
 
-def validate_common_record(frozen,units,timeline,mode):
+def _common_record(frozen,units,timeline,mode,*,construct=False):
     root=run_of(frozen)/'production/scene-pipeline'
     inputs=pipeline_inputs(frozen,mode)
     if (root/'inputs.json').exists():
         saved=read_json(root/'inputs.json');object_fields(saved,INPUT_FIELDS,'scene pipeline inputs')
         if type(saved['schema_version']) is not int or saved!=inputs:raise ProductionRefused('scene pipeline frozen inputs differ')
+    expected=None
     if (root/'common-inputs-ready.json').exists():
         saved=read_json(root/'common-inputs-ready.json');object_fields(saved,COMMON_FIELDS,'scene common ready')
         if type(saved['schema_version']) is not int:raise ProductionRefused('scene common ready schema differs')
         timestamp(saved['created_at'])
         expected=common_value(frozen,units,timeline,mode,inputs,created_at=saved['created_at'])
         if saved!=expected:raise ProductionRefused('scene common bytes or PCM differ')
-    return inputs
+    if expected is None and construct:expected=common_value(frozen,units,timeline,mode,inputs,created_at=now())
+    return inputs,expected
+
+
+def validate_common_record(frozen,units,timeline,mode):
+    return _common_record(frozen,units,timeline,mode)[0]
+
+
+@contextmanager
+def _common_sources(frozen,timeline,mode):
+    """Seal the exact compared sources while coordinator markers are written."""
+    if os.name!='nt':
+        yield False;return
+    from .verification import _locked_reader,file_stamp,_NativeInput
+    from .scene_revision_records import safe_path
+    run=run_of(frozen)
+    sources=[c.pcm.path for c in timeline.clips]
+    if mode=='inherited':
+        sources.append(require_scene_revision(frozen)['imports']['common:all'][0]['view_artifact']['path'])
+    else:
+        sources.extend(run/f'production/{stage}.json' for stage in ('units','timeline'))
+        if mode=='automatic':sources.append(run/'production/speech.json')
+    with ExitStack() as stack:
+        observed=[]
+        for source in dict.fromkeys(sources):
+            path=safe_path(source,run)
+            with _locked_reader(path) as stream:
+                lease=_NativeInput(path,stream,file_stamp(stream),None)
+                stack.callback(lease.close);observed.append((path,lease))
+        yield True
+        for path,lease in observed:lease.verify(path)
 
 
 def record_common(frozen,units,timeline,mode,*,lock):
-    inputs=validate_common_record(frozen,units,timeline,mode)
+    with _common_sources(frozen,timeline,mode) as protected:
+        return _record_common(frozen,units,timeline,mode,lock=lock,protected=protected)
+
+
+def _record_common(frozen,units,timeline,mode,*,lock,protected):
+    inputs,expected=_common_record(frozen,units,timeline,mode,construct=True)
     run=run_of(frozen);store=RevisionStore(run,lock);root=run/'production/scene-pipeline'
     store.save(root/'inputs.json',inputs)
     from .production_scene_pipeline import boundary
     boundary('pipeline-inputs')
-    old=read_json(root/'common-inputs-ready.json') if (root/'common-inputs-ready.json').exists() else None
-    store.save(root/'common-inputs-ready.json',common_value(frozen,units,timeline,mode,inputs,created_at=old['created_at'] if old else now()))
+    if not protected:
+        expected=common_value(frozen,units,timeline,mode,inputs,created_at=expected['created_at'])
+    store.save(root/'common-inputs-ready.json',expected)
     boundary('common-ready')
     return inputs
 
 
 @revision_validation
+@protect_scene_inputs
+@revision_read_transaction()
 def load_scene_pipeline_progress(frozen):
     from .image_selection_records import _run,load_committed_plan,load_accepted_batches
     run=_run(frozen);root=run/'production/scene-pipeline'

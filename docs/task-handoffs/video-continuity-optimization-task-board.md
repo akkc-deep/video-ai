@@ -34,7 +34,7 @@
 | 5 | VCO-05 | P1-C：单次 20 秒隔离生成与跨题材验证 | COMPLETED | VCO-01 | docs/task-designs/VCO-05-design.md | docs/task-handoffs/VCO-05-handoff.md |
 | 6 | VCO-06 | P2-A：轻度非破坏性校色与修订血缘 | COMPLETED | VCO-03, VCO-04 | docs/task-designs/VCO-06-design.md | docs/task-handoffs/VCO-06-handoff.md |
 | 7 | VCO-07 | P2-B：经实测准入的版本化整段生产模式 | COMPLETED | VCO-04, VCO-05 | docs/task-designs/VCO-07-design.md | docs/task-handoffs/VCO-07-handoff.md |
-| 8 | VCO-08 | P3：原生跨窗口续写后端验证与接入 | IN_PROGRESS | VCO-01, VCO-04 | docs/task-designs/VCO-08-design.md | docs/task-handoffs/VCO-08-handoff.md |
+| 8 | VCO-08 | P3：原生跨窗口续写后端验证与接入 | COMPLETED | VCO-01, VCO-04 | docs/task-designs/VCO-08-design.md | docs/task-handoffs/VCO-08-handoff.md |
 
 ## Task Details
 
@@ -277,6 +277,20 @@
 - **State evidence:** 2026-10-23 初始化为 `NOT_STARTED`；本板未证明 whole_scene_v1 可生产启用。
 
 ### VCO-08
+
+- **2026-11-04 完成记录：** `IN_PROGRESS -> COMPLETED`。主五项 Acceptance 已逐项核实，见[最终验收证据](../task-designs/VCO-08-production-verification.md)。已接受 C 四窗真实原生 13 帧条件、768×432/16fps、320 帧完整链，human_video review SHA4beaf4ac；生产显式 opt-in 接口、schema4/媒体/PCM/字幕、修订/unknown/仅解码恢复与旧兼容完成。当前8源资源根 `inputs/vco08-production-resource/c8da3bd7e9c2441cbb9594255a959a20` 五阶段 complete，worker/runner真实exit0；0新增模型采样/文本编码，执行总时限和人工占用配额null，实际余量守卫保留。普通exporter已导出C/production-native16-admission.json（SHA1e56f31d5bb2c885342d250daaf9209bc38ff21383c9f3226cfbb30eac5c8d47）；最终逐节点账C/regression-final-coverage.json（SHA4afb0b07350ff1e1b6961539237ab16e8016217134369b94291ece77fcd05a67）核对5326唯一节点，未知0、未解决失败0，最终源码SHA一致。原1768批14失败由108 GREEN解决，659批1失败由21 GREEN解决；旧失败/中断不改签。唯一独立最终review三项Important均RED→GREEN，未处理重要项/Minor均0，diff --check通过。保留既有工作区和同任务handoff；无更大Order后继，不创建新任务或发布。视觉接受范围仍为单白鹭四窗20秒，跨题材和任意长度质量须实际新观看。
+
+- **2026-11-03 23:32 最终覆盖进行中：** 保持IN_PROGRESS。1768精确余项已完整1754 PASS/14 FAIL，14项全部在108项定向中GREEN；本轮不重启该批。最终collect5326节点，新增/受影响659项session48047/runner10080仍串行运行，当前158 PASS/1 FAIL：唯一已定位失败为旧_prefix输入缺video_expected时新增native scope检测提前KeyError，待批次完整结束后修复并定向复验。原生320四窗/334五窗CPU事务和0重复采样、旧公开协调器完整合成/交付/损坏只读拒绝/原媒体继承、旧修订与冻结提示继承已通过；旧whole预算/观察门禁和真实320帧映射也已通过。完整媒体/恢复和后续单元仍运行，当前源码资源五阶段及正常exporter独立准入尚未执行，不能提前结项。实际资格视频仍沿用已接受C四窗，0新模型采样/编码/下载。最新PID/日志、修复runner和逐节点覆盖核对入口见[当前交接](VCO-08-handoff.md)。
+
+- **2026-11-03 21:08 生产接入收尾：** 保持IN_PROGRESS。原生worker/事务/静态与整链观察/媒体与修订消费者已实现；两条跨run继承及混合新链集成d79dfdc3实际2 PASS、退出0，资格视频和原文本缓存不重跑。唯一独立最终审查三项Important均已真实RED→GREEN：active-role预检、schema4聚合恢复及video/cache早期launch unknown阻止修订（公开入口两场景56f22a27实际2 PASS）。当前精确1768剩余CPU回归session51431仍运行，已发现11项旧媒体证明/最小对象兼容失败，尚未修复或计通过；待完整终态后集中修复及受影响覆盖。最终源码资源预检、独立生产准入exporter及逐项结项尚待，详见[当前交接](VCO-08-handoff.md)与[验收证据](../task-designs/VCO-08-production-verification.md)。无执行总时限/人工占用配额，实际余量守卫保留；用户已放行本次Windows Terminal/AweSun共存，不重复询问。
+
+- **2026-11-03 新整段动态接受：** 用户回复“视频没问题，继续吧”，已绑定C实际320帧20秒完整native16链/result/viewing，human_video review SHA4beaf4aca19f19e1a5d1a4c28deddb525fd118a8c5e32d20891b0ed35440421f。资格技术/静态/完整动态通过，仅单白鹭四窗范围；生产Tasks1..7尚未实施，VCO-08仍IN_PROGRESS。当前原4375回归pytest8068/runner14148持续，已明确1722 PASS/0 FAIL但未终态；保持源码身份，退出后按生产计划直接实施，不再次确认或重采样。
+
+- **2026-11-03 12:55 当前入口：** 保持IN_PROGRESS。C第三/四窗原进程均各一次成功，全部artifact与实际各48层KV4,076,863,488字节完整SHA/实际静态核验通过。四窗已组成320帧/768×432/16fps/20秒，93+80+80+67唯一贡献、三边界和raw逐像素一致通过；chain result454ca48cd8febea79243dc6609dbb16d3913f8c3aba2f528df5c6dc4499bb7c4、integrity0f6708185220c1c9e77344dba098aac2376a9573b486563800a1ab226b070274。新完整视频已发出观看反馈问题，曝光/主体左移/翼腿出框风险明记，动态仍unverified，不能转录旧native15接受。当前GPU已退出、无新下载/文本编码/权重复制；生产接入合同/Tasks1..7计划完整但尚未实施，最终4375未完成节点续跑仍待，当前入口C/live-run.json与主handoff。
+
+- **2026-11-03 10:36 当前入口：** 保持IN_PROGRESS。C前两窗已各一次真实成功；第二窗11-02 14:13:17退出0/4515.047秒，11-03完整SHA/48层真实KV4,076,863,488字节及静态核验通过，累计173原生16fps帧。第二窗result8864c391d778155902120742591a43c5feecc9720e21c1ab241a56b19ac40b08、screening72ecb2b3f9a5c497628f4f2c136ced078a4aa526510673e27e140f74af9315ef；曝光/构图留完整链动态。第三窗10:31:28已启动一次，worker3752/supervisor21912/owner18948/tool13260，约3/50；只监测C/live-run.json/worker-7ae91c2f19014c2b83f21c942bee8f97.log，不重采样、不并发CPU测试。第四窗/320帧整链观看、生产接入及最终软件收尾仍待；主handoff已刷新，旧BLOCKED与旧运行PID为历史。
+
+- **2026-11-02 11:47 当前入口：** 保持IN_PROGRESS。用户已接受native15三窗整段，并明确选择768×432/16fps/320帧路线“按建议直接推进，无需逐步确认”。Q首窗14/50以commit_reserve失败，无latent/媒体，原27源/intent冻结；不重启Q。独立异步分配器技术续验C=Q/allocator-async-candidate-v1已完成合成FFN等价、真实五阶段/布局/最终准入及独立review处置；full-probe3407退出0、峰值reserved由13,281,263,616降到8,187,281,408字节、原空闲门槛不改。case66ab2b4e、software637d88ff；0下载/文本编码/权重复制。依持续授权作明确有修复的独立续验裁决，proposal.json保留失败血缘、4源diff及范围，未将一般授权伪写为用户对C的逐字批准。C首窗11:45:42+08已仅启动一次，worker20888/supervisor5444/owner7252，tool2444，当前入口C/live-run.json；不并发CPU测试、不重新采样旧intent。正式新视频技术/四窗/动态及生产接入仍待。4375软件余项在会话中断后进程消失、日志无终态，旧751 PASS及原故障修复5项保留，未解决余项留收尾，不冒充全库通过。
 
 - **2026-11-02 10:05 当前进展：** 保持IN_PROGRESS。独立案例003三窗均已真实技术完成，每窗仅一次采样；第三窗session29654/worker40556退出0、4632.156秒，result SHA cc06527eed75c86c555519874231e950354628625fe2c00eb024b3950c2bf2e3。三窗artifact、父链及两续窗各48层/4,907,335,680字节KV完整SHA核验通过；只追加新增区组成253帧/15fps/16.8667秒链，raw逐像素一致。原模型/文本复用，0新增下载/编码。首窗完整观看已接受；新的整链播放问题已发出，曝光变化、主体偏左/部分翼尖出画等静态风险保留，完整动态仍unverified，正式16fps未启用。GPU退出后单点真实复现原timeout测试失败（95.31秒），证实被用户要求的production无时限覆盖；只修测试故障注入，不改生产规则，5项定向复验session98891运行中。4375精确余项尚待，不重跑751已报告通过前缀。详见研究实录最新段落及VCO-08-native16-interface-audit.md；旧handoff中BLOCKED为历史。
 

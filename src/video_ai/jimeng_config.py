@@ -93,8 +93,17 @@ def override_image_model(settings, req_key):
 
 
 def active_models(config):
+    if native_temporal(config): return {k: v for k, v in config.models.items() if k == 'upscale'}
     return {k: v for k, v in config.models.items() if k != 'sdxl' or config.production_strategy != STRATEGY}
 
 
 def active_workflows(config):
+    if native_temporal(config): return {k: v for k, v in config.workflows.items() if k == 'upscale'}
     return {k: v for k, v in config.workflows.items() if k != 'sdxl' or config.production_strategy != STRATEGY}
+
+
+def native_temporal(config):
+    raw = getattr(config, 'raw', {})
+    settings = raw.get('scene_rendering', {})
+    return (config.production_strategy == STRATEGY and isinstance(settings, Mapping)
+            and settings.get('mode') == 'temporal_extension_v1')

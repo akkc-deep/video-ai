@@ -413,3 +413,130 @@ def test_cached_proof_is_bound_to_exact_frozen_options(runtime_run,reader):
         with pytest.raises(ValueError):
             if reader=='revision':require_scene_revision(changed)
             else:require_revision_import(changed,'image','scene_0001',context=proof)
+
+
+def test_reference_read_transaction_rechecks_bytes_at_exit(runtime_run):
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    run,_,_=runtime_run; path=run/'transaction-source.json'; path.write_bytes(b'{"v":1}')
+    guard=RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture(path,root=run)
+    with pytest.raises(ValueError,match='captured bytes changed'):
+        with revision_read_transaction():
+            guard.verify_captured_bytes()
+            path.write_bytes(b'{"v":2}')
+            guard.verify_captured_bytes()
+
+
+def test_reference_read_transaction_rechecks_directory_inventory(runtime_run):
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    run,_,_=runtime_run; folder=run/'transaction-inputs'; folder.mkdir()
+    guard=RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture_directory(folder,root=run)
+    with pytest.raises(ValueError,match='inventory changed'):
+        with revision_read_transaction():
+            guard.verify_captured_bytes()
+            (folder/'added.json').write_bytes(b'{}')
+
+
+def test_reference_read_transaction_preserves_typed_frozen_checks(runtime_run):
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    run,_,_=runtime_run
+    frozen=SimpleNamespace(options={'script_path':str(run/'production/script.txt'),'version':1})
+    guard=RevisionGuard(frozen)
+    with revision_read_transaction():
+        guard.verify_captured_bytes()
+        frozen.options['version']=2
+        with pytest.raises(ValueError,match='frozen options changed'): guard.verify_captured_bytes()
+        frozen.options['version']=1
+
+
+def test_reference_read_transaction_checks_boundaries_and_resets(runtime_run,monkeypatch):
+    from video_ai.runtime import scene_revision_records as records
+    run,_,_=runtime_run; path=run/'transaction-source.json'; path.write_bytes(b'{}')
+    guard=records.RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture(path,root=run)
+    calls=[]; original=records.verify_artifact
+    def counted(*args,**kwargs): calls.append(True); return original(*args,**kwargs)
+    monkeypatch.setattr(records,'verify_artifact',counted)
+    with records.revision_read_transaction():
+        guard.verify_captured_bytes()
+        with records.revision_read_transaction():
+            for _ in range(5): guard.verify_captured_bytes()
+    assert len(calls)==2
+    guard.verify_captured_bytes()
+    assert len(calls)==3
+
+
+def test_closed_reference_read_context_cannot_skip_checks(runtime_run):
+    from contextvars import copy_context
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    run,_,_=runtime_run; path=run/'late-read-source.json'; path.write_bytes(b'{"v":1}')
+    guard=RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture(path,root=run)
+    with revision_read_transaction():
+        guard.verify_captured_bytes(); copied=copy_context()
+    path.write_bytes(b'{"v":2}')
+    with pytest.raises(ValueError,match='captured bytes changed'): copied.run(guard.verify_captured_bytes)
+
+
+def test_reference_read_transaction_does_not_skip_foreign_thread_checks(runtime_run):
+    from concurrent.futures import ThreadPoolExecutor
+    from contextvars import copy_context
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    run,_,_=runtime_run; path=run/'worker-read-source.json'; path.write_bytes(b'{"v":1}')
+    guard=RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture(path,root=run)
+    with revision_read_transaction():
+        guard.verify_captured_bytes(); copied=copy_context()
+        path.write_bytes(b'{"v":2}')
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                with pytest.raises(ValueError,match='captured bytes changed'):
+                    executor.submit(copied.run,guard.verify_captured_bytes).result(timeout=5)
+        finally: path.write_bytes(b'{"v":1}')
+
+
+def test_reference_read_transaction_preserves_nested_byte_capture(runtime_run):
+    from video_ai.runtime.scene_revision_records import RevisionGuard, revision_read_transaction
+    from video_ai.runtime._continuity_byte_guard import capture_reads
+    run,_,_=runtime_run; path=run/'captured-read-source.json'; path.write_bytes(b'{"v":1}')
+    guard=RevisionGuard(SimpleNamespace(options={'script_path':str(run/'production/script.txt')}))
+    guard.capture(path,root=run)
+    with revision_read_transaction():
+        guard.verify_captured_bytes()
+        with capture_reads() as capture:
+            guard.verify_captured_bytes()
+        assert capture.finish().file_count==1
+
+
+def test_reference_read_input_is_loaded_at_both_boundaries_only():
+    from video_ai.runtime.scene_revision_records import revision_read_transaction, revision_read_matches
+    calls=[]
+    def read(): calls.append(True); return {'value':1}
+    with revision_read_transaction():
+        for _ in range(5): assert revision_read_matches('input',{'value':1},read)
+        assert not revision_read_matches('input',{'value':2},read)
+        assert len(calls)==1
+    assert len(calls)==2
+    assert revision_read_matches('input',{'value':1},read)
+    assert len(calls)==3
+
+
+def test_reference_read_input_change_is_detected_on_exit():
+    from video_ai.runtime.scene_revision_records import revision_read_transaction, revision_read_matches
+    original={'value':1}
+    with pytest.raises(ValueError,match='read input changed'):
+        with revision_read_transaction():
+            assert revision_read_matches('input',{'value':1},lambda:original)
+            original['value']=2
+
+
+def test_closed_reference_read_input_context_loads_fresh():
+    from contextvars import copy_context
+    from video_ai.runtime.scene_revision_records import revision_read_transaction, revision_read_matches
+    original={'value':1}
+    with revision_read_transaction():
+        assert revision_read_matches('input',{'value':1},lambda:original)
+        copied=copy_context()
+    original['value']=2
+    assert not copied.run(revision_read_matches,'input',{'value':1},lambda:original)

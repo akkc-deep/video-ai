@@ -1,4 +1,4 @@
-"""Fixed byte budgets must admit visual facts without rewriting old requests."""
+"""Prompt advice preserves complete visual facts and exact historical requests."""
 import json
 
 import pytest
@@ -43,11 +43,12 @@ def test_visual_fields_fit_without_changing_frozen_budget_and_replay_to_wan(runt
     assert len(cloud.submits) == 4 and len(smtp.messages) == 1
 
 
-def test_still_oversized_visual_fields_stop_before_storage_or_paid_submission(runtime_run, tmp_path, monkeypatch):
+def test_visual_fields_over_local_byte_advice_are_sent_complete(runtime_run, tmp_path, monkeypatch):
     s, cloud, smtp, kwargs = limited_setup(runtime_run, tmp_path, monkeypatch, limit=1)
     result = produce(s, **kwargs)
-    assert result.status == 'awaiting_image_model_configuration'
-    assert not cloud.storage_calls and not cloud.submits and not smtp.messages
+    assert result.status == 'awaiting_image_selection', result.error
+    assert len(cloud.submits) == 4 and len(smtp.messages) == 1
+    assert all('白色羽毛' in body['prompt'] and len(body['prompt'].encode('utf-8')) > 1 for body in cloud.submits)
 
 
 @pytest.mark.parametrize('point', ['accepted', 'downloaded', 'provenance'])
@@ -101,13 +102,15 @@ def test_saved_compact_identity_cannot_switch_or_rebuild_orphan_evidence(runtime
     assert (len(cloud.submits), len(cloud.storage_calls), len(smtp.messages)) == before
 
 
-def test_chinese_visual_fields_are_checked_as_bytes_before_upload(runtime_run, tmp_path, monkeypatch):
+def test_chinese_visual_fields_are_not_cut_or_refused_by_byte_advice(runtime_run, tmp_path, monkeypatch):
     from video_ai.runtime.reference_visual_prompt import compact_reference_prompt
     s, cloud, smtp, kwargs = limited_setup(runtime_run, tmp_path, monkeypatch, style='湖'*200)
     prompt = compact_reference_prompt(s['plan']['scenes'][1], s['bible'])
     assert len(prompt) < 800 < len(prompt.encode('utf-8'))
-    assert produce(s, **kwargs).status == 'awaiting_image_model_configuration'
-    assert not cloud.storage_calls and not cloud.submits and not smtp.messages
+    result = produce(s, **kwargs)
+    assert result.status == 'awaiting_image_selection', result.error
+    assert len(cloud.submits) == 4 and len(smtp.messages) == 1
+    assert all('湖'*200 in body['prompt'] for body in cloud.submits)
 
 
 def test_provenance_without_one_whole_request_never_repeats_paid_submission(runtime_run, tmp_path, monkeypatch):

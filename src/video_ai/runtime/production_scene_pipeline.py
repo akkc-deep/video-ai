@@ -10,9 +10,11 @@ from .manifest import now
 from .production_state import ProductionRefused,object_fields
 from .scene_pipeline_records import (ScenePipelineResult,common_inputs,record_common,pipeline_inputs,
     validate_common_record,error,run_of,load_scene_pipeline_progress)
-from .scene_revision_records import revision_validation,artifact,stable_bytes,require_scene_revision
+from .scene_revision_records import (revision_validation,artifact,stable_bytes,require_scene_revision,
+                                     revision_read_transaction)
 from ._scene_revision_copy import RevisionStore
 from .execution_limits import production_execution
+from .verification import protect_scene_inputs
 
 DEPENDENCIES = ('planner image_client_factory reference_storage reference_client_factory smtp_factory '
                 'wan_client_factory wan_service_factory upscale_client_factory upscale_service_factory').split()
@@ -31,9 +33,14 @@ def _dependencies(value):
 
 def _common(frozen,*,paths,logger,lock):
     run=run_of(frozen)
-    proof=require_scene_revision(frozen) if 'scene_revision' in frozen.options else None
-    inherited=proof is not None and 'common:all' in proof['imports']
-    automatic=(run/'production/production-state.json').exists()
+    existing=None
+    with revision_read_transaction():
+        proof=require_scene_revision(frozen) if 'scene_revision' in frozen.options else None
+        inherited=proof is not None and 'common:all' in proof['imports']
+        automatic=(run/'production/production-state.json').exists()
+        regenerate=proof is not None and 'all' in proof['invalidation']['dirty']['common']
+        if inherited or (not automatic and not regenerate):
+            existing=common_inputs(frozen)
     if proof is not None and 'all' in proof['invalidation']['dirty']['common']:
         from .production_state import ProductionStateStore
         from .manifest import create_manifest
@@ -67,7 +74,7 @@ def _common(frozen,*,paths,logger,lock):
         timeline,_=step('timeline',produce_timeline,frozen,units,audio,state=state,manifest=manifest,paths=paths,logger=logger)
         mode='automatic'
     else:
-        units,timeline,mode=common_inputs(frozen)
+        units,timeline,mode=existing
     inputs=record_common(frozen,units,timeline,mode,lock=lock)
     return units,timeline,inputs
 
@@ -143,6 +150,7 @@ def _restore_missing_aggregates(frozen,units,timeline,*,paths,logger,lock,deps):
 
 @production_execution
 @revision_validation
+@protect_scene_inputs
 def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=None,email_settings=None,dependencies=None):
     deps=_dependencies(dependencies);run=run_of(frozen);stage='preflight'
     store=RevisionStore(run,lock);store.owned()
@@ -186,7 +194,8 @@ def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=No
                         _candidates(frozen,scene,run/'production/jimeng'/sid/'candidates.json')
                         manifests.append(run/'production/jimeng'/sid/'candidates.json');continue
                     client=deps.image_client_factory(frozen.config.image_generation) if deps.image_client_factory else None
-                    value=generate_candidates(frozen,sid,scene['image_prompt'],client=client,lock=lock)
+                    from .scene_image_prompts import effective_image_prompt
+                    value=generate_candidates(frozen,sid,effective_image_prompt(frozen,scene),client=client,lock=lock)
                     manifests.append(value if isinstance(value,(Path,str)) else run/'production/jimeng'/sid/'candidates.json')
                 result=prepare_image_batch(frozen,units,timeline,manifests,batch_index=index,paths=paths,logger=logger,
                     lock=lock,email_settings=email_settings,smtp_factory=deps.smtp_factory)

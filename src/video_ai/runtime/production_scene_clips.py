@@ -189,6 +189,16 @@ class _OwnedService:
         self.handle=self.manager.ensure(build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui'])
         if not self.handle.owned: raise ProductionRefused('Comfy service is not owned by this run')
 
+    def capability_identity(self):
+        """Never reuse capabilities across a process exit, PID reuse or restart."""
+        from .production_state import process_started_at
+        handle=self.handle
+        if (handle is None or not handle.owned or handle.process is None
+                or handle.process.poll() is not None
+                or process_started_at(handle.pid)!=handle.started_at):
+            raise ProductionRefused('owned Comfy service identity changed')
+        return id(self),handle.pid,handle.started_at,handle.url
+
     def close(self):
         try:
             if self.sampler is not None:
@@ -257,6 +267,10 @@ def _input(context,row,parent,*,paths,logger):
     return value
 
 
+from ..media.video import inspection_reuse
+
+
+@inspection_reuse()
 def _technical(context,row,submission,request,*,paths,logger):
     from ..media.video import inspect_video,trim_scene_video
     from ..media.frames import extract_native_frame
@@ -302,6 +316,9 @@ def _technical(context,row,submission,request,*,paths,logger):
 
 
 def _finish(context,errors=None):
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .production_temporal_scene_clips import finish_temporal_clips
+        return finish_temporal_clips(context)
     store=context['store']; store.verify_global()
     progress,records=collect_progress(context); scenes=progress['scenes']; templates=[]
     for row in context['rows']:
@@ -329,6 +346,9 @@ def _finish(context,errors=None):
 
 
 def _produce(context,*,paths,logger,client_factory,service_factory):
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .production_temporal_scene_clips import produce_temporal_clips
+        return produce_temporal_clips(context,paths=paths,logger=logger)
     from ..adapters.scene_comfy import SceneComfyClient
     from .scene_comfy_transactions import recover_or_submit_scene_clip,SceneSubmitUnknown
     from .production_inputs import check_stage_space
@@ -347,7 +367,10 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
     if load_continuity_policy(context['frozen']) is not None:
         from .production_scene_continuity import ensure_initial_epoch
         ensure_initial_epoch(context['frozen'],context['units'],context['timeline'],paths=paths,logger=logger,lock=store.lock)
-    service=None; errors={}; result=None
+    service=None; errors={}; result=None;capability_cache={}
+    def service_identity():
+        identify=getattr(service,'capability_identity',None)
+        return identify() if callable(identify) else None
     def ensure():
         nonlocal service
         store.assert_owned()
@@ -375,10 +398,12 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
                     store.write(folder/'graph.json',graph); store.write(folder/'request.json',request); boundary('request')
                     factory=client_factory or SceneComfyClient
                     client=factory(context['frozen'].config.services['comfyui'],
-                        request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph))
+                        request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph),
+                        **({'send_checks_only':True} if client_factory is None else {}))
                     submission=recover_or_submit_scene_clip(store,request,graph,client=client,template=context['template'],
                         ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['wan'],
-                        request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'])
+                        request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'],
+                        capability_cache=capability_cache,service_identity=service_identity)
                     try:
                         _technical(context,row,submission,request,paths=paths,logger=logger)
                     except InvalidGeneratedMedia as exc:
@@ -484,6 +509,9 @@ def _check_observation_replacement(record,value):
 
 
 def _consume(context,observation_path):
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .production_temporal_scene_clips import consume_temporal_observation
+        return consume_temporal_observation(context,observation_path)
     from .scene_clip_observations import validate_scene_clip_observation
     from ..adapters.common import strict_json,JSON_LIMIT
     store=context['store']; store.assert_owned(); progress,records=collect_progress(context)

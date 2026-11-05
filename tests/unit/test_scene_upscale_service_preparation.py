@@ -63,6 +63,6 @@ def test_service_phase_precedes_only_fresh_whole_tracking(tmp_path,monkeypatch,m
     else:
         assert entries[0][0]==(78 if prepared else 0)
         assert entries[0][1]==180
-        assert entries[0][2].get('send_checks_only',False)==(mode=='whole_scene_v1')
+        assert entries[0][2].get('send_checks_only',False) is True
         assert len(calls)==(2 if prepared else 1)
         assert len(services)==1 and services[0].closed

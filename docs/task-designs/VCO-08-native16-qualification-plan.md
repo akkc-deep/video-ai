@@ -57,13 +57,27 @@
 
 **Files:** 新目录资源/布局/准入收据、window001..004、chain004。
 
-- [ ] 等当前CPU回归退出并处理实际失败，读取主机余量。
-- [ ] 运行五阶段真实新shape探针，无scheduler/视频；完整成功后freeze/layout/final-admission一致。
-- [ ] 仅清理已退出资源探针的自有KV scratch，保留元数据/收据；实际窗口KV保持。
+- [x] 当前CPU回归在会话中断后已退出：native33919不可用，41072/28172实际均不存在，日志无终态，不冒充4375项通过。原751通过及timeout修复5项保持；未知余项留软件收尾。Ruling：实际无CPU进程后推进已授权GPU资格，避免为缺失结果从头重启研究。启动时原余量守卫仍执行。
+- [x] 运行五阶段真实新shape探针，无scheduler/视频，session59052退出0、211.4秒，结果full-dit-resource-probe-d9165fba1ae8445f861090cf92d1a1a0.json；最低commit5,278,523,392/物理18,981,482,496/磁盘53,038,338,048字节。layout日志278084d、final-admission b2f07be均退出0，27/11源及case/cache/资源/布局一致。
+- [x] 仅清理已退出资源探针自有96个KV scratch叶文件共4,076,863,488字节；48元数据和逐文件SHA/清理收据保留，实际窗口文件0修改。日志090a1db，清理后磁盘57,114,968,064字节。
 - [ ] stage1一次，核验技术+实际静态；无明显失败签发下窗screening，再按相同规则顺序stage2/3/4。失败停止，不重采样。
+
+2026-11-03更新：上项原Q按失败停止，独立修复C现已四窗各一次完成且全数技术/实际静态通过；第三4161.422秒、第四4157.734秒。C四窗真实320帧/16fps/20秒已组装并逐保留区核验（chain integrity0f6708185220c1c9e77344dba098aac2376a9573b486563800a1ab226b070274）。新完整human_video问题已发出，动态接受仍未取得；该unchecked原项保留Q失败血缘，不将原Q写成成功。
+
+当前stage1已于10:52:53+08启动一次，worker8684/supervisor3144/owner PowerShell3192，外层tool session54147，bootstrap日志af791da7f0b649eb903d3ef0e6630322。外层使用Start-Process -WindowStyle Hidden并持久化launch-intent/owner时间/日志；冻结的数值/监督执行源未改。只监测此进程，不以工具会话丢失代替worker已退出判断。首次0/50已进入真实采样，未预记视频通过。
+
+Q实际于14/50以commit_reserve失败退出，无latent/媒体，failure-observation.json保留，27冻结源不改，不能重启Q。Ruling：依据用户已明确“按建议直接推进，无需逐步确认”及持续完成授权，对已具体修复并验证的资源故障建立独立技术续验C；这不是复用/清除原Q intent或无修复换seed重抽。保留原Q失败与新C血缘，明确累计已有1个失败native16采样；C仍各窗最多一次、同规格/同提示/同seed/同模型、不降低实际余量门槛。错误代价是新增这一技术资格案例的计算，故不能将此裁决泛化为无限随机重试。
+
+C=Q/allocator-async-candidate-v1，case66ab2b4eaf48fc1adde81e8319c0384a33c93b7022baf5fd438bf832317077d0、software637d88ff64441e241d922585a4ca16cd279b7c0fe70575dea328083ed1302e93。原官方/数值适配23源保持；只4源改异步allocator选择/绑定及停止原资源快照。合成FFN输出逐字节一致，完整五阶段资源预检3407退出0，211.2秒；峰值reserved8,187,281,408字节（Q13,281,263,616），最低commit6,267,060,224/物理13,692,510,208字节。独立review唯一Important为layout提前导入Torch；实际RED3989d682→预置两个allocator环境变量后GREEN1d103b20，源码冻结未改。final-admission375c86c8退出0；probe scratch精确释放4,076,863,488字节，元数据/收据保留。proposal.json/candidate.patch为完整可复核结果。
+
+11:45:42+08仅启动一次C首窗，worker20888/owner PowerShell7252，tool session2444，bootstrap日志397ff5ba403f481dbeec87e0c05a15fd；C/live-run.json为当前入口。后续只读原进程，不重启；成功后核验/实际静态，按已授权四窗继续，完整新视频动态接受另记。
+
+C首窗12:56:45退出0，4263.735秒，93帧/16fps/768×432/raw逐像素一致；result849ff142563d9882c323f77aceae4277ee6c92672303a97419c925d7b172f3c3。实际完整性128170f7和静态cf586942退出0；screening2d1cfdf2bdb556b7c909988e5ef012e88ef48efc7c0233ea2ab528666ddb7236。实际接触图的曝光/构图风险留最终动态，不伪造新观看。12:58:02仅启动stage2一次，worker29840/supervisor28792/owner30652/tool69039；日志d7cbdfd13c034c9b83248d89ef4b6e31。当前只监测第二窗，stage3/4尚未开始。
 - [ ] 组装320帧，核验实际SHA/13历史/48层真实KV/输出PTS与映射；提交完整20秒视频并等待新的完整动态反馈。
 - [ ] 按事实更新实录/板、生产适用范围和后续接口设计；不把资格样片当VCO-08全部完成。
 
 ## Verification commands
+
+2026-11-03续验：C第二窗已完整性/实际静态通过（详见research-results与live-run）。第三窗原worker3752于11:40:49+08退出0，4161.422秒；全部artifact和实际48层KV4,076,863,488字节完整SHA通过（26ece37d78544e2abba0913d7249d007），result b763f56a29e7832d88b3ae48f2d4184c2ef41ed8301161305fab7ccd78534463。实际静态已查看并记录后段明显变暗和腿/翼出框风险，screening69f063dd652bab4b4bf1234ec1f1ff1095401b143830842ff52d7fd3c3d6ec8a；动态unverified。11:42:25+08仅启动C第四窗一次（worker14808/supervisor9000/owner8536），不重采样前三窗。等待第四窗退出后verify/static与完整320帧组装/新动态接受。
 
 每条Python经项目bootstrap；CPU合同probe：`Invoke-VideoAiNative $VideoAiPython @('-B','<new-root>/native16_contract_probe.py')`。pipeline/数值脚本使用既有嵌入式Python。真实命令按顺序为`full_dit_resource_probe.py`、`freeze_software.py`、`checkpoint_layout_probe.py`、`final_admission_check.py`、`supervise_window.py --stage N`及`assemble_chain.py --windows 4`。每项必须退出0并核对实际收据；研究完整动态接受另记。

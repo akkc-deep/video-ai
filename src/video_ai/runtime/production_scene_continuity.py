@@ -288,7 +288,7 @@ def _analysis(store,context,source,reader,request_path,paths):
     mandatory=verified['closure']+[request['manifest']]
     for row in binding['clips']:
         mandatory += [row[k] for k in ('clip_record','request','generated','source','mapping','last_frame')]
-        mandatory.append(reader.read(row['last_frame'])['image'])
+        mandatory.append(records._continuity_last_image(reader.read(row['last_frame'])))
     closure=sorted({v['path']:v for v in mandatory}.values(),key=lambda v:v['path'])
     for ref in closure:verify(ref,runtime=False,empty=ref['bytes']==0)
     value=dict(schema_version=1,run_id=store.run_dir.name,assessment_id=aid,epoch=epoch['artifact'],clip_id=job['clip_id'],
@@ -351,19 +351,22 @@ def consume_scene_continuity_review(frozen,units,timeline,review_path,*,paths,lo
         state=records._review_state(value,reader)
         # A raw confirmed issue is durable even if old accepted video cannot be replaced.
         cid=assessment['clip_id'];video=reader.read(value['video_observation']);record=source[cid]
-        verdict=video['verdict'];receipt_name='observation-rejected.json' if verdict=='failed' else 'observation-accepted.json'
-        receipt_path=records._metadata_folder(frozen,cid,record)/receipt_name
-        if verdict in ('passed','failed'):
+        if 'native_window' in record:
+            chain=record['native_chain']
+            if chain is None:raise ProductionRefused('native continuity requires complete scene chain')
+            receipt_path=Path(chain['result']['path']).parent/('rejected.json' if video['verdict']=='failed' else 'accepted.json')
             if receipt_path.exists():
-                existing=reader.read(receipt_path)
-                existing_ref=existing['observation'];submitted=value['video_observation']
-                if (existing['observation_sha256']!=canonical_digest(video)
-                        or any(existing_ref[k]!=submitted[k] for k in ('bytes','sha256'))):
+                existing=reader.read(receipt_path);actual=reader.read(existing['observation'])
+                if canonical_digest(actual)!=canonical_digest(video):
                     if state=='blocked':return _finish(context)
-                    raise ProductionRefused('review cannot replace original video observation')
-            else:_consume(context,value['video_observation']['path'])
-        elif record['accepted'] is None and record['rejected'] is None:
-            _consume(context,value['video_observation']['path'])
+                    raise ProductionRefused('review cannot replace original native chain playback')
+            else:
+                from .production_temporal_scene_clips import consume_temporal_observation
+                consume_temporal_observation(context,value['video_observation']['path'])
+        else:
+            receipt_path=_consume_legacy_review_video(context,record,source,cid,video,value,reader,state)
+            if receipt_path is None:return _finish(context)
+        verdict=video['verdict']
         if state=='awaiting_review' or verdict=='unverified':return _finish(context)
         receipt=dict(schema_version=1,run_id=store.run_dir.name,assessment_id=aid,assessment=artifact(assessment_path),
             review=artifact(original),video_receipt=artifact(receipt_path),state=state,created_at=now())
@@ -377,3 +380,22 @@ def consume_scene_continuity_review(frozen,units,timeline,review_path,*,paths,lo
         store.write(Path('reviews')/aid/'receipt.json',receipt);boundary('review-receipt')
         return _finish(context)
     return clip_entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,operation=operation)
+
+
+def _consume_legacy_review_video(context,record,source,cid,video,value,reader,state):
+        from .production_scene_clips import _consume
+        frozen=context['frozen']
+        verdict=video['verdict'];receipt_name='observation-rejected.json' if verdict=='failed' else 'observation-accepted.json'
+        receipt_path=records._metadata_folder(frozen,cid,record)/receipt_name
+        if verdict in ('passed','failed'):
+            if receipt_path.exists():
+                existing=reader.read(receipt_path)
+                existing_ref=existing['observation'];submitted=value['video_observation']
+                if (existing['observation_sha256']!=canonical_digest(video)
+                        or any(existing_ref[k]!=submitted[k] for k in ('bytes','sha256'))):
+                    if state=='blocked':return None
+                    raise ProductionRefused('review cannot replace original video observation')
+            else:_consume(context,value['video_observation']['path'])
+        elif record['accepted'] is None and record['rejected'] is None:
+            _consume(context,value['video_observation']['path'])
+        return receipt_path

@@ -15,6 +15,8 @@ from .production_image_selection import _Records as SelectionRecords, prepare_im
 from .production_state import ProductionRefused, RunLock, integer, object_fields, run_path, timestamp
 from .reference_settings import bind_reference_settings
 from .execution_limits import production_execution
+from .scene_revision_records import (revision_read_transaction, revision_checkpoint_transaction,
+                                     revision_checkpoints_active)
 
 
 def boundary(point):
@@ -72,6 +74,12 @@ class ReferencePreparationResult:
 
 
 class _Records(SelectionRecords):
+    def owned(self):
+        if revision_checkpoints_active():
+            self.lock_owned()
+        else:
+            super().owned()
+
     # Settings binding also accepts the smaller candidate store's image interface.
     def image(self, path, raw): return self.bytes(path, raw)
 
@@ -94,11 +102,13 @@ def _storage_format(value):
 
 
 def _storage_object(store, original, settings, storage, *, verify_remote):
+    from .storage import remote_namespace
+    object_namespace = remote_namespace(store.run)
     _original_unchanged(store, original)
     image_format = _storage_format(original['format'])
     mime = {'png': 'image/png', 'jpeg': 'image/jpeg', 'webp': 'image/webp'}[image_format]
     expected = {key: settings[key] for key in ('bucket', 'region', 'endpoint')}
-    expected.update(key=settings['key_prefix']+'/'+store.run.name+'/'+original['sha256']+'.original',
+    expected.update(key=settings['key_prefix']+'/'+object_namespace+'/'+original['sha256']+'.original',
                     bytes=original['bytes'], sha256=original['sha256'], content_type=mime)
     source = {key: original[key] for key in ('path', 'bytes', 'sha256')}
     folder = run_path(store.run, store.run/'production/reference-storage'/original['sha256'])
@@ -139,7 +149,7 @@ def _storage_object(store, original, settings, storage, *, verify_remote):
 
     old = existing_receipt() if receipt_path.exists() else None
     if not verify_remote: return existing_receipt()
-    obj = storage.ensure_original(dict(original, format=image_format), run_id=store.run.name, before_put=before_put)
+    obj = storage.ensure_original(dict(original, format=image_format), run_id=object_namespace, before_put=before_put)
     _original_unchanged(store, original)
     object_fields(obj, tuple(expected)+('etag',), 'verified reference object')
     if not _same_json({key: obj[key] for key in expected}, expected) or not isinstance(obj['etag'], str) or not obj['etag']:
@@ -182,42 +192,47 @@ def _operate(frozen, units, timeline, store, *, batch_index, paths, logger, refe
     cap = marker['capability']; storage_settings = marker['storage']
     resolved = []
     # Validate the entire batch before the first upload or paid submission.
-    for scene in scenes:
-        sources = resolve_reference_bindings(frozen, bible, plan, scene, accepted)
-        prompt = resolve_reference_prompt(frozen, scene, bible, cap)
-        if not sources or len(sources) > cap['max_images']:
-            raise ReferenceConfigurationRequired('reference image count exceeds verified model capability')
-        if len(prompt.encode('utf-8')) > cap['max_prompt_bytes']:
-            raise ReferenceConfigurationRequired('reference prompt exceeds verified model capability')
-        for original, uses in sources:
-            if (original['bytes'] > cap['max_image_bytes'] or _storage_format(original['format']) not in cap['formats']
-                    or not cap['min_width'] <= original['width'] <= cap['max_width']
-                    or not cap['min_height'] <= original['height'] <= cap['max_height']):
-                raise ReferenceConfigurationRequired('reference original exceeds verified model capability')
-            _original_unchanged(store, original)
-        resolved.append((scene, sources))
-    storage = storage or ReferenceStorage(storage_settings, ownership_check=store.owned)
+    with revision_read_transaction():
+        for scene in scenes:
+            sources = resolve_reference_bindings(frozen, bible, plan, scene, accepted)
+            prompt = resolve_reference_prompt(frozen, scene, bible, cap)
+            if not sources or len(sources) > cap['max_images']:
+                raise ReferenceConfigurationRequired('reference image count exceeds verified model capability')
+            # Prompt length advice must not truncate content or block production.
+            for original, uses in sources:
+                if (original['bytes'] > cap['max_image_bytes'] or _storage_format(original['format']) not in cap['formats']
+                        or not cap['min_width'] <= original['width'] <= cap['max_width']
+                        or not cap['min_height'] <= original['height'] <= cap['max_height']):
+                    raise ReferenceConfigurationRequired('reference original exceeds verified model capability')
+                _original_unchanged(store, original)
+            resolved.append((scene, sources))
+    storage = storage or ReferenceStorage(storage_settings, ownership_check=store.lock_owned)
     if not _same_json(thaw(storage.settings), storage_settings): raise ProductionRefused('reference storage settings differ')
     # Injected test transports are trusted boundaries; production credentials remain environment-only.
     if isinstance(storage, ReferenceStorage):
-        storage.ownership_check = store.owned
+        storage.ownership_check = store.lock_owned
+        storage.download_ownership_check = store.lock_owned
         storage.check_credentials()
     client = client_factory(model) if client_factory else JimengClient(model)
     if not _same_json(client.settings, model): raise ProductionRefused('reference client model differs')
     if isinstance(client, JimengClient): client.check_credentials()
     manifests = []
     for scene, sources in resolved:
-        store.owned(); sid = scene['scene_id']; refs = []
-        request_root = store.run/'production/jimeng'/sid
-        needs_submit = any(not (request_root/f'request_{i:02d}'/'intent.json').exists()
-                           for i in range(1, model.candidates_per_scene+1))
-        for original, uses in sources:
-            obj = _storage_object(store, original, storage_settings, storage, verify_remote=needs_submit)
-            refs.append(dict(scene_id=original['scene_id'],
-                **{key: original[key] for key in ('candidate_id', 'sha256', 'bytes', 'width', 'height', 'format')},
-                uses=uses, object=obj))
-        generate_reference_candidates(frozen, scene, bible, refs, settings=marker, capability=cap, client=client,
-                                      paths=paths, logger=logger, lock=store.lock, storage=storage)
+        with revision_checkpoint_transaction():
+            store.owned()
+            if store.revision_guard is not None:
+                store.revision_guard.verify_captured_bytes()
+            sid = scene['scene_id']; refs = []
+            request_root = store.run/'production/jimeng'/sid
+            needs_submit = any(not (request_root/f'request_{i:02d}'/'intent.json').exists()
+                               for i in range(1, model.candidates_per_scene+1))
+            for original, uses in sources:
+                obj = _storage_object(store, original, storage_settings, storage, verify_remote=needs_submit)
+                refs.append(dict(scene_id=original['scene_id'],
+                    **{key: original[key] for key in ('candidate_id', 'sha256', 'bytes', 'width', 'height', 'format')},
+                    uses=uses, object=obj))
+            generate_reference_candidates(frozen, scene, bible, refs, settings=marker, capability=cap, client=client,
+                                          paths=paths, logger=logger, lock=store.lock, storage=storage)
         boundary('reference-candidates')
         manifests.append(request_root/'candidates.json')
     selection = prepare_image_batch(frozen, units, timeline, manifests, batch_index=batch_index, paths=paths,
@@ -257,9 +272,11 @@ def produce_reference_batch(frozen, units, timeline, *, batch_index, paths, logg
         if 'scene_revision' in frozen.options:
             from .scene_revision_records import require_scene_revision
             store.revision_guard=require_scene_revision(frozen)['guard']
-        return _operate(frozen, units, timeline, store, batch_index=batch_index, paths=paths, logger=logger,
-            reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
-            smtp_factory=smtp_factory, email_settings=email_settings)
+        from .verification import scene_input_protection
+        with scene_input_protection(frozen):
+            return _operate(frozen, units, timeline, store, batch_index=batch_index, paths=paths, logger=logger,
+                reference_settings_path=reference_settings_path, storage=storage, client_factory=client_factory,
+                smtp_factory=smtp_factory, email_settings=email_settings)
     except (Exception, KeyboardInterrupt) as exc:
         status = ('awaiting_image_model_configuration' if isinstance(exc, ReferenceConfigurationRequired) else
                   'interrupted' if isinstance(exc, KeyboardInterrupt) else 'blocked' if isinstance(exc, ValueError) else 'failed')

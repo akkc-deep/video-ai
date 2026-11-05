@@ -1,5 +1,36 @@
 # video-ai
 
+## 视频目录与过程数据清理
+
+新视频由 `make-video` 自动分配简单编号，例如 `0001-旅行者一号`。续作、选图、观察、返工和发布都用同一个 `--video 0001`，无需再查运行 ID；旧任务继续支持原 `--run-dir`。
+
+```powershell
+.\scripts\start_windows.ps1 make-video --script D:/VideoSi/projects/video-ai/inputs/script.txt --title 旅行者一号
+.\scripts\start_windows.ps1 make-video --video 0001
+.\scripts\start_windows.ps1 storage report --video 0001
+```
+
+制作文件集中在 `D:/VideoSi/projects/video-ai/productions/0001-旅行者一号/`；正式成片、字幕、文案和发布记录独立保存在 `D:/VideoSi/output/video-ai/0001-旅行者一号/v001/`。修订记录由程序管理，交付版本按修订号组织，未发布修订可能使版本号跳号。
+
+正式发布后，确定不再需要原素材和进度返工时，先预览，再结束制作、清理：
+
+```powershell
+.\scripts\start_windows.ps1 storage close --video 0001 --dry-run
+.\scripts\start_windows.ps1 storage close --video 0001
+.\scripts\start_windows.ps1 storage clean --video 0001 --dry-run
+.\scripts\start_windows.ps1 storage clean --video 0001
+```
+
+`close` 将完整制作包归入 `D:/VideoSi/disposable/video-ai/completed/`；`clean --video 0001` 只删除这个视频的过程数据，保留所有正式交付版本。制作包清理后无法恢复原进度。仍有模型/邮件未决请求、进程占用或其他视频引用时拒绝结束制作。
+
+不指定 `--video` 的 `storage clean --dry-run` / `storage clean` 会预览/清理已结束视频以及已识别的共享缓存、下载和临时数据；活动测试会话与未分类测试/缓存目录保留。模型、工具、Python 环境、公共素材及现有旧版 runs 不自动删除。现有 cache 中的权重和基础解释器继续原位保护。
+
+双击入口也支持 `generate_video.cmd -Script 文案路径 -Title 视频名称`，续作用 `generate_video.cmd -Video 0001`。详细路径与旧数据归类见 [目录方案](docs/task-designs/storage-layout-design.md)。
+
+## 一键迁移到其他电脑
+
+在新电脑运行 [install_online.cmd](install_online.cmd)，或单独下载并执行 [install_online.ps1](scripts/install_online.ps1)。脚本联网下载项目源码、Python、工具、模型和公开参考音频，创建配置，完成后打开视频生成入口。目标电脑需要 Windows x64、D: 盘和兼容的 NVIDIA 显卡/驱动；以后双击 `D:\VideoSi\projects\video-ai\generate_video.cmd`。安装步骤、下载来源及断点续传说明见 [Windows 联网安装说明](docs/windows-online-install.md)。另有 [旧电脑拷贝方式](docs/windows-migration.md)，仅用于需要离线搬运的场景。
+
 ## 即梦段落视频：邮件选图、连续观察与发布
 
 `paragraph_jimeng_v1` 已接通官方候选图片、固定基准参考、QQ 邮件选图、Wan 连续片段、逐帧 RealESRGAN 超分和成片。每批图片、每个动态片段及最终影片都需实际查看并提交观察；最终观察通过后显式 `--publish` 才正式交付。完整操作和故障恢复见 [候选图片说明](docs/jimeng-candidates.md)，配置字段见 [配置说明](config/README.md)。

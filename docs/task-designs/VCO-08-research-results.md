@@ -1,8 +1,58 @@
 # VCO-08 LongCat 研究实录
 
-状态：**IN_PROGRESS**。用户对已验证读锁修复和独立新案例继续问题明确回复“继续完成当前任务”，已登记BLOCKED -> READY -> IN_PROGRESS。读锁修复部署到独立案例003，前两次失败冻结案保持。用户移除时间和内存占用上限的授权持续有效。合同为`docs/task-designs/VCO-08-design.md`；当前交接保留上次失败恢复历史。真实多窗、正式16fps生产及最终全库尚未通过。
+状态：**COMPLETED（2026-11-04）**。C四窗真实原生16fps资格及完整动态已接受，生产显式接入、当前源码独立五阶段资源/正常exporter和最终5326节点覆盖核对均已通过。时间及人工内存/显存占用配额移除，实际余量守卫保留。主五项Acceptance、最终收据和适用范围见[验收证据](VCO-08-production-verification.md)；[同任务记录](../task-handoffs/VCO-08-handoff.md)保留完整失败与接续历史。下文旧未通过/运行中/PID为历史，不作为当前任务状态。
+
+## 最终结项（2026-11-04）
+
+- 保留用户已接受的C四窗320帧/20秒原片和human_video review（SHA4beaf4ac），未重采样、重下权重或重编码已有文本。固定27源数值核心复用；生产封装实际13帧条件/RNG、schema4/观察、媒体/PCM/字幕、修订与旧模式兼容均有定向和完整CPU集成证据。
+- 唯一独立最终审查3 Important全部真实RED→GREEN。1768精确余项1754 PASS/14 FAIL由108 GREEN解决；659新增/受影响658 PASS/1 FAIL由21 GREEN解决。保留有效前缀并按5326唯一节点核对，未知0、未解决失败0，最终全部src/tests/scripts SHA一致；覆盖账C/regression-final-coverage.json SHA4afb0b07350ff1e1b6961539237ab16e8016217134369b94291ece77fcd05a67。
+- 当前生产资源根`D:/VideoSi/projects/video-ai/inputs/vco08-production-resource/c8da3bd7e9c2441cbb9594255a959a20`五阶段complete，worker23784/runner9324均真实exit0、resource_trigger=null，0新增采样/文本编码/视频输出；实际空闲资源阈值未降低、桌面应用未关闭。
+- 普通scripts/export_temporal_evidence.py导出独立生产准入C/production-native16-admission.json（185810字节，SHA1e56f31d5bb2c885342d250daaf9209bc38ff21383c9f3226cfbb30eac5c8d47），正常加载核对ready=true；其后逐节点核对工具也实际exit0。任务板现为COMPLETED，无后继任务或自动发布。
+- 视觉资格仍只覆盖单白鹭四窗320帧；其他题材和更长新链须自身完整观看。资源前向和fixture_only CPU影片不作为新生产视频视觉接受。
 
 ## 当前操作入口
+
+**C完整native16整链接受（2026-11-03 13:58+08记录）：** 用户对新320帧/20秒四窗视频的完整观看反馈回复“视频没问题，继续吧”。已重新核对原chain result/viewing SHA不变，保存`C/trial-001/chain-004/dynamic-review.json`，SHA `4beaf4aca19f19e1a5d1a4c28deddb525fd118a8c5e32d20891b0ed35440421f`，human_video、[0,320)接受。仅该单白鹭四窗资格整段，不外推任意题材/长度或未实现的生产接入。C/live-run.json已登记接受，原不可变result与technical-assessment初始unverified保留为历史。生产按既有Tasks1..7继续，无需逐步确认；先保留当前CPU回归的源码身份，原pytest8068/runner14148仍运行，已明确报告1722 PASS/0 FAIL（非最终计数）。不重启回归、不重做GPU、不新下载/文本编码。
+
+**原4375精确回归续跑（2026-11-03 12:56+08）：** GPU全部退出后，`check_final_regression_sources.py`实际核对原520份源，519不变/唯一timeout故障注入修复匹配已通过收据，0产品源码变化；精确4375列表SHA保持，source proof `6db413796bf028262f52eb83d7c3e5394ef4ddb49c7e3d49bd5410738f67aa68`（e16c92342b354308bdf0ba4bb7364bc8退出0）。仅启动一次受控后台runner14148/test wrapper9612/Python launcher21652/实际pytest8068，`-vv -rA @原列表`已collect4375，保留逐节点完整行，当前首个whole协议/超分/PCM/交付CPU集成仍在执行，无完成结论。启动与intent、stdout/stderr在C/regression-final-*；bootstrap日志`test-5f24febc8ece4f9aa24af2f5ffb5babc`，真实终态须completion/退出码/源码前后一致。无总时限、不重复751通过前缀，不并发GPU或修改src/tests/scripts。观看反馈问题待答，生产源码任务尚未开始。
+
+**C四窗技术完整、320帧整段待新动态反馈（2026-11-03 12:55+08）：** 第四窗原worker14808/supervisor9000于12:51:42+08退出0，4157.734秒，无资源停止，sample-complete/媒体已提交。`vco08-native16-window4-integrity-1b619720ea2b4cb79d213cef27ad2edb`退出0，全部artifact完整SHA及真实48层96个BF16 KV共4,076,863,488字节通过；result SHA `6da17c6c99f388566c49979115a88dd1b304973fa25ef0ad07629a1c7a37dc42`。实际接触图的边界parent final/raw12/raw13连续、单白鹭可辨；暗背景/后段绿色树线、主体左移和部分翼腿出框已记录为动态关注项。末窗screening SHA `550543b7c9998be7021a40592ee750f8ef624749cc08316cdb276d0b37c80d11`，allow_next=false只因没有后继。
+
+`assemble_chain.py --windows 4`退出0（e6103584e9ac41f6b2b5e9b4e142e144），真实保留93+80+80+67=320帧，768×432、16/1fps、20秒；三个边界93/173/253，末窗[13,80)保留、[80,93)裁尾仍保留原始证据，历史只输出一次，无混合/插帧/循环/补帧/变速。raw解码逐像素相同/MAE0；viewing有损MAE1.634917仅记录，不冒充色彩通过。`verify_chain_integrity.py`退出0（d87a8d0abe884a6684f6b6b5bacd56e3），逐窗口保留像素与完整链完全一致、全部链artifact SHA/来源/映射和既有完整KV收据绑定；chain/integrity SHA `0f6708185220c1c9e77344dba098aac2376a9573b486563800a1ab226b070274`。没有重扫前三窗KV或调用模型。
+
+整链result SHA `454ca48cd8febea79243dc6609dbb16d3913f8c3aba2f528df5c6dc4499bb7c4`；观看副本`C/trial-001/chain-004/viewing.mp4`，2,179,572字节/SHA `1a45636bd0fed6cabfbefa9afbc05402371a6f4fbf8faad4d0338fae583adeba`。已提供完整新20秒视频并发出human_video反馈问题，visual_acceptance仍unverified；旧native15接受不转录。当前无GPU采样，生产mode尚未实现，待新动态接受后按生产plan直接实施；同时准备原4375精确未完成回归，不重做已验证前缀。0新下载/文本编码/权重复制，四窗各仅一次真实采样，Q失败血缘保留。
+
+**C第三窗成功、第四窗已启动（2026-11-03 11:43+08）：** 恢复核实第三窗原worker3752/supervisor21912后持续监测，没有重启。第三窗03:40:49.959Z真实退出0，4161.422秒，无资源停止；sample先提交，随后解码/媒体全部完成。完整性日志`vco08-native16-window3-integrity-26ece37d78544e2abba0913d7249d007`退出0，全部artifact完整SHA、48层96个真实BF16 KV共4,076,863,488字节核验通过；result SHA `b763f56a29e7832d88b3ae48f2d4184c2ef41ed8301161305fab7ccd78534463`，13历史/80新增，累计253帧。实际查看contact-sheet：parent final/raw12/raw13姿态接近，单白鹭可辨，无明显静态硬切；后段显著变暗、主体左移及腿/翼贴边或出框已如实记录，完整动态仍unverified。screening SHA `69f063dd652bab4b4bf1234ec1f1ff1095401b143830842ff52d7fd3c3d6ec8a`，静态记录日志`vco08-native16-window3-static-28fd8734aca245abb85435450cbee5d3`退出0。
+
+按既有四窗授权于11:42:25+08仅启动第四窗一次：worker14808/supervisor9000/owner PowerShell8536，外层tool68092仅为启动脚本、不要求存活；worker日志`C/trial-001/window-004/worker-8807914e8c2540448b1a8ed274a09a11.log`，supervisor输出`C/background-window-004.stdout.log`。C/live-run.json为当前入口；无新下载/文本编码/权重复制/并行CPU测试。第四窗成功后核验93原生帧、仅保留[13,80)的67新增，再组装320帧20秒整段并取得新完整动态反馈。生产计划`VCO-08-production-native16-plan.md`补齐Tasks3..7及消费者/恢复/最终回归，仍未开始生产源码任务或启用mode。
+
+**C第二窗成功已核验、第三窗续跑（2026-11-03 10:36+08）：** 恢复先核实原进程与产物：第二窗worker29840于11-02 14:13:17+08真实退出0，4515.047秒，无资源停止，有sample-complete/result，未重启。11-03对其完整性/真实48层96个BF16 KV逐SHA核验通过（a6cc1a78851b4bea802cc7b93f7da02d退出0）；result SHA `8864c391d778155902120742591a43c5feecc9720e21c1ab241a56b19ac40b08`，actual KV4,076,863,488字节，13历史/80新增，链[93,173)，raw16fps/逐像素一致。实际联系图parent final/raw12/raw13无明显静态硬切，单白鹭/黄喙/黑腿可辨，后段翼/背景更亮及边界构图风险留完整动态。新screening SHA `72ecb2b3f9a5c497628f4f2c136ced078a4aa526510673e27e140f74af9315ef`（cb72c05aa1234fdf933fafe15c4d33d3退出0）。
+
+依原四窗持续授权，11-03 10:31:28+08仅启动C第三窗一次：worker3752/supervisor21912/owner PowerShell18948/tool13260；worker日志`C/trial-001/window-003/worker-7ae91c2f19014c2b83f21c942bee8f97.log`，bootstrap日志vco08-native16-supervised-window3-3bdec9e4450144feb52147dbf29f6599。现约3/50，commit空闲约18.16GB；原case起点跨日保持、null时限不重置，不重下/重编码/重采样前两窗，无并行CPU测试。第四窗、320帧完整技术/动态及生产接入仍待。生产接入调查提纲`VCO-08-native16-production-outline.md`仅保存候选架构，未添加生产mode。
+
+**C首窗真实成功、第二窗已启动（2026-11-02 13:00+08）：** C首窗worker20888/supervisor5444于12:56:45退出0，4263.735秒，50/50完成；latent先提交后解码/媒体全部成功，无资源停止。result SHA `849ff142563d9882c323f77aceae4277ee6c92672303a97419c925d7b172f3c3`，sample SHA `7b25938ee583bf668e0a7a99736211dbfe8f3fed3eab97a7898dbd589d4bf902`。原生93帧、768×432、16/1fps、93/16秒，raw逐像素一致。全部artifact完整SHA及父链/终态/映射核验通过（日志vco08-async-native16-window1-integrity-128170f7ddb94da8bcf9b672822e407c）。这是该案例首窗通过，不泛化为全部资源/视频通过。
+
+已实际查看contact-sheet的参考及raw0/12/31/46/62/77/92：单只白鹭、黄喙、黑腿可辨；raw0接近原选图。曝光后段变亮/背景变浅，主体横向位置与大小有变化，部分翼尖/腿到达边缘，保留为完整链动态风险；不从静帧推断平滑运动。实际notes/完整性/结果绑定screening SHA `2d1cfdf2bdb556b7c909988e5ef012e88ef48efc7c0233ea2ab528666ddb7236`，allow_next=true，未新建首窗动态接受（cf5869428daa4e3cb256e84f89145c00退出0）。
+
+按用户已授权四窗，12:58:02+08仅启动C第二窗一次，worker29840/supervisor28792/owner PowerShell30652/tool69039；worker日志`C/trial-001/window-002/worker-a2a25814540b49ebb54539feb088bf0f.log`，bootstrap日志vco08-native16-supervised-window2-d7cbdfd13c034c9b83248d89ef4b6e31。第二窗将取父原生最后13帧，实际clean KV/80新增及后两窗/整链动态仍待。无CPU测试、不重启首窗、不新增下载/编码/权重复制；C/live-run.json及主handoff已更新活动入口。
+
+**独立有修复续验C首窗运行（2026-11-02 11:47+08）：** C完整实际五阶段探针session3407退出0，结果full-dit-resource-probe-aa11914616454c7eacf07cfebf07e1a0.json，约211.2秒，最低commit6,267,060,224/物理13,692,510,208/磁盘53,025,984,512字节，GPU peak reserved8,187,281,408（Q13,281,263,616）；0scheduler/视频。独立review唯一Important为layout先导入Torch导致backend断言；真实入口RED3989d682→启动Python前设置两allocator环境后GREEN1d103b20，27冻结源码未改。final-admission375c86c8941c4fd1ac12fbe9b6a571d0退出0；C/proposal.json、candidate.patch、资源/布局/缓存/失败血缘完整。精确96个probe scratch叶文件4,076,863,488字节释放，48元数据/逐SHA收据保留，实际窗口无修改。清理后实际disk free162,032,922,624字节，除本操作4,076,863,488字节外的变化来源未归因。
+
+明确裁决：用户已直接授权“按建议直接推进，无需逐步确认”及持续完成任务，对已具体化/实测的资源修复以独立身份继续同规格四窗；不复用/清除Q失败intent，不换seed/题材/规格重抽，不降低余量守卫，不将此授权泛化为无限盲目试验。原Q失败及新增计算均明记，C当前实际native16累计前有1个失败采样；完整裁决与错误代价在资格plan。11:45:42+08仅启动C首窗一次，worker20888/supervisor5444/owner PowerShell7252/tool2444；worker日志`C/trial-001/window-001/worker-3125b5665e38449695f9025a5b0bb873.log`，bootstrap日志vco08-native16-supervised-window1-397ff5ba403f481dbeec87e0c05a15fd。C/live-run.json为当前入口。0/50已进入采样，无CPU测试，无新下载/编码/权重复制；尚无视频/动态通过或生产启用。
+
+**Q首窗资源停止、独立候选仅预检（2026-11-02 11:32+08）：** Q首窗14/50后于11:13:18被supervisor以commit_reserve终止，worker8684退出1，1225.063秒；无sample-complete/成功latent/媒体/result，stage2未启动，不能decode-only或重新采样。intent SHA `5e902c9e1872153b6a3c19cbb65b55dfaf7c7ffd2d9f7067afcfe3bda81eb9f2`，真实失败观察`Q/trial-001/window-001/failure-observation.json`，27冻结源逐项未变。最后worker资源记录11:13:17.658为commit15,522,263,040字节，监督器未保存触发瞬间的具体低值，不能将上一秒记录当作停止值或推造压力来源。
+
+事后独立GlobalMemoryStatusEx与GetPerformanceInfo均记录系统commit限额35,493,629,952字节、可用18,115,952,640字节、历史peak31,472,041,984字节；当前Job flags12288且process/job memory limit均未启用。该快照不能重建停止瞬间，也不证明特定应用导致。原4GiB空闲guard仍有效，不将本次停止归为人工占用配额或OOM。日志vco08-native16-post-stop-commit-inspection-3bd7dc81c80847358f323211188b8a7c。
+
+模型无关的原官方随机FFN全token shape分配器比较（0权重/文本/扩散/视频调用）：native128与cudaMallocAsync各3次，输出SHA均`5a64e192b13588b274447f003d192e50c24b74df4ad4a614f350d22a9e03f542`；GPU reserved峰值7,027,556,352→6,476,005,376字节，最低commit8,642,658,304→8,910,516,224字节。只是合成机制证据，不外推全模型数值或真实窗口通过。原始日志dcfafc0d036e4ba387ff108099e79aab/90c680c69cea4526b93f6e40d46ad426。
+
+独立C=`Q/allocator-async-candidate-v1`保留原失败血缘，case SHA `66ab2b4eaf48fc1adde81e8319c0384a33c93b7022baf5fd438bf832317077d0`、27源软件SHA `637d88ff64441e241d922585a4ca16cd279b7c0fe70575dea328083ed1302e93`。仅worker/完整probe换异步allocator并核对实际backend、resource门禁绑定backend、supervisor增存触发时原mem快照；数值/shape/提示/步数/所有余量门槛不改。backend选择、错backend拒绝、真实supervisor fixture保存3GiB触发/4GiB门槛均实际RED→GREEN，无CUDA/模型；0新下载/编码/权重复制。C完整真实五阶段资源预检session3407运行中，日志vco08-async-candidate-full-resource-preflight-6b458b9473bd42159601bdb61664dd74；独立增量只读review进行中。尚无新视频采样，不重启Q。后续新的真实视频案例须按失败停止规则明确技术复验范围，不以候选预检冒充通过。
+
+**Q首窗真实运行（2026-11-02 10:54+08）：** 会话中断恢复后，native33919不可用、pytest41072/launcher28172均不存在，原日志无终态或可恢复完成标记；`M/regression-remaining-interruption.json`保留观察事实，不补造4375项通过。旧751通过及timeout修复5项GREEN仍保留，未知余项留至软件收尾。当前无CPU测试，直接推进用户已授权Q，不重做native15。
+
+Q五阶段真实新shape资源探针session59052退出0，211.4秒，结果`full-dit-resource-probe-d9165fba1ae8445f861090cf92d1a1a0.json` complete=true；最低commit5,278,523,392/物理18,981,482,496/磁盘53,038,338,048字节，actual clean KV4,076,863,488、VAE encode[1,16,4,54,96]/decode[93,432,768,3]均新规格。layout278084d296ff4d228725e5d36d125a41、final-admission b2f07be49368407aa836b9cc5112a2d5退出0；27执行源/11官方源/模型/文本/案例/资源/布局一致。仅已退出无采样资源探针的96个scratch KV叶文件逐SHA核对后释放4,076,863,488字节，48元数据及清理intent/完成收据保持，实际窗口0修改，磁盘57,114,968,064字节。所有模型/文本复用，0下载/编码/权重复制。
+
+10:52:53+08仅启动一次Q首窗，worker8684、supervisor3144、owner PowerShell3192，tool session54147；bootstrap日志`vco08-native16-supervised-window1-af791da7f0b649eb903d3ef0e6630322`，worker日志`Q/trial-001/window-001/worker-fb0824f3f2474562a6eb13e746b4ab7f.log`。外层Start-Process Hidden及launch-intent/owner起点/日志持久化，原27冻结源不改；工具会话丢失时先核实原进程和产物，不自动重新启动。0/50已进入采样，时间/人工占用配额仍null、实际空闲守卫保持；真实视频技术/静态/完整动态仍待，生产尚未启用。
 
 **native15整链接受、native16直接推进（2026-11-02 10:32+08）：** 用户明确指出`M/trial-001/chain-003/viewing.mp4`“这个视频没有问题”，依完整观看问题上下文记录human_video接受，`chain-003/dynamic-review.json` SHA `d31def417863db56f4f9e1487820f364ba66ecd6994c8ae2f9de80033a7dda43`；`M/native15-research-assessment.json`绑定技术/完整动态/适用单例，不改原不可变result的初始unverified。用户另对原生worker768×432/16fps/320帧路线明确回复“按建议直接推进，无需逐步确认”，授权收据`M/native16-route-authorization.json`，不再等待同一批准。研究接受不等于新16fps视频或生产启用。
 

@@ -137,6 +137,8 @@ def _proof_covers(full, required):
 
 
 def media_checks_covered(store):
+    from ._temporal_media_check_coverage import native_media_checks_covered
+    if native_media_checks_covered(store):return True
     certificate = getattr(store, '_media_check_coverage', None)
     return type(certificate) is _Coverage and certificate.applies(store)
 
@@ -174,6 +176,9 @@ class _Coverage:
 def capture_media_check_coverage(store, callback, *, maximum_files=32768,
                                  maximum_inventory_entries=65536):
     """Return a certificate only after successful live subset validation."""
+    from ._temporal_media_check_coverage import known_temporal_execution,capture_native_media_check_coverage
+    if known_temporal_execution(getattr(store,'execution_guard',None)):
+        return capture_native_media_check_coverage(store,callback,maximum_files=maximum_files,maximum_inventory_entries=maximum_inventory_entries)
     tag = getattr(callback, '_ready_media_byte_guard', None)
     execution = getattr(store, 'execution_guard', None)
     revision = None if store.revision_context is None else store.revision_context.get('guard')

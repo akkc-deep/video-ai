@@ -39,7 +39,10 @@ def media_declaration(frozen,path):
     scope=_scope.get()
     if scope is None or scope['identity']!=canonical_digest(frozen.options):return None
     run=Path(frozen.options['script_path']).parent.parent;path=Path(path)
-    if not path.is_relative_to(run) or path.suffix.lower() not in ('.png','.mp4'):return None
+    if not path.is_relative_to(run):return None
+    native=_native_media_declaration(scope,run,path)
+    if native is not None:return native
+    if path.suffix.lower() not in ('.png','.mp4'):return None
     parts=path.relative_to(run).parts;cid=None
     if len(parts)>=4 and parts[:2]==('production','scene-clips'):cid=parts[2]
     elif len(parts)>=6 and parts[0]=='comfy' and parts[1] in ('input','output') and parts[2:4]==(run.name,'scene_clips'):cid=parts[4]
@@ -63,6 +66,59 @@ def media_declaration(frozen,path):
                     declarations[media['path']]=deepcopy(media)
         scope['declarations'][cid]=declarations
     return deepcopy(scope['declarations'][cid].get(str(path)))
+
+
+def _native_media_declaration(scope,run,path):
+    """Read declared binaries only for explicitly discarded native content.
+
+    JSON transaction/review evidence is always read and verified normally.
+    Required source clips, and callers outside the revision scope, cannot use
+    this path to admit missing media.
+    """
+    if path.suffix.lower() not in ('.png','.mp4','.npy','.safetensors','.bf16','.bin'):return None
+    parts=path.relative_to(run).parts
+    if len(parts)<4 or parts[:2]!=('production','scene-clips'):return None
+    if parts[2]=='chains':
+        if len(parts)<5:return None
+        folder=run/'production/scene-clips/chains'/parts[3]
+        record=folder/'result.json'
+        if not record.is_file():return None
+        value=_json(record,root=run)
+        if value.get('algorithm')!='longcat_native_scene_chain_v1':return None
+        clips={row['clip_id'] for row in value['windows']}
+        if not clips or not clips<=scope['known'] or clips&scope['required']:return None
+        records=[value]
+    else:
+        cid=parts[2]
+        if cid not in scope['known'] or cid in scope['required']:return None
+        folder=run/'production/scene-clips'/cid
+        request_path=folder/'request.json'
+        if not request_path.is_file():return None
+        request=_json(request_path,root=run)
+        if request.get('protocol')!='longcat_native16_v1' or request.get('clip_id')!=cid:return None
+        records=[request]
+        for name in ('input.json','sample-complete.json','native-result.json','kv-manifest.json'):
+            record=folder/name
+            if record.is_file():records.append(_json(record,root=run))
+    declarations={}
+    def visit(value):
+        if isinstance(value,dict):
+            if {'path','bytes','sha256'}<=set(value):
+                bound={key:value[key] for key in ('path','bytes','sha256')}
+                safe_path(bound['path'],run)
+                previous=declarations.get(bound['path'])
+                if previous is not None and previous!=bound:raise ProductionRefused('native media declarations conflict')
+                declarations[bound['path']]=bound
+            else:
+                for child in value.values():visit(child)
+        elif isinstance(value,list):
+            for child in value:visit(child)
+    # Workflow/admission/cache entries can refer outside the run; only the
+    # actual native input and result artifact declarations belong here.
+    for value in records:
+        for key in ('input','source','snapshot','sample','generator','artifacts','layers'):
+            if key in value:visit(value[key])
+    return deepcopy(declarations.get(str(path)))
 
 
 def declared_observation_media(run,value):

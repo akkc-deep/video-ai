@@ -1,5 +1,6 @@
 """Prepare a new frozen scene revision without changing or running its origin."""
 from copy import deepcopy
+from contextlib import ExitStack, nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
@@ -15,6 +16,7 @@ from .production_state import ArtifactStamp, ProductionRefused, RunLock, json_by
 from .scene_revision_records import (artifact, safe_path, stable_bytes, token, _json,
     validate_revision_structure, require_scene_revision,revision_validation)
 from ._scene_revision_copy import RevisionStore, copy_identity
+from .verification import whole_input_protection, validation_session, writable_validation_session
 
 
 def boundary(point):
@@ -77,6 +79,10 @@ def configuration_identity(config, *, image_model=None, reference_sha=None):
             evidence=load_whole_scene_evidence(config.raw['scene_rendering']['whole_scene_evidence'])
             options['execution_policy']['input_identities']['whole_scene_evidence']=evidence['root']
             verify_current_environment(SimpleNamespace(config=config,options=options),evidence)
+        elif config.raw['scene_rendering'].get('mode')=='temporal_extension_v1':
+            from .temporal_scene_admission import load_temporal_evidence
+            evidence=load_temporal_evidence(config.raw['scene_rendering']['temporal_evidence'])
+            options['execution_policy']['input_identities'].update(temporal_evidence=evidence['root'],temporal_runtime_bundle=evidence['value']['runtime_bundle'])
     return identity_from_options(options,reference_settings_sha256=reference_sha)
 
 
@@ -92,13 +98,22 @@ def _target_configuration(source,target,request):
     voice_path = target/'production/scene-revision/voice-source.json'
     voice = load_voice_config(voice_path,raw=voice_raw)
     raw = thaw(source.options['config_snapshot']['raw'])
+    workflows=thaw(source.config.workflows)
+    if raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1':
+        # Frozen runtime workflows contain only active roles. Keep inactive
+        # settings parseable without admitting, copying or reading their files.
+        inherited={role:str((source.config.config_file.parent/Path(value)).resolve())
+            for role,value in raw['workflows'].items()}
+        workflows=dict(inherited,**workflows)
     raw.update(voice_config=str(voice_path),tools=thaw(source.config.tools),models=thaw(source.config.models),
-               workflows=thaw(source.config.workflows))
+               workflows=workflows)
     raw['media']['font_file'] = str(source.config.media.font_file)
     if 'scene_rendering' in raw:
         raw['scene_rendering']['prompt_contract'] = source.options['execution_policy']['input_identities']['scene_video_prompts']['path']
         if raw['scene_rendering'].get('mode') == 'whole_scene_v1':
             raw['scene_rendering']['whole_scene_evidence'] = source.options['execution_policy']['input_identities']['whole_scene_evidence']['path']
+        elif raw['scene_rendering'].get('mode')=='temporal_extension_v1':
+            raw['scene_rendering']['temporal_evidence']=source.options['execution_policy']['input_identities']['temporal_evidence']['path']
     if raw.get('reference_capabilities') is not None:
         # Preserve validated capability bytes already frozen by the source.
         for key in raw['reference_capabilities']:
@@ -147,8 +162,9 @@ def _image_terminal(source,scene,bible,plan,intent_path):
     from .production_state import timestamp
     folder=intent_path.parent;run=folder.parents[3]
     request=_json(folder/'request.json',root=run);identity=canonical_digest(request)
+    from .scene_image_prompts import effective_image_prompt
     expected=dict(schema_version=2,run_id=run.name,scene_id=scene['scene_id'],
-        request_id=folder.name,prompt=scene['image_prompt'],image_generation=thaw(source.config.image_generation))
+        request_id=folder.name,prompt=effective_image_prompt(source,scene),image_generation=thaw(source.config.image_generation))
     if scene['reference_bindings']:
         from .reference_settings import load_reference_settings
         from .reference_image_records import validate_reference_inputs,validate_reference_intent,validate_submit_evidence
@@ -200,7 +216,11 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
     parents = {};media_context=None;extractions={}
     for budget in source_clips:
         cid = budget['clip_id']; record = None
-        if proof is not None and 'clip:'+cid in proof['imports']:
+        if context is not None and (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+            row=next(r for r in context['rows'] if r['budget']['clip_id']==cid)
+            record=validate_clip(context,row,parents.get(budget['parent_clip_id']))
+            if record is not None and record['accepted'] is not None and record['rejected'] is None:parents[cid]=record
+        elif proof is not None and 'clip:'+cid in proof['imports']:
             from ._scene_revision_readers import inherited_clip_record
             record=inherited_clip_record(source,cid,context=proof)
             parents[cid]=record
@@ -219,7 +239,8 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
             from .scene_clip_records import graph_for
             terminal_row=next(r for r in context['rows'] if r['budget']['clip_id']==cid)
             terminal=validate_scene_terminal(context['store'],context['store'].read(folder/'request.json'),graph_for(context,terminal_row))
-        if (folder/'intent.json').exists() and record is None and terminal is None:
+        if (not (context is not None and (context.get('execution') or {}).get('mode')=='temporal_extension_v1')
+                and (folder/'intent.json').exists() and record is None and terminal is None):
             effects.append(dict(node='clips:'+cid,intent_sha256=canonical_digest(read_json(folder/'intent.json')),
                 status='running' if (folder/'accepted.json').exists() else 'unknown'))
         for i in range(budget['retained_frames']):
@@ -246,6 +267,9 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
             if (frame_folder/'intent.json').exists() and value is None and terminal is None:
                 effects.append(dict(node='upscale:'+fid,intent_sha256=canonical_digest(read_json(frame_folder/'intent.json')),
                     status='running' if (frame_folder/'accepted.json').exists() else 'unknown'))
+    if context is not None and (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .temporal_native_process import native_revision_effects
+        effects.extend(native_revision_effects(context,{value['clip_id']:value['record'] for value in clips}))
     for scene in plan['scenes']:
         for intent in (run/'production/jimeng'/scene['scene_id']).glob('request_*/intent.json'):
             terminal=_image_terminal(source,scene,bible,plan,intent) if intent.with_name('terminal.json').exists() else None
@@ -309,134 +333,151 @@ def _dependencies(domain,key,plan,existing,*,execution_clips=None):
 def create_scene_revision(source_run,request_path):
     source_id = None; target = None
     try:
-        from .production_inputs import load_frozen_inputs,freeze_inputs,revision_freeze_scope
-        from ._scene_revision_origins import capture_origin,make_import_view
-        source_run = validate_run_dir(source_run)
-        source = load_frozen_inputs(source_run)
-        if source.config.production_strategy!=STRATEGY: raise ProductionRefused('revision requires scene strategy')
-        source_id = source_run.name
-        if (source_run/'.make-video.lock').exists(): raise ProductionRefused('source has a write lock; resolve it in original run')
-        options_bound = artifact(source_run/'production/options.json',root=source_run)
-        request_path = Path(request_path)
-        raw = stable_bytes(request_path,root=request_path.parent)
-        from ..adapters.common import strict_json
-        request = strict_json(raw.removeprefix(b'\xef\xbb\xbf'))
-        from ..planning.scene_revision import REQUEST_FIELDS
-        object_fields(request,REQUEST_FIELDS,'revision request')
-        if request['source_options_sha256'] != options_bound['sha256']: raise ProductionRefused('revision source options SHA differs')
-        revision_id = UUID(request['revision_id'])
-        if str(revision_id)!=request['revision_id']: raise ProductionRefused('canonical revision UUID required')
-        date = datetime.fromisoformat(request['requested_at'])
-        if date.tzinfo is None or date>datetime.now(timezone.utc): raise ProductionRefused('invalid revision timestamp')
-        preliminary = load_config(Path(request['config_path'])) if request['kind']=='reconfigure' else source.config
-        name = date.astimezone(timezone.utc).strftime('%Y%m%d-%H%M%S')+'-'+revision_id.hex[:12]
-        candidate = preliminary.project_root/'runs'/name
-        safe_path(candidate,preliminary.project_root/'runs'); validate_run_dir(candidate)
-        if candidate.is_relative_to(source_run) or source_run.is_relative_to(candidate):
-            raise ProductionRefused('revision target overlaps the read-only source')
-        config,config_raw,voice_raw = _target_configuration(source,candidate,request)
-        if request['output_path'] is not None:
-            from .production_inputs import output_paths
-            targets=output_paths(config,candidate,request['output_path'],check_existing=False)
-            if set(targets.values()) & set(source.options['output_paths'].values()):
-                raise ProductionRefused('revision output must not reserve an original source output path')
-        from ..selection_config import parse_selection_email
-        old_email = parse_selection_email(source.config.raw.get('selection_email'))
-        new_email = parse_selection_email(config.raw.get('selection_email'))
-        if (old_email.sender,old_email.recipient)!=(new_email.sender,new_email.recipient): raise ProductionRefused('revision cannot change confirmed email addresses')
-        from ._scene_revision_reference import source_reference_context,target_reference_digest
-        source_reference=source_reference_context(source)
-        source_reference_sha=source_reference['digest'] if source_reference is not None else None
-        from dataclasses import replace
-        from types import SimpleNamespace
-        effective_image=override_image_model(config.image_generation,request['image_model'] or source.options.get('image_model_override'))
-        reference_target=SimpleNamespace(config=replace(config,image_generation=effective_image),options={})
-        reference_sha=target_reference_digest(reference_target,source_reference)
-        identity = configuration_identity(config,image_model=request['image_model'] or source.options.get('image_model_override'),reference_sha=reference_sha)
-        snapshot = _snapshot(source,target_config=config,reference_sha=source_reference_sha,request=request,target_identity=identity)
-        invalidation = plan_scene_revision(snapshot,request,identity)
-        if invalidation['blocked_effects']: raise ProductionRefused('original paid effects unknown/running; reconcile original run first')
-        if request['kind']=='reselect_images':
-            from .image_selection_records import _candidates
-            for choice in request['choices']:
-                scene = next(s for s in snapshot['scene_plan']['scenes'] if s['scene_id']==choice['scene_id'])
-                _,candidates = _candidates(source,scene,source_run/'production/jimeng'/choice['scene_id']/'candidates.json')
-                if not any(all(c[k]==choice[k] for k in ('candidate_id','sha256')) for c in candidates): raise ProductionRefused('reselection candidate is not original completed result')
-        # Validate all reusable origins before target allocation or media copying.
-        nodes = _import_order(snapshot['scene_plan'],invalidation,reference_sha is not None and reference_sha==source_reference_sha)
-        captures = {(d,k):capture_origin(source,d,k) for d,k in nodes}
-        for captured in captures.values(): captured['guard'].verify_captured_bytes()
-        if artifact(source_run/'production/options.json',root=source_run)!=options_bound: raise ProductionRefused('source options changed')
-        if stable_bytes(request_path,root=request_path.parent)!=raw: raise ProductionRefused('revision request changed')
-        existed = candidate.exists()
-        if existed and not (candidate/'production/scene-revision/intent.json').is_file(): raise ProductionRefused('unowned revision target exists')
-        candidate.mkdir(parents=True,exist_ok=True); target = candidate
-        with RunLock(target) as held:
-            store = RevisionStore(target,held)
-            from ._scene_revision_copy import preflight_copies
-            allowed={str(store.root/'copy-ready'/token(d,k)/(role+'.json')) for (d,k),value in captures.items() for role,_ in value['media']}
-            preflight_copies(store.root,target.name,expected=allowed);store.copies_preflighted=True
-            source_request = dict(path=str(store.path('request.json')),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
-            intent = dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,revision_id=str(revision_id),
-                source_run_id=source_id,source_run_dir=str(source_run),source_options=options_bound,request=source_request,
-                target_identity=identity,invalidation=invalidation,created_at=request['requested_at'])
-            store.save('intent.json',intent); boundary('intent')
-            store.image('request.json',raw)
-            if config_raw is not None:
-                store.image('config-source.json',config_raw); store.image('voice-source.json',voice_raw)
-            imports,existing,common_view = [],{},None
-            for domain,key in nodes:
-                iid = domain+':'+key; capture = captures[domain,key]
-                dependencies = _dependencies(domain,key,snapshot['scene_plan'],existing,
-                    execution_clips=snapshot.get('scene_execution',{}).get('clips'))
-                mappings = []
-                for role,original in capture['media']:
-                    local = copy_identity(store,iid,domain,key,role,original,guard=capture['guard'])
-                    mappings.append(dict(role=role,source=original,target=local))
-                view = make_import_view(target,domain,key,capture['value'],mappings,common_view=common_view)
-                view_path = store.save(Path('views')/domain/(token(domain,key)+'.json'),view); boundary('view')
-                sidecar = dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,import_id=iid,domain=domain,key=key,
-                    source_run_id=source_id,source_options_sha256=options_bound['sha256'],source_identity_sha256=canonical_digest(capture['value']),
-                    dependency_import_ids=dependencies,source_json_snapshot=capture['snapshot'],raw_files=capture['raw_files'],
-                    source_artifacts=[v for _,v in capture['media']],local_artifacts=mappings,view=view,
-                    view_sha256=canonical_digest(view),view_artifact=artifact(view_path,root=store.root),created_at=request['requested_at'])
-                path = store.save(Path('imports')/(token(domain,key)+'.json'),sidecar); boundary('import')
-                imports.append(artifact(path,root=store.root)); existing[iid] = sidecar
-                if domain=='common': common_view = view
-            for capture in captures.values(): capture['guard'].verify_captured_bytes()
-            index = store.save('imports.json',dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,revision_id=str(revision_id),imports=imports))
-            invalidation_path = store.save('invalidation.json',invalidation); boundary('imports')
-            commit = {k:v for k,v in intent.items() if k!='invalidation'}
-            commit.update(invalidation=artifact(invalidation_path,root=store.root),imports=artifact(index,root=store.root))
-            commit_path = store.save('commit.json',commit); boundary('commit')
-            commit_bound = artifact(commit_path,root=store.root)
-            if configuration_identity(config,image_model=request['image_model'] or source.options.get('image_model_override'),reference_sha=reference_sha)!=identity:
-                raise ProductionRefused('target identity changed before freezing')
-            with revision_freeze_scope(store):
-                frozen = freeze_inputs(config,target,text=source.script.text,
-                    raw_script_bytes=stable_bytes(source.options['script_path'],root=source_run),
-                    image_model=request['image_model'] or source.options.get('image_model_override'),
-                    cpu_planner=source.options['cpu_planner'],output_path=request['output_path'],scene_revision=commit_bound)
-            if target_reference_digest(frozen,source_reference)!=reference_sha:
-                raise ProductionRefused('target reference identity changed while freezing')
-            boundary('options')
-            validate_revision_structure(frozen.options,target); require_scene_revision(frozen)
-            if (frozen.config.raw.get('scene_rendering',{}).get('mode') is not None
-                    and 'all' in invalidation['reusable']['common'] and 'all' in invalidation['reusable']['plan']):
-                # Establish a new target budget only after imported semantic inputs
-                # exist. An intermediate revision can then be revised without video.
-                from .scene_revision_records import load_scene_common_prefix
-                from .image_selection_records import load_committed_plan
-                from .scene_execution_records import ensure_scene_execution
-                target_units,target_timeline=load_scene_common_prefix(frozen)
-                _,target_plan=load_committed_plan(frozen,target_units,target_timeline)
-                ensure_scene_execution(frozen,target_plan,target_timeline,lock=held)
-            for capture in captures.values(): capture['guard'].verify_captured_bytes()
-            store.save('ready.json',dict(schema_version=2,run_id=target.name,revision_id=str(revision_id),commit=commit_bound,
-                options=artifact(target/'production/options.json',root=target),created_at=frozen.options['created_at']))
-            boundary('ready')
-        return SceneRevisionResult(source_run_id=source_id,run_id=target.name,run_dir=target,status='revision_ready',
-            revision_commit=commit_path,log_dir=target/'logs/production')
+        with ExitStack() as invocation:
+            from .production_inputs import load_frozen_inputs,freeze_inputs,revision_freeze_scope
+            from ._scene_revision_origins import capture_origin,make_import_view
+            source_run = validate_run_dir(source_run)
+            from .storage import managed_lease
+            invocation.enter_context(managed_lease(source_run))
+            source = load_frozen_inputs(source_run)
+            native_mode=source.config.raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
+            if native_mode:
+                invocation.enter_context(whole_input_protection())
+                invocation.enter_context(validation_session())
+            if source.config.production_strategy!=STRATEGY: raise ProductionRefused('revision requires scene strategy')
+            source_id = source_run.name
+            if (source_run/'.make-video.lock').exists(): raise ProductionRefused('source has a write lock; resolve it in original run')
+            options_bound = artifact(source_run/'production/options.json',root=source_run)
+            request_path = Path(request_path)
+            raw = stable_bytes(request_path,root=request_path.parent)
+            from ..adapters.common import strict_json
+            request = strict_json(raw.removeprefix(b'\xef\xbb\xbf'))
+            from ..planning.scene_revision import validate_revision_request_fields
+            validate_revision_request_fields(request)
+            if request['source_options_sha256'] != options_bound['sha256']: raise ProductionRefused('revision source options SHA differs')
+            revision_id = UUID(request['revision_id'])
+            if str(revision_id)!=request['revision_id']: raise ProductionRefused('canonical revision UUID required')
+            date = datetime.fromisoformat(request['requested_at'])
+            if date.tzinfo is None or date>datetime.now(timezone.utc): raise ProductionRefused('invalid revision timestamp')
+            preliminary = load_config(Path(request['config_path'])) if request['kind']=='reconfigure' else source.config
+            name = date.astimezone(timezone.utc).strftime('%Y%m%d-%H%M%S')+'-'+revision_id.hex[:12]
+            from .storage import revision_target, managed_location
+            candidate = revision_target(source_run,str(revision_id))
+            if candidate is None:
+                candidate = preliminary.project_root/'runs'/name
+                safe_path(candidate,preliminary.project_root/'runs')
+            validate_run_dir(candidate)
+            if candidate.is_relative_to(source_run) or source_run.is_relative_to(candidate):
+                raise ProductionRefused('revision target overlaps the read-only source')
+            config,config_raw,voice_raw = _target_configuration(source,candidate,request)
+            if request['output_path'] is not None:
+                from .production_inputs import output_paths
+                targets=output_paths(config,candidate,request['output_path'],check_existing=False)
+                if set(targets.values()) & set(source.options['output_paths'].values()):
+                    raise ProductionRefused('revision output must not reserve an original source output path')
+            from ..selection_config import parse_selection_email
+            old_email = parse_selection_email(source.config.raw.get('selection_email'))
+            new_email = parse_selection_email(config.raw.get('selection_email'))
+            if (old_email.sender,old_email.recipient)!=(new_email.sender,new_email.recipient): raise ProductionRefused('revision cannot change confirmed email addresses')
+            from ._scene_revision_reference import source_reference_context,target_reference_digest
+            source_reference=source_reference_context(source)
+            source_reference_sha=source_reference['digest'] if source_reference is not None else None
+            from dataclasses import replace
+            from types import SimpleNamespace
+            effective_image=override_image_model(config.image_generation,request['image_model'] or source.options.get('image_model_override'))
+            reference_target=SimpleNamespace(config=replace(config,image_generation=effective_image),options={})
+            reference_sha=target_reference_digest(reference_target,source_reference)
+            identity = configuration_identity(config,image_model=request['image_model'] or source.options.get('image_model_override'),reference_sha=reference_sha)
+            snapshot = _snapshot(source,target_config=config,reference_sha=source_reference_sha,request=request,target_identity=identity)
+            invalidation = plan_scene_revision(snapshot,request,identity)
+            if invalidation['blocked_effects']: raise ProductionRefused('original paid effects unknown/running; reconcile original run first')
+            if request['kind']=='reselect_images':
+                from .image_selection_records import _candidates
+                for choice in request['choices']:
+                    scene = next(s for s in snapshot['scene_plan']['scenes'] if s['scene_id']==choice['scene_id'])
+                    _,candidates = _candidates(source,scene,source_run/'production/jimeng'/choice['scene_id']/'candidates.json')
+                    if not any(all(c[k]==choice[k] for k in ('candidate_id','sha256')) for c in candidates): raise ProductionRefused('reselection candidate is not original completed result')
+            # Validate all reusable origins before target allocation or media copying.
+            nodes = _import_order(snapshot['scene_plan'],invalidation,reference_sha is not None and reference_sha==source_reference_sha)
+            captures = {(d,k):capture_origin(source,d,k) for d,k in nodes}
+            for captured in captures.values(): captured['guard'].verify_captured_bytes()
+            if artifact(source_run/'production/options.json',root=source_run)!=options_bound: raise ProductionRefused('source options changed')
+            if stable_bytes(request_path,root=request_path.parent)!=raw: raise ProductionRefused('revision request changed')
+            existed = candidate.exists()
+            managed_owned = managed_location(candidate) is not None
+            if existed and not managed_owned and not (candidate/'production/scene-revision/intent.json').is_file(): raise ProductionRefused('unowned revision target exists')
+            candidate.mkdir(parents=True,exist_ok=True); target = candidate
+            with RunLock(target) as held, (writable_validation_session(target) if native_mode else nullcontext()):
+                store = RevisionStore(target,held)
+                from ._scene_revision_copy import preflight_copies
+                allowed={str(store.root/'copy-ready'/token(d,k)/(role+'.json')) for (d,k),value in captures.items() for role,_ in value['media']}
+                preflight_copies(store.root,target.name,expected=allowed);store.copies_preflighted=True
+                source_request = dict(path=str(store.path('request.json')),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+                intent = dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,revision_id=str(revision_id),
+                    source_run_id=source_id,source_run_dir=str(source_run),source_options=options_bound,request=source_request,
+                    target_identity=identity,invalidation=invalidation,created_at=request['requested_at'])
+                store.save('intent.json',intent); boundary('intent')
+                store.image('request.json',raw)
+                if config_raw is not None:
+                    store.image('config-source.json',config_raw); store.image('voice-source.json',voice_raw)
+                imports,existing,common_view = [],{},None
+                for domain,key in nodes:
+                    iid = domain+':'+key; capture = captures[domain,key]
+                    dependencies = _dependencies(domain,key,snapshot['scene_plan'],existing,
+                        execution_clips=snapshot.get('scene_execution',{}).get('clips'))
+                    mappings = []
+                    for role,original in capture['media']:
+                        local = copy_identity(store,iid,domain,key,role,original,guard=capture['guard'])
+                        mappings.append(dict(role=role,source=original,target=local))
+                    view = make_import_view(target,domain,key,capture['value'],mappings,common_view=common_view)
+                    view_path = store.save(Path('views')/domain/(token(domain,key)+'.json'),view); boundary('view')
+                    sidecar = dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,import_id=iid,domain=domain,key=key,
+                        source_run_id=source_id,source_options_sha256=options_bound['sha256'],source_identity_sha256=canonical_digest(capture['value']),
+                        dependency_import_ids=dependencies,source_json_snapshot=capture['snapshot'],raw_files=capture['raw_files'],
+                        source_artifacts=[v for _,v in capture['media']],local_artifacts=mappings,view=view,
+                        view_sha256=canonical_digest(view),view_artifact=artifact(view_path,root=store.root),created_at=request['requested_at'])
+                    path = store.save(Path('imports')/(token(domain,key)+'.json'),sidecar); boundary('import')
+                    imports.append(artifact(path,root=store.root)); existing[iid] = sidecar
+                    if domain=='common': common_view = view
+                for capture in captures.values(): capture['guard'].verify_captured_bytes()
+                index = store.save('imports.json',dict(schema_version=2,production_strategy=STRATEGY,run_id=target.name,revision_id=str(revision_id),imports=imports))
+                invalidation_path = store.save('invalidation.json',invalidation); boundary('imports')
+                commit = {k:v for k,v in intent.items() if k!='invalidation'}
+                commit.update(invalidation=artifact(invalidation_path,root=store.root),imports=artifact(index,root=store.root))
+                commit_path = store.save('commit.json',commit); boundary('commit')
+                commit_bound = artifact(commit_path,root=store.root)
+                if configuration_identity(config,image_model=request['image_model'] or source.options.get('image_model_override'),reference_sha=reference_sha)!=identity:
+                    raise ProductionRefused('target identity changed before freezing')
+                with revision_freeze_scope(store):
+                    frozen = freeze_inputs(config,target,text=source.script.text,
+                        raw_script_bytes=stable_bytes(source.options['script_path'],root=source_run),
+                        image_model=request['image_model'] or source.options.get('image_model_override'),
+                        cpu_planner=source.options['cpu_planner'],output_path=request['output_path'],scene_revision=commit_bound)
+                if target_reference_digest(frozen,source_reference)!=reference_sha:
+                    raise ProductionRefused('target reference identity changed while freezing')
+                boundary('options')
+                validate_revision_structure(frozen.options,target); require_scene_revision(frozen)
+                if (frozen.config.raw.get('scene_rendering',{}).get('mode') is not None
+                        and 'all' in invalidation['reusable']['common'] and 'all' in invalidation['reusable']['plan']):
+                    # Establish a new target budget only after imported semantic inputs
+                    # exist. An intermediate revision can then be revised without video.
+                    from .scene_revision_records import load_scene_common_prefix
+                    from .image_selection_records import load_committed_plan
+                    from .scene_execution_records import ensure_scene_execution
+                    target_units,target_timeline=load_scene_common_prefix(frozen)
+                    _,target_plan=load_committed_plan(frozen,target_units,target_timeline)
+                    ensure_scene_execution(frozen,target_plan,target_timeline,lock=held)
+                for capture in captures.values(): capture['guard'].verify_captured_bytes()
+                store.save('ready.json',dict(schema_version=2,run_id=target.name,revision_id=str(revision_id),commit=commit_bound,
+                    options=artifact(target/'production/options.json',root=target),created_at=frozen.options['created_at']))
+                boundary('ready')
+            if managed_location(target) is not None:
+                from .storage import VideoStorage
+                location=managed_location(target)
+                manager=VideoStorage(location[0])
+                manager.set_current(location[1].name,target)
+            return SceneRevisionResult(source_run_id=source_id,run_id=target.name,run_dir=target,status='revision_ready',
+                revision_commit=commit_path,log_dir=target/'logs/production')
     except (Exception,KeyboardInterrupt) as exc:
         from ..adapters.jimeng import redact
         return SceneRevisionResult(source_run_id=source_id,run_id=target.name if target else None,run_dir=target,

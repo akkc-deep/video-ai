@@ -22,6 +22,22 @@ def _fields(value, fields, label):
         raise ValueError(f'{label}: exact fields required')
 
 
+def validate_revision_request_fields(request):
+    """Keep legacy requests exact; accept explicit image-only corrections."""
+    extra = ['image_prompt_overrides'] if isinstance(request, dict) and 'image_prompt_overrides' in request else []
+    _fields(request, REQUEST_FIELDS + extra, 'revision request')
+    if not extra:
+        return {}
+    changes = request['image_prompt_overrides']
+    if (request['kind'] != 'regenerate_images' or type(changes) is not dict or not changes
+            or type(request['scene_ids']) is not list
+            or any(type(sid) is not str or sid not in request['scene_ids'] for sid in changes)):
+        raise ValueError('image prompt overrides require targeted image regeneration')
+    if any(type(prompt) is not str or not prompt.strip() or '://' in prompt for prompt in changes.values()):
+        raise ValueError('image prompt override must be nonempty text without URLs')
+    return changes
+
+
 def _sha(value):
     if type(value) is not str or not re.fullmatch('[0-9a-f]{64}', value):
         raise ValueError('SHA256 required')
@@ -52,8 +68,9 @@ def snapshot_execution_clips(snapshot):
     identity = classification['identity'] if classification is not None else identity_from_options(options)
     plan = snapshot['scene_plan']
     clips = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode=mode)
-    if (type(execution['schema_version']) is not int or execution['schema_version'] != 1
-            or execution['algorithm'] != 'scene_execution_v1' or execution['production_strategy'] != STRATEGY
+    native=mode=='temporal_extension_v1'
+    if (type(execution['schema_version']) is not int or execution['schema_version'] != (2 if native else 1)
+            or execution['algorithm'] != ('scene_execution_v2' if native else 'scene_execution_v1') or execution['production_strategy'] != STRATEGY
             or execution['mode'] != mode or execution['run_id'] != options['run_id']
             or execution['scene_plan_sha256'] != canonical_digest(plan)
             or execution['rendering_identity_sha256'] != canonical_digest(identity_from_options(options))
@@ -67,6 +84,9 @@ def snapshot_execution_clips(snapshot):
         _fields(evidence, ['path','bytes','sha256'], 'source execution admission')
         if evidence['sha256'] != identity['rendering']['whole_scene_evidence_sha256']:
             raise ValueError('source execution admission differs')
+    elif native:
+        _fields(evidence,['path','bytes','sha256'],'source native execution admission')
+        if evidence['sha256']!=identity['rendering']['temporal_evidence_sha256']:raise ValueError('source native execution admission differs')
     elif evidence is not None: raise ValueError('segmented execution has whole admission')
     return clips
 
@@ -76,11 +96,12 @@ def validate_rendering_identity(value):
     modern = 'schema_version' in value or 'rendering' in value
     _fields(value, IDENTITY_FIELDS+(['schema_version','rendering'] if modern else []), 'target identity')
     if modern:
-        if type(value['schema_version']) is not int or value['schema_version'] not in (2, 3):
+        if type(value['schema_version']) is not int or value['schema_version'] not in (2, 3, 4):
             raise ValueError('unknown rendering identity schema')
         rendering = value['rendering']
         fields = ['prompt_policy','prompt_contract_sha256']
         if value['schema_version'] == 3: fields += ['mode','whole_scene_evidence_sha256','execution_algorithm']
+        if value['schema_version'] == 4: fields += ['mode','temporal_evidence_sha256','temporal_runtime_bundle_sha256','execution_algorithm','protocol']
         _fields(rendering, fields, 'rendering identity')
         if rendering['prompt_policy'] != 'visual_v2': raise ValueError('unknown rendering identity policy')
         _sha(rendering['prompt_contract_sha256'])
@@ -90,6 +111,10 @@ def validate_rendering_identity(value):
             if rendering['mode'] == 'whole_scene_v1': _sha(rendering['whole_scene_evidence_sha256'])
             elif rendering['whole_scene_evidence_sha256'] is not None:
                 raise ValueError('segmented rendering cannot carry whole admission')
+        if value['schema_version']==4:
+            if (rendering['mode']!='temporal_extension_v1' or rendering['execution_algorithm']!='scene_execution_v2'
+                    or rendering['protocol']!='longcat_native16_v1'):raise ValueError('native rendering identity differs')
+            for key in ('temporal_evidence_sha256','temporal_runtime_bundle_sha256'):_sha(rendering[key])
     for key in ('config_sha256','voice_sha256','font_sha256','planning_sha256'): _sha(value[key])
     if value['reference_settings_sha256'] is not None: _sha(value['reference_settings_sha256'])
     for key in ('image_generation','model_stamps','workflows'):
@@ -137,6 +162,14 @@ def identity_from_options(options, *, reference_settings_sha256=None):
         result.update(schema_version=2,rendering=dict(prompt_policy=settings['prompt_policy'],
             prompt_contract_sha256=stamp['sha256']))
         if 'mode' in settings:
+            if settings['mode']=='temporal_extension_v1':
+                evidence=inputs.get('temporal_evidence');bundle=inputs.get('temporal_runtime_bundle')
+                if not isinstance(evidence,dict) or not isinstance(bundle,dict):raise ValueError('native rendering requires frozen evidence/runtime')
+                _sha(evidence.get('sha256'));_sha(bundle.get('sha256'))
+                result.update(schema_version=4,rendering=dict(result['rendering'],mode=settings['mode'],
+                    temporal_evidence_sha256=evidence['sha256'],temporal_runtime_bundle_sha256=bundle['sha256'],
+                    execution_algorithm='scene_execution_v2',protocol='longcat_native16_v1'))
+                return result
             evidence = inputs.get('whole_scene_evidence')
             if settings['mode'] == 'whole_scene_v1' and not isinstance(evidence, dict):
                 raise ValueError('whole rendering identity requires frozen evidence SHA')
@@ -147,7 +180,7 @@ def identity_from_options(options, *, reference_settings_sha256=None):
 
 
 def _validate_request(request, snapshot, target):
-    _fields(request, REQUEST_FIELDS, 'revision request')
+    validate_revision_request_fields(request)
     if type(request['schema_version']) is not int or request['schema_version'] != 2 or request['production_strategy'] != STRATEGY:
         raise ValueError('revision schema/strategy differs')
     if str(UUID(request['revision_id'])) != request['revision_id']: raise ValueError('canonical UUID required')
@@ -282,7 +315,7 @@ def plan_scene_revision(snapshot, request, target_identity):
             roots += [node('clips',cid) for cid in clips]
         planning_changed = source['planning_sha256'] != target_identity['planning_sha256']
         if (classification is not None and classification['target_config'] is not None
-                and (source.get('schema_version') == 3 or target_identity.get('schema_version') == 3)):
+                and (source.get('schema_version') in (3,4) or target_identity.get('schema_version') in (3,4))):
             # Versioned mode adoption may add an advisory policy. It changes
             # admission, not narration, semantic planning or accepted images.
             planning_changed = (_planning_digest(snapshot['source_options']['config_snapshot']['raw'],ignore_admission=True)

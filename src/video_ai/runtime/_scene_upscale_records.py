@@ -3,7 +3,7 @@ from copy import deepcopy
 import os
 from pathlib import Path
 import re
-from .production_state import ProductionRefused,object_fields,timestamp,run_path
+from .production_state import ProductionRefused,object_fields,timestamp,run_path,ArtifactStamp
 from .scene_clip_records import equal,_decode_video
 from ..planning.production_scenes import canonical_digest
 from ..media.scene_upscale import verify_scene_frame_pixels,verify_png
@@ -68,6 +68,9 @@ def validate_extraction(context,clip,*,promote=False,media=True):
         verify_scene_frame_pixels(clip['source']['path'],[r['image']['path'] for r in active],
             expected_frames=len(rows),width=p.width,height=p.height,config=context['frozen'].config)
         store.media_cache.add(key)
+    if media:
+        for item in active:
+            store.media_cache.add(png_content_key(store,item['image'],width=p.width,height=p.height))
     for artifact in ready['evidence']: store.validate_artifact(artifact)
     expected=dict(schema_version=2,run_id=store.run_dir.name,clip_id=clip['clip_id'],source=clip['source'],
         frames=ready['target_frames'],recipe=recipe,evidence=ready['evidence'],created_at=ready['created_at'])
@@ -92,9 +95,14 @@ def expected_request(context,row,input_image,input_copy):
         parameters=deepcopy(context['inputs']['parameters']),graph_sha256=canonical_digest(graph_for(context,row)))
 
 
+def png_content_key(store,artifact,*,width,height):
+    tools=tuple(ArtifactStamp.read(store.frozen.config.tools[k]) for k in ('ffmpeg','ffprobe'))
+    return 'png-content',artifact['bytes'],artifact['sha256'],width,height,tools
+
+
 def validate_png(store,artifact,*,width,height):
     store.verify_tools()
-    path=store.validate_artifact(artifact); key=('png',canonical_digest(artifact),width,height)
+    path=store.validate_artifact(artifact); key=png_content_key(store,artifact,width=width,height=height)
     if key not in store.media_cache:
         verify_png(path,width=width,height=height,config=store.frozen.config)
         store.validate_artifact(artifact); store.media_cache.add(key)

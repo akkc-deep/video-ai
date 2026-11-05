@@ -322,7 +322,7 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
         from .planning.scene_video_prompts import parse_scene_rendering
         try:
             rendering = parse_scene_rendering(data['scene_rendering'])
-            if rendering.get('mode') == 'whole_scene_v1':
+            if rendering.get('mode') in ('whole_scene_v1', 'temporal_extension_v1'):
                 if data.get('scene_continuity') != dict(schema_version=1, policy='advisory_v1'):
                     raise ValueError('whole_scene_v1 requires explicit scene_continuity advisory_v1')
                 if not isinstance(data.get('media'), Mapping) or data['media'].get('profile') != 'fast':

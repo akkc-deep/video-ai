@@ -13,6 +13,7 @@ from ..planning.production_scenes import canonical_digest
 from .manifest import now
 from .production_comfy import metadata, matches, output_from_history
 from .production_state import ProductionRefused, object_fields, run_path, timestamp
+from .scene_comfy_transactions import _HistoryTracker
 
 
 class SceneSubmitUnknown(RuntimeError):
@@ -362,6 +363,7 @@ def _pending_scene_frame_output(store,request,graph,*,template=None):
 
 def _record_http(store,request,intent,method,route,call,timeout,graph):
     store.assert_owned(); directory=store.frame_dir(request['frame_id'])/'http'; token=str(uuid4())
+    response_guard=store.capture_guard(request,graph)
     payload=prompt_payload(graph,intent['client_id']) if method=='POST' else None
     req=dict(schema_version=2,run_id=request['run_id'],frame_id=request['frame_id'],intent_sha256=canonical_digest(intent),method=method,route=route,
         body_sha256=hashlib.sha256(payload).hexdigest() if payload is not None else None,started_at=now())
@@ -377,10 +379,12 @@ def _record_http(store,request,intent,method,route,call,timeout,graph):
         error=dict(kind=type(exc).__name__,message=str(exc) or type(exc).__name__)
         interrupted=exc
     # No callback can write after lock loss. Evidence is caller-thread only.
+    response_guard()
     store.assert_owned()
     bp=store.write_bytes(directory/(token+'.body'),response['body'] if response else b'')
     meta=dict(schema_version=2,run_id=request['run_id'],frame_id=request['frame_id'],request_sha256=canonical_digest(req),
         status=response['status'] if response else None,headers=response['headers'] if response else {},body=_body_artifact(store,bp),finished_at=now(),error=error)
+    response_guard()
     mp=store.write(directory/(token+'.response.json'),meta)
     row=dict(request=req,response=meta,raw=response['body'] if response else b'',evidence=store.artifact(mp))
     if interrupted is not None:
@@ -389,9 +393,18 @@ def _record_http(store,request,intent,method,route,call,timeout,graph):
     return row
 
 
-def _remote_validate(store,client,template,logger,timeout):
+def _remote_validate(store,client,template,logger,timeout,*,capability_cache=None,service_identity=None,ownership_check=None):
     """Service capability evidence precedes the once-only model intent."""
     from .logging import RunLogger
+    from .scene_comfy_transactions import _capability_key
+    check=ownership_check or getattr(store,'verify_global',store.assert_owned)
+    check()
+    cache_key=_capability_key(store,template,capability_cache,service_identity)
+    if cache_key is not None and cache_key in capability_cache:
+        store.validate_artifact(capability_cache[cache_key]);check()
+        if _capability_key(store,template,capability_cache,service_identity)!=cache_key:
+            raise ProductionRefused('owned Comfy service identity changed during capability check')
+        return
     logger=logger or RunLogger(store.run_dir,production=True)
     token=str(uuid4()); name='scene-upscale/service/'+token
     store.assert_owned()
@@ -403,9 +416,9 @@ def _remote_validate(store,client,template,logger,timeout):
             or not isinstance(response['headers'],dict) or not isinstance(response['body'],bytes) or len(response['body'])>JSON_LIMIT):
             response=None; raise ValueError('invalid object_info memory response')
     except BaseException as exc: failure=exc
-    store.assert_owned()
+    check()
     body=logger.save_bytes(name+'.body',response['body'] if response is not None else b'')
-    store.assert_owned()
+    check()
     logger.save_json(name+'.response.json',dict(status=response['status'] if response else None,headers=response['headers'] if response else {},
         body=_body_artifact(store,body),finished_at=now(),error=dict(kind=type(failure).__name__,message=str(failure)) if failure else None))
     if failure is not None:
@@ -415,9 +428,14 @@ def _remote_validate(store,client,template,logger,timeout):
     if not isinstance(value,dict): raise ProductionRefused('remote object_info must be successful JSON object')
     try: template.validate_remote(value)
     except ValueError as exc: raise ProductionRefused('remote Wan template invalid: '+str(exc)) from exc
+    if cache_key is not None and _capability_key(store,template,capability_cache,service_identity)!=cache_key:
+        raise ProductionRefused('owned Comfy service identity changed during capability request')
+    if cache_key is not None:
+        capability_cache[cache_key]=_body_artifact(store,body)
 
 
-def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None):
+def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None,
+                                  capability_cache=None,service_identity=None):
     from .execution_limits import execution_deadline, request_timeout
     budget=positive_timeout(timeout); end=execution_deadline(timeout,time.monotonic())
     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
@@ -449,7 +467,8 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
             guard(); ensure_service(); guard()
             service_ready=True
             if getattr(store,'recheck_inputs',True):
-                _remote_validate(store,client,template,logger,remaining())
+                _remote_validate(store,client,template,logger,remaining(),capability_cache=capability_cache,
+                    service_identity=service_identity,ownership_check=guard)
             guard()
             store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
             intent=dict(schema_version=2,run_id=request['run_id'],frame_id=request['frame_id'],request_sha256=canonical_digest(request),graph_sha256=request['graph_sha256'],
@@ -471,9 +490,9 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
                     if accepted is not None and (accepted['prompt_id']!=value['prompt_id'] or accepted['number']!=value['number']):
                         _terminal(store,request,intent,'identity_conflict','POST acceptance identity conflict',[row['evidence']])
                     if accepted is None: accepted=_accept(store,request,intent,value['prompt_id'],value['number'],row['evidence'])
-        fetched=False; network_failed=False
+        fetched=False; network_failed=False;tracker=_HistoryTracker(intent,graph,parse=_parse);poll_delay=.25
         while True:
-            try: pid,candidate,evidence=_history_candidates(rows,intent,accepted,graph)
+            try: pid,candidate,evidence=tracker.advance(rows,accepted)
             except ProductionRefused as exc: _terminal(store,request,intent,'identity_conflict',str(exc),[row['evidence'] for row in rows])
             except AdapterError as exc: _terminal(store,request,intent,'execution_failed',str(exc),[row['evidence'] for row in rows])
             if candidate:
@@ -503,9 +522,10 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
                             prompt_id=accepted['prompt_id'],history_evidence=candidate['history'],output=output)
                         store.assert_owned(); store.write(directory/'submission.json',result)
                         return validate_scene_frame_submission(store,request,graph)
+            poll_queue=not fetched or accepted is None or network_failed or candidate is None
             if fetched:
                 if candidate is None and not network_failed: raise SceneSubmitUnknown('no unique original graph/client identity; no re-POST')
-                time.sleep(min(2,remaining()))
+                time.sleep(min(poll_delay,remaining()));poll_delay=min(2,poll_delay*2)
             else:
                 if not service_ready:
                     guard(); ensure_service(); guard(); service_ready=True
@@ -513,8 +533,9 @@ def recover_or_submit_scene_frame(store,request,graph,*,client,template,ensure_s
             # Every view is retained. A later success cannot erase a contradiction.
             network_failed=False
             try:
-                row=_record_http(store,request,intent,'GET','/queue',lambda t:client.queue(timeout=t),remaining(),graph); rows.append(row)
-                if not isinstance(_parse(row),dict): raise SceneSubmitUnknown('queue temporarily unavailable')
+                if poll_queue:
+                    row=_record_http(store,request,intent,'GET','/queue',lambda t:client.queue(timeout=t),remaining(),graph); rows.append(row)
+                    if not isinstance(_parse(row),dict): raise SceneSubmitUnknown('queue temporarily unavailable')
                 route='/history'+('/'+accepted['prompt_id'] if accepted else '')
                 row=_record_http(store,request,intent,'GET',route,lambda t:client.history(accepted['prompt_id'] if accepted else None,timeout=t),remaining(),graph); rows.append(row)
                 if not isinstance(_parse(row),dict): raise SceneSubmitUnknown('history temporarily unavailable')

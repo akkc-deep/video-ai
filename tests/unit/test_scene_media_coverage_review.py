@@ -38,7 +38,11 @@ def test_different_whole_ancestor_reader_is_not_certified_and_remains_live(cover
     from video_ai.runtime.scene_revision_records import RevisionGuard
     from video_ai.runtime.production_state import RunLock
     c=coverage_case();s=c['store']
-    frozen=SimpleNamespace(options=dict(deepcopy(s.frozen.options),ancestor=True),config=s.frozen.config)
+    options=dict(deepcopy(s.frozen.options),ancestor=True)
+    options['config_snapshot']['raw']['scene_rendering']['mode']='whole_scene_v1'
+    config=SimpleNamespace(raw=deepcopy(s.frozen.config.raw))
+    config.raw['scene_rendering']['mode']='whole_scene_v1'
+    frozen=SimpleNamespace(options=options,config=config)
     ancestor=RevisionGuard(frozen);reader=EvidenceReader();reader.capture(c['evidence'])
     c['cache'][id(frozen)]=reader;ancestor.verify_frozen(frozen)
     c['revision'].ancestors.append(ancestor)

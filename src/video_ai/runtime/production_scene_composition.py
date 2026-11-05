@@ -139,8 +139,10 @@ def _inspect(context,artifact,probe):
     try:
         validate_original_probe(probe,frames)
         validate_probe(probe,pts,fps=16,total_frames=frames,channels=1)
-        execute((tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',source,'-map','0:v:0','-map','0:a:0','-f','null','-'))
-        audio=execute((tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',source,'-map','0:a:0',
+        # One decoder validates every video frame while returning all decoded
+        # narration samples. Both output errors still fail this complete pass.
+        audio=execute((tools['ffmpeg'],'-nostdin','-v','error','-xerror','-i',source,
+                       '-map','0:v:0','-f','null',os.devnull,'-map','0:a:0',
                        '-f','s16le','-acodec','pcm_s16le','pipe:1'))
         samples=len(audio)//2
         if len(audio)%2 or not frames*3000<=samples<frames*3000+2048:

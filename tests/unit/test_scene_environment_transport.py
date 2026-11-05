@@ -21,18 +21,24 @@ def environment_input():
     return prompt, schema, script, units, timeline
 
 
-def environment_wire():
+def environment_wire(*,source_sets=False,source_nonempty=True):
     group = dict(label='湖畔', environment='湖面与岸边石头', time='清晨', lighting='柔光',
                  spatial_relations=[], source_facts=[dict(name='environment', value='湖面', sources=['speech_0001'])],
                  creative_choices=[], change_sources=[])
     def scene(environment):
         return dict(summary='湖边白鸟', image_prompt='白鸟在湖边', motion_prompt='白鸟轻轻转头',
                     entity_ids=[], variant_ids=[], change_sources=[], _environment=environment)
-    return dict(global_style=dict(description='自然摄影', source_facts=[], creative_choices=[]),
+    result=dict(global_style=dict(description='自然摄影', source_facts=[], creative_choices=[]),
                 entities=[], appearance_variants=[], scenes={
                     'scene_0001': scene({'new': group}),
                     'scene_0002': scene({'reuse': 'scene_0001'}),
                     'scene_0003': scene({'reuse': 'scene_0002'})})
+    def convert(value):
+        if isinstance(value,list):return [convert(x) for x in value]
+        if not isinstance(value,dict):return value
+        return {k:(dict(first=v[0],more=dict.fromkeys(v[1:],True)) if source_nonempty and k=='sources' and v else dict.fromkeys(v,True))
+                if k in ('sources','change_sources') else convert(v) for k,v in value.items()}
+    return convert(result) if source_sets else result
 
 
 def test_known_single_unit_paragraphs_bind_each_scene_slot():
@@ -85,3 +91,43 @@ def test_multiple_units_per_paragraph_keep_original_wire():
     body = ollama_body(_prompt(script, units, timeline, settings), schema, scene_planning=True)
     assert body['format']['properties']['scenes']['type'] == 'array'
     assert 'scene_groups' in body['format']['properties']
+
+
+def test_fixed_multi_unit_paragraphs_restore_all_members_and_exact_citations():
+    from video_ai.adapters.ollama_scenes import restore_scene_content
+    script,units,timeline=scene_inputs('湖面很静。白鸟停在石上。\n它望向远处。',samples=[48000]*3)
+    settings=ScenePlanningSettings(target_scenes_per_paragraph=1)
+    prompt=_prompt(script,units,timeline,settings)
+    body=ollama_body(prompt,make_scene_schema(script,units,timeline,settings),
+        scene_planning=True,scene_grouped=True)
+    assert body['format']['properties']['scenes']['required']==['scene_0001','scene_0002']
+    wire=environment_wire();del wire['scenes']['scene_0003']
+    wire['scenes']['scene_0001']['_environment']['new']['source_facts'][0]['sources']=['speech_0002']
+    _schema_check(wire,body['format'])
+    restored=restore_scene_content(wire,prompt)
+    assert [s['unit_ids'] for s in restored['scenes']]==[['speech_0001','speech_0002'],['speech_0003']]
+    assert restored['scene_groups'][0]['source_facts'][0]['sources']==[
+        dict(unit_id='speech_0002',text_start=5,text_end=12,quote='白鸟停在石上。')]
+    wire['scenes']['scene_0001']['_environment']['new']['source_facts'][0]['sources']=['speech_0003']
+    with pytest.raises(ValueError):_schema_check(wire,body['format'])
+
+
+def test_source_set_transport_cannot_repeat_the_same_citation_and_restores_exact_sources():
+    from video_ai.adapters.ollama_scenes import restore_scene_content
+    from video_ai.adapters.ollama import _response_schema_check
+    prompt,schema,*_=environment_input()
+    body=ollama_body(prompt,schema,scene_planning=True,scene_grouped=True,scene_source_sets=True)
+    wire=environment_wire(source_sets=True)
+    _response_schema_check(wire,body['format'])
+    restored=restore_scene_content(wire,prompt)
+    assert restored['scene_groups'][0]['source_facts'][0]['sources']==[
+        dict(unit_id='speech_0001',text_start=0,text_end=5,quote='湖面很静。')]
+    citation=body['format']['properties']['scenes']['properties']['scene_0001']['properties']['_environment']['properties']['new']['properties']['source_facts']['items']['properties']['sources']
+    assert citation['type']=='object' and citation['additionalProperties'] is False
+    with pytest.raises(ValueError):_response_schema_check({},citation)
+    with pytest.raises(ValueError):_response_schema_check(['speech_0001','speech_0001'],citation)
+    with pytest.raises(ValueError):_response_schema_check({'speech_0003':True},citation)
+    with pytest.raises(ValueError):_response_schema_check({'first':'speech_0003','more':{}},citation)
+    changes=body['format']['properties']['scenes']['properties']['scene_0002']['properties']['_environment']['anyOf'][1]['properties']['new']['properties']['change_sources']
+    with pytest.raises(ValueError):_response_schema_check({},changes)
+    _response_schema_check({'first':'speech_0002','more':{}},changes)

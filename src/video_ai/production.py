@@ -15,6 +15,7 @@ from .runtime.production_inputs import (DEFAULT_CONFIG, _save_bytes, check_stage
 from .runtime.production_state import (STAGES, ProductionRefused, ProductionStateStore, RunLock,
                                        absolute_path, object_fields, run_path, validate_error, write_exclusive)
 from .runtime.execution_limits import production_execution
+from .runtime.verification import protect_scene_inputs
 
 TECHNICAL_CHECKS = ('source_text_coverage', 'audio_samples', 'frame_mapping', 'subtitles', 'final_media')
 
@@ -372,6 +373,7 @@ def make_video(config=None, *, script=None, text=None, run_dir=None, output_path
             'blocked' if isinstance(exc,ValueError) else 'failed',error=error(exc))
 
 
+@protect_scene_inputs
 def _scene_completed_fast(frozen,actions,reference_settings,email_settings):
     """No RunLock, logger, directory, invocation or service before this decision."""
     from .runtime.scene_media_records import SceneMediaResult

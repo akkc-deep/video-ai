@@ -30,39 +30,44 @@ def parse_scene_rendering(value):
     explicit = isinstance(value, Mapping) and 'mode' in value
     fields = 'prompt_policy prompt_contract'
     if explicit:
-        if value['mode'] not in ('segmented_v1', 'whole_scene_v1'):
+        if value['mode'] not in ('segmented_v1', 'whole_scene_v1', 'temporal_extension_v1'):
             raise ValueError('unknown scene rendering mode')
         fields += ' mode'
         if value['mode'] == 'whole_scene_v1': fields += ' whole_scene_evidence'
+        if value['mode'] == 'temporal_extension_v1': fields += ' temporal_evidence'
     _fields(value, fields, 'scene_rendering')
     if value['prompt_policy'] != 'visual_v2':
         raise ValueError('scene_rendering.prompt_policy must be visual_v2')
     _text(value['prompt_contract'])
-    if explicit and value['mode'] == 'whole_scene_v1':
-        name = _text(value['whole_scene_evidence'])
+    if explicit and value['mode'] in ('whole_scene_v1', 'temporal_extension_v1'):
+        evidence_field = 'temporal_evidence' if value['mode'] == 'temporal_extension_v1' else 'whole_scene_evidence'
+        name = _text(value[evidence_field])
         path = PureWindowsPath(name)
         if (not path.is_absolute() or not path.is_relative_to(PureWindowsPath('D:/VideoSi'))
                 or '..' in path.parts or any(c in name for c in '*?')
                 or path.suffix.lower() != '.json' or ':' in name[2:]):
-            raise ValueError('whole_scene_evidence requires an exact absolute D:/VideoSi JSON file')
+            raise ValueError(evidence_field+' requires an exact absolute D:/VideoSi JSON file')
     return deepcopy(thaw(value))
 
 
 def validate_scene_video_prompt_contract(contract, *, bible=None, plan=None, wan_inputs=None, script=None, execution=None):
     """Validate structure/review first, then the complete admitted context if supplied."""
     _fields(contract, 'schema_version production_strategy binding style clips review', 'prompt contract')
-    if type(contract['schema_version']) is not int or contract['schema_version'] not in (1, 2):
+    if type(contract['schema_version']) is not int or contract['schema_version'] not in (1, 2, 3):
         raise ValueError('unknown prompt contract schema_version')
     whole = contract['schema_version'] == 2
+    native = contract['schema_version'] == 3
+    versioned = whole or native
+    mode = 'temporal_extension_v1' if native else 'whole_scene_v1'
     if contract['production_strategy'] != 'paragraph_jimeng_v1':
         raise ValueError('prompt contract production_strategy differs')
     binding_fields = 'scene_plan_sha256 visual_bible_sha256 wan_inputs_sha256'
-    if whole: binding_fields += ' rendering_mode execution_clips_sha256'
+    if versioned: binding_fields += ' rendering_mode execution_clips_sha256'
     _fields(contract['binding'], binding_fields, 'prompt binding')
     for key, value in contract['binding'].items():
         if key != 'rendering_mode': _sha(value)
-    if whole and contract['binding']['rendering_mode'] != 'whole_scene_v1':
-        raise ValueError('schema2 prompt requires whole_scene_v1')
+    if versioned and contract['binding']['rendering_mode'] != mode:
+        raise ValueError('prompt schema requires '+mode)
     _text(contract['style'])
     clips = contract['clips']
     if not isinstance(clips, (list, tuple)) or not clips:
@@ -101,13 +106,13 @@ def validate_scene_video_prompt_contract(contract, *, bible=None, plan=None, wan
         expected = dict(scene_plan_sha256=canonical_digest(thaw(plan)),visual_bible_sha256=canonical_digest(thaw(bible)),
                         wan_inputs_sha256=canonical_digest(thaw(wan_inputs)))
         budgets = plan['clips']
-        if whole:
+        if versioned:
             from types import SimpleNamespace
             from .scene_execution import derive_scene_execution_clips
-            budgets = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode='whole_scene_v1')
-            expected.update(rendering_mode='whole_scene_v1', execution_clips_sha256=canonical_digest(budgets))
+            budgets = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode=mode)
+            expected.update(rendering_mode=mode, execution_clips_sha256=canonical_digest(budgets))
         if execution is not None:
-            if ((execution.get('mode') == 'whole_scene_v1') != whole
+            if ((execution.get('mode') != (mode if versioned else 'segmented_v1'))
                     or thaw(execution.get('clips')) != thaw(budgets)):
                 raise ValueError('prompt execution mode or clips differ')
         if thaw(contract['binding']) != expected: raise ValueError('prompt contract binding differs from admitted inputs')

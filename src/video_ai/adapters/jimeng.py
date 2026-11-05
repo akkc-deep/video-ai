@@ -62,10 +62,11 @@ def _identifier(value, label):
 
 
 class JimengClient:
-    def __init__(self, settings, *, http=None, ownership_check=None):
+    def __init__(self, settings, *, http=None, ownership_check=None, download_ownership_check=None):
         self.settings = settings
         self.http = http or ExternalHttpsClient()
         self.ownership_check = ownership_check
+        self.download_ownership_check = download_ownership_check
 
     def check_credentials(self):
         access = os.environ.get(self.settings.access_key_env)
@@ -134,6 +135,7 @@ class JimengClient:
         return dict(status=status, image_urls=urls, request_id=request_id, diagnostic=diagnostic)
 
     def download(self, url, *, timeout=None):
+        check = self.download_ownership_check or self.ownership_check
         return self.http.request('GET', url, timeout=min(timeout, self.settings.request_timeout_seconds)
             if timeout is not None else self.settings.request_timeout_seconds, max_bytes=64*1024*1024,
-            **({'ownership_check': self.ownership_check} if self.ownership_check is not None else {})).body
+            **({'ownership_check': check} if check is not None else {})).body

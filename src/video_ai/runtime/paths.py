@@ -14,6 +14,8 @@ SOURCE_ROOT = Path('D:/code/py/video-ai')
 PROJECT_ROOT = RUNTIME_ROOT / 'projects/video-ai'
 OUTPUT_ROOT = RUNTIME_ROOT / 'output/video-ai'
 CACHE_ROOT = RUNTIME_ROOT / 'cache/video-ai'
+PRODUCTION_ROOT = PROJECT_ROOT / 'productions'
+DISPOSABLE_ROOT = RUNTIME_ROOT / 'disposable/video-ai'
 _LOCAL_TIME = timezone(timedelta(hours=8), 'Asia/Shanghai')
 _RESERVED = re.compile(r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)', re.I)
 
@@ -76,15 +78,28 @@ class PathPolicy:
         roots = {
             'config': (PROJECT_ROOT / 'config',),
             'input': (PROJECT_ROOT / 'inputs',),
-            'run': (PROJECT_ROOT / 'runs',),
+            'run': (PROJECT_ROOT / 'runs', PRODUCTION_ROOT),
             'output': (OUTPUT_ROOT,),
-            'cache': (CACHE_ROOT,),
-            'log': (CACHE_ROOT / 'logs', PROJECT_ROOT / 'runs'),
-            'tool-env': (RUNTIME_ROOT / 'tools', RUNTIME_ROOT / 'envs/video-ai'),
+            'cache': (CACHE_ROOT, DISPOSABLE_ROOT),
+            'log': (CACHE_ROOT / 'logs', PROJECT_ROOT / 'runs', PRODUCTION_ROOT, DISPOSABLE_ROOT),
+            'tool-env': (RUNTIME_ROOT / 'tools', RUNTIME_ROOT / 'envs'),
             'model': (RUNTIME_ROOT / 'models',),
         }
         if category not in roots:
             raise ValueError(f'unknown write category: {category}')
+        # Test-only in-process scope; never populated from a production CLI flag or environment.
+        from .storage import _test_runtimes
+        for sandbox in tuple(_test_runtimes):
+            extra = {
+                'config': (sandbox/'projects/video-ai/config',),
+                'input': (sandbox/'projects/video-ai/inputs',),
+                'run': (sandbox/'projects/video-ai/runs',sandbox/'projects/video-ai/productions'),
+                'output': (sandbox/'output/video-ai',),
+                'cache': (sandbox/'cache/video-ai',sandbox/'disposable/video-ai'),
+                'log': (sandbox/'cache/video-ai',sandbox/'projects/video-ai/runs',sandbox/'projects/video-ai/productions',sandbox/'disposable/video-ai'),
+                'tool-env': (sandbox/'tools',sandbox/'envs'), 'model': (sandbox/'models',),
+            }
+            roots[category] += extra[category]
         # Do not resolve trusted roots: a redirected root must fail closed too.
         if candidate.is_relative_to(SOURCE_ROOT) or not any(candidate.is_relative_to(root) for root in roots[category]):
             raise ValueError(f'{category}: path outside allowed D:/VideoSi subtree: {candidate}')
@@ -104,6 +119,12 @@ class RuntimePaths:
 
     @classmethod
     def from_config(cls, config: 'ProjectConfig') -> 'RuntimePaths':
+        from .storage import _sandbox
+        sandbox = _sandbox.get()
+        if sandbox is not None:
+            project = sandbox/'projects/video-ai'
+            return cls(config.runtime_root,project,project/'config',project/'inputs',project/'runs',
+                       sandbox/'output/video-ai',sandbox/'disposable/video-ai/cache',sandbox/'envs/video-ai')
         return cls(config.runtime_root, config.project_root, config.project_root / 'config',
                    config.project_root / 'inputs', config.project_root / 'runs',
                    config.output_root, config.cache_root, config.runtime_root / 'envs/video-ai')
@@ -134,6 +155,10 @@ def new_run_id(now: datetime | None = None) -> str:
 
 
 def create_run(paths: RuntimePaths) -> Path:
+    from .storage import allocated_run
+    managed = allocated_run()
+    if managed is not None:
+        return paths.policy.validate_write(managed, 'run')
     paths.validate()
     for _ in range(3):
         run = paths.policy.validate_write(paths.runs_root / new_run_id(), 'run')

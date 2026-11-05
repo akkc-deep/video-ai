@@ -6,6 +6,7 @@ from copy import deepcopy
 import os
 from pathlib import Path
 import stat
+from threading import get_ident
 from uuid import UUID
 
 from ..adapters.common import strict_json
@@ -23,6 +24,100 @@ IMPORT_FIELDS = ('schema_version production_strategy run_id import_id domain key
                  'raw_files source_artifacts local_artifacts view view_sha256 view_artifact created_at').split()
 IMPORT_DOMAINS = ('common','plan','reference_settings','image','choice','image_group','clip','upscale')
 _context = ContextVar('scene_revision_context', default=None)
+_read_transaction = ContextVar('scene_revision_read_transaction', default=None)
+
+
+@contextmanager
+def revision_read_transaction():
+    """Bound repeated byte checks to one strictly local read transaction.
+
+    First access and exit verify complete captured bytes/inventories. Typed
+    frozen state is still checked on every lookup. Do not enclose network calls
+    or persistence; reference generation must explicitly opt into
+    revision_checkpoint_transaction and its source checkpoint contract.
+    A copied context cannot carry reusable checks to another thread or outlive
+    this scope.
+    """
+    current = _read_transaction.get()
+    if current is not None and current['active'] and current['thread'] == get_ident():
+        yield
+        return
+    state = dict(active=True, thread=get_ident(), checked={}, inputs={})
+    token = _read_transaction.set(state)
+    try:
+        yield
+    finally:
+        state['active'] = False
+        _read_transaction.reset(token)
+        for expected, read in state['inputs'].values():
+            if canonical_digest(thaw(read())) != expected:
+                raise ProductionRefused('revision local read input changed')
+        for guard in state['checked']:
+            guard.verify_captured_bytes()
+
+
+@contextmanager
+def revision_checkpoint_transaction():
+    """Reference generation reuses admission between explicit source checkpoints.
+
+    Unlike a local read transaction this may enclose network/persistence. Only
+    reference stores opt into lock-only writes, and transport callbacks must
+    use lock/current-request checks. Call revision_read_checkpoint before each
+    paid submission and before committing a new scene. Scope exit still checks
+    every original input and guard, including on failure. Foreign/closed copied
+    contexts cannot reuse the admission.
+    """
+    with revision_read_transaction():
+        state = _read_transaction.get()
+        previous = state.get('checkpoints', False)
+        state['checkpoints'] = True
+        try:
+            yield
+        finally:
+            state['checkpoints'] = previous
+
+
+def revision_checkpoints_active():
+    """Only the owning reference writer may defer checks; captures stay strict."""
+    from ._continuity_byte_guard import _captures
+    state = _read_transaction.get()
+    return (state is not None and state['active'] and state['thread'] == get_ident()
+            and state.get('checkpoints', False) and not _captures.get())
+
+
+def revision_read_checkpoint():
+    """Refresh all admitted sources without changing their original baselines."""
+    state = _read_transaction.get()
+    if state is None or not state['active'] or state['thread'] != get_ident():
+        raise ProductionRefused('source checkpoint requires an active owning transaction')
+    # Disable memo reuse while checking, including any nested loader consumers.
+    token = _read_transaction.set(None)
+    try:
+        for expected, read in tuple(state['inputs'].values()):
+            if canonical_digest(thaw(read())) != expected:
+                raise ProductionRefused('revision local read input changed')
+        for guard in tuple(state['checked']):
+            guard.verify_captured_bytes()
+    finally:
+        _read_transaction.reset(token)
+
+
+def revision_read_matches(key, value, read):
+    """Compare a local input; re-read its full loader at transaction exit.
+
+    Retain only a canonical digest, so callers cannot mutate a cached object.
+    Outside a live local read scope, or during byte capture, always load fresh.
+    """
+    from ._continuity_byte_guard import _captures
+    state = _read_transaction.get()
+    if (state is None or not state['active'] or state['thread'] != get_ident()
+            or _captures.get()):
+        return canonical_digest(thaw(value)) == canonical_digest(thaw(read()))
+    previous = state['inputs'].get(key)
+    if previous is None:
+        previous = (canonical_digest(thaw(read())), read)
+        state['inputs'][key] = previous
+    return canonical_digest(thaw(value)) == previous[0]
 
 
 @contextmanager
@@ -138,10 +233,20 @@ class RevisionGuard:
         if frozen.options.get('config_snapshot',{}).get('raw',{}).get('scene_rendering',{}).get('mode') == 'whole_scene_v1':
             from .scene_execution_records import verify_whole_scene_frozen
             verify_whole_scene_frozen(frozen)
+        elif frozen.options.get('config_snapshot',{}).get('raw',{}).get('scene_rendering',{}).get('mode')=='temporal_extension_v1':
+            from .temporal_scene_admission import verify_temporal_frozen
+            verify_temporal_frozen(frozen)
 
     def verify_captured_bytes(self):
-        from ._continuity_byte_guard import observe_inventory, observe_absence
+        from ._continuity_byte_guard import observe_inventory, observe_absence, _captures
         self.verify_frozen(self.frozen)
+        transaction = _read_transaction.get()
+        if (transaction is not None and transaction['active']
+                and transaction['thread'] == get_ident() and not _captures.get()):
+            if self in transaction['checked']:
+                return
+        else:
+            transaction = None
         for ancestor in self.ancestors:ancestor.verify_captured_bytes()
         for value,root,empty,identity in self.files.values():
             verify_artifact(value,root=root,allow_empty=empty)
@@ -153,6 +258,8 @@ class RevisionGuard:
         for path,root in self.absent.items():
             if safe_path(path,root).exists(): raise ProductionRefused('revision absent evidence appeared')
             observe_absence(path)
+        if transaction is not None:
+            transaction['checked'][self] = None
 
     def verify_global(self):
         self.verify_captured_bytes()

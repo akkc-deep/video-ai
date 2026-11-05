@@ -21,7 +21,9 @@ def _digest(raw):
 
 def _run(frozen):
     run = validate_run_dir(Path(frozen.options['script_path']).parent.parent)
-    if frozen.config.production_strategy != 'paragraph_jimeng_v1' or not _same_json(load_frozen_inputs(run), frozen):
+    from .scene_revision_records import revision_read_matches
+    if (frozen.config.production_strategy != 'paragraph_jimeng_v1'
+            or not revision_read_matches(('frozen-inputs', str(run)), frozen, lambda: load_frozen_inputs(run))):
         raise ProductionRefused('reference settings frozen identity differs')
     return run
 

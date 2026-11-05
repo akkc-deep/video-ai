@@ -19,6 +19,7 @@ from .manifest import hash_file, thaw, validate_run_dir
 from .production_inputs import _same_json, load_frozen_inputs
 from .execution_limits import command_timeout
 from .production_state import ProductionRefused, integer, object_fields, run_path, timestamp
+from .scene_revision_records import revision_read_transaction
 
 
 CANDIDATE_FIELDS = 'candidate_id request_id task_id req_key path bytes sha256 width height format'.split()
@@ -61,7 +62,8 @@ def _run(frozen):
     run = validate_run_dir(Path(frozen.options['script_path']).parent.parent)
     if frozen.options['run_id'] != run.name or frozen.config.production_strategy != STRATEGY:
         raise ProductionRefused('image selection frozen run/strategy differs')
-    if not _same_json(load_frozen_inputs(run), frozen):
+    from .scene_revision_records import revision_read_matches
+    if not revision_read_matches(('frozen-inputs', str(run)), frozen, lambda: load_frozen_inputs(run)):
         raise ProductionRefused('image selection frozen inputs differ')
     return run
 
@@ -69,7 +71,8 @@ def _run(frozen):
 def batch_directory(frozen, batch_id):
     if not isinstance(batch_id, str) or not re.fullmatch(r'image_batch_[0-9]{4,}', batch_id):
         raise ProductionRefused('safe image batch ID required')
-    return run_path(_run(frozen), _run(frozen)/'production/image-selection'/batch_id)
+    run = _run(frozen)
+    return run_path(run, run/'production/image-selection'/batch_id)
 
 
 def load_committed_plan(frozen, units, timeline):
@@ -187,8 +190,10 @@ def _candidates(frozen, scene, manifest_path, *, _reference=None):
         raise ProductionRefused('candidate manifest is outside exact scene path')
     stamp = hash_file(expected_path); manifest = _read(expected_path)
     object_fields(manifest, 'schema_version run_id scene_id identity candidates'.split(), 'candidate manifest')
+    from .scene_image_prompts import effective_image_prompt
+    prompt = effective_image_prompt(frozen, scene)
     requests = [dict(schema_version=2, run_id=run.name, scene_id=scene['scene_id'], request_id=f'request_{i:02d}',
-                     prompt=scene['image_prompt'], image_generation=thaw(settings))
+                     prompt=prompt, image_generation=thaw(settings))
                 for i in range(1, settings.candidates_per_scene+1)]
     first_request = folder/'request_01/request.json'
     if _reference is None and first_request.exists() and 'reference_inputs' in _read(first_request):
@@ -304,12 +309,14 @@ def _expected_batch(frozen, units, timeline, bible, plan, manifests, index, acce
         delivery=dict(sender=settings.sender, recipient=settings.recipient, max_mime_bytes=settings.max_mime_bytes))
 
 
+@revision_read_transaction()
 def build_batch(frozen, units, timeline, candidate_manifests, *, batch_index):
     bible, plan = load_committed_plan(frozen, units, timeline)
     accepted = _load_accepted(frozen, units, timeline, bible, plan, before=batch_index)
     return _expected_batch(frozen, units, timeline, bible, plan, candidate_manifests, batch_index, accepted)
 
 
+@revision_read_transaction()
 def validate_batch(frozen, units, timeline, bible, plan, batch):
     committed = load_committed_plan(frozen, units, timeline)
     _equal([bible, plan], list(committed), 'supplied committed plan')
@@ -366,9 +373,22 @@ def _observation(value, current, all_choices):
     return result
 
 
+@revision_read_transaction()
 def validate_selection(frozen, bible, plan, batch, value, *, accepted_batches):
     object_fields(batch, BATCH_FIELDS, 'image batch')
-    object_fields(value, SELECTION_FIELDS, 'image selection')
+    integer(batch['batch_index'], 'batch index', 1)
+    prior = [a for a in accepted_batches if a['batch_id'] != batch['batch_id']]
+    manifests = [scene['candidate_manifest']['path'] for scene in batch['scenes']]
+    expected = _expected_batch(frozen, None, None, bible, plan, manifests, batch['batch_index'], prior)
+    _equal(batch, expected, 'selection batch')
+    return _validate_selection_value(frozen, bible, plan, batch, value, accepted_batches=accepted_batches)
+
+
+def _validate_selection_value(frozen, bible, plan, batch, value, *, accepted_batches):
+    """Validate reviewer evidence after the caller independently rebuilt batch."""
+    object_fields(batch, BATCH_FIELDS, 'image batch')
+    local = isinstance(value, dict) and 'local_review' in value
+    object_fields(value, SELECTION_FIELDS + (['local_review'] if local else []), 'image selection')
     if value['observation'] is not None and not isinstance(value['observation'], dict):
         raise ProductionRefused('image observation must be an object or null')
     template = selection_template(batch)
@@ -379,10 +399,6 @@ def validate_selection(frozen, bible, plan, batch, value, *, accepted_batches):
     _equal(batch['visual_bible_sha256'], canonical_digest(bible), 'selection bible')
     _equal(batch['run_id'], _run(frozen).name, 'selection run')
     integer(batch['batch_index'], 'batch index', 1)
-    prior = [a for a in accepted_batches if a['batch_id'] != batch['batch_id']]
-    manifests = [scene['candidate_manifest']['path'] for scene in batch['scenes']]
-    expected = _expected_batch(frozen, None, None, bible, plan, manifests, batch['batch_index'], prior)
-    _equal(batch, expected, 'selection batch')
     selected = _choice_rows(value['selections']); ids = [s['scene_id'] for s in batch['scenes']]
     if set(selected)-set(ids) or (value['intent'] == 'accept' and set(selected) != set(ids)):
         raise ProductionRefused('selection scene coverage differs from current batch')
@@ -407,7 +423,19 @@ def validate_selection(frozen, bible, plan, batch, value, *, accepted_batches):
     if value['observation'] is not None and value['observation'].get('scope') == 'all_selected_images':
         if len(ordered) != len(plan['scenes']): raise ProductionRefused('all selected images observation requires every scene')
     observation = _observation(value['observation'], current, ordered)
-    return dict(selections=list(current.values()), observation=observation)
+    result = dict(selections=list(current.values()), observation=observation)
+    if local:
+        review = value['local_review']
+        object_fields(review, ['schema_version','method','reviewer','statement','viewed_images'], 'local image review')
+        if (type(review['schema_version']) is not int or review['schema_version'] != 1
+                or review['method'] != 'local_files' or value['intent'] != 'accept'):
+            raise ProductionRefused('local file review requires explicit accept intent')
+        _nonempty(review['reviewer'], 'local reviewer')
+        _nonempty(review['statement'], 'local user statement')
+        viewed = _choice_rows(review['viewed_images'])
+        _equal(viewed, current, 'local review exact chosen image coverage')
+        result['local_review'] = dict(review, viewed_images=list(viewed.values()))
+    return result
 
 
 def build_accepted(batch, normalized, *, source_submission_sha256, bible, accepted_batches):
@@ -442,6 +470,7 @@ def _submission(folder, sha):
         raise ProductionRefused('invalid original source submission JSON') from exc
 
 
+@revision_read_transaction()
 def _load_accepted(frozen, units, timeline, bible, plan, *, before=None):
     run = _run(frozen); result = []; missing = False
     for index, ids in enumerate(plan['batches'], 1):
@@ -463,15 +492,16 @@ def _load_accepted(frozen, units, timeline, bible, plan, *, before=None):
         _equal(batch, expected, 'accepted batch manifest')
         value = _submission(folder, accepted['source_submission_sha256'])
         if value.get('intent') != 'accept': raise ProductionRefused('accepted source submission has no accept intent')
-        normalized = validate_selection(frozen, bible, plan, batch, value, accepted_batches=result)
+        normalized = _validate_selection_value(frozen, bible, plan, batch, value, accepted_batches=result)
         rebuilt = build_accepted(batch, normalized, source_submission_sha256=accepted['source_submission_sha256'],
                                  bible=bible, accepted_batches=result)
         _equal(accepted, rebuilt, 'accepted image batch')
-        # Transport backing is part of acceptance, including on disk re-entry.
-        # The late import keeps the pure builders usable by the coordinator.
-        from .production_image_selection import notification_delivery_state
-        if notification_delivery_state(run, batch) != 'accepted':
-            raise ProductionRefused('accepted image batch lacks complete SMTP receipts')
+        # Local confirmation is bound to the immutable original submission.
+        # Legacy mail selections retain their transport evidence on re-entry.
+        if 'local_review' not in normalized:
+            from .production_image_selection import notification_delivery_state
+            if notification_delivery_state(run, batch) != 'accepted':
+                raise ProductionRefused('accepted image batch lacks complete SMTP receipts')
         result.append(accepted)
     root = run/'production/image-selection'
     expected_ids = {f'image_batch_{i:04d}' for i in range(1, len(plan['batches'])+1)}
@@ -481,6 +511,7 @@ def _load_accepted(frozen, units, timeline, bible, plan, *, before=None):
     return result
 
 
+@revision_read_transaction()
 def load_accepted_batches(frozen, units, timeline, bible=None, plan=None):
     committed = load_committed_plan(frozen, units, timeline)
     if bible is not None: _equal(bible, committed[0], 'supplied visual bible')
@@ -506,6 +537,7 @@ def build_complete_acceptance(frozen, bible, plan, accepted_batches, observation
         observation_submission_sha256=observation_submission_sha256)
 
 
+@revision_read_transaction()
 def require_complete_image_acceptance(frozen, units, timeline):
     bible, plan = load_committed_plan(frozen, units, timeline)
     from ._scene_revision_readers import inherited_image_group

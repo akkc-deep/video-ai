@@ -9,14 +9,15 @@ from .services import ServiceSpec
 
 
 def build_service_specs(config, run_dir, *, model_stage=None, production=False, frozen=None,
-                        store=None, tts_yaml_path=None) -> dict[str,ServiceSpec]:
+                        store=None, tts_yaml_path=None,planner_transport=None) -> dict[str,ServiceSpec]:
     run = validate_run_dir(run_dir)
     policy = PathPolicy()
     for path in config.tools.values():
         policy.validate_write(path,'tool-env')
     if type(production) is not bool: raise ValueError('production must be boolean')
     if production:
-        return _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model_stage)
+        return _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model_stage,planner_transport)
+    if planner_transport is not None:raise ValueError('direct planner transport requires production inputs')
     fixed={'ollama':'http://127.0.0.1:11435','comfyui':'http://127.0.0.1:8188','tts':'http://127.0.0.1:9880'}
     revision=None
     if dict(config.services)!=fixed:
@@ -57,7 +58,7 @@ def build_service_specs(config, run_dir, *, model_stage=None, production=False, 
     }
 
 
-def _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model_stage):
+def _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model_stage,planner_transport):
     """Consume only caller-owned frozen inputs and the production manifest store."""
     from .production_inputs import FrozenInputs, _resolved
     if (not isinstance(frozen,FrozenInputs) or not isinstance(store,ManifestStore)
@@ -72,7 +73,11 @@ def _production_service_specs(config,run,policy,frozen,store,tts_yaml_path,model
     from ..adapters.common import validate_base_url
     for url in config.services.values(): validate_base_url(url)
     urls=MappingProxyType(dict(config.services));tools=config.tools;timeout=config.timeouts['service_start']
-    specs={'ollama':ServiceSpec('ollama',urls['ollama'],(str(tools['ollama_executable']),'serve'),
+    if planner_transport not in (None,'llama_direct'):raise ValueError('unsupported planner transport')
+    ollama_args=(str(tools['ollama_executable']),'serve') if planner_transport is None else (
+        str(tools['comfy_python']),'-B','-s',str(Path(__file__).with_name('ollama_direct.py')),
+        '--ollama-executable',str(tools['ollama_executable']),'serve')
+    specs={'ollama':ServiceSpec('ollama',urls['ollama'],ollama_args,
                 tools['ollama_executable'].parent,timeout,{'OLLAMA_HOST':urlsplit(urls['ollama']).netloc},
                 production_services=urls)}
     parts=urlsplit(urls['comfyui'])

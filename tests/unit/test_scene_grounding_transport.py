@@ -37,10 +37,10 @@ def test_scene_wire_keeps_later_original_units_available_and_full_input_intact()
     assert body['options']['num_ctx'] == 32768
 
 
-def test_scene_planning_uses_reasoning_with_the_same_bounded_output_budget():
+def test_scene_planning_uses_reasoning_without_a_fixed_output_budget():
     body, _ = source_schema()
     assert body['think'] is True
-    assert body['options']['num_predict'] == 8192
+    assert body['options']['num_predict'] == -1
     assert body['options']['num_ctx'] == 32768
     assert ollama_body('unchanged ordinary request', {'type': 'object'})['think'] is False
 

@@ -46,6 +46,8 @@ SMTP retry JSON 精确包含 `schema_version=2/run_id/batch_id/part/expected_att
 
 修订请求格式见 [JIM-07 设计](task-designs/JIM-07-design.md) 的“修订请求和内容依赖图”。`kind` 支持 `reselect_images/regenerate_images/regenerate_clips/reconfigure`；绑定原 run、原 options 文件 SHA、完整 revision UUID、带时区请求时间和理由。目标配置只在 `reconfigure` 请求中指定。
 
+`regenerate_images` 还可带可选的 `image_prompt_overrides`，例如 `{"scene_0001":"地球位于身后，探测器远离地球驶向深空"}`。键必须属于本次 `scene_ids`，值为非空、无 URL 的完整新生图提示词；其他修订类型不接受该字段。修订请求绑定提示词字节，基准图和参考图均按新提示词生成和校验；原分镜、配音及时间轴保留。之后的修订会继承已有提示词修正，直到重新规划分镜；不提供该字段时兼容原有请求格式。
+
 `revision_ready` 只准备并冻结新目录，尚未产生新推理或邮件；随后对返回的新 run 普通续作。重选图片需要在新批次中再次确认，图片改变需要新的整组观察；仅片段返工也会重新合成候选并要求新的最终观察。未受影响的已接受媒体通过显式证明和字节副本继承，来源保持只读。未知原付费任务或仍需处理的未知邮件必须先回原运行核对。
 
 ## 配置
@@ -146,6 +148,8 @@ print(result.to_dict())
 该操作会实际发送邮件。列表必须精确覆盖 `plan['batches'][batch_index-1]` 并保持场景顺序。先接受基准，再通过下面的参考批次入口生成有关画面。等待返回后释放本次自有 RunLock 和连接；传入 `lock=held_run_lock` 时由调用方释放。没有模型服务需要启动。
 
 邮件含候选编号、可复制 JSON 行、完整原文、基准用途、预览和整组对照图。打开结果中的 `selection_template`，另存为自己的选择文件：保留所有身份及基准字段，复制每个 scene 所选的 JSON 行到 `selections`。`intent="draft"` 可暂存部分选择；完整接受改为 `intent="accept"`，当前批次每个 scene 必须恰好一张。`observation` 可以为 `null`，不会因选了编号而自动通过一致性审核。
+
+用户直接在本地查看图片并明确选择时，同一个 `--image-selection` 文件可额外带 `local_review`：`{"schema_version":1,"method":"local_files","reviewer":"实际选择者","statement":"用户的实际选择原话","viewed_images":[{"scene_id":"scene_0001","candidate_id":"request_01_image_01","sha256":"所选原图的完整 SHA256"}]}`。该方式只接受 `intent="accept"`；`viewed_images` 必须精确覆盖当前批次全部选择。程序保存并验证原始提交及其 SHA256，作为本地确认依据；不会创建 SMTP 回执。原邮件选择文件不带此字段时仍要求有效邮件回执。本地选定基准不代表所有图片一致性或视频已验收。
 
 ```powershell
 video-ai make-video --run-dir "D:/VideoSi/projects/video-ai/runs/RUN" --image-selection "D:/VideoSi/selection.json" --json
@@ -325,3 +329,35 @@ prefix = validate_scene_completed_prefix(frozen, units, timeline)
 ```
 
 四个 `require_*` 每次重新验证对应原证据；缺少门槛或发现冲突会拒绝。进度和完成前缀接口只读，不补写收据、不启动服务或重新提取、编码、复制。写入口自动持有同运行 RunLock；已有协调器持锁时传 `lock=held_run_lock`，由调用方负责释放。其他错误状态 `blocked/failed/interrupted` 的退出码为 2/1/130。真实模型效果和最终实际影片质量仍需 JIM-08 的真实服务与观看验收。
+
+## 原生时序续写（VCO-08）
+
+`temporal_extension_v1` 是显式选择的生产模式。使用前，必须由
+`scripts/export_temporal_evidence.py` 从已接受资格、固定运行 bundle 和当前生产封装的真实五阶段资源收据导出独立准入；安装 bundle 或资源前向通过都不能单独成为视频质量接受。
+VCO-08 的生产准入和最终验证状态以 [交接记录](task-handoffs/VCO-08-handoff.md) 为准。
+
+2026-11-04 已完成独立生产准入及最终验证，实际准入路径为下例中的 `production-native16-admission.json`（SHA `1e56f31d5bb2c885342d250daaf9209bc38ff21383c9f3226cfbb30eac5c8d47`）。五阶段真实资源、5,326 唯一测试节点覆盖及视觉适用范围见[验收记录](task-designs/VCO-08-production-verification.md)。该模式保持显式选择。
+
+新配置或显式配置修订使用下面的字段；路径须指向实际已审查的提示合同和已导出的准入 JSON：
+
+```json
+{
+  "scene_continuity": {"schema_version": 1, "policy": "advisory_v1"},
+  "scene_rendering": {
+    "mode": "temporal_extension_v1",
+    "prompt_policy": "visual_v2",
+    "prompt_contract": "D:/VideoSi/projects/video-ai/inputs/native-prompts.json",
+    "temporal_evidence": "D:/VideoSi/projects/video-ai/vco08-preflight/20261102-native16-qualification/allocator-async-candidate-v1/production-native16-admission.json"
+  }
+}
+```
+
+媒体 profile 使用 `fast`。原生源固定 768×432、16fps 部署输出时钟，每窗生成 93 帧；续窗实际输入父窗 raw RGB 的 `[80,93)` 共 13 帧并恢复父 Generator。首窗最多贡献 93 帧，续窗最多贡献 80 帧，末窗准确裁尾。例如 320 帧贡献为 `93+80+80+67`。预算覆盖完整时间轴，不以 320 帧截断旁白或字幕；16fps 是预先声明的输出时钟，模型 API 没有 fps 条件输入。
+
+沿用 `produce_scene_clips` 和 `consume_scene_clip_observation` 入口。原生窗完成后返回 `temporal_window_static` 模板，只用于静态筛查和决定后继窗口；所有窗口完成后返回 `scene_temporal_chain_process` 模板，必须完整播放整条新链后填写。单次完整观看绑定全链及所有边界，各窗口引用同一原始事件。VCO-04 的自动报告、风险回应和最终成片观看仍各自保留门槛；静态 acceptable 不等于动态通过。
+
+原生事务保存在 `production/scene-clips/<clip_id>/`，整链位于 `production/scene-clips/chains/<scene_id>/`，完成索引为 schema 4。unknown/failed 窗口不自动重新采样；有完整 sample-complete/latent/Generator 的成功采样只允许同身份 decode-only 恢复。现有精确提示缓存直接复用；不同的新提示在任何视频 intent 前使用独立 prepare-cache 作业，unknown 缓存作业不自动重编码。
+
+模式或协议变化通过新修订失效相关视频后代，原文、语义、选图、PCM 和字幕可以合法继承。未变原生场景保留原始观看事件；旧父窗与新后继窗混合后必须组装并观看新链。实际需要继承的 raw93、Generator、媒体或原观察缺失仍拒绝，不通过重新推理补回。
+
+正式生产不设执行总时限或人工内存/显存占用配额。仍要求启动时空闲物理内存 8 GiB、commit 10 GiB、显存 18 GiB，运行时保留物理 2 GiB、commit 4 GiB、显存 1 GiB及磁盘 32 GiB；监督器只停止自己持有的 worker。资格的实际视觉范围为一个白鹭案例、四窗 320 帧；其他输入和更长链须以其完整新观看结果接受。

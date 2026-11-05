@@ -95,6 +95,12 @@ class SceneMediaStore(SceneClipStore):
         return raw.get('scene_rendering',{}).get('mode')!='whole_scene_v1'
 
     def assert_owned(self):
+        raw=getattr(getattr(self.frozen,'config',None),'raw',{})
+        if raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1':
+            from ._temporal_media_check_coverage import known_temporal_execution
+            execution=getattr(self,'execution_guard',None)
+            if (not known_temporal_execution(execution) or execution.frozen is not self.frozen or execution.store.run_dir!=self.run_dir):
+                raise ProductionRefused('native media execution proof missing or replaced')
         if not self.recheck_inputs:
             if (not isinstance(self.lock,RunLock) or self.lock.run_dir!=self.run_dir
                     or read_json(self.lock.path)!=self.lock.owner):
@@ -131,6 +137,9 @@ class SceneMediaStore(SceneClipStore):
         return super().path(target)
 
     def artifact(self,path):
+        from ._temporal_media_check_coverage import native_external_artifact
+        captured=native_external_artifact(self,path)
+        if captured is not None:return captured
         self._lexical(path)
         return super().artifact(path)
 
@@ -138,6 +147,8 @@ class SceneMediaStore(SceneClipStore):
         from .scene_color_repair_records import require_production_repair_origin
         require_production_repair_origin(value)
         object_fields(value,('path','bytes','sha256'),'scene media Artifact')
+        from ._temporal_media_check_coverage import native_external_artifact
+        if native_external_artifact(self,value['path'],value) is not None:return Path(value['path'])
         self._lexical(value['path'])
         return super().validate_artifact(value)
 
@@ -180,6 +191,8 @@ class SceneMediaStore(SceneClipStore):
 
     def bind_artifact(self,artifact):
         """Extend byte guards without replacing an earlier admitted identity."""
+        from ._temporal_media_check_coverage import native_external_artifact
+        if native_external_artifact(self,artifact['path'],artifact) is not None:return
         key=artifact['path']
         if key in self.guard_absent_paths or key in self.guard_empty_paths:
             raise ProductionRefused('captured absent/empty evidence changed: '+key)
@@ -448,7 +461,14 @@ def _scene_media_base_context(frozen,units,timeline,*,paths=None,lock=None):
         'production/image-selection','production/reference-images','production/reference-storage','production/jimeng','production/scene-clips'))
     store.guard_tool_stamps=tool_stamps
     store.capture_unhashed_inputs(snapshot,pcm_paths=(c.pcm.path for c in timeline.clips))
-    clips = _require_scene_clip_base_acceptance(frozen,units,timeline)
+    from ._continuity_byte_guard import capture_reads
+    native=frozen.config.raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
+    native_proof=None
+    if native:
+        with capture_reads() as capture:
+            clips=_require_scene_clip_base_acceptance(frozen,units,timeline)
+        native_proof=capture.finish()
+    else:clips = _require_scene_clip_base_acceptance(frozen,units,timeline)
     execution = None
     if clips.get('schema_version') == 3:
         from .scene_execution_records import load_scene_execution, verify_whole_scene_frozen
@@ -464,6 +484,16 @@ def _scene_media_base_context(frozen,units,timeline,*,paths=None,lock=None):
         if execution['mode']=='whole_scene_v1':
             from ._scene_media_check_coverage import WholeExecutionCheck
             store.execution_guard=WholeExecutionCheck(store,frozen,budget_artifact)
+    elif clips.get('schema_version')==4:
+        from .scene_execution_records import load_scene_execution
+        from .temporal_scene_admission import verify_temporal_frozen
+        from ._temporal_media_check_coverage import TemporalExecutionCheck
+        _,semantic_plan=load_committed_plan(frozen,units,timeline)
+        execution=load_scene_execution(frozen,semantic_plan,timeline)
+        evidence=verify_temporal_frozen(frozen)
+        store.execution_guard=TemporalExecutionCheck(store,frozen,clips['execution_budget'],evidence)
+        if native_proof is None:raise ProductionRefused('native media source proof missing')
+        store.execution_guard.extend_proof(native_proof)
     store.verify_admission_snapshot(snapshot)
     bible,plan=load_committed_plan(frozen,units,timeline)
     images = require_complete_image_acceptance(frozen,units,timeline)
@@ -524,6 +554,7 @@ def scene_media_context(frozen,units,timeline,*,paths=None,lock=None):
         from ._scene_media_check_coverage import capture_media_check_coverage
         store._media_check_coverage=capture_media_check_coverage(store,guard)
     else:store.continuity_read_guard=getattr(store,'continuity_check',None)
+    if context.get('execution') is not None and context['execution']['mode']=='temporal_extension_v1':store.execution_guard()
     return context
 
 
@@ -568,13 +599,18 @@ def load_scene_media_progress(frozen,units,timeline):
 def _load_scene_media_progress(context):
     from ._scene_upscale_records import validate_upscale_frames, require_upscale_record
     frozen=context['frozen'];store = context['store']
-    terminals=[]; frames = validate_upscale_frames(context,terminal_errors=terminals)
+    terminals=[]
+    complete=store.read('complete.json') is not None
+    # The complete record validator reconstructs every frame and binds the
+    # returned list. Reuse that exact reconstruction for progress counters.
+    frames=(require_upscale_record(context)['frames'] if complete else
+            validate_upscale_frames(context,terminal_errors=terminals))
     def row(status='pending',record=None,completed=0,total=1,error=None):
         return dict(status=status,record=str(record) if record else None,completed_items=completed,total_items=total,error=error)
     result = dict(schema_version=2,run_id=store.run_dir.name,upscale=row(total=len(context['rows']),completed=len(frames)),
                   composition=row(),final_review=row(),delivery=row())
-    if store.read('complete.json') is not None:
-        require_upscale_record(context); result['upscale'] = row('ready',store.root/'complete.json',len(frames),len(context['rows']))
+    if complete:
+        result['upscale'] = row('ready',store.root/'complete.json',len(frames),len(context['rows']))
     elif terminals:
         terminal=terminals[0]
         result['upscale']['status']='blocked' if terminal['status']=='identity_conflict' else 'failed'

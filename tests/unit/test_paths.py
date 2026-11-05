@@ -152,7 +152,8 @@ def test_shot_name_rejects_invalid_or_injected_id(shot):
 
 @pytest.mark.parametrize('existing', ['.mp4', '.srt'])
 def test_output_pair_refuses_either_existing_file_without_modification(existing):
-    folder = Path('D:/VideoSi/output/video-ai/tests') / uuid.uuid4().hex
+    from video_ai.runtime.storage import _sandbox
+    folder = _sandbox.get()/'output/video-ai/tests'/uuid.uuid4().hex
     folder.mkdir(parents=True)
     movie = folder / '中文 movie.mp4'
     occupied = movie.with_suffix(existing)

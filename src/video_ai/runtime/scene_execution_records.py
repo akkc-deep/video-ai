@@ -20,7 +20,7 @@ _writer_admissions=ContextVar('scene_execution_writer_admissions',default=None)
 def _protect_whole_inputs(function):
     @wraps(function)
     def protected(frozen,*args,**kwargs):
-        if rendering_mode(frozen)!='whole_scene_v1':return function(frozen,*args,**kwargs)
+        if rendering_mode(frozen) not in ('whole_scene_v1','temporal_extension_v1'):return function(frozen,*args,**kwargs)
         from .verification import whole_input_protection
         with whole_input_protection():return function(frozen,*args,**kwargs)
     return protected
@@ -36,7 +36,9 @@ def verified_scene_execution_write(function):
     @wraps(function)
     @_protect_whole_inputs
     def wrapped(frozen,*args,**kwargs):
-        if rendering_mode(frozen) is None:return function(frozen,*args,**kwargs)
+        if rendering_mode(frozen) is None:
+            from .verification import scene_input_protection
+            with scene_input_protection(frozen):return function(frozen,*args,**kwargs)
         from .verification import validation_session,writable_validation_session
         options=getattr(frozen,'options',{})
         scope=lambda: writable_validation_session(_run(frozen)) if 'script_path' in options else validation_session()
@@ -175,6 +177,8 @@ def cached_whole_scene_admission_guard(frozen):
     return evidence.get('guard') if isinstance(evidence,dict) else None
 
 
+@verified_read
+@_protect_whole_inputs
 def verify_whole_scene_frozen(frozen,*,reader=None):
     """Rebuild the external semantic closure, inventories and current environment.
 
@@ -215,6 +219,9 @@ def verify_whole_scene_frozen(frozen,*,reader=None):
 def _identity(frozen):
     mode=rendering_mode(frozen)
     evidence=verify_whole_scene_frozen(frozen) if mode=='whole_scene_v1' else None
+    if mode=='temporal_extension_v1':
+        from .temporal_scene_admission import verify_temporal_frozen
+        evidence=verify_temporal_frozen(frozen)
     return dict(run_id=frozen.options['run_id'],mode=mode or 'segmented_v1',
         rendering_identity_sha256=canonical_digest(identity_from_options(thaw(frozen.options)) if mode is not None else thaw(frozen.options)),
         admission=evidence['root'] if evidence is not None else None)

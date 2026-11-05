@@ -23,6 +23,25 @@ def test_signature_fixed_utf8_vector():
         'Signature=5190658c5ac5ea62e5a3e7649c38f65e45a7b16e4daa4d241d48d7efeb27dae9')
 
 
+def test_download_can_use_lease_guard_without_rehashing_source_for_every_chunk():
+    from video_ai.jimeng_config import parse_image_generation
+    from video_ai.adapters.external_https import ExternalHttpsClient
+    from video_ai.adapters.jimeng import JimengClient
+    body = b'image-bytes' * 20000
+    checks = []
+    class Download(io.BytesIO):
+        status = 200
+        headers = {'Content-Length': str(len(body))}
+        def geturl(self): return 'https://cdn.example/image'
+    def source_guard():
+        raise AssertionError('full source guard must run at transaction boundaries, not per download chunk')
+    client = JimengClient(parse_image_generation(image_settings(), 'test'),
+        http=ExternalHttpsClient(transport=lambda request, **kwargs: Download(body)), ownership_check=source_guard)
+    client.download_ownership_check = lambda: checks.append('lease')
+    assert client.download('https://cdn.example/image') == body
+    assert len(checks) > 2
+
+
 def client_with(monkeypatch, replies, captured=None):
     from video_ai.jimeng_config import parse_image_generation
     from video_ai.adapters.external_https import ExternalHttpsClient

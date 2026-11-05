@@ -16,7 +16,7 @@ from .owned_cleanup import stop_owned_preserving_exception
 from .production_inputs import check_stage_space
 from .production_state import ArtifactStamp, ProductionRefused, object_fields, run_path
 from .production_support import (commit_checkpoint, mark_request_error, read_report, recover_checkpoint,
-                                 recover_http, stamps)
+                                 recover_http, stamps, http_recovery_scope)
 from .service_specs import build_service_specs
 from .services import ServiceConflictError, ServiceManager, port_listening
 
@@ -43,12 +43,14 @@ def _check_intent(path, *, frozen, uid, schema, prompt, candidates):
     data = read_json(Path(path))
     object_fields(data, ('request_id', 'body', 'schema', 'prompt', 'context'), 'Ollama intent')
     context = data['context']
-    object_fields(context,('client_id','script_identity','candidate_ranges'),'Ollama intent context')
+    object_fields(context,('client_id','script_identity','candidate_ranges')+
+                  (('model_session',) if 'model_session' in context else ()),'Ollama intent context')
     if (data['request_id'] != uid or data['schema'] != schema or data['prompt'] != prompt or
         context['script_identity'] != frozen.options['execution_policy']['input_identities']['script'] or
         context['candidate_ranges'] != [dict(unit_id=s.unit_id,start=s.start,end=s.end) for s in candidates]):
         raise ProductionRefused(f'{uid}: frozen Ollama intent differs')
-    expected=[ollama_body(prompt,schema,cpu_only=frozen.options['cpu_planner'],units_coverage=mode)
+    expected=[ollama_body(prompt,schema,cpu_only=frozen.options['cpu_planner'],units_coverage=mode,
+                         model_session=context.get('model_session'))
               for mode in (False,True)]
     if json.dumps(data['body'],sort_keys=True,allow_nan=False) not in [json.dumps(body,sort_keys=True,allow_nan=False) for body in expected]:
         raise ProductionRefused(f'{uid}: original Ollama body differs from frozen request')
@@ -62,6 +64,7 @@ def produce_units(frozen, *, state, manifest, paths, logger):
                               settings=settings, measure=font.measure)
 
 
+@http_recovery_scope()
 def _produce_units(frozen, *, state, manifest, paths, logger, settings, measure):
     report = read_report(state, 'units')
     complete = state.snapshot()['stages']['units']['status'] == 'completed'
@@ -92,7 +95,8 @@ def _produce_units(frozen, *, state, manifest, paths, logger, settings, measure)
                                            prompt=current_prompt,candidates=candidates)
                     if intent['context']['client_id'] != cp['request']['client_id']: raise ProductionRefused('Ollama client identity differs')
                     raw,_,original_evidence=recover_http(logger,uid=uid,
-                        url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'])
+                        url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'],
+                        evidence_paths=cp['request']['response_paths'] or None)
                     original_error=None;original_content=None
                     try:
                         original_content=parse_completed_response(strict_json(raw),schema=schema,request_id=uid,evidence_paths=original_evidence)
@@ -127,7 +131,7 @@ def _produce_units(frozen, *, state, manifest, paths, logger, settings, measure)
                         req = record['request']
                         if req is None or req['client_id'] != intent['context']['client_id'] or req['intent_path'] != str(intent_path):
                             raise ProductionRefused('Ollama intent/state association differs')
-                    try: raw, meta, evidence = recover_http(logger,uid=uid,url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'])
+                    try: raw, meta, evidence = recover_http(logger,uid=uid,url=frozen.config.services['ollama']+'/api/generate',payload=intent['body'],evidence_paths=req['response_paths'] or None)
                     except AdapterError as exc: mark_request_error(state,'units',uid,exc)
                     media = next((v for k,v in meta['headers'].items() if k.lower()=='content-type'),'').split(';')[0]
                     if media != 'application/json' and not media.endswith('+json'): raise ProductionRefused('unknown Ollama JSON response')
@@ -146,7 +150,8 @@ def _produce_units(frozen, *, state, manifest, paths, logger, settings, measure)
                         if not handle.owned: raise ProductionRefused(f'external Ollama service: {handle.url}')
                     client_id = uuid4().hex
                     context = dict(client_id=client_id,script_identity=frozen.options['execution_policy']['input_identities']['script'],
-                                   candidate_ranges=[dict(unit_id=s.unit_id,start=s.start,end=s.end) for s in candidates])
+                                   candidate_ranges=[dict(unit_id=s.unit_id,start=s.start,end=s.end) for s in candidates],
+                                   model_session='owned_stage_v1')
                     def on_intent(path, body):
                         state.record_unit('units',uid,status='running',request=dict(state='intent',intent_path=str(path),
                             client_id=client_id,prompt_id=None,response_paths=[]))

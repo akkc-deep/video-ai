@@ -62,6 +62,7 @@ class _Media:
         self.lock = self.run/'.make-video.lock'
         self.owner = read_json(self.lock) if self.lock.exists() else None
         self.revision_guard = None
+        self.decoded = {}
 
     def owned(self):
         if self.owner is not None and (not self.lock.is_file() or read_json(self.lock) != self.owner):
@@ -79,6 +80,12 @@ class _Media:
 
     def inspect(self, path):
         identity = _identity(path)
+        tools = tuple((str(self.config.tools[k]), _identity(self.config.tools[k])['sha256'])
+                      for k in ('ffmpeg', 'ffprobe'))
+        key = (identity['bytes'], identity['sha256'], tools)
+        if key in self.decoded:
+            self.owned()
+            return dict(identity, **self.decoded[key])
         probe = self.command((self.config.tools['ffprobe'], '-v', 'error', '-count_frames',
                               '-show_streams', '-of', 'json', path))
         streams = read_json(probe.stdout_path).get('streams')
@@ -93,7 +100,8 @@ class _Media:
         self.command((self.config.tools['ffmpeg'], '-nostdin', '-v', 'error', '-xerror', '-i', path, '-f', 'null', '-'))
         if _identity(path) != identity:
             raise ProductionRefused('image identity changed during decode')
-        return dict(identity, width=stream['width'], height=stream['height'])
+        self.decoded[key] = dict(width=stream['width'], height=stream['height'])
+        return dict(identity, **self.decoded[key])
 
     def commit(self, target, raw):
         target = self.local(target)
@@ -127,6 +135,33 @@ class _Media:
         finally:
             if temporary.exists(): temporary.unlink()
         return self.inspect(target)
+
+    def previews(self, source, expected):
+        """Decode one original once, keeping the established JPEG recipes."""
+        temporary = []
+        try:
+            filters = ['[0:v]split='+str(len(expected))+''.join(f'[s{i}]' for i in range(len(expected)))]
+            output = []
+            for i, row in enumerate(expected):
+                target = self.local(row['path']); target.parent.mkdir(parents=True, exist_ok=True)
+                staging = self.local(target.with_name(f'.{target.stem}.{uuid4().hex}.jpg'))
+                temporary.append((target, staging))
+                width, height = row['width'], row['height']
+                filters.append(f'[s{i}]scale={width}:{height}:force_original_aspect_ratio=decrease,'
+                    f'pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1[o{i}]')
+                output.extend(('-map', f'[o{i}]', '-frames:v', '1', '-c:v', 'mjpeg', '-q:v', '3',
+                               '-pix_fmt', 'yuvj420p', staging))
+            self.command((self.config.tools['ffmpeg'], '-nostdin', '-n', '-v', 'error', '-xerror',
+                          '-i', source, '-filter_complex', ';'.join(filters), *output))
+            result = []
+            for target, staging in temporary:
+                self.inspect(staging)
+                self.commit(target, staging.read_bytes())
+                result.append(self.inspect(target))
+            return result
+        finally:
+            for _, staging in temporary:
+                if staging.exists(): staging.unlink()
 
 
 def _inherited_sources(batch,store):
@@ -223,6 +258,12 @@ def _verify_source(store, row):
 
 
 def prepare_email_media(batch, *, config, paths, logger) -> dict:
+    from ..runtime.verification import whole_input_protection, writable_validation_session
+    with whole_input_protection(), writable_validation_session(Path(logger.run_dir)):
+        return _prepare_email_media(batch, config=config, paths=paths, logger=logger)
+
+
+def _prepare_email_media(batch, *, config, paths, logger) -> dict:
     """Persist and return exact schema-2 source/preview/contact-sheet identities.
 
     The coordinator owns the run lock. A standalone call is also supported;
@@ -264,7 +305,10 @@ def prepare_email_media(batch, *, config, paths, logger) -> dict:
                     raise ProductionRefused('saved media identity changed')
                 if store.inspect(path) != {k: row[k] for k in ('path', 'bytes', 'sha256', 'width', 'height')}:
                     raise ProductionRefused('saved media dimensions changed')
-                sync_file(path)
+                # Originals are durable input artifacts from the candidate /
+                # import transaction. They may be held deny-write throughout
+                # this call; only this module's derivatives need re-syncing.
+                if row.get('kind') != 'original': sync_file(path)
         store.owned()
         # The manifest and derivative can both have been edited. Re-render
         # from the verified originals below, then let immutable byte comparison
@@ -272,16 +316,18 @@ def prepare_email_media(batch, *, config, paths, logger) -> dict:
     font = Path(config.media.font_file)
     if not font.is_absolute() or not font.is_file():
         raise ProductionRefused('fixed local contact sheet font required')
+    from ..runtime.storage import managed_location
+    managed = managed_location(logger.run_dir) is not None
+    # FreeType on Windows can fail to open a UTF-8 absolute font path. Relative
+    # ASCII snapshot paths work from the process's Unicode working directory.
+    filter_font = font.relative_to(logger.run_dir) if managed and font.is_relative_to(logger.run_dir) else font
     images = []
-    for expected in expected_images:
-        if expected['kind'] == 'original':
-            images.append(expected)
-            continue
-        source = next(r for r in sources if (r['scene_id'], r['candidate_id']) == (expected['scene_id'], expected['candidate_id']))
-        width, height = expected['width'], expected['height']
-        contain = f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1'
-        identity = store.render(expected['path'], ('-i', source['path'], '-vf', contain))
-        images.append(dict(expected, **identity))
+    for source in sources:
+        rows = [row for row in expected_images if (row['scene_id'], row['candidate_id']) ==
+                (source['scene_id'], source['candidate_id'])]
+        images.append(rows[0])
+        rendered = store.previews(source['path'], rows[1:])
+        images.extend(dict(row, **identity) for row, identity in zip(rows[1:], rendered))
     sheets = []
     for index, (page, expected) in enumerate(zip(pages, expected_sheets), 1):
         args, filters = [], []
@@ -292,9 +338,10 @@ def prepare_email_media(batch, *, config, paths, logger) -> dict:
             label = f'{source["scene_id"]}={source["candidate_id"]}'
             textfile = folder/'labels'/f'page_{index:04d}_cell_{cell+1:02d}.txt'
             store.commit(textfile, label.encode('ascii'))
+            filter_textfile = textfile.relative_to(logger.run_dir) if managed else textfile
             size = min(16, max(4, 750//len(label)))
             filters.append(f"[{cell}:v]scale=480:270,drawbox=x=0:y=ih-26:w=iw:h=26:color=black:t=fill,"
-                           f"drawtext=fontfile='{_escaped(font)}':textfile='{_escaped(textfile)}':expansion=none:"
+                           f"drawtext=fontfile='{_escaped(filter_font)}':textfile='{_escaped(filter_textfile)}':expansion=none:"
                            f"fontsize={size}:fontcolor=white:x=6:y=h-22[c{cell}]")
         if len(page) == 1:
             filters.append('[c0]pad=960:270:0:0:black[out]')

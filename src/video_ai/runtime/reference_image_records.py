@@ -38,6 +38,8 @@ def build_reference_prompt(scene, bible):
 def resolve_reference_prompt(frozen, scene, bible, capability):
     """Choose once before submission; recover only a fully known saved format."""
     from .reference_visual_prompt import compact_reference_prompt
+    from .scene_image_prompts import effective_image_prompt
+    scene = dict(scene, image_prompt=effective_image_prompt(frozen, scene))
     full = build_reference_prompt(scene, bible)
     compact = compact_reference_prompt(scene, bible)
     run = images._run(frozen)
@@ -151,6 +153,10 @@ def _committed(frozen, scene, bible, plan):
     return run
 
 
+from .scene_revision_records import revision_read_transaction
+
+
+@revision_read_transaction()
 def resolve_reference_bindings(frozen, bible, plan, scene, accepted_batches):
     """Return (candidate, uses) in Bible order, merging identical originals."""
     run = _committed(frozen, scene, bible, plan)
@@ -200,8 +206,9 @@ def _format(value):
 def _object(frozen, candidate, record, storage, accepted_sources):
     object_fields(record, OBJECT_FIELDS, 'reference object')
     run = images._run(frozen)
+    from .storage import remote_namespace
     expected = dict(bucket=storage['bucket'], region=storage['region'], endpoint=storage['endpoint'],
-        key=storage['key_prefix']+'/'+run.name+'/'+candidate['sha256']+'.original',
+        key=storage['key_prefix']+'/'+remote_namespace(run)+'/'+candidate['sha256']+'.original',
         bytes=candidate['bytes'], sha256=candidate['sha256'], content_type='image/'+_format(candidate['format']))
     images._equal({k: record[k] for k in expected}, expected, 'reference object identity')
     images._nonempty(record['etag'], 'reference object etag')
@@ -230,6 +237,7 @@ def _object(frozen, candidate, record, storage, accepted_sources):
                                object=record, verified_at=receipt['verified_at']), 'reference object receipt')
 
 
+@revision_read_transaction()
 def validate_reference_inputs(frozen, scene, bible, plan, references, settings):
     """Local preflight, including source decode and capability; performs no I/O to cloud."""
     _committed(frozen, scene, bible, plan)
@@ -254,8 +262,8 @@ def validate_reference_inputs(frozen, scene, bible, plan, references, settings):
             raise ProductionRefused('reference image exceeds verified model capability')
         _object(frozen, candidate, row['object'], storage, accepted_sources)
     prompt = resolve_reference_prompt(frozen, scene, bible, cap)
-    if len(prompt.encode('utf-8')) > cap['max_prompt_bytes']:
-        raise ProductionRefused('reference prompt exceeds verified capability')
+    # The historical byte threshold selects a representation, not an input cap.
+    # Preserve the complete prompt; provider errors remain authoritative.
     return model, prompt
 
 
@@ -333,6 +341,7 @@ def verify_reference_provenance(frozen, scene, bible, plan):
     return provenance
 
 
+@revision_read_transaction()
 def reference_candidates(frozen, scene, manifest_path):
     from ._scene_revision_origins import inherited
     if inherited(frozen,'image',scene['scene_id']) is not None:
@@ -348,6 +357,7 @@ def reference_candidates(frozen, scene, manifest_path):
     return images._candidates(frozen, scene, manifest_path, _reference=(model, requests, settings))
 
 
+@revision_read_transaction()
 def build_reference_image_acceptance(frozen, units, timeline):
     complete = images.require_complete_image_acceptance(frozen, units, timeline)
     bible, plan = images.load_committed_plan(frozen, units, timeline)
@@ -375,6 +385,7 @@ def build_reference_image_acceptance(frozen, units, timeline):
         complete_acceptance_sha256=canonical_digest(complete), scenes=rows)
 
 
+@revision_read_transaction()
 def require_reference_image_acceptance(frozen, units, timeline):
     expected = build_reference_image_acceptance(frozen, units, timeline)
     actual = images._read(images._run(frozen)/'production/reference-images/wan-inputs.json')

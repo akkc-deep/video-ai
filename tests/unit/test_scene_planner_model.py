@@ -35,7 +35,7 @@ def test_scene_body_uses_chosen_model_and_ordinary_requests_keep_8b():
     ordinary = ollama_body('ordinary', {'type': 'object'})
     body = ollama_body('complete input', {'type': 'object'}, scene_planning=True, model='qwen3:14b')
     assert body['model'] == 'qwen3:14b' and body['think'] is True
-    assert body['options'] == dict(temperature=0, num_predict=8192, num_ctx=32768)
+    assert body['options'] == dict(temperature=0, num_predict=-1, num_ctx=32768)
     assert ordinary['model'] == 'qwen3:8b' and ordinary['think'] is False
     with pytest.raises(ValueError):
         ollama_body('ordinary', {'type': 'object'}, model='qwen3:14b')

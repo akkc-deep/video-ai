@@ -11,7 +11,8 @@ def copies(tmp_path, runtime_run):
     from video_ai.runtime.logging import RunLogger
     source = tmp_path / 'source.bin'
     source.write_bytes(b'actual source content')
-    target = Path('D:/VideoSi/tools/tests') / uuid4().hex / 'copy.bin'
+    from video_ai.runtime.storage import _sandbox
+    target = _sandbox.get()/'tools/tests'/uuid4().hex/'copy.bin'
     return CopyEntry(source, target, 'tool-env', source.stat().st_size, None), RunLogger(runtime_run[0])
 
 

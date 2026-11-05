@@ -267,7 +267,21 @@ def test_durable_boundaries_release_lock_and_resume(runtime_run, tmp_path, monke
     assert len(cloud.submits) == 4
 
 
-@pytest.mark.parametrize('change', ['bytes', 'dimensions', 'format', 'prompt', 'ttl'])
+def test_reference_batch_does_not_block_complete_prompt_on_local_byte_advice(runtime_run, tmp_path, monkeypatch):
+    s = prepared_baseline(runtime_run, tmp_path)
+    cloud, smtp, kwargs = configured_cloud(s, monkeypatch)
+    value = json.loads(s['reference_settings_path'].read_text(encoding='utf-8'))
+    cap_path = Path(value['reference_capabilities']['jimeng_t2i_v40'])
+    cap = json.loads(cap_path.read_text(encoding='utf-8'))
+    cap['max_prompt_bytes'] = 1
+    write_json(cap_path, cap)
+    result = produce(s, **kwargs)
+    assert result.status == 'awaiting_image_selection', result.error
+    assert len(cloud.submits) == 4
+    assert all(len(payload['prompt'].encode('utf-8')) > 1 for payload in cloud.submits)
+
+
+@pytest.mark.parametrize('change', ['bytes', 'dimensions', 'format', 'ttl'])
 def test_batch_limits_stop_before_any_cloud_request(runtime_run, tmp_path, monkeypatch, change):
     s = prepared_baseline(runtime_run, tmp_path)
     cloud, smtp, kwargs = configured_cloud(s, monkeypatch)
@@ -277,7 +291,6 @@ def test_batch_limits_stop_before_any_cloud_request(runtime_run, tmp_path, monke
     if change == 'bytes': cap['max_image_bytes'] = 1
     elif change == 'dimensions': cap['min_width'] = 4096
     elif change == 'format': cap['formats'] = ['jpeg']
-    elif change == 'prompt': cap['max_prompt_bytes'] = 10
     else: value['reference_storage']['url_ttl_seconds'] = 100
     write_json(cap_path, cap); write_json(s['reference_settings_path'], value)
     result = produce(s, **kwargs)

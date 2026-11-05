@@ -41,3 +41,16 @@
 ## 当前软件回归断点
 
 已报告751 PASS、1 FAIL，4375未完成；细节在案例003的regression-resume-manifest.json和regression-checkpoint-boundary-proof.json。当前GPU结束后先单点复现原timeout故障，若确认故障注入被production无时限覆盖，仅修测试注入策略；生产时间规则保持。然后继续余下精确nodeid，不重跑已完成前缀。将来新产品改动须依据实际变更补充验证。
+
+## 正式消费者补充调查（Q首窗运行期间，仅只读）
+
+- `runtime/scene_clip_records.py::scene_context`在预算加载前即校验Wan模型/WorkflowTemplate；正式temporal上下文需独立分支，不能在此路径上贴mode标签。`validate_clip`重建Comfy请求/提交与schema2技术记录，原生事务也需要独立验证分支。`collect_progress`、`complete_value`、`require_scene_clip_acceptance`可评估复用核心父链/观察流程，但index须明确版本和协议。
+- `planning/scene_media.py::plan_scene_upscale`只接受schema2/3 index，并对每片调用`scene_clip_frame_mapping`。新13历史映射必须显式贯通此消费者，旧schema不可接受新的预算标记；不能只修生成端。`runtime/scene_media_records.py`对execution-budget的读取亦只有schema3分支。
+- `runtime/scene_clip_observations.py::build_observation_template`主要消费已验证clip/request/mapping/last-frame和父观察，支持复用真实观看契约；父last-frame是审计/观察引用，不能冒充13帧模型输入。原生输入必须另外保存完整13帧来源和调用证据。
+- `planning/scene_revision.py::snapshot_execution_clips`严格要求execution schema1/algorithm scene_execution_v1；rendering identity仅schema2/3。新execution/protocol/schema应有独立分支及准确source快照验证，旧版本不得因加入新mode而被重解释。
+- `runtime/scene_video_prompt_records.py`以schema2==whole_scene_v1判定；新temporal prompt需独立版本、完整覆盖新的执行clip ID，并仍按VCO-01只把视觉字段送模型。
+- Q的worker明确锁定93+80+80+67、原白鹭文本缓存SHA，因而只是资格执行器。不能直接对其他生产提示调用它；正式worker须支持新输入独立缓存身份及合法未满窗裁尾，且不得重编码本案例已经存在的文本。实际模型/API无fps条件的事实仍必须保留。
+- 初始生产适用帧数/窗口上限须依据Q成功范围声明；若拟支持1..320帧，预算应让非末窗始终全保留、仅末窗裁尾，续窗条件仍取父原生93帧最后13帧。纯预算与所有媒体/修订消费者需测试覆盖1/13/80/93/94/173/253/254/320及321拒绝。此处是候选设计要求，不是已实现/已准入。
+- 新worker的软件身份与Q资格身份若不同，不能沿用Q全源SHA宣称相同；必须明确区分数值核心/输入封装差异、重新取得新源码对应资源证据并完成必要真实生产验证。禁止通过关闭旧守卫绕过身份差异。
+
+原timeout已实际RED→GREEN（5项通过）；后续4375 batch在会话中断后进程消失、无完成结果，不能从tmp目录或诊断marker推造PASS。当前先推进已授权Q，未解决余项留软件收尾。此段覆盖上段旧“待复现”操作状态。

@@ -31,7 +31,8 @@ def source_contract_identity(config):
 
 def validate_contract_mode(contract, settings):
     settings = parse_scene_rendering(settings)
-    if (contract['schema_version'] == 2) != (settings.get('mode') == 'whole_scene_v1'):
+    expected = {'whole_scene_v1': 2, 'temporal_extension_v1': 3}.get(settings.get('mode'), 1)
+    if type(contract['schema_version']) is not int or contract['schema_version'] != expected:
         raise ProductionRefused('prompt schema differs from frozen rendering mode')
     return contract
 
@@ -73,11 +74,12 @@ def prompt_binding_context(frozen,contract,bible,plan,wan_inputs):
     while True:
         expected = dict(scene_plan_sha256=canonical_digest(thaw(plan)),
             visual_bible_sha256=canonical_digest(thaw(bible)),wan_inputs_sha256=canonical_digest(thaw(wan_inputs)))
-        if contract.get('schema_version') == 2:
+        if contract.get('schema_version') in (2, 3):
             from types import SimpleNamespace
             from ..planning.scene_execution import derive_scene_execution_clips
-            clips = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode='whole_scene_v1')
-            expected.update(rendering_mode='whole_scene_v1', execution_clips_sha256=canonical_digest(clips))
+            mode = 'temporal_extension_v1' if contract['schema_version'] == 3 else 'whole_scene_v1'
+            clips = derive_scene_execution_clips(plan, SimpleNamespace(total_frames=plan['total_frames']), mode=mode)
+            expected.update(rendering_mode=mode, execution_clips_sha256=canonical_digest(clips))
         if thaw(contract['binding']) == expected:
             context = dict(bible=bible,plan=plan,wan_inputs=wan_inputs,script=current.script)
             validate_scene_video_prompt_contract(contract,**context)

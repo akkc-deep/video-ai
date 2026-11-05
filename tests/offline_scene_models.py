@@ -12,7 +12,8 @@ def model_inputs(config, patch):
     from video_ai.runtime import production_visual_templates
     from video_ai.runtime.manifest import thaw
     models=thaw(config.models)
-    root=Path('D:/VideoSi/models/tests')/('offline-scene-'+uuid4().hex)
+    from video_ai.runtime.storage import _sandbox
+    root=_sandbox.get()/'models/tests'/('offline-scene-'+uuid4().hex)
     root.mkdir(parents=True)
     replacements={}
     for role in ('wan_high','wan_low','text_encoder','vae','upscale'):

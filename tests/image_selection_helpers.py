@@ -92,7 +92,8 @@ def notification_receipt(setup, batch):
     run = setup['run']; created_at = '2026-10-18T00:00:00+00:00'
     mail = run/'production/image-selection'/batch['batch_id']/'mail'
     folder = mail/'part_0001/attempt_0001'; folder.mkdir(parents=True,exist_ok=True)
-    message_id = f"<{run.name}.{batch['batch_id']}.part_0001.attempt_0001@video-ai.local>"
+    from video_ai.adapters.selection_email import message_identity
+    message_id = '<'+message_identity(batch,1,1)+'@video-ai.local>'
     message = EmailMessage(policy=policy.SMTP)
     message['From'] = batch['delivery']['sender']; message['To'] = batch['delivery']['recipient']
     message['Subject'] = 'Offline selection fixture'; message['Message-ID'] = message_id

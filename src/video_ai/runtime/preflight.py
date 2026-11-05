@@ -9,7 +9,7 @@ import subprocess
 from uuid import uuid4
 
 from ..config import ProjectConfig
-from ..jimeng_config import STRATEGY, active_models, active_workflows
+from ..jimeng_config import STRATEGY, active_models, active_workflows, native_temporal
 from .environment import build_child_env
 from .paths import RuntimePaths, validate_output_pair
 from .workflows import validate_workflow
@@ -180,7 +180,8 @@ def preflight(config: ProjectConfig, *, script: Path | None = None, output: Path
             raise ValueError(f'D: no available disk space: free={usage.free}, total={usage.total}')
         return f'free={usage.free}, total={usage.total}; full_run_space_checked=false'
     record('disk', disk)
-    for kind in (('wan', 'upscale') if config.production_strategy == STRATEGY else ('sdxl', 'wan', 'upscale')):
+    kinds=('upscale',) if native_temporal(config) else (('wan', 'upscale') if config.production_strategy == STRATEGY else ('sdxl', 'wan', 'upscale'))
+    for kind in kinds:
         workflow = config.workflows[kind]
         mapping = config.workflows['wan_mapping'] if kind == 'wan' else workflow.with_suffix('.mapping.json')
         def check_workflow(w=workflow, m=mapping):

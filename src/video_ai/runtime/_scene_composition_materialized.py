@@ -18,17 +18,44 @@ MATERIALIZED_FIELDS = ('schema_version run_id inputs_sha256 contributions_sha256
     'subtitle ass font subtitle_events evidence created_at').split()
 
 
-def copy_bytes(store, source, target):
-    store.verify_global(); source_path=store.validate_artifact(source)
+def copy_bytes(store, source, target, *, check_global=True):
+    check = store.verify_global if check_global else store.assert_write
+    check(); source_path=store.validate_artifact(source)
     target=run_path(store.run_dir,target)
     with source_path.open('rb') as incoming,target.open('xb') as output:
         shutil.copyfileobj(incoming,output,1024*1024)
         output.flush(); os.fsync(output.fileno())
-    store.verify_global(); store.validate_artifact(source)
+    check(); store.validate_artifact(source)
     actual=store.artifact(target)
     equal({k:actual[k] for k in ('bytes','sha256')},
           {k:source[k] for k in ('bytes','sha256')},'composition byte copy')
     return actual
+
+
+def copy_frame_sequence(store, rows, folder):
+    """One complete source audit around exact, individually guarded copies."""
+    store.verify_global()
+    try:
+        from .storage import managed_location
+        if managed_location(store.run_dir) is not None:
+            from .storage_files import materialize_immutable
+            sequence=[]
+            for i,row in enumerate(rows,1):
+                store.assert_write()
+                source=store.validate_artifact(row['image'])
+                target=run_path(store.run_dir,folder/'frames'/f'frame_{i:06d}.png')
+                materialize_immutable(source,target)
+                actual=store.artifact(target)
+                equal({k:actual[k] for k in ('bytes','sha256')},
+                      {k:row['image'][k] for k in ('bytes','sha256')},'linked composition bytes')
+                sequence.append(actual)
+            return sequence
+        return [copy_bytes(store, row['image'], folder/'frames'/f'frame_{i:06d}.png', check_global=False)
+                for i, row in enumerate(rows, 1)]
+    finally:
+        # No materialized-ready record may be accepted after source drift,
+        # including a failure halfway through an otherwise recoverable copy.
+        store.verify_global()
 
 
 def subtitle_layout(context):
@@ -126,8 +153,7 @@ def materialize(context):
     if ready is None:
         folder=store.path('materialized-attempts')/str(uuid4()); store.verify_global(); folder.mkdir(parents=True)
         (folder/'frames').mkdir(); (folder/'fonts').mkdir()
-        sequence=[copy_bytes(store,row['image'],folder/'frames'/f'frame_{i:06d}.png')
-                  for i,row in enumerate(context['contributions']['frames'],1)]
+        sequence=copy_frame_sequence(store,context['contributions']['frames'],folder)
         store.verify_global(); write_production_narration(context['timeline'],folder/'narration.wav'); store.verify_global()
         narration=dict(audio=store.artifact(folder/'narration.wav'),**narration_layout(context))
         for name,text in (('subtitle.srt',srt_text(context['subtitle_events'])),

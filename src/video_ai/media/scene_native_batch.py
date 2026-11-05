@@ -7,23 +7,24 @@ from .frames import _command, _count, _directory, _sequence
 from .images import _deadline, _remaining, _record_name
 from ..runtime.execution_limits import command_timeout
 from .video import _dimensions, _video_path, inspect_video
-from .scene_upscale import _decode, verify_png
+from .scene_upscale import _decode, verify_png, png_sequence_hashes
 from ..runtime.manifest import hash_file, thaw
 from ..runtime.timeline_checks import _again
 
 
 def extract_native_scene_batch(source, directory, *, expected_frames, width, height,
-                               config, paths, logger, unit_id, timeout=1200, reuse_existing=False):
+                               config, paths, logger, unit_id, timeout=1200, reuse_existing=False,
+                               aggregate_png=False):
     """Validate every PNG and every source pixel before returning any extraction.
 
-    PNG probes/decodes are the existing strict in-memory checker. Their results
-    are summarized together, so actual evidence writes (and their caller guards)
-    are bounded independently of the number of frames. No sampled validation,
-    persistent guard suppression, source re-encoding or deadline renewal occurs.
+    Aggregate checking decodes the complete numeric PNG sequence and compares
+    every RGB24 frame digest; the historical whole-scene path retains its PNG
+    checker. Both summarize evidence together, independent of frame count.
+    No sampling, source re-encoding or deadline renewal occurs.
     """
     deadline = _deadline(timeout, monotonic())
     _count(expected_frames); _dimensions(width, height)
-    if expected_frames > 320:
+    if expected_frames > 320 and not aggregate_png:
         raise ValueError('whole scene batch exceeds 320 retained frames')
     if type(reuse_existing) is not bool:
         raise ValueError('reuse_existing must be bool')
@@ -59,14 +60,22 @@ def extract_native_scene_batch(source, directory, *, expected_frames, width, hei
     if len(raw) != expected_frames * size:
         raise ValueError('native retained decode frame count differs')
     rows = []
+    digests = (png_sequence_hashes(sequence,width=width,height=height,config=config,
+        timeout=remaining(),remaining_timeout=remaining) if aggregate_png else None)
     for index, path in enumerate(sequence):
-        pixels = verify_png(path, width=width, height=height, config=config, timeout=remaining(),
-                            remaining_timeout=remaining)
+        if digests is not None:
+            digest=digests[index]
+            same_pixels=digest==hashlib.sha256(raw[index*size:(index+1)*size]).hexdigest()
+        else:
+            pixels=verify_png(path, width=width, height=height, config=config, timeout=remaining(),
+                             remaining_timeout=remaining)
+            digest=hashlib.sha256(pixels).hexdigest()
+            same_pixels=pixels==raw[index*size:(index+1)*size]
         _remaining(deadline, monotonic())
-        if pixels != raw[index*size:(index+1)*size]:
+        if not same_pixels:
             raise ValueError('PNG pixels differ from retained source frame')
         rows.append(dict(index=index, image=thaw(identities[str(path)]),
-            decoded_rgb24_sha256=hashlib.sha256(pixels).hexdigest()))
+            decoded_rgb24_sha256=digest))
     def recheck():
         owned_sequence()
         _again(dict(identities, source=before))

@@ -18,7 +18,7 @@ from .production_inputs import _save_bytes, check_stage_space
 from .production_state import (ArtifactStamp, ProductionRefused, integer, object_fields, run_path,
                                sync_file, write_exclusive)
 from .production_support import (commit_checkpoint, mark_request_error, read_report, recover_checkpoint,
-                                 recover_http, stamps, sync_manifest_stage)
+                                 recover_http, stamps, sync_manifest_stage, http_recovery_scope)
 from .service_specs import build_service_specs
 from .services import ServiceConflictError, ServiceManager, port_listening
 from .speech_checks import _runtime_voice_configuration, service_log, validate_fixed_voice_log
@@ -81,6 +81,7 @@ def _validate_intent(path, frozen, span, client):
 
 
 @production_execution
+@http_recovery_scope()
 def produce_speech(frozen, units, *, state, manifest, paths, logger, limits=SpeechLimits()):
     report=read_report(state,'speech')
     complete=state.snapshot()['stages']['speech']['status']=='completed'
@@ -126,7 +127,7 @@ def produce_speech(frozen, units, *, state, manifest, paths, logger, limits=Spee
                     req=record['request']
                     if req is None or req['client_id']!=intent['client_id'] or req['intent_path']!=str(intent_path):
                         raise ProductionRefused('TTS request/state identity differs')
-                try: raw_bytes,_,evidence=recover_http(logger,uid=uid,url=frozen.config.services['tts']+'/tts',payload=intent['payload'])
+                try: raw_bytes,_,evidence=recover_http(logger,uid=uid,url=frozen.config.services['tts']+'/tts',payload=intent['payload'],evidence_paths=req['response_paths'] or None)
                 except AdapterError as exc: mark_request_error(state,'speech',uid,exc)
             else:
                 if handle is None:

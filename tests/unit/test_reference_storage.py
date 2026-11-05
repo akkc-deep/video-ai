@@ -140,6 +140,77 @@ def test_existing_verified_object_writes_logical_intent_without_put(monkeypatch,
     assert authorized == [threading.get_ident()]
 
 
+def test_tos_worker_preserves_the_protected_input_context(monkeypatch, tmp_path):
+    from video_ai.runtime import manifest, verification
+    import os
+    if os.name != 'nt': pytest.skip('Windows mandatory input protection')
+    row, data = original(tmp_path)
+    path = tmp_path/'sealed-proof.json'; path.write_bytes(b'original proof')
+    calls = []
+    digest = manifest._hash_open_file
+    def counted(stream, candidate):
+        if candidate == path: calls.append(candidate)
+        return digest(stream, candidate)
+    monkeypatch.setattr(manifest, '_hash_open_file', counted)
+    def transport(request, **kwargs):
+        return Response(request, headers=identity_headers(row), body=data if request.get_method() == 'GET' else b'')
+    client = storage(monkeypatch, transport, ownership_check=lambda: manifest.hash_file(path))
+    with verification.whole_input_protection(immutable_roots=[path]), verification.writable_validation_session(tmp_path):
+        manifest.hash_file(path)
+        assert client.ensure_original(row, run_id='fixture-run', before_put=lambda: None)['sha256'] == row['sha256']
+        assert calls == [path]
+
+
+def test_tos_readback_checks_lease_per_chunk_and_source_at_boundaries(monkeypatch, tmp_path):
+    row, _ = original(tmp_path)
+    data = b'large-reference-fixture' * 20000
+    from pathlib import Path
+    Path(row['path']).write_bytes(data)
+    row.update(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+    reading = threading.Event()
+    lease_checks = []
+    def source_guard():
+        if reading.is_set():
+            raise AssertionError('source scan repeated inside network chunk loop')
+    class Download(Response):
+        def read1(self, size):
+            chunk = super().read1(size)
+            if chunk: reading.set()
+            else: reading.clear()
+            return chunk
+    def transport(request, **kwargs):
+        if request.get_method() == 'GET':
+            return Download(request, headers=identity_headers(row), body=data)
+        return Response(request, headers=identity_headers(row))
+    client = storage(monkeypatch, transport, ownership_check=source_guard)
+    client.download_ownership_check = lambda: lease_checks.append(True)
+    result = client.ensure_original(row, run_id='fixture-run', before_put=lambda: None)
+    assert result['sha256'] == row['sha256']
+    assert len(lease_checks) > 2
+
+
+def test_tos_readback_rejects_source_change_before_returning_receipt(monkeypatch, tmp_path):
+    from pathlib import Path
+    from video_ai.adapters.common import AdapterError
+    row, data = original(tmp_path)
+    def source_guard():
+        if Path(row['path']).read_bytes() != data:
+            raise ValueError('source changed')
+    class Changed(Response):
+        def read1(self, size):
+            chunk = super().read1(size)
+            if chunk: Path(row['path']).write_bytes(b'changed original')
+            return chunk
+    def transport(request, **kwargs):
+        if request.get_method() == 'GET':
+            return Changed(request, headers=identity_headers(row), body=data)
+        return Response(request, headers=identity_headers(row))
+    client = storage(monkeypatch, transport, ownership_check=source_guard)
+    client.download_ownership_check = lambda: None
+    with pytest.raises(AdapterError):
+        client.ensure_original(row, run_id='fixture-run', before_put=lambda: None)
+
+
 @pytest.mark.parametrize('failure', ['metadata', 'bytes', 'length', 'type', 'etag', '403', 'redirect'])
 def test_conflicting_or_unreadable_object_never_overwritten(monkeypatch, tmp_path, failure):
     from video_ai.adapters.common import AdapterError

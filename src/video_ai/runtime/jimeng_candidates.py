@@ -15,6 +15,9 @@ from .manifest import hash_file, now, thaw, validate_run_dir
 from .production_inputs import load_frozen_inputs, _same_json
 from .execution_limits import execution_deadline
 from .production_state import ProductionRefused, RunLock, run_path, object_fields, write_exclusive
+from .scene_revision_records import (revision_checkpoint_transaction, revision_checkpoints_active,
+                                     revision_read_checkpoint, revision_read_matches, revision_validation)
+from .verification import protect_scene_inputs
 
 
 def boundary(point, identity):
@@ -30,10 +33,14 @@ class _Records:
         self.run, self.lock = run, lock
         self.revision_guard = None
 
-    def owned(self):
+    def lock_owned(self):
         if self.lock.run_dir != self.run or read_json(self.lock.path) != self.lock.owner:
             raise ProductionRefused('candidate generation lost held run lock')
-        if self.revision_guard is not None:self.revision_guard.verify_captured_bytes()
+
+    def owned(self):
+        self.lock_owned()
+        if self.revision_guard is not None and not revision_checkpoints_active():
+            self.revision_guard.verify_captured_bytes()
 
     def save(self, path, value):
         self.owned(); path = run_path(self.run, path)
@@ -58,6 +65,29 @@ def _read_bound(path, fields, identity):
     if type(value['schema_version']) is not int or value['schema_version'] != 2 or value['identity'] != identity:
         raise ProductionRefused('Jimeng record schema or identity differs')
     return value
+
+
+def record_output_layout(store, folder, identity, task_id, urls):
+    """Keep initial ordering; one accepted output can move between CDN origins."""
+    layout = dict(schema_version=2, identity=identity,
+        sources=[_digest(urlsplit(url)._replace(query='', fragment='').geturl()) for url in urls])
+    path = folder/'outputs.json'
+    if not path.exists():
+        store.save(path, layout)
+        return
+    original = _read_bound(path, ('schema_version', 'identity', 'sources'), identity)
+    if _same_json(original, layout):
+        return
+    old_sources = original['sources']
+    if (type(old_sources) is not list or len(old_sources) != 1 or len(layout['sources']) != 1
+            or type(old_sources[0]) is not str or not re.fullmatch('[0-9a-f]{64}', old_sources[0])):
+        raise ProductionRefused('official image output origins/order changed; cannot map multiple outputs')
+    # Both responses belong to the same accepted task. A single output has no
+    # ordering ambiguity; never change its task, candidate ID or original bytes.
+    refresh = dict(schema_version=2, identity=identity, task_id=task_id,
+        algorithm='single_output_origin_refresh_v1', original_outputs_sha256=_digest(original),
+        sources=layout['sources'])
+    store.save(folder/('outputs-refresh-'+_digest(refresh)+'.json'), refresh)
 
 
 def _verify_candidate(value, request, task_id, index, folder, inspect, settings):
@@ -94,7 +124,7 @@ def _inspect_original(path, inspect, settings):
     return info
 
 
-def _request_candidates(store, folder, request, client, inspect, settings, sleep):
+def _request_candidates(store, folder, request, client, inspect, settings, sleep, *, phase='collect'):
     identity = _digest(request)
     store.save(folder/'request.json', request)
     accepted_path = folder/'accepted.json'
@@ -102,18 +132,34 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
     if accepted_path.exists():
         accepted = _read_bound(accepted_path, ('schema_version', 'identity', 'task_id', 'request_id', 'diagnostic'), identity)
     else:
+        if (folder/'terminal.json').exists() or (folder/'result.json').exists():
+            raise ProductionRefused('image result/terminal lacks durable task_id; no automatic resubmission')
         if intent_path.exists():
             raise ProductionRefused('submit_unknown: image submission intent has no durable task_id; verify original request manually, no automatic resubmission')
+        if phase == 'check': return None
         # Missing credentials is a local precondition and must not create a submission intent.
         if isinstance(client, JimengClient): client.check_credentials()
         store.save(intent_path, dict(schema_version=2, identity=identity, created_at=now(), state='intent'))
         store.owned()
+        if revision_checkpoints_active(): revision_read_checkpoint()
+        if isinstance(client, JimengClient):
+            snapshots = [(path, hash_file(path)) for path in (folder/'request.json', intent_path)]
+            def before_send():
+                store.lock_owned()
+                for path, expected in snapshots:
+                    fresh = hash_file(path)
+                    if (fresh.bytes, fresh.sha256) != (expected.bytes, expected.sha256):
+                        raise ProductionRefused('image request/intent changed before actual HTTP send')
+                store.lock_owned()
+            client.ownership_check = before_send
         try:
             response = client.submit(request['prompt'])
         except AdapterError as exc:
             store.save(folder/('submission-error-'+uuid4().hex+'.json'), dict(schema_version=2, identity=identity,
                 kind=exc.kind.value, diagnostic=getattr(exc, 'diagnostic', {})))
             raise
+        finally:
+            if isinstance(client, JimengClient): client.ownership_check = store.lock_owned
         accepted = dict(schema_version=2, identity=identity, task_id=response['task_id'],
                         request_id=response['request_id'], diagnostic=response['diagnostic'])
         store.save(accepted_path, accepted)
@@ -123,6 +169,10 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
     task_id = accepted['task_id']
     if not isinstance(task_id, str) or not re.fullmatch(r'[A-Za-z0-9_.:-]{1,256}', task_id):
         raise ProductionRefused('invalid persisted official task ID')
+    terminal_path = folder/'terminal.json'
+    if terminal_path.exists():
+        terminal = _read_bound(terminal_path, ('schema_version', 'identity', 'status'), identity)
+        raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
     result_path = folder/'result.json'
     if result_path.exists():
         result = _read_bound(result_path, ('schema_version', 'identity', 'task_id', 'candidates'), identity)
@@ -131,10 +181,7 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
         for index, candidate in enumerate(result['candidates'], 1):
             _verify_candidate(candidate, request, task_id, index, folder, inspect, settings)
         return result['candidates']
-    terminal_path = folder/'terminal.json'
-    if terminal_path.exists():
-        terminal = _read_bound(terminal_path, ('schema_version', 'identity', 'status'), identity)
-        raise ProductionRefused('official task '+str(terminal['status'])+'; no automatic resubmission')
+    if phase in ('check', 'submit'): return None
     end = execution_deadline(settings.task_timeout_seconds,time.monotonic())
     delay = settings.poll_interval_seconds
     def remaining():
@@ -154,8 +201,7 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
         sleep(min(delay, remaining())); delay = min(delay*2, 15)
     urls = response['image_urls']
     # Persist output ordering without persisting the expiring signed URLs.
-    layout = dict(schema_version=2, identity=identity, sources=[_digest(urlsplit(url)._replace(query='', fragment='').geturl()) for url in urls])
-    store.save(folder/'outputs.json', layout)
+    record_output_layout(store, folder, identity, task_id, urls)
     candidates = []
     for index, url in enumerate(urls, 1):
         cid = f'{request["request_id"]}_image_{index:02d}'
@@ -167,6 +213,7 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
             receipt_path = folder/(cid+'.download.json')
             if not path.exists():
                 store.owned(); raw = client.download(url, timeout=remaining())
+                if revision_checkpoints_active(): revision_read_checkpoint()
                 # Bind downloaded bytes before exposing a reusable original. An
                 # interruption before decoding must not allow replacement adoption.
                 store.save(receipt_path, dict(schema_version=2, identity=identity, candidate_id=cid,
@@ -185,6 +232,9 @@ def _request_candidates(store, folder, request, client, inspect, settings, sleep
     return candidates
 
 
+@protect_scene_inputs
+@revision_validation
+@revision_checkpoint_transaction()
 def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, sleep=time.sleep, lock=None):
     """Generate/recover original candidates; acquire a run lock unless supplied by coordinator.
 
@@ -200,8 +250,9 @@ def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, 
         with RunLock(run) as held:
             return generate_candidates(frozen, scene_id, prompt, client=client, inspect=inspect, sleep=sleep, lock=held)
     store = _Records(run, lock); store.owned()
-    fresh = load_frozen_inputs(run)
-    if not _same_json(fresh, frozen): raise ProductionRefused('candidate frozen input/model identity differs')
+    if store.revision_guard is not None: store.revision_guard.verify_captured_bytes()
+    if not revision_read_matches(('frozen-inputs', str(run)), frozen, lambda: load_frozen_inputs(run)):
+        raise ProductionRefused('candidate frozen input/model identity differs')
     if 'scene_revision' in frozen.options:
         from .scene_revision_records import require_scene_revision
         proof=require_scene_revision(frozen);store.revision_guard=proof['guard']
@@ -210,7 +261,11 @@ def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, 
     settings = frozen.config.image_generation
     if client is not None and not _same_json(client.settings, settings): raise ProductionRefused('candidate client model differs')
     client = client or JimengClient(settings)
-    if isinstance(client,JimengClient):client.ownership_check=store.owned
+    if isinstance(client,JimengClient):
+        client.ownership_check=store.lock_owned
+        # GET has no paid side effect. Full source checks bracket downloading
+        # and every durable save; per-chunk checks only need the active lease.
+        client.download_ownership_check=store.lock_owned
     if inspect is None:
         from ..media.images import inspect_image
         from .logging import RunLogger
@@ -236,9 +291,28 @@ def generate_candidates(frozen, scene_id, prompt, *, client=None, inspect=None, 
             raise ProductionRefused('candidate manifest schema/run/scene/input identity differs')
         for request in requests:
             if not (folder/request['request_id']/'result.json').exists(): raise ProductionRefused('committed candidates lack request result')
-    for request in requests:
-        directory = run_path(run, folder/request['request_id']); directory.mkdir(exist_ok=True)
-        candidates.extend(_request_candidates(store, directory, request, client, inspect, settings, sleep))
+    work = []
+    try:
+        for request in requests:
+            directory = run_path(run, folder/request['request_id']); directory.mkdir(exist_ok=True)
+            completed = _request_candidates(store, directory, request, client, inspect, settings, sleep, phase='check')
+            work.append((request, directory, completed))
+        for request, directory, completed in work:
+            if completed is None:
+                _request_candidates(store, directory, request, client, None, settings, sleep, phase='submit')
+    except (ProductionRefused, AdapterError, TimeoutError):
+        for request in requests:
+            directory = run_path(run, folder/request['request_id'])
+            if (directory/'accepted.json').exists() and not (directory/'result.json').exists():
+                try:
+                    _request_candidates(store, directory, request, client, inspect, settings, sleep)
+                except Exception:
+                    pass
+        raise
+    for request, directory, completed in work:
+        candidates.extend(completed if completed is not None else
+            _request_candidates(store, directory, request, client, inspect, settings, sleep))
     result = dict(schema_version=2, run_id=run.name, scene_id=scene_id, identity=identity, candidates=candidates)
+    if not manifest_path.exists(): revision_read_checkpoint()
     store.save(manifest_path, result)
     return result

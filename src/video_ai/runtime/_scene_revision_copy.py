@@ -33,7 +33,8 @@ def preflight_copies(root,run_id,*,expected=None):
         role=ready['role']
         if (type(ready['schema_version']) is not int or ready['schema_version']!=2 or ready['run_id']!=run_id
                 or not separator or not key or domain not in ('common','image','choice','clip','upscale')
-                or not re.fullmatch(r'(?:pcm_[0-9]{6}|generated|source|first_frame|last_frame|input|input_copy|model_output|output|selected_image|candidate_[0-9]{6}|comparison_[0-9]{6})',role)
+                or not re.fullmatch(r'(?:pcm_[0-9]{6}|generated|source|first_frame|last_frame|input|input_copy|model_output|output|selected_image|candidate_[0-9]{6}|comparison_[0-9]{6}|native_frames|native_generator|temporal_chain_viewing)',role)
+                or role in ('native_frames','native_generator','temporal_chain_viewing') and domain!='clip'
                 or path!=root/'copy-ready'/token(domain,key)/(role+'.json')
                 or ready['recipe']!=dict(algorithm='identity_revision_copy_v1',parameters={})):
             raise ProductionRefused('copy-ready identity differs')
@@ -100,7 +101,8 @@ def copy_identity(store,import_id,domain,key,role,source,*,guard):
     store.owned(); guard.verify_captured_bytes()
     if not getattr(store,'copies_preflighted',False):
         preflight_copies(store.root,store.run.name);store.copies_preflighted=True
-    if not re.fullmatch(r'(?:pcm(?:_[0-9]{6})?|generated|source|first_frame|last_frame|input|input_copy|model_output|output|selected_image|candidate_[0-9]{6}|comparison_[0-9]{6})',role):
+    if (not re.fullmatch(r'(?:pcm(?:_[0-9]{6})?|generated|source|first_frame|last_frame|input|input_copy|model_output|output|selected_image|candidate_[0-9]{6}|comparison_[0-9]{6}|native_frames|native_generator|temporal_chain_viewing)',role)
+            or role in ('native_frames','native_generator','temporal_chain_viewing') and domain!='clip'):
         raise ProductionRefused('invalid revision media role')
     suffix = Path(source['path']).suffix.lower()
     if not re.fullmatch(r'\.[a-z0-9]{1,12}',suffix): raise ProductionRefused('invalid source extension')

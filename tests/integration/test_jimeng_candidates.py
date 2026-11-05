@@ -20,13 +20,13 @@ class Response(io.BytesIO):
 
 
 @pytest.fixture
-def candidate_setup(production_config, runtime_run, tmp_path, monkeypatch):
+def candidate_setup(production_config, runtime_run, tmp_path, monkeypatch, request):
     from video_ai.runtime.production_inputs import freeze_inputs
     from video_ai.adapters.jimeng import JimengClient
     from video_ai.adapters.external_https import ExternalHttpsClient
     config = configured(production_config, tmp_path)
     data = json.loads(config.config_file.read_text(encoding='utf-8'))
-    data['image_generation']['candidates_per_scene'] = 1
+    data['image_generation']['candidates_per_scene'] = getattr(request, 'param', 1)
     config.config_file.write_text(json.dumps(data), encoding='utf-8')
     from video_ai.config import load_config
     frozen = freeze_inputs(load_config(config.config_file), runtime_run[0], text='湖水。')
@@ -119,6 +119,85 @@ def test_query_and_partial_download_resume_without_paid_resubmit(candidate_setup
     assert len(generate(candidate_setup)['candidates']) == 2
     assert state['submits'] == 1
     if failure == 'download': assert state['downloads'].count('/1') == 1
+
+
+def test_single_image_cdn_origin_can_refresh_after_failed_download_without_resubmission(candidate_setup, monkeypatch):
+    frozen, client, state, run = candidate_setup
+    state['urls'] = 1
+    original_download = client.download
+    def unavailable(*args, **kwargs):
+        raise TimeoutError('download interrupted')
+    monkeypatch.setattr(client, 'download', unavailable)
+    with pytest.raises(TimeoutError):
+        generate(candidate_setup)
+    folder = run/'production/jimeng/scene_0001/request_01'
+    old_layout = (folder/'outputs.json').read_bytes()
+    query = client.query
+    def refreshed(*args, **kwargs):
+        response = query(*args, **kwargs)
+        response['image_urls'] = ['https://cdn.example/renewed/1?sig=private']
+        return response
+    monkeypatch.setattr(client, 'query', refreshed)
+    monkeypatch.setattr(client, 'download', original_download)
+    manifest = generate(candidate_setup)
+    assert len(manifest['candidates']) == 1
+    assert state['submits'] == 1
+    assert (folder/'outputs.json').read_bytes() == old_layout
+    assert len(list(folder.glob('outputs-refresh-*.json'))) == 1
+    assert generate(candidate_setup) == manifest
+    assert state['submits'] == 1
+    assert all('sig=private' not in path.read_text(encoding='utf-8') for path in folder.glob('*.json'))
+
+
+def test_multi_image_origin_changes_still_refuse_ambiguous_reordering(candidate_setup, monkeypatch):
+    frozen, client, state, run = candidate_setup
+    state['failure'] = 'download'
+    with pytest.raises(Exception):
+        generate(candidate_setup)
+    folder = run/'production/jimeng/scene_0001/request_01'
+    old_layout = (folder/'outputs.json').read_bytes()
+    state['failure'] = None
+    query = client.query
+    def reordered(*args, **kwargs):
+        response = query(*args, **kwargs)
+        response['image_urls'].reverse()
+        return response
+    monkeypatch.setattr(client, 'query', reordered)
+    with pytest.raises(ValueError):
+        generate(candidate_setup)
+    assert state['submits'] == 1
+    assert (folder/'outputs.json').read_bytes() == old_layout
+    assert not list(folder.glob('outputs-refresh-*.json'))
+
+
+def test_source_changed_during_download_cannot_commit_candidate(candidate_setup, monkeypatch):
+    import video_ai.runtime.jimeng_candidates as candidates
+    from video_ai.runtime.scene_revision_records import RevisionGuard
+    frozen, client, state, run = candidate_setup
+    state['urls'] = 1
+    source = run/'captured-original.txt'
+    source.write_bytes(b'original source')
+    guard = RevisionGuard(frozen)
+    guard.capture(source, root=run)
+    records = candidates._Records
+    class GuardedRecords(records):
+        def __init__(self, *args):
+            super().__init__(*args)
+            self.revision_guard = guard
+    monkeypatch.setattr(candidates, '_Records', GuardedRecords)
+    download = client.download
+    def changed(*args, **kwargs):
+        raw = download(*args, **kwargs)
+        source.write_bytes(b'changed source!')
+        return raw
+    monkeypatch.setattr(client, 'download', changed)
+    with pytest.raises(ValueError):
+        generate(candidate_setup)
+    folder = run/'production/jimeng/scene_0001/request_01'
+    assert not list(folder.glob('*.original'))
+    assert not list(folder.glob('*.download.json'))
+    assert not (folder/'result.json').exists()
+    assert state['submits'] == 1
 
 
 @pytest.mark.parametrize('status', ['expired', 'not_found', 'failed'])
