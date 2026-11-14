@@ -1,0 +1,422 @@
+{
+  "fixture": "six pending synthetic clips, two accepted clips, three source layers and shared ancestor DAG",
+  "scope": "Only test runtime writes. No network, model service, video inference or decoding/rendering.",
+  "metric_notes": "Both versions share the same whole_input_protection window, matching the existing public review API. Cold preparation includes protection/batch entry and starts at progress/source admission, after synthetic fixture assembly (application admission cold, not OS cache cold); first receive and warm batch include synchronous raw/receipt persistence; final_boundary includes batch exit proof checks and protection cleanup. Leaf media/plan semantics are stubbed. hash_reads/hashed_input_bytes count application SHA input reads, not physical disk I/O. Timings are not production projections.",
+  "baseline_sha256": {
+    "_continuity_byte_guard.py": "008c04f9c70824fd69ea8b2c6cda7d9978c2634e20d5212dfe0597b53c138625",
+    "_scene_revision_origins.py": "93325c9c1118c6844738f8dca8efefd4741c7e724ca656e6a149286b9ab34695",
+    "_scene_revision_readers.py": "fab4726471ca5be2641c2355e07f84e9beaf6b06a3fe19ebdcf024f4b17e764d",
+    "image_selection_records.py": "d95c0628c91e182ab8d3a42581decd55706472961f838ed41bb91d68ecc258fe",
+    "production_scene_clips.py": "430fc3b682a6520ba6b272f28fbf6578a2d3e3624797c98aaf873751edf097a2",
+    "reference_image_records.py": "ce26412498571f4f717dd08d6a2093fcf1bd96bdfdad4330bea5ceb8c61894ce",
+    "resume_voyager2_after_reboot.py": "b785f8119fc5aefe272870622be1a903bac70cf7a4f61aec4fe714d37a83219a",
+    "scene_clip_records.py": "76bff8fe923663045a86c8400f8895cf335d9afef19f1c034982db09b027e06f",
+    "scene_comfy_transactions.py": "c2450949ee2b7f84e50ca7718589e8d54078d213630ec59cf73f4f34a625831d",
+    "scene_revision_records.py": "474149cb6999ca77aaacbf95f8e526e18b0863f1455ebe4157729119c3798b4c",
+    "test_review_loading_performance.py": "d3c7ff9c8a68a996054fc239cabc35419e2ece01f87c41d26f7fe542328f0406",
+    "test_scene_revision_records.py": "81f5db81be1228990037e685c2e4fb64465dcfd1338255feef41d28649aa8f21"
+  },
+  "optimized_sha256": {
+    "src\\video_ai\\runtime\\_continuity_byte_guard.py": "0febf62a6f510e884da3eaa371745970e8c208626437dd5a95901743fd90d587",
+    "src\\video_ai\\runtime\\scene_revision_records.py": "23ab5a3a689195024a19974605cb3d07b32c359b7d34bf167f09e38f7085117d",
+    "src\\video_ai\\runtime\\image_selection_records.py": "5afaa5da74bbf378128f78d68a6e307657c1577f61dae7ab67d11bb18cf8ffcc",
+    "src\\video_ai\\runtime\\_scene_revision_readers.py": "0eda80ac1f0b17b7ea29d9bd8ced4cf6c3a35b540f9024065f13b7a3b262a86d",
+    "src\\video_ai\\runtime\\_scene_revision_origins.py": "41e6fa2d7f8384d6a541b1875ae874c17d98bbc6bd0b791ca817710f40f257ae",
+    "src\\video_ai\\runtime\\reference_image_records.py": "a609998bab5720db425966ed56bc955946c084cdf642ba3e5465cafea368aef5",
+    "src\\video_ai\\runtime\\scene_clip_records.py": "78d98aa466251f43e54c9be5ac9232a9a62308348eec358c68f15d49308be8f4",
+    "src\\video_ai\\runtime\\scene_comfy_transactions.py": "673108fd68706a58dbcdeccca72f50f05a1201ba690cb1a411ddfb6af62e40c6",
+    "src\\video_ai\\runtime\\production_scene_clips.py": "feb36684eafb74764fa18a14454b186b675e2dcac146bd395697057c4242237e",
+    "src\\video_ai\\runtime\\_scene_review_batch.py": "227b7448436d4fe06ee443be2995de0c8c90c5ea896b48c03a4457193dbcb526",
+    "src\\video_ai\\runtime\\scene_review_control.py": "bb94a8d0ff40c1a52fd3a8526a1d39e341eab8ff6c76628d746889a910c0c90c"
+  },
+  "runs": {
+    "baseline": [
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.11313240000163205,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "load_frozen_inputs": 6,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 12,
+              "revision_artifact_checks": 138,
+              "source_plan_rebuild": 6,
+              "reference_leaf_rebuild": 6
+            }
+          },
+          "first_receive": {
+            "seconds": 0.21137559999988298,
+            "calls": {
+              "collect_progress": 3,
+              "validate_clip": 24,
+              "load_frozen_inputs": 18,
+              "source_clip_record": 18,
+              "source_clip_rebuild": 18,
+              "verify_reference_provenance": 36,
+              "revision_artifact_checks": 438,
+              "source_plan_rebuild": 18,
+              "reference_leaf_rebuild": 18
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.6976810000014666,
+            "calls": {
+              "collect_progress": 9,
+              "validate_clip": 72,
+              "load_frozen_inputs": 54,
+              "source_clip_record": 54,
+              "source_clip_rebuild": 54,
+              "verify_reference_provenance": 108,
+              "revision_artifact_checks": 1314,
+              "source_plan_rebuild": 54,
+              "reference_leaf_rebuild": 54
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.0014609999998356216,
+            "calls": {}
+          }
+        }
+      },
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.11123009999937494,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "load_frozen_inputs": 6,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 12,
+              "revision_artifact_checks": 138,
+              "source_plan_rebuild": 6,
+              "reference_leaf_rebuild": 6
+            }
+          },
+          "first_receive": {
+            "seconds": 0.2071157000027597,
+            "calls": {
+              "collect_progress": 3,
+              "validate_clip": 24,
+              "load_frozen_inputs": 18,
+              "source_clip_record": 18,
+              "source_clip_rebuild": 18,
+              "verify_reference_provenance": 36,
+              "revision_artifact_checks": 438,
+              "source_plan_rebuild": 18,
+              "reference_leaf_rebuild": 18
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.6823787999965134,
+            "calls": {
+              "collect_progress": 9,
+              "validate_clip": 72,
+              "load_frozen_inputs": 54,
+              "source_clip_record": 54,
+              "source_clip_rebuild": 54,
+              "verify_reference_provenance": 108,
+              "revision_artifact_checks": 1314,
+              "source_plan_rebuild": 54,
+              "reference_leaf_rebuild": 54
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.0012839999981224537,
+            "calls": {}
+          }
+        }
+      },
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.10998100000142585,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "load_frozen_inputs": 6,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 12,
+              "revision_artifact_checks": 138,
+              "source_plan_rebuild": 6,
+              "reference_leaf_rebuild": 6
+            }
+          },
+          "first_receive": {
+            "seconds": 0.20398700000077952,
+            "calls": {
+              "collect_progress": 3,
+              "validate_clip": 24,
+              "load_frozen_inputs": 18,
+              "source_clip_record": 18,
+              "source_clip_rebuild": 18,
+              "verify_reference_provenance": 36,
+              "revision_artifact_checks": 438,
+              "source_plan_rebuild": 18,
+              "reference_leaf_rebuild": 18
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.6820729999999458,
+            "calls": {
+              "collect_progress": 9,
+              "validate_clip": 72,
+              "load_frozen_inputs": 54,
+              "source_clip_record": 54,
+              "source_clip_rebuild": 54,
+              "verify_reference_provenance": 108,
+              "revision_artifact_checks": 1314,
+              "source_plan_rebuild": 54,
+              "reference_leaf_rebuild": 54
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.001429600000847131,
+            "calls": {}
+          }
+        }
+      }
+    ],
+    "optimized": [
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.15223619999960647,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "revision_artifact_checks": 93,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 8,
+              "source_plan_rebuild": 2,
+              "reference_leaf_rebuild": 1
+            }
+          },
+          "first_receive": {
+            "seconds": 0.12151610000000801,
+            "calls": {
+              "validate_clip": 2,
+              "revision_artifact_checks": 84
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.35814460000256076,
+            "calls": {
+              "validate_clip": 6,
+              "revision_artifact_checks": 252
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.03552750000017113,
+            "calls": {
+              "revision_artifact_checks": 27
+            }
+          }
+        }
+      },
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.15502329999799258,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "revision_artifact_checks": 93,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 8,
+              "source_plan_rebuild": 2,
+              "reference_leaf_rebuild": 1
+            }
+          },
+          "first_receive": {
+            "seconds": 0.12252060000173515,
+            "calls": {
+              "validate_clip": 2,
+              "revision_artifact_checks": 84
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.3587461999995867,
+            "calls": {
+              "validate_clip": 6,
+              "revision_artifact_checks": 252
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.036656299998867325,
+            "calls": {
+              "revision_artifact_checks": 27
+            }
+          }
+        }
+      },
+      {
+        "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+        "stages": {
+          "cold_preparation": {
+            "seconds": 0.15181479999955627,
+            "calls": {
+              "collect_progress": 1,
+              "validate_clip": 8,
+              "hash_reads": 12,
+              "hashed_input_bytes": 606,
+              "revision_artifact_checks": 93,
+              "source_clip_record": 6,
+              "source_clip_rebuild": 6,
+              "verify_reference_provenance": 8,
+              "source_plan_rebuild": 2,
+              "reference_leaf_rebuild": 1
+            }
+          },
+          "first_receive": {
+            "seconds": 0.12033400000291294,
+            "calls": {
+              "validate_clip": 2,
+              "revision_artifact_checks": 84
+            }
+          },
+          "warm_batch_3": {
+            "seconds": 0.3693429999984801,
+            "calls": {
+              "validate_clip": 6,
+              "revision_artifact_checks": 252
+            }
+          },
+          "final_boundary": {
+            "seconds": 0.03572649999841815,
+            "calls": {
+              "revision_artifact_checks": 27
+            }
+          }
+        }
+      }
+    ]
+  },
+  "summary": {
+    "baseline": {
+      "cold_preparation": {
+        "median_seconds": 0.11123009999937494,
+        "min_seconds": 0.10998100000142585,
+        "max_seconds": 0.11313240000163205,
+        "calls": {
+          "collect_progress": 1,
+          "validate_clip": 8,
+          "hash_reads": 12,
+          "hashed_input_bytes": 606,
+          "load_frozen_inputs": 6,
+          "source_clip_record": 6,
+          "source_clip_rebuild": 6,
+          "verify_reference_provenance": 12,
+          "revision_artifact_checks": 138,
+          "source_plan_rebuild": 6,
+          "reference_leaf_rebuild": 6
+        }
+      },
+      "first_receive": {
+        "median_seconds": 0.2071157000027597,
+        "min_seconds": 0.20398700000077952,
+        "max_seconds": 0.21137559999988298,
+        "calls": {
+          "collect_progress": 3,
+          "validate_clip": 24,
+          "load_frozen_inputs": 18,
+          "source_clip_record": 18,
+          "source_clip_rebuild": 18,
+          "verify_reference_provenance": 36,
+          "revision_artifact_checks": 438,
+          "source_plan_rebuild": 18,
+          "reference_leaf_rebuild": 18
+        }
+      },
+      "warm_batch_3": {
+        "median_seconds": 0.6823787999965134,
+        "min_seconds": 0.6820729999999458,
+        "max_seconds": 0.6976810000014666,
+        "calls": {
+          "collect_progress": 9,
+          "validate_clip": 72,
+          "load_frozen_inputs": 54,
+          "source_clip_record": 54,
+          "source_clip_rebuild": 54,
+          "verify_reference_provenance": 108,
+          "revision_artifact_checks": 1314,
+          "source_plan_rebuild": 54,
+          "reference_leaf_rebuild": 54
+        }
+      },
+      "final_boundary": {
+        "median_seconds": 0.001429600000847131,
+        "min_seconds": 0.0012839999981224537,
+        "max_seconds": 0.0014609999998356216,
+        "calls": {}
+      }
+    },
+    "optimized": {
+      "cold_preparation": {
+        "median_seconds": 0.15223619999960647,
+        "min_seconds": 0.15181479999955627,
+        "max_seconds": 0.15502329999799258,
+        "calls": {
+          "collect_progress": 1,
+          "validate_clip": 8,
+          "hash_reads": 12,
+          "hashed_input_bytes": 606,
+          "revision_artifact_checks": 93,
+          "source_clip_record": 6,
+          "source_clip_rebuild": 6,
+          "verify_reference_provenance": 8,
+          "source_plan_rebuild": 2,
+          "reference_leaf_rebuild": 1
+        }
+      },
+      "first_receive": {
+        "median_seconds": 0.12151610000000801,
+        "min_seconds": 0.12033400000291294,
+        "max_seconds": 0.12252060000173515,
+        "calls": {
+          "validate_clip": 2,
+          "revision_artifact_checks": 84
+        }
+      },
+      "warm_batch_3": {
+        "median_seconds": 0.3587461999995867,
+        "min_seconds": 0.35814460000256076,
+        "max_seconds": 0.3693429999984801,
+        "calls": {
+          "validate_clip": 6,
+          "revision_artifact_checks": 252
+        }
+      },
+      "final_boundary": {
+        "median_seconds": 0.03572649999841815,
+        "min_seconds": 0.03552750000017113,
+        "max_seconds": 0.036656299998867325,
+        "calls": {
+          "revision_artifact_checks": 27
+        }
+      }
+    }
+  }
+}

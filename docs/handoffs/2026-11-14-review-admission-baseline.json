@@ -1,0 +1,26 @@
+{
+  "fixture": "six independent synthetic technical clips; real observation validator, store, progress and receipt writes; media semantics stubbed; no production writes",
+  "stages": {
+    "cold_preparation": {
+      "seconds": 0.04688720000012836,
+      "calls": {
+        "collect_progress": 1,
+        "validate_clip": 6
+      }
+    },
+    "first_receive": {
+      "seconds": 0.1315718999994715,
+      "calls": {
+        "collect_progress": 3,
+        "validate_clip": 18
+      }
+    },
+    "warm_batch_3": {
+      "seconds": 0.423097199998665,
+      "calls": {
+        "collect_progress": 9,
+        "validate_clip": 54
+      }
+    }
+  }
+}

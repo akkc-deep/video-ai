@@ -1,0 +1,49 @@
+{
+  "status": "accepted_complete",
+  "read_first": [
+    "docs/handoffs/2026-11-09-repeated-read-handoff.md",
+    "docs/handoffs/repeated-read-progress.json",
+    "docs/handoffs/repeated-read-acceptance-audit.json"
+  ],
+  "workspace": "Use current dirty worktree; many unrelated pre-existing modifications. Do not reset/clean. No commits made by this task.",
+  "implementation_files": [
+    "src/video_ai/runtime/scene_revision_records.py",
+    "src/video_ai/runtime/_scene_revision_origins.py",
+    "src/video_ai/runtime/_scene_revision_origin_images.py",
+    "src/video_ai/runtime/jimeng_candidates.py",
+    "src/video_ai/runtime/production_scene_revision.py",
+    "src/video_ai/runtime/scene_clip_observations.py",
+    "src/video_ai/planning/scene_video_prompts.py"
+  ],
+  "new_files": [
+    "tests/unit/test_revision_guard_shared_ancestors.py",
+    "scripts/benchmark_revision_admission.py"
+  ],
+  "integration_fixture": "tests/integration/test_scene_revision_flow.py: isolated tools, synthetic voice reference/weights; copies ffmpeg/ffprobe to test tree, never writes production configs.",
+  "last_fix": "_verify_read_boundary temporarily clears _artifact_batch, restores in finally. Regression test_checkpoint_inside_artifact_batch_checks_fresh_bytes_immediately failed before fix and passed after.",
+  "review": "Independent reviewer found no confirmed high/medium issues; nested checkpoint limitation was reproduced and fixed, follow-up found no remaining blocker for that fix. Detailed candidates-manifest review limited; integration coverage exists.",
+  "tests": "177 scoped unit tests passed on last implementation.41 integration tests passed before last boundary fix. Last full integration run was explicitly stopped on user pause; rerun required.",
+  "performance": "Original times load118.684001s/admission21845.364883s. Intermediate acceptance.json admission263.0811394s, warm source0 hashes, three reads0 hashes; source changed so NOT final evidence. final-validated.json interrupted after load17.4678569s and MUST NOT be claimed complete.",
+  "resume_commands": [
+    "$env:PYTHONPATH='src'; .tools/python/python.exe -m pytest tests/integration/test_scene_revision_flow.py tests/integration/test_scene_image_prompt_revision.py -q",
+    "$env:PYTHONPATH='src'; $run=(Get-ChildItem E:/VideoAI/work -Directory -Filter '0002-*' | Select-Object -First 1).FullName + '/process/revisions/08'; .tools/python/python.exe scripts/benchmark_revision_admission.py --run $run --output docs/handoffs/repeated-read-resumed-acceptance.json"
+  ],
+  "remaining": [],
+  "constraints": [
+    "Video generation remains paused",
+    "No paid APIs, no production media or config writes, no regeneration",
+    "Do not resume old sessions70819/90252; stopped at user pause after py-spy verified exact command lines",
+    "Do not reuse old PIDs without fresh command verification",
+    "Metrics hash_read_bytes are SHA256 read bytes, not physical disk I/O; rglob counter is traversal invocations"
+  ],
+  "final_evidence": "docs/handoffs/repeated-read-resumed-acceptance.json",
+  "baseline_recovery_search": {
+    "stash": "empty",
+    "reflog": "clone only",
+    "workspace_backups": "none found",
+    "scratch_logs": "no original benchmark counters found",
+    "HEAD": "contains older revision read implementation but not proven identical to original measured dirty worktree"
+  },
+  "acceptance_scope_update": "User explicitly waived historical before/after comparison; accept final implementation, passing integration tests, completed real08 six-stage offline benchmark and matching source hashes.",
+  "production_generation": "paused"
+}

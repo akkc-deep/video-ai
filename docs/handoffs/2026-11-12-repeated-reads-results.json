@@ -1,0 +1,424 @@
+﻿{
+    "scope":  "Voyager2 revision08 read-only review preparation and boundary checks",
+    "before":  {
+                   "seconds":  384.4380021999823,
+                   "stages":  {
+                                  "frozen":  11.870275900000706,
+                                  "prepared":  286.2604181999923,
+                                  "review_preparation":  34.05632750003133
+                              },
+                   "io_totals":  {
+                                     "read_open_attempts":  58717,
+                                     "stable_byte_reads":  17954,
+                                     "actual_hash_reads":  49169,
+                                     "actual_hash_input_bytes":  15499976370,
+                                     "stable_reads_top":  [
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\scene-revision\\request.json",
+                                                                  619
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\scene-revision\\request.json",
+                                                                  440
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\request.json",
+                                                                  245
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\image-selection\\image_batch_0003\\accepted.json",
+                                                                  217
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\image-selection\\image_batch_0002\\accepted.json",
+                                                                  132
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0009\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0013\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0043\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0062\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0080\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0081\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0084\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0114\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\jimeng\\scene_0119\\candidates.json",
+                                                                  53
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\request.json",
+                                                                  49
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0023\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0058\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0071\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0077\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0079\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0087\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0088\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\06\\production\\jimeng\\scene_0118\\candidates.json",
+                                                                  44
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\image-selection\\image_batch_0001\\accepted.json",
+                                                                  36
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0010\\candidates.json",
+                                                                  13
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0019\\candidates.json",
+                                                                  13
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0022\\candidates.json",
+                                                                  13
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0028\\candidates.json",
+                                                                  13
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0034\\candidates.json",
+                                                                  13
+                                                              ],
+                                                              [
+                                                                  "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\04\\production\\jimeng\\scene_0052\\candidates.json",
+                                                                  13
+                                                              ]
+                                                          ],
+                                     "hash_reads_top":  [
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\025724d771d2761d767caf7065f07acbae1a72c0750407c233af44479f24a416\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\0989f59136bf51384f2e4b92843f8c0644e7483bf164288a1b71de452f120aaa\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\1eda47e1f9994d4cacb9a9978e5758e1b72c68ae1027484af899e09491cef2a8\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\1eefcf2680c3f06d2fbdbe7a1304735f07217e24bd06641de06e0bc0293e09e4\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\27c9c4969099369ac9b0eaf1cd0d447c45a9904ebf60419fbf6b356dcf836662\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\2e2566a6d25ac2cf90792d25ec2f1c083820c5c79e98a114ce63acbcca45f56c\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\374be684a24832c3e62051d5c4192bb36c1f6ffd3a54e368b36d87abace3b50b\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\389c4c5377dda7113de3bba2371a0dc15e3619fab7be78653e185ab56aee4aef\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\3a0338a520fb645ccff09edefc132f9f7ee5f48c9de0602c6ac3ed59437fd15f\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\3e0d361b386ae0877867089db2150f3351e30d2c106b3488b9d43582806d28bf\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\3f13349d6c4c0dfb319e1fcc3fc039611d745fbcda315d69d47b454261ceb54c\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\404a89b509763bc5601b355b12b3080100f0ca6a098d54c2eb29e5fe4e320802\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\42514baeb01fd05e972db6d077f6d7a2808559530cf0294e0c000bb7133f97fa\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\4379be0226fb45d96deb4df4f94bd95274aa6ebdddb74a9f517573fce211b053\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\4466075ca2a42e6c828684c03f75316c061cf6f81e7c522410dc55fe3cc65073\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\4a657314b207c9b1946b246a14e81afde81320c9e22d758017b4ca369df8ac6b\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\4d0598df40f3b050d0b666e117b85b05a53e48ae258aa6a4ddd61d417bcb9198\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\558258c383fc833dd8382b2980ee9156464e9c1832a7f32c57b643c8b38d5745\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\5667f84501b8b3a55cf57a67daa7144a99435f7d591ac32a232fc69758b32c4f\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\592a871d73e54a83d0cd1394da5807956aa40dd7e5408ef539d28e1343a66766\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\5a97ab9d52defc38dbf9cfa3f70ce2848736afc5d49903f098c2615ce63fce60\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\5e1c1d7824fadc0b86da9ec02a5cc964594a9669b4fb1abd1169acb34e386dd6\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\66126d9506af3abf4da5f141774059d04b7356254a27e2e161aa89a6e98af5ff\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\671c58da2de56a683bc8b998d2479011b5f8fcc1ebe7e47be8931b810d2e6066\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\68e7cc7efd9ef0f95ca4146ddc2cc09d7327111c2539251af5a5982e98b27df0\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\6ed222afa2f97f40c12ad3f5fb85ee6e840c51df8c8fe08e51eab14d85c4f257\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\73edd2e91eb87ea1ae284a4c9fb867466efffb78dbb1a9d384c5ed5a559cbf01\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\758b0a8bee0eb3f32b162b4768ec2080f80e35cdc75fcba73774487456da0660\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\75ffe38b21714ffed1bdb4de4d697f33ebad2bc2273b99a0cfd890f096f51471\\selected_image.original",
+                                                                6
+                                                            ],
+                                                            [
+                                                                "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\media\\choice\\7680e5a2b259f4865355a54da1b6380dadc0ba409d505c6662b2defe066d97db\\selected_image.original",
+                                                                6
+                                                            ]
+                                                        ],
+                                     "notes":  "open counts are attempted read opens, not physical disk reads; stable_bytes and _hash_open_file count actual application byte-read operations."
+                                 }
+               },
+    "after":  {
+                  "status":  "completed",
+                  "seconds":  370.02322209998965,
+                  "stages":  {
+                                 "frozen":  12.429025499965064,
+                                 "prepared":  286.2899555999902,
+                                 "review_preparation":  32.54909810004756
+                             },
+                  "hash_io":  {
+                                  "read_operations":  3784,
+                                  "unique_paths":  3784,
+                                  "duplicate_paths":  [
+
+                                                      ],
+                                  "bytes":  3519220986
+                              },
+                  "content_io":  {
+                                     "read_operations":  12525,
+                                     "unique_paths":  12525,
+                                     "bytes":  684353723,
+                                     "duplicate_paths":  [
+
+                                                         ],
+                                     "top":  [
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\options.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\script.txt",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\inputs\\config.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\inputs\\voice.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\workflows\\wan22_i2v_14b_api.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\workflows\\wan22_i2v_14b_api.mapping.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\workflows\\upscale_api.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\workflows\\upscale_api.mapping.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\inputs\\tts-api-source.yaml",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\inputs\\tts-api.yaml",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\commit.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\options.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\request.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\invalidation.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\imports.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\imports\\c1f818f69dd4cb0d4d4288e923b2b6a88f59986439c78d5b767e4e0f82d3c892.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-revision\\views\\common\\c1f818f69dd4cb0d4d4288e923b2b6a88f59986439c78d5b767e4e0f82d3c892.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\inputs\\config.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\inputs\\voice.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\commit.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\config-source.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\00dea320-90cb-4fc8-81fe-e1001638cc0a.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\01f6ce73-1c7b-484d-9e47-64ea6d5da9e8.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\0204e153-8695-4575-8a45-2e4d5720171c.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\02a1c0ba-59df-46c8-a991-dd37e3e1e9bf.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\02f8b7cf-7c52-487c-874f-4d99a0f31c0e.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\0477ff06-a451-4a60-91e1-585ef7521f73.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\0482c9f4-4c61-4e7b-8753-9ff0753aee40.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\0495cbda-6e4b-4660-b28c-135a47d5af2e.json",
+                                                     1
+                                                 ],
+                                                 [
+                                                     "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\07\\production\\scene-revision\\copy-intents\\056232ec-6147-489a-adef-fe7228aa1586.json",
+                                                     1
+                                                 ]
+                                             ]
+                                 },
+                  "protected_byte_cache":  {
+                                               "paths":  12525,
+                                               "bytes":  684353723,
+                                               "native_entries":  16011
+                                           }
+              },
+    "existing_clips":  137,
+    "formal_accepted_reviews":  0,
+    "generation_started":  false,
+    "tests_passed":  221,
+    "limitations":  [
+                        "Application read counters are not physical disk IO counters.",
+                        "External codec reads are not counted.",
+                        "No formal review submission was executed.",
+                        "Cold preparation still takes about six minutes; remaining CPU work is not solved."
+                    ]
+}

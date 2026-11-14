@@ -1,0 +1,41 @@
+{
+  "run": "E:\\VideoAI\\work\\0002-\u65c5\u884c\u80052\u53f7-\u5373\u68a6\u7248\\process\\revisions\\08",
+  "stages": {
+    "initial_load": {
+      "seconds": 397.59491849999176,
+      "hash_calls": 514372,
+      "hashed_bytes": 229701864108,
+      "unique_hashed_paths": 5022,
+      "max_hashes_per_path": 250
+    },
+    "initial_revision_admission": {
+      "seconds": 1355.501703499991,
+      "hash_calls": 15799,
+      "hashed_bytes": 4110528995,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 1
+    },
+    "warm_source_check": {
+      "seconds": 13.696602000010898,
+      "hash_calls": 21861,
+      "hashed_bytes": 5705977608,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 2
+    },
+    "warm_config_load": {
+      "seconds": 13.724663100001635,
+      "hash_calls": 21872,
+      "hashed_bytes": 5726046280,
+      "unique_hashed_paths": 15810,
+      "max_hashes_per_path": 2
+    },
+    "three_reads_one_transaction": {
+      "seconds": 42.297440299997106,
+      "hash_calls": 64677,
+      "hashed_bytes": 12490946918,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 11
+    }
+  },
+  "network_requests": 0
+}

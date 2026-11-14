@@ -1,0 +1,68 @@
+{
+  "run": "E:\\VideoAI\\work\\0002-\u65c5\u884c\u80052\u53f7-\u5373\u68a6\u7248\\process\\revisions\\08",
+  "stages": {
+    "initial_load": {
+      "seconds": 17.002653700008523,
+      "hash_calls": 12623,
+      "hashed_bytes": 6735998094,
+      "hash_read_bytes": 6735998094,
+      "directory_traversals": 571,
+      "unique_hashed_paths": 5022,
+      "max_hashes_per_path": 4
+    },
+    "initial_revision_admission": {
+      "seconds": 354.06862209999235,
+      "hash_calls": 15799,
+      "hashed_bytes": 4110528995,
+      "hash_read_bytes": 4110528995,
+      "directory_traversals": 2531,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 1
+    },
+    "warm_source_check": {
+      "seconds": 15.073392499994952,
+      "hash_calls": 21861,
+      "hashed_bytes": 5705977608,
+      "hash_read_bytes": 5705977608,
+      "directory_traversals": 630,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 2
+    },
+    "warm_config_load": {
+      "seconds": 14.795163200004026,
+      "hash_calls": 21872,
+      "hashed_bytes": 5726046280,
+      "hash_read_bytes": 5726046280,
+      "directory_traversals": 630,
+      "unique_hashed_paths": 15810,
+      "max_hashes_per_path": 2
+    },
+    "three_reads_one_transaction": {
+      "seconds": 19.73059409999405,
+      "directory_traversals": 1260,
+      "hash_calls": 21861,
+      "hashed_bytes": 5705977608,
+      "hash_read_bytes": 5705977608,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 2
+    },
+    "read_checkpoint_and_exit": {
+      "seconds": 35.226046000025235,
+      "directory_traversals": 1890,
+      "hash_calls": 43722,
+      "hashed_bytes": 11411955216,
+      "hash_read_bytes": 11411955216,
+      "unique_hashed_paths": 15799,
+      "max_hashes_per_path": 4
+    }
+  },
+  "network_requests": 0,
+  "source_sha256": {
+    "scene_revision_records.py": "9da6720f446c23b951a5ed6b4a86dcc68b3e76cab3110b2f3892a01ad4b33a8d",
+    "_scene_revision_origins.py": "4c7ba4ca89a875a44483847576359a1cb3f068a03826ae9bb625567c0045681f",
+    "verification.py": "e1fe4f72677b55d358893d6609bfd8f9088f8750323ea4ce18cd08b7ec7108b8"
+  },
+  "production_write_guard": "audit hook denies write opens and filesystem mutations under production work",
+  "status": "completed",
+  "source_unchanged_during_benchmark": false
+}

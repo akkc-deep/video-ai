@@ -1,0 +1,265 @@
+{
+  "recorded_at": "2026-11-14T01:12:59.8444607+08:00",
+  "run_dir": "E:/VideoAI/work/0002-旅行者2号-即梦版/process/revisions/09",
+  "producer": {
+    "started_at": "2026-11-14T00:53:21.7485605+08:00",
+    "log": "E:/VideoAI/scratch/logs/voyager2-09-local-recovery-admitted-inbox-295b3fc399914f219262cfd325d9eca2.log",
+    "tool_session": 36805,
+    "pid": 8504,
+    "terminal_exit_code": 130
+  },
+  "scene2": {
+    "local_receipt": "E:/VideoAI/work/0002-旅行者2号-即梦版/process/revisions/09/production/scene-clips/scene_0002_clip_0001/local-output-recovery.json",
+    "measurement_scope": "Process creation to immutable final-frame technical receipt time, including cold preparation, recovery and technical processing. Not a per-stage CPU or I/O measurement.",
+    "process_start_to_technical_seconds": 744.3660985,
+    "technical_created_at": "2026-11-14T01:05:46.114659+08:00"
+  },
+  "scene3": {
+    "source08": {
+      "path": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08\\production\\scene-clips\\scene_0003_clip_0001\\source.mp4",
+      "sha256": "8bc70d1789296868a30d60177fda5d94eae3e60eba7d8cb4a6801525a4caba9a"
+    },
+    "equal_bytes": true,
+    "source09": {
+      "path": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\09\\production\\scene-clips\\scene_0003_clip_0001\\source.mp4",
+      "sha256": "8bc70d1789296868a30d60177fda5d94eae3e60eba7d8cb4a6801525a4caba9a"
+    }
+  },
+  "user_feedback": [
+    "为什么一直在回复",
+    "为什么一直在恢复",
+    "把这些流程问题都记录下来，后续我会让其他任务修复"
+  ],
+  "feedback_provenance": "Exact user messages from the current conversation; manually recorded, not an exported transcript.",
+  "final_observation": "Historical snapshot at recorded_at: Scene 2 and 7 formally admitted; scene 1 clip 3 technically complete with 46 retained frames; original producer stopped at its completed-clip checkpoint. Superseded by handoff_followup below.",
+  "revision10_preparation_sample": {
+    "phase_update_at": "2026-11-14T01:33:02.108478+08:00",
+    "observed_at": "2026-11-14T02:04:12.5608465+08:00",
+    "seconds_since_phase_update": 1870.4523685,
+    "status": "running; session 64383 remains live",
+    "stage": "One live stack sample in _capture_origins and protected handle verification",
+    "stack": "E:/VideoAI/scratch/voyager2-revision10-live-stack-20261114.txt",
+    "ready_marker_present": false,
+    "measurement_scope": "Elapsed since wrapper saved its preparing-targeted-revision phase; not an exclusive function timing or completed benchmark."
+  },
+  "handoff_followup": {
+    "date": "2026-11-14",
+    "scope": "Documentation-only update from the existing live session and saved evidence; no new workflow repair or broad validation.",
+    "scene1_clip3": "Actually reviewed; formally accepted. Current production directory contains accepted.json and observation-accepted.json.",
+    "acceptance_log": "E:/VideoAI/scratch/logs/voyager2-admit-final-scene1-and-revise-7ac557a07a3a413c9743b6567fa6f386.log:5",
+    "live_tool_session": 64383,
+    "poll_result": "Still running; empty new stdout. Not restarted.",
+    "last_logged_stage": "preparing explicit rigid-body scene-3 repair",
+    "state_conflict_source": "E:/VideoAI/scratch/voyager2-resume-state.json",
+    "state_conflict_excerpt": {
+      "unresolved_clip": "scene_0002_clip_0001",
+      "unresolved_reason": "Original video exists, but fresh queue and history have no original task; retain original media and do not re-POST",
+      "recovered_clips": [
+        "scene_0002_clip_0001",
+        "scene_0007_clip_0001"
+      ],
+      "last_output": "All three scene-1 clips and recovered scene 2/7 formally accepted; preparing planned targeted revision"
+    },
+    "interpretation_limit": "The conflicting fields prove stale coordination metadata; they do not mean scene 2 recovery is still pending. No claim that revision 10 is ready. Scratch source08 reviews are not formal acceptance.",
+    "source08_scratch_review_snapshot": {
+      "index": "E:/VideoAI/scratch/voyager2-source08-review-index.json",
+      "counts": {
+        "passed": 65,
+        "failed": 16,
+        "unverified": 4,
+        "total": 85
+      },
+      "formal_acceptance_written": false,
+      "revision10_reusable_clip_count": 8,
+      "reuse_count_source": "E:/VideoAI/work/0002-旅行者2号-即梦版/process/revisions/10/production/scene-revision/intent.json: invalidation.reusable.clips",
+      "followup_action": "Finished assigned old-source ranges; no new old-source review ranges assigned. Focus on current production footage. No direct cross-version admission performed."
+    }
+  },
+  "revision10_preparation_result": {
+    "phase_update_at": "2026-11-14T01:33:02.108478+08:00",
+    "revision_ready_state_update_at": "2026-11-14T03:37:22.326837+08:00",
+    "elapsed_seconds": 7460.218359,
+    "status": "revision_ready; same session has entered narration/timeline and source-clip context loading",
+    "session": 64383,
+    "measurement_scope": "Wrapper phase update before create_scene_revision to state update after successful result. Includes origin capture, copying, target freezing, admission and final checks; not per-function exclusive timing.",
+    "log": "E:/VideoAI/scratch/logs/voyager2-admit-final-scene1-and-revise-7ac557a07a3a413c9743b6567fa6f386.log"
+  },
+  "revision10_entry_dependency_failure": {
+    "recorded_at": "2026-11-14T03:57:57.525791+08:00",
+    "terminal_session": 64383,
+    "exit_code": 2,
+    "error": "required image selection record unavailable: revision10/production/reference-images/wan-inputs.json",
+    "cause": "Task-local clip entry bypassed the normal coordinator step that materializes accepted image inputs for Wan.",
+    "normal_implementation": "src/video_ai/runtime/production_scene_pipeline.py:207",
+    "task_local_change": "resume_voyager2_clips.py calls build_reference_image_acceptance and RevisionStore.save only when local Wan inputs are missing",
+    "new_producer_session": 65235,
+    "new_producer_pid": 18160,
+    "new_log": "E:/VideoAI/scratch/logs/voyager2-10-wan-admission-and-clips-578d4277565b48fc8d2fd32a089d7165.log",
+    "verification": "Actual resumed process printed accepted Wan reference inputs ready and building original source-clip context. Current run10 Wan inputs exist and contain 137 scenes. No new video generation or completed clip is claimed yet.",
+    "review_material_session": 34353,
+    "verified_wan_scene_count": 137,
+    "verified_at": "2026-11-14T04:02:35.42536+08:00"
+  },
+  "revision10_runtime_stage_samples": {
+    "provenance": "Direct read-only tool observations during this conversation; manually recorded, not an exported transcript.",
+    "service_healthy": {
+      "observed_at": "2026-11-14T05:05:49.9567748+08:00",
+      "pid": 16316,
+      "status": "healthy",
+      "owned": true
+    },
+    "later_observation": {
+      "observed_at": "2026-11-14T05:20:37.1798277+08:00",
+      "scene2_child_request": false,
+      "scene2_child_intent": false,
+      "scene2_child_accepted": false,
+      "scene3_request": false
+    },
+    "interpretation": "A healthy owned Comfy service and advancing-original-producer stdout do not prove that new video inference has been submitted. Producer session 65235 was polled live and retained. No service restart or duplicate submit performed."
+  },
+  "repeated_import_progress_samples": {
+    "provenance": "Two read-only py-spy locals samples of the same live producer PID18160; manually transcribed tool output.",
+    "first": {
+      "observed_at": "2026-11-14T04:41:17.1108506+08:00",
+      "caller": "resume_voyager2_clips.py:141 advance -> collect_progress",
+      "clip_id": "scene_0004_clip_0001"
+    },
+    "second": {
+      "observed_at": "2026-11-14T05:36:16.5009252+08:00",
+      "caller": "production_scene_clips.py:364 _produce -> collect_progress",
+      "outer": "resume_voyager2_clips.py:216 advance",
+      "clip_id": "scene_0004_clip_0001"
+    },
+    "interpretation": "Initial continue-script admission and original producer preflight each reconstruct imported source clip records. These are two sampled points, not exclusive function timings or evidence of duplicate inference requests. No broad performance test or core optimization performed."
+  },
+  "auxiliary_exporter_timeout": {
+    "recorded_at": "2026-11-14T06:17:46.387556+08:00",
+    "tool_session": 34353,
+    "exit_code": 1,
+    "error": "TimeoutError: Clips not ready: scene_0002_clip_0002,scene_0003_clip_0001",
+    "producer_session_still_live": 65235,
+    "producer_restarted": false,
+    "new_exporter_session": 53450,
+    "new_exporter_deadline_seconds": 86400
+  },
+  "control_plane_and_handoff_events": {
+    "provenance": "Actual tool results and read-only observations; manually recorded, not an exported transcript.",
+    "stop_file_update": {
+      "error": "PermissionError WinError5 replacing stop-after-clip.next.json onto stop-after-clip.json",
+      "attributes": 32,
+      "old_contents": "run09, token f6f33402d23c415e882abc64adda97ce",
+      "read_path": "config.read_json -> protected_bytes during active whole-input window",
+      "task_helper_workaround": "stop_requested uses json.loads(STOP.read_bytes()) for this mutable control signal in future executions; no core protection disabled"
+    },
+    "ctrl_c": {
+      "tool_session": 65235,
+      "terminal_exit_code": 1,
+      "observed_at": "2026-11-14T06:57:21.3798243+08:00",
+      "native_pid_still_alive": 18160,
+      "native_creation": "2026-11-14T03:44:10.9672171+08:00",
+      "service_pid_still_alive": 16316
+    },
+    "safe_handoff": {
+      "queue_running": [],
+      "queue_pending": [],
+      "owned_original_intents": [
+        "scene_0002_clip_0002",
+        "scene_0003_clip_0001"
+      ],
+      "both_technically_complete": true,
+      "both_actually_reviewed": true,
+      "only_old_native_producer_ended": true,
+      "old_comfy_service_retained": true,
+      "public_RunLock_reclaims_ended_owner": true,
+      "new_cached_tool_session": 47763,
+      "new_native_pid": 30088,
+      "new_native_identity": "134390846618377043",
+      "new_review_exporter": 2648
+    }
+  },
+  "documentation_followup": {
+    "date": "2026-11-14",
+    "scope": "Documentation only; existing observation and sidecar read once. No regeneration, frame export, repeat visual review or core workflow repair.",
+    "issue_count": 18,
+    "machine_reboot_followup": "E:/VideoAI/scratch/voyager2-reboot-20261114-evidence.json",
+    "scene3_continuation": {
+      "observation": "E:/VideoAI/scratch/voyager2-current-review10/scene_0003_clip_0002/observation.json:121",
+      "evidence": "E:/VideoAI/scratch/voyager2-current-review10/scene_0003_clip_0002/evidence.json:32",
+      "viewed_at_from_saved_observation": "2026-11-14T10:40:57.328154+08:00",
+      "source_sha256": "fb064f81a115815500ae4169b8c26ee7cc73bc35aa5a4b7758662da2ce427c12",
+      "retained_frames": 77,
+      "saved_verdict": "failed",
+      "failure_interval": [
+        32,
+        77
+      ],
+      "actual_child_graph_contains_explicit_override": true,
+      "formal_rejection_written_at_snapshot": false,
+      "inbox_published_at_snapshot": false,
+      "accepted_parent_preserved": "scene_0003_clip_0001",
+      "corrective_revision_authored_at_snapshot": false
+    },
+    "admission_scheduling": {
+      "source_locations": [
+        "src/video_ai/runtime/production_scene_clips.py:519",
+        "src/video_ai/runtime/production_scene_clips.py:537",
+        "src/video_ai/runtime/production_scene_clips.py:325",
+        "src/video_ai/runtime/production_scene_clips.py:620"
+      ],
+      "temporary_policy": "Save actual pending observations locally; publish at current producer pass end. This is not an API optimization and does not remove per-observation scans.",
+      "unreviewed_parent_guard": [
+        "src/video_ai/runtime/production_scene_clips.py:389",
+        "src/video_ai/runtime/production_scene_clips.py:422"
+      ],
+      "measurement_limit": "Call structure only; no exclusive time measurement or attribution of all waiting to these calls."
+    },
+    "later_corrective_draft": {
+      "accepted_parent_preserved": true,
+      "status": "fields_checked_draft_only",
+      "path": "E:/VideoAI/scratch/voyager2-10-scene3-child-locked-pose-revision.json",
+      "condition": "Finish current pass and process pending actual observations before source handoff",
+      "revision_api_called": false,
+      "clip_ids": [
+        "scene_0003_clip_0002"
+      ]
+    },
+    "default_positive_prompt_sample": {
+      "limit": "Graph text and saved actual visual observation only; not proof of sole cause or guaranteed prompt-only repair. Image conditioning remains present.",
+      "has_control_room_words": false,
+      "actual_review": "E:/VideoAI/scratch/voyager2-current-review10/scene_0008_clip_0001/observation.json",
+      "graph": "E:/VideoAI/work/0002-旅行者2号-即梦版/process/revisions/10/production/scene-clips/scene_0008_clip_0001/graph.json:439",
+      "has_locked_pose_words": false,
+      "clip_id": "scene_0008_clip_0001",
+      "prefix": "无 + VISUAL_BIBLE_JSON",
+      "formal_rejection_written_at_snapshot": false,
+      "characters": 1545,
+      "source_sha256": "cb9cb0c26b03153eb1080ac5c4adbbc57440e6ef6e558b051708c6ce1bad17c5",
+      "node": "129:93",
+      "saved_verdict": "failed"
+    }
+  },
+  "control_plane_runtime_probe": {
+    "observed_at": "2026-11-14T09:56:48.513945+08:00",
+    "producer_pid": 30088,
+    "process_started_at": "134390846618377043",
+    "writable_open_succeeded": true,
+    "access_mode": "r+b opened and closed without writing bytes",
+    "contents_modified": false,
+    "scope": "After current entry printed advancing original clip producer, so its mutable stop reader had executed inside the active input-protection window"
+  },
+  "latest_user_pause_handoff": {
+    "status": "paused_by_user",
+    "snapshot": "E:\\code\\py\\video-ai\\docs\\handoffs\\2026-11-14-review-admission-optimization-evidence.json",
+    "handoff": "E:\\code\\py\\video-ai\\docs\\handoffs\\2026-11-14-review-admission-optimization-handoff.md",
+    "counts": {
+      "formally_accepted": 11,
+      "formally_rejected": 1,
+      "pending_observations": 29,
+      "pending_verdicts": {
+        "passed": 25,
+        "failed": 4
+      }
+    },
+    "historical_snapshots_below_do_not_authorize_resume": true
+  }
+}

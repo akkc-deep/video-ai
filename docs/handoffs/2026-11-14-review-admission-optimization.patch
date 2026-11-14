@@ -1,0 +1,1748 @@
+--- a/src/video_ai/runtime/_scene_revision_readers.py
++++ b/src/video_ai/runtime/_scene_revision_readers.py
+@@ -65,10 +65,17 @@
+     if proof is None:return None
+     run = Path(frozen.options['script_path']).parent.parent
+     folder = run/'production/scene-clips'/key
+-    if folder.exists() and any(folder.iterdir()): raise ProductionRefused('owned clip competes with imported clip')
+-    from .production_inputs import load_frozen_inputs
++    from ._continuity_byte_guard import observe_inventory,observe_absence
++    if folder.exists():
++        children=list(folder.iterdir())
++        observe_inventory(folder,'children',children)
++        if children: raise ProductionRefused('owned clip competes with imported clip')
++    else:
++        observe_absence(folder)
+     from ._scene_revision_origins import source_clip_record,remap_media
+-    source = load_frozen_inputs(proof['source_run'])
++    proof['guard'].verify_frozen(frozen)
++    proof['guard'].verify_captured_bytes()
++    source = proof['source_frozen']
+     record = source_clip_record(source,key)
+     sidecar = proof['imports']['clip:'+key][0]
+     if row is not None:
+--- a/src/video_ai/runtime/_scene_revision_origins.py
++++ b/src/video_ai/runtime/_scene_revision_origins.py
+@@ -186,6 +186,12 @@
+ 
+ @verified_read
+ def source_clip_record(frozen,key):
++    from .scene_revision_records import revision_cached_read,revision_read_identity
++    identity = (revision_read_identity(frozen),key)
++    return revision_cached_read('source_clip',identity,lambda:_read_source_clip_record(frozen,key))
++
++
++def _read_source_clip_record(frozen,key):
+     from ._scene_revision_origin_images import origin_image_scope
+     from ._scene_revision_origin_clips import origin_clip_scope
+     required,known=_origin_clip_ids(frozen,key)
+@@ -196,7 +202,11 @@
+ def _source_clip_record(frozen, key):
+     native=frozen.config.raw.get('scene_rendering',{}).get('mode')=='temporal_extension_v1'
+     scene_id=key.split('_clip_',1)[0]
+-    owned_native_chain=native and (run_of(frozen)/'production/scene-clips/chains'/scene_id/'result.json').exists()
++    chain_result=run_of(frozen)/'production/scene-clips/chains'/scene_id/'result.json'
++    owned_native_chain=native and chain_result.exists()
++    if native and not owned_native_chain:
++        from ._continuity_byte_guard import observe_absence
++        observe_absence(chain_result)
+     if 'scene_revision' in frozen.options and not owned_native_chain:
+         from ._scene_revision_readers import inherited_clip_record
+         value = inherited_clip_record(frozen,key)
+--- a/src/video_ai/runtime/scene_revision_records.py
++++ b/src/video_ai/runtime/scene_revision_records.py
+@@ -3,6 +3,7 @@
+ from contextlib import contextmanager, nullcontext
+ from functools import wraps
+ from copy import deepcopy
++from dataclasses import is_dataclass
+ import os
+ from pathlib import Path
+ import stat
+@@ -14,6 +15,7 @@
+ from ..planning.scene_revision import validate_rendering_identity, DOMAINS, STRATEGY
+ from .manifest import thaw, validate_run_dir
+ from .verification import verified_read
++from .scene_review_control import review_checkpoint
+ from .production_state import (ArtifactStamp, ProductionRefused, RunLock, integer,
+                                object_fields, run_path, timestamp)
+ 
+@@ -45,6 +47,8 @@
+         _artifact_batch.reset(token)
+         for guard in state.get('reference_prior_guards', ()):
+             guard.verify()
++        for _, guard in state.get('semantic_reads', {}).values():
++            guard.verify()
+         for path, expected in state['ownership'].items():
+             if _optional_path_identity(path) != expected:
+                 raise ProductionRefused('revision captured file ownership changed')
+@@ -64,6 +68,53 @@
+         return path_identity(path)
+     except FileNotFoundError:
+         return None
++
++
++def replay_revision_reads(guard):
++    """Expose a memo's complete closure to any enclosing origin capture."""
++    from ._continuity_byte_guard import observe_file, observe_inventory, observe_absence
++    for file in guard.files:
++        observe_file({name:getattr(file,name) for name in
++                      ('path','bytes','mtime_ns','sha256','verified_at')})
++    for inventory in guard.inventories:
++        observe_inventory(inventory.path,inventory.kind,inventory.expected,pattern=inventory.pattern)
++    for path in guard.absences:
++        observe_absence(path)
++
++
++def revision_cached_read(namespace, key, read):
++    """Reuse semantics only in an owning batch, retaining strict byte proofs.
++
++    Hits verify original dependencies and replay them into outer captures. Never
++    store an incomplete/failed read, or expose the mutable cached return value.
++    """
++    review_checkpoint()
++    batch = _artifact_batch.get()
++    if batch is None or not batch['active'] or batch['thread'] != get_ident():
++        return read()
++    cache = batch.setdefault('semantic_reads', {})
++    key = (namespace,key)
++    if key not in cache:
++        from ._continuity_byte_guard import capture_reads
++        with capture_reads() as capture:
++            value = read()
++        guard = capture.finish()
++        from ._protected_continuity_inputs import verify_protected_continuity_file
++        for file in guard.files:
++            verify_protected_continuity_file(file,prepare_existing=True)
++        cache[key] = (deepcopy(value),guard)
++    else:
++        _, guard = cache[key]
++        guard.verify()
++        replay_revision_reads(guard)
++    return deepcopy(cache[key][0])
++
++
++def revision_read_identity(frozen):
++    """Bind typed inputs as well as disk paths; test doubles have no typed state."""
++    value = thaw(frozen) if is_dataclass(frozen) else dict(
++        options=thaw(getattr(frozen,'options',{})),config=thaw(getattr(frozen,'config',None)))
++    return id(frozen),canonical_digest(value)
+ 
+ 
+ def revision_raw_inventory(directory, *, root):
+@@ -404,6 +455,7 @@
+     @_unique_guard_pass
+     def verify_captured_bytes(self):
+         from ._continuity_byte_guard import observe_inventory, observe_absence, _captures
++        review_checkpoint()
+         self.verify_frozen(self.frozen)
+         transaction = _read_transaction.get()
+         if (transaction is not None and transaction['active']
+@@ -418,6 +470,7 @@
+             transaction = None
+         for ancestor in self.ancestors:ancestor.verify_captured_bytes()
+         for value,root,empty,identity in self.files.values():
++            review_checkpoint()
+             verify_artifact(value,root=root,allow_empty=empty)
+             if path_identity(value['path'])!=identity: raise ProductionRefused('revision captured file ownership changed')
+         for directory,(inventory,root) in self.directories.items():
+@@ -504,6 +557,7 @@
+         raise ProductionRefused('revision invalidation identity differs')
+     imports = {}
+     for bound in index['imports']:
++        review_checkpoint()
+         sidecar = _json(verify_artifact(bound,root=root),root=root)
+         object_fields(sidecar,IMPORT_FIELDS,'revision import')
+         timestamp(sidecar['created_at'])
+@@ -651,6 +705,7 @@
+             guard.ancestors.append(require_scene_revision(origin)['guard'])
+         originals={}
+         for iid,(sidecar,bound) in result['imports'].items():
++            review_checkpoint()
+             guard.capture(bound['path'],root=root,expected=bound)
+             view_bound = sidecar['view_artifact']; guard.capture(view_bound['path'],root=root,expected=view_bound)
+             snapshot = sidecar['source_json_snapshot']
+--- a/src/video_ai/runtime/reference_image_records.py
++++ b/src/video_ai/runtime/reference_image_records.py
+@@ -49,11 +49,17 @@
+     request_ids = {f'request_{i:02d}' for i in range(1, model.candidates_per_scene+1)}
+     saved = []
+     originals = {}
+-    for folder in sorted(root.glob('request_*')):
++    from ._continuity_byte_guard import observe_inventory,observe_absence
++    from .manifest import hash_file
++    folders=sorted(root.glob('request_*'))
++    observe_inventory(root,'reference_requests',folders)
++    for folder in folders:
+         if not folder.is_dir():
+             continue
++        children=list(folder.iterdir())
++        observe_inventory(folder,'children',children)
+         if folder.name not in request_ids:
+-            if any(folder.iterdir()):
++            if children:
+                 raise ProductionRefused('unexpected reference request evidence')
+             continue
+         path = folder/'request.json'
+@@ -64,9 +70,13 @@
+                 raise ProductionRefused('reference request prompt is not a known exact representation')
+             saved.append(prompt)
+             originals[folder.name] = value
+-        elif any(folder.iterdir()):
+-            raise ProductionRefused('reference request evidence lacks original logical request')
++        else:
++            observe_absence(path)
++            if children: raise ProductionRefused('reference request evidence lacks original logical request')
+     provenance = run/'production/reference-images'/scene['scene_id']/'provenance.json'
++    for path in (provenance,root/'candidates.json'):
++        if path.exists(): hash_file(path)
++        else: observe_absence(path)
+     if (root/'candidates.json').exists() and not provenance.exists():
+         raise ProductionRefused('reference candidates lack original provenance')
+     if (provenance.exists() or (root/'candidates.json').exists()) and not saved:
+@@ -111,6 +121,8 @@
+                          ('result', 'schema_version identity task_id candidates')):
+         path = folder/(name+'.json')
+         if name == 'result' and not require_result and not path.exists():
++            from ._continuity_byte_guard import observe_absence
++            observe_absence(path)
+             continue  # Recover by querying the accepted task, even after its input URLs expire.
+         value = images._read(path)
+         object_fields(value, fields.split(), 'completed reference '+name)
+@@ -337,24 +349,27 @@
+ 
+ 
+ def verify_reference_provenance(frozen, scene, bible, plan):
++    from .scene_revision_records import revision_cached_read,revision_read_identity
++    identity = (revision_read_identity(frozen),
++                canonical_digest(scene),canonical_digest(bible),canonical_digest(plan))
++    return revision_cached_read('reference_provenance',identity,
++        lambda:_verify_reference_provenance(frozen,scene,bible,plan))
++
++
++def _verify_reference_provenance(frozen, scene, bible, plan):
+     from ._scene_revision_readers import proof_for
+     proof = proof_for(frozen,'image',scene['scene_id'])
+     if proof is not None:
+         from ._scene_revision_origins import common, origin_timeline
+-        from .scene_revision_records import _artifact_batch
+-        from threading import get_ident
++        from .scene_revision_records import revision_cached_read,revision_read_identity
+         source = proof['source_frozen']
+         # The import guard covers source common/plan bytes and inventories.
+         # Replaying it on every use also exposes dependencies to capture observers.
+         proof['guard'].verify_captured_bytes()
+-        batch = _artifact_batch.get()
+-        cache = (batch.setdefault('reference_source_plans', {})
+-                 if batch is not None and batch['active'] and batch['thread'] == get_ident() else {})
+-        key = id(source)
+-        if key not in cache:
++        def source_plan():
+             prefix = common(source)
+-            cache[key] = images.load_committed_plan(source, prefix['units'], origin_timeline(prefix['timeline']))
+-        old_bible, old_plan = cache[key]
++            return images.load_committed_plan(source, prefix['units'], origin_timeline(prefix['timeline']))
++        old_bible, old_plan = revision_cached_read('reference_source_plan',revision_read_identity(source),source_plan)
+         old_scene = next(s for s in old_plan['scenes'] if s['scene_id']==scene['scene_id'])
+         provenance = verify_reference_provenance(source,old_scene,old_bible,old_plan)
+         proof['guard'].verify_captured_bytes()
+--- a/src/video_ai/runtime/scene_clip_records.py
++++ b/src/video_ai/runtime/scene_clip_records.py
+@@ -17,6 +17,7 @@
+ from . import image_selection_records as images
+ from .verification import verified_read
+ from .execution_limits import command_timeout
++from .scene_review_control import review_checkpoint
+ 
+ 
+ def equal(actual, expected, label):
+@@ -60,7 +61,10 @@
+ 
+     def read(self, relative):
+         path = self.path(relative)
+-        if not path.exists(): return None
++        if not path.exists():
++            from ._continuity_byte_guard import observe_absence
++            observe_absence(path)
++            return None
+         return read_json(path)
+ 
+     def write_bytes(self, relative, raw):
+@@ -179,6 +183,7 @@
+ @verified_read
+ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
+     """Full batch preflight, also used by both read-only public entrypoints."""
++    review_checkpoint(force=True)
+     from .scene_execution_records import rendering_mode
+     if rendering_mode(frozen) == 'temporal_extension_v1':
+         from .temporal_scene_records import temporal_context
+@@ -224,6 +229,7 @@
+         prompt_contract=contract,prompt_binding_context=binding,execution=execution,
+         positive_overrides=positive_overrides)
+     for selected in wan['scenes']:
++        review_checkpoint()
+         from ._scene_revision_origin_images import source_image_required
+         if not source_image_required(frozen,selected['scene_id']):continue
+         artifact = {k:selected[k] for k in ('path','bytes','sha256')}
+@@ -254,6 +260,7 @@
+         if path.exists(): store.guard_paths[str(path)] = store.artifact(path)
+     # Bind every source selection/observation/provenance record, including comparison baselines.
+     for directory in ('production/image-selection','production/reference-images','production/reference-storage','production/jimeng'):
++        review_checkpoint()
+         inventory={str(path) for path in (run/directory).rglob('*.json')}
+         store.guard_directories[str(run/directory)]=inventory
+         for path in inventory: store.guard_paths[path] = store.artifact(path)
+@@ -294,7 +301,11 @@
+     """Read every durable authored source, including interrupted receipt commits."""
+     from .scene_clip_observations import validate_scene_clip_observation
+     rows=[]
+-    for path in sorted((folder/'observations').glob('*.json')):
++    from ._continuity_byte_guard import observe_inventory
++    directory = folder/'observations'
++    paths = sorted(directory.glob('*.json'))
++    observe_inventory(directory,'json_direct',paths)
++    for path in paths:
+         artifact=store.artifact(path)
+         if path.name!=artifact['sha256']+'.json': raise ProductionRefused('observation original filename/SHA differs')
+         value=read_json(path)
+@@ -539,41 +550,57 @@
+ 
+ 
+ @verified_read
+-def collect_progress(context):
++def collect_progress(context, *, scene_reader=None):
+     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+         from .temporal_scene_records import temporal_progress_view
+         return temporal_progress_view(context)
+     store=context['store']; scenes=[]; records={}
+     for scene in context['plan']['scenes']:
+-        state=dict(scene_id=scene['scene_id'],status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=None,error=None)
+-        parent=None; stopped=False
+-        for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
+-            cid=row['budget']['clip_id']; folder=store.clip_dir(cid)
+-            if stopped:
+-                if folder.exists() and any(folder.iterdir()): raise ProductionRefused('descendant evidence exists before parent acceptance')
+-                continue
+-            record=validate_clip(context,row,parent)
+-            if record:
+-                records[cid]=record; state['completed_clip_ids'].append(cid)
+-                if record['rejected']:
+-                    rejected=record['rejected']
+-                    evidence=rejected['observation']['path'] if rejected.get('_raw_only') else str(folder/'observation-rejected.json')
+-                    state.update(status='continuity_failed',waiting_clip_id=cid,error=dict(kind='continuity_failed',message='explicit process observation failed',evidence_paths=[evidence]))
+-                    stopped=True
+-                elif record['accepted']:
+-                    state['accepted_clip_ids'].append(cid); parent=record; state['status']='ready'
+-                else:
+-                    state.update(status='awaiting_continuity_review',waiting_clip_id=cid); stopped=True
+-            else:
+-                terminal=store.read(folder/'terminal.json')
+-                if terminal:
+-                    state.update(status='failed',waiting_clip_id=cid,error=dict(kind=terminal['status'],message=terminal['reason'],evidence_paths=[str(folder/'terminal.json')]))
+-                elif store.read(folder/'intent.json'):
+-                    state.update(status='submit_unknown',waiting_clip_id=cid,error=dict(kind='submit_unknown',message='original task needs recovery',evidence_paths=[str(folder/'intent.json')]))
+-                else: state.update(status='pending',waiting_clip_id=cid)
+-                stopped=True
++        state, current = (scene_reader or scene_progress)(context,scene)
++        records.update(current)
+         scenes.append(state)
+     return dict(schema_version=2,run_id=store.run_dir.name,inputs_sha256=canonical_digest(context['inputs']),scenes=scenes),records
++
++
++def scene_progress(context, scene):
++    """Rebuild just one scene, retaining parent admission and descendant checks."""
++    from ._continuity_byte_guard import observe_inventory,observe_absence
++    store=context['store']; records={}
++    state=dict(scene_id=scene['scene_id'],status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=None,error=None)
++    parent=None; stopped=False
++    for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
++        review_checkpoint()
++        cid=row['budget']['clip_id']; folder=store.clip_dir(cid)
++        if stopped:
++            if folder.exists():
++                children=list(folder.iterdir())
++                observe_inventory(folder,'children',children)
++            else:
++                children=[]
++                observe_absence(folder)
++            if children: raise ProductionRefused('descendant evidence exists before parent acceptance')
++            continue
++        record=validate_clip(context,row,parent)
++        if record:
++            records[cid]=record; state['completed_clip_ids'].append(cid)
++            if record['rejected']:
++                rejected=record['rejected']
++                evidence=rejected['observation']['path'] if rejected.get('_raw_only') else str(folder/'observation-rejected.json')
++                state.update(status='continuity_failed',waiting_clip_id=cid,error=dict(kind='continuity_failed',message='explicit process observation failed',evidence_paths=[evidence]))
++                stopped=True
++            elif record['accepted']:
++                state['accepted_clip_ids'].append(cid); parent=record; state['status']='ready'
++            else:
++                state.update(status='awaiting_continuity_review',waiting_clip_id=cid); stopped=True
++        else:
++            terminal=store.read(folder/'terminal.json')
++            if terminal:
++                state.update(status='failed',waiting_clip_id=cid,error=dict(kind=terminal['status'],message=terminal['reason'],evidence_paths=[str(folder/'terminal.json')]))
++            elif store.read(folder/'intent.json'):
++                state.update(status='submit_unknown',waiting_clip_id=cid,error=dict(kind='submit_unknown',message='original task needs recovery',evidence_paths=[str(folder/'intent.json')]))
++            else: state.update(status='pending',waiting_clip_id=cid)
++            stopped=True
++    return state,records
+ 
+ 
+ def complete_value(context,records):
+--- a/src/video_ai/runtime/production_scene_clips.py
++++ b/src/video_ai/runtime/production_scene_clips.py
+@@ -16,6 +16,8 @@
+ from .scene_clip_records import (scene_context,graph_for,expected_request,validate_clip,collect_progress,
+     complete_value,validate_media_receipt,technical_recipes,equal)
+ from .scene_execution_records import verified_scene_execution_write
++from ._scene_review_batch import review_admission_batch, review_batch
++from .scene_review_control import review_admission_control,review_checkpoint
+ 
+ 
+ def boundary(point):
+@@ -317,16 +319,19 @@
+     store.write(folder/'clip.json',clip); boundary('clip')
+ 
+ 
+-def _finish(context,errors=None):
++def _finish(context,errors=None,*,snapshot=None):
+     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+         from .production_temporal_scene_clips import finish_temporal_clips
+         return finish_temporal_clips(context)
+     store=context['store']; store.verify_global()
+-    progress,records=collect_progress(context); scenes=progress['scenes']; templates=[]
++    progress,records=snapshot if snapshot is not None else collect_progress(context)
++    scenes=progress['scenes']; templates=[]
+     for row in context['rows']:
+         cid=row['budget']['clip_id']; record=records.get(cid)
+         if record and not record['accepted'] and not record['rejected']:
+             path=store.write(store.clip_dir(cid)/'observation-template.json',record['template'])
++            batch=review_batch(context)
++            if batch is not None: batch.wrote_template(cid,path)
+             templates.append(str(path))
+     for scene in scenes:
+         if errors and scene['scene_id'] in errors:
+@@ -348,6 +353,7 @@
+ 
+ 
+ def _produce(context,*,paths,logger,client_factory,service_factory):
++    review_checkpoint(force=True)
+     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+         from .production_temporal_scene_clips import produce_temporal_clips
+         return produce_temporal_clips(context,paths=paths,logger=logger)
+@@ -358,7 +364,9 @@
+     logger=_GuardedLogger(logger,store.assert_owned)
+     check_stage_space(context['frozen'].config,frames=sum(r['budget']['generated_frames'] for r in context['rows']))
+     # All graphs, all existing chains and originals are validated before the first ensure or POST.
+-    for row in context['rows']: graph_for(context,row)
++    for row in context['rows']:
++        review_checkpoint()
++        graph_for(context,row)
+     store.write('inputs.json',context['inputs']); boundary('inputs')
+     _restore_outer(context,paths=paths,logger=logger)
+     progress,_=collect_progress(context)
+@@ -375,15 +383,18 @@
+         return identify() if callable(identify) else None
+     def ensure():
+         nonlocal service
++        review_checkpoint(force=True)
+         store.assert_owned()
+         if service is None: service=(service_factory or _OwnedService)(context['frozen'],paths,logger,store.lock)
+         service.ensure(); store.assert_owned()
++        review_checkpoint(force=True)
+     try:
+         for scene in context['plan']['scenes']:
+             parent=None
+             for row in [r for r in context['rows'] if r['budget']['scene_id']==scene['scene_id']]:
+                 b=row['budget']; cid=b['clip_id']; folder=store.clip_dir(cid)
+                 store.assert_owned()
++                review_checkpoint(force=True)
+                 old=validate_clip(context,row,parent)
+                 if old:
+                     if not old['accepted'] or old['rejected']: break
+@@ -514,9 +525,14 @@
+     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+         from .production_temporal_scene_clips import consume_temporal_observation
+         return consume_temporal_observation(context,observation_path)
++    batch=review_batch(context)
++    if batch is None:
++        with review_admission_batch(context):
++            return _consume(context,observation_path)
+     from .scene_clip_observations import validate_scene_clip_observation
+     from ..adapters.common import strict_json,JSON_LIMIT
+-    store=context['store']; store.assert_owned(); progress,records=collect_progress(context)
++    store=context['store']; progress,records=batch.snapshot()
++    batch.verify(); batch.report('review_receiving')
+     raw=Path(observation_path).read_bytes()
+     if len(raw)>JSON_LIMIT: raise ProductionRefused('observation exceeds JSON_LIMIT')
+     value=strict_json(raw)
+@@ -533,10 +549,10 @@
+     # Every upstream record and original was fully admitted at entry. Exact raw
+     # byte and inventory rechecks make that admission current without rerunning
+     # the same decoders; this cache never crosses a public API invocation.
+-    store.verify_global()
+-    progress,records=collect_progress(context); record=records[cid]
++    progress,records=batch.refresh(cid,created=(original,)); record=records[cid]
+     _check_observation_replacement(record,value)
+     validate_scene_clip_observation(value,dict(template=record['template'],created_at=record['clip']['created_at']),now=current)
++    receipt_written=False
+     if value['verdict'] in ('passed','failed'):
+         filename='observation-accepted.json' if value['verdict']=='passed' else 'observation-rejected.json'
+         time_key='accepted_at' if value['verdict']=='passed' else 'rejected_at'
+@@ -545,10 +561,21 @@
+             store.write(folder/filename,dict(schema_version=2,run_id=store.run_dir.name,clip_id=cid,
+                 clip_sha256=canonical_digest(record['clip']),request_sha256=canonical_digest(record['request']),
+                 observation=store.artifact(original),observation_sha256=canonical_digest(value),**{time_key:current.isoformat()}))
++            receipt_written=True
+         elif value['verdict']=='failed' or prior['observation_sha256']!=canonical_digest(value):
+             raise ProductionRefused('accepted/rejected observation cannot be replaced')
+         boundary('observation-receipt')
+-    return _finish(context)
++        progress,records=batch.refresh(cid,created=(folder/filename,))
++    batch.checkpoint()
++    result=_finish(context,snapshot=(progress,records))
++    if receipt_written:
++        batch.received+=1; batch.report('review_receiving',clip_id=cid)
++    return result
++
++
++def _review_snapshot(context):
++    batch=review_batch(context)
++    return batch.snapshot() if batch is not None else collect_progress(context)
+ 
+ 
+ def hashlib_sha(raw):
+@@ -560,6 +587,7 @@
+ def _entry(frozen,units,timeline,*,paths,logger,lock,operation):
+     run=None; acquired=None; result=None
+     try:
++        review_checkpoint(force=True)
+         candidate=validate_run_dir(Path(frozen.options['script_path']).parent.parent)
+         if (frozen.options['run_id']!=candidate.name or not candidate.is_dir()
+                 or not run_path(candidate,candidate/'production/options.json').is_file()):
+@@ -568,7 +596,10 @@
+         if logger.run_dir!=run or not logger.production: raise ProductionRefused('scene clips require matching production logger')
+         if lock is None:
+             acquired=RunLock(run); acquired.__enter__(); lock=acquired
+-        context=scene_context(frozen,units,timeline,paths=paths,lock=lock); context['store'].assert_owned()
++        from .scene_revision_records import revision_artifact_batch,revision_read_transaction
++        with revision_artifact_batch(),revision_read_transaction():
++            context=scene_context(frozen,units,timeline,paths=paths,lock=lock)
++        context['store'].assert_owned()
+         result=operation(context)
+     except KeyboardInterrupt as exc: result=_result(run,'interrupted',error=_error(exc))
+     except ProductionRefused as exc: result=_result(run,'blocked',error=_error(exc))
+@@ -600,13 +631,16 @@
+ @revision_validation
+ @protect_scene_reviews
+ def consume_scene_clip_observation(frozen,units,timeline,observation_path,*,paths,logger,lock=None):
+-    return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
+-        operation=lambda context:_consume(context,observation_path))
++    from .scene_revision_records import revision_artifact_batch
++    with revision_artifact_batch():
++        return _entry(frozen,units,timeline,paths=paths,logger=logger,lock=lock,
++            operation=lambda context:_consume(context,observation_path))
+ 
+ @production_execution
+ @revision_validation
+ @protect_scene_reviews
+-def consume_scene_clip_observations(frozen, units, timeline, observation_paths, *, paths, logger, lock=None):
++def consume_scene_clip_observations(frozen, units, timeline, observation_paths, *, paths, logger, lock=None,
++                                   stop_requested=None, notify=None):
+     """Admit authored reviews with one preflight; stop at the first failed admission.
+ 
+     Each review retains its original byte, media and receipt checks. This entry
+@@ -616,9 +650,19 @@
+     if not observations:
+         raise ProductionRefused('batch observation admission requires observations')
+     def consume(context):
+-        for observation in observations:
+-            result = _consume(context, observation)
+-            if result.status not in ('awaiting_continuity_review', 'source_clips_ready'):
+-                return result
++        if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
++            for observation in observations:
++                review_checkpoint(force=True)
++                result=_consume(context,observation)
++                if result.status not in ('awaiting_continuity_review','source_clips_ready'): return result
++            return result
++        with review_admission_batch(context,stop_requested=stop_requested,notify=notify) as batch:
++            for observation in observations:
++                batch.checkpoint()
++                result = _consume(context, observation)
++                if result.status not in ('awaiting_continuity_review', 'source_clips_ready'):
++                    return result
+         return result
+-    return _entry(frozen, units, timeline, paths=paths, logger=logger, lock=lock, operation=consume)
++    from .scene_revision_records import revision_artifact_batch
++    with review_admission_control(stop_requested=stop_requested),revision_artifact_batch():
++        return _entry(frozen, units, timeline, paths=paths, logger=logger, lock=lock, operation=consume)
+--- a/src/video_ai/runtime/scene_comfy_transactions.py
++++ b/src/video_ai/runtime/scene_comfy_transactions.py
+@@ -410,6 +410,7 @@
+ def recover_or_submit_scene_clip(store,request,graph,*,client,template,ensure_service,logger,timeout,request_timeout_seconds=None,
+                                  capability_cache=None,service_identity=None):
+     from .execution_limits import execution_deadline, request_timeout
++    from .scene_review_control import review_checkpoint
+     budget=positive_timeout(timeout); end=execution_deadline(timeout,time.monotonic())
+     store.assert_owned(); directory,intent,accepted,rows=_load(store,request,graph)
+     completed=validate_scene_submission(store,request,graph)
+@@ -436,10 +437,13 @@
+     try:
+         if intent is None:
+             cid=str(uuid4()); prompt_payload(graph,cid)  # Size rejection precedes intent.
++            review_checkpoint(force=True)
+             guard(); ensure_service(); guard()
++            review_checkpoint(force=True)
+             service_ready=True
+             _remote_validate(store,client,template,logger,remaining(),capability_cache=capability_cache,
+                 service_identity=service_identity,ownership_check=guard); guard()
++            review_checkpoint(force=True)
+             store.write(directory/'request.json',request); store.write(directory/'graph.json',graph)
+             intent=dict(schema_version=2,run_id=request['run_id'],clip_id=request['clip_id'],request_sha256=canonical_digest(request),graph_sha256=request['graph_sha256'],
+                 input_sha256=request['input_sha256'],parent_sha256=canonical_digest(request['parent']) if request['parent'] is not None else None,
+@@ -449,6 +453,7 @@
+                 # The inference clock begins at the durable original intent;
+                 # startup has its separate bound and recovery never resets it.
+                 end=time.monotonic()+max(0,datetime.fromisoformat(intent['created_at']).timestamp()+budget-time.time())
++            review_checkpoint(force=True)
+             row=_record_http(store,request,intent,'POST','/prompt',lambda t:client.submit(graph,client_id=cid,timeout=t),remaining(),graph)
+             rows.append(row); value=_parse(row)
+             if _post_rejected(row):
+--- a/src/video_ai/runtime/_continuity_byte_guard.py
++++ b/src/video_ai/runtime/_continuity_byte_guard.py
+@@ -10,6 +10,7 @@
+ import stat
+ from threading import RLock
+ from time import monotonic
++from .scene_review_control import review_checkpoint
+ 
+ 
+ class CaptureLimit(ValueError):
+@@ -19,7 +20,7 @@
+ _captures = ContextVar('continuity_byte_captures', default=())
+ _KINDS = frozenset(('children', 'json_direct', 'assessment_paths', 'job_intents',
+                     'nonempty_files', 'revision_json', 'whole_files',
+-                    'continuity_sources'))
++                    'continuity_sources', 'reference_requests'))
+ 
+ 
+ def _safe(path):
+@@ -62,6 +63,7 @@
+ 
+ 
+ def _check_time(deadline):
++    review_checkpoint()
+     if deadline is not None and monotonic() >= deadline:
+         raise ValueError('byte proof verification interval exceeded')
+ 
+@@ -123,6 +125,8 @@
+         paths = _assessment_paths(root, deadline, 'intent.json')
+     elif spec.kind == 'continuity_sources':
+         paths = root.glob('*continuity*.py')
++    elif spec.kind == 'reference_requests':
++        paths = root.glob('request_*')
+     else:
+         paths = root.rglob('*')
+     items = []
+@@ -181,6 +185,7 @@
+         from .manifest import hash_file
+         from ._protected_continuity_inputs import verify_protected_continuity_file
+         from .execution_limits import execution_deadline
++        review_checkpoint(force=True)
+         deadline = execution_deadline(300,monotonic())
+         token = _captures.set(())
+         try:
+--- a/src/video_ai/runtime/image_selection_records.py
++++ b/src/video_ai/runtime/image_selection_records.py
+@@ -178,7 +178,13 @@
+         canonical = run/'production/jimeng'/scene['scene_id']/'candidates.json'
+         if Path(manifest_path) not in (canonical,Path(sidecar['view_artifact']['path'])):
+             raise ProductionRefused('candidate path is not the registered inherited view')
+-        if canonical.parent.exists() and any(canonical.parent.iterdir()): raise ProductionRefused('owned image competes with import')
++        from ._continuity_byte_guard import observe_inventory,observe_absence
++        if canonical.parent.exists():
++            children=list(canonical.parent.iterdir())
++            observe_inventory(canonical.parent,'children',children)
++            if children: raise ProductionRefused('owned image competes with import')
++        else:
++            observe_absence(canonical.parent)
+         return deepcopy(sidecar['view_artifact']),imported['candidates']
+     from ._scene_revision_origin_images import source_candidate_metadata
+     metadata=source_candidate_metadata(frozen,scene,manifest_path)
+--- a/.tools/resume_voyager2_after_reboot.py
++++ b/.tools/resume_voyager2_after_reboot.py
+@@ -25,6 +25,7 @@
+ from video_ai.runtime.verification import scene_input_protection
+ from video_ai.runtime.reference_image_records import build_reference_image_acceptance
+ from video_ai.runtime._scene_revision_copy import RevisionStore
++from video_ai.runtime.scene_review_control import review_admission_control, review_checkpoint
+ 
+ RUN = Path(os.environ['VOYAGER2_RUN_DIR'])
+ INBOX = Path('E:/VideoAI/scratch')/('voyager2-review-revision'+RUN.name)
+@@ -63,9 +64,29 @@
+     return dict(info=info, process_started_at=started)
+ 
+ 
++def pause_requested(owner=None):
++    if not STOP.is_file(): return False
++    value=json.loads(STOP.read_bytes())  # Mutable control, never config.read_json.
++    if value.get('run_id')!=RUN.name: return False
++    if owner is None:
++        path=RUN/'.make-video.lock'
++        owner=json.loads(path.read_bytes()) if path.is_file() else None
++    return owner is None or value.get('token')==owner.get('token')
++
++
+ @production_execution
+ @revision_validation
+ def main():
++    try:
++        with review_admission_control(stop_requested=pause_requested):
++            review_checkpoint(force=True)
++            return _main()
++    except KeyboardInterrupt:
++        print('[pause] stopped at an admission boundary; video work remains paused',flush=True)
++        raise SystemExit(130)
++
++
++def _main():
+     if any((RUN/'production'/name).exists() for name in
+            ('scene-upscale', 'scene-composition', 'scene-delivery')):
+         raise ProductionRefused('later media exists; use full coordinator')
+@@ -73,13 +94,14 @@
+         check_review(json.loads(path.read_bytes()))
+     print('[review] authored inbox format checked before cold input loading', flush=True)
+     previous = prior_service()
+-    print('[resume] loading frozen revision '+RUN.name+'; existing model service retained', flush=True)
++    print('[prepare] loading frozen revision '+RUN.name+' and inherited source proofs', flush=True)
+     with revision_read_transaction():
+         frozen = load_frozen_inputs(RUN)
+     paths = RuntimePaths.from_config(frozen.config)
+     logger = RunLogger(RUN, production=True)
+     with RunLock(RUN) as lock, scene_input_protection(frozen):
+-        print('[resume] preparing existing narration and timeline', flush=True)
++        review_checkpoint(force=True)
++        print('[prepare] admitting existing narration, timeline and reference dependencies', flush=True)
+         with revision_read_transaction():
+             units, timeline = load_prepared_inputs(frozen)
+         wan_inputs = RUN/'production/reference-images/wan-inputs.json'
+@@ -96,55 +118,76 @@
+             guarded_logger = clips._GuardedLogger(logger, store.assert_owned)
+             consumed = {}
+             invalid = {}
++            records = {}
++            last_phase = None
+ 
+             def stop_requested():
+-                if not STOP.is_file():
+-                    return False
+-                # This is a mutable control signal, not a frozen media input.
+-                value = json.loads(STOP.read_bytes())
+-                return value.get('run_id') == RUN.name and value.get('token') == lock.owner['token']
++                return pause_requested(lock.owner)
++
++            def review_notice(event):
++                nonlocal last_phase
++                phase=event['phase']
++                if event['clip_id'] is not None:
++                    print('[review] receipt committed '+event['clip_id']+'; batch receipts '+str(event['received'])+
++                          '; elapsed '+format(event['elapsed_seconds'],'.2f')+'s',flush=True)
++                elif phase!=last_phase:
++                    print('[review] '+phase,flush=True)
++                last_phase=phase
+ 
+             def admit_reviews():
++                nonlocal records
+                 changed = False
++                pending=[]
+                 for path in sorted(INBOX.glob('*/observation.json')):
++                    if stop_requested(): raise KeyboardInterrupt()
+                     raw = path.read_bytes()
+                     digest = hashlib.sha256(raw).hexdigest()
+                     if consumed.get(str(path)) == digest or invalid.get(str(path)) == digest:
+                         continue
+-                    try:
+-                        value = json.loads(raw)
+-                    except (ValueError, UnicodeError):
+-                        continue  # A caller may still be writing its scratch review.
+-                    cid = value.get('clip_id')
+-                    if value.get('run_id') != RUN.name or cid not in store.clip_ids:
+-                        raise ProductionRefused('review inbox contains a different run or clip')
+-                    if not (store.clip_dir(cid)/'clip.json').is_file():
+-                        continue
+-                    record = records.get(cid)
+-                    prior = record and (record['accepted'] or record['rejected'])
+-                    if (prior and not prior.get('_raw_only')
+-                            and prior['observation']['sha256'] == digest):
+-                        consumed[str(path)] = digest
+-                        print('[review] retained existing receipt '+cid, flush=True)
+-                        continue
+-                    try:
+-                        check_review(value)
+-                    except ProductionRefused as exc:
+-                        invalid[str(path)] = digest
+-                        print('[review] invalid scratch record retained '+cid+': '+str(exc), flush=True)
+-                        continue
+-                    clips._consume(context, path)
++                    pending.append((path,raw,digest))
++                if not pending: return False
++                with clips.review_admission_batch(context,stop_requested=stop_requested,notify=review_notice):
++                    _,records=clips._review_snapshot(context)
++                    for path,raw,digest in pending:
++                        if stop_requested(): raise KeyboardInterrupt()
++                        changed=admit_review(path,raw,digest) or changed
++                        _,records=clips._review_snapshot(context)
++                return changed
++
++            def admit_review(path,raw,digest):
++                try:
++                    value = json.loads(raw)
++                except (ValueError, UnicodeError):
++                    return False  # A caller may still be writing its scratch review.
++                cid = value.get('clip_id')
++                if value.get('run_id') != RUN.name or cid not in store.clip_ids:
++                    raise ProductionRefused('review inbox contains a different run or clip')
++                if not (store.clip_dir(cid)/'clip.json').is_file():
++                    return False
++                record = records.get(cid)
++                prior = record and (record['accepted'] or record['rejected'])
++                if (prior and not prior.get('_raw_only')
++                        and prior['observation']['sha256'] == digest):
+                     consumed[str(path)] = digest
+-                    changed = True
+-                    print('[review] admitted '+cid+' '+value['verdict'], flush=True)
+-                return changed
+-
+-            _, records = collect_progress(context)
++                    return False
++                try:
++                    check_review(value)
++                except ProductionRefused as exc:
++                    invalid[str(path)] = digest
++                    print('[review] invalid scratch record retained '+cid+': '+str(exc), flush=True)
++                    return False
++                clips._consume(context, path)
++                consumed[str(path)] = digest
++                return True
++
++            if stop_requested(): raise KeyboardInterrupt()
+             admit_reviews()
++            if stop_requested(): raise KeyboardInterrupt()
+             borrowed = previous is not None and process_started_at(previous['info']['pid']) == previous['process_started_at']
+             service = None
+             if not borrowed:
+                 service = clips._OwnedService(frozen, paths, guarded_logger, lock)
++                if stop_requested(): raise KeyboardInterrupt()
+                 service.ensure()
+             client = SceneComfyClient(frozen.config.services['comfyui'],
+                 request_timeout=frozen.config.timeouts['comfy_request'],
+--- a/tests/unit/test_review_loading_performance.py
++++ b/tests/unit/test_review_loading_performance.py
+@@ -1,6 +1,7 @@
+ ﻿from types import SimpleNamespace
+ from video_ai.runtime import reference_image_records as refs, scene_revision_records as records
+ from video_ai.runtime import _scene_revision_origins as origins, _scene_revision_readers as readers, production_inputs
++from unit.test_review_admission_optimization import admission_fixture
+ 
+ def test_inherited_provenance_reuses_typed_timeline(monkeypatch):
+     source=object(); target=object(); scene={'scene_id':'s'}; timeline={'test':1}; calls=[]
+@@ -16,19 +17,19 @@
+             except LookupError:pass
+     assert len(calls)==1
+ 
+-def test_batch_reviews_build_context_once(monkeypatch):
++def test_batch_reviews_build_context_once(monkeypatch,admission_fixture):
+     from video_ai.runtime import production_scene_clips as clips
+     calls=[]
+-    monkeypatch.setattr(clips,'_entry',lambda *a,operation,**kw:operation({'one':1}))
++    monkeypatch.setattr(clips,'_entry',lambda *a,operation,**kw:operation(admission_fixture.context))
+     monkeypatch.setattr(clips,'_consume',lambda ctx,path:calls.append(path) or SimpleNamespace(status='awaiting_continuity_review'))
+     result=clips.consume_scene_clip_observations(None,None,None,['a','b'],paths=None,logger=None)
+     assert calls==['a','b']
+     assert result.status=='awaiting_continuity_review'
+ 
+-def test_batch_stops_on_failed_review(monkeypatch):
++def test_batch_stops_on_failed_review(monkeypatch,admission_fixture):
+     from video_ai.runtime import production_scene_clips as clips
+     calls=[]
+-    monkeypatch.setattr(clips,'_entry',lambda *a,operation,**kw:operation({}))
++    monkeypatch.setattr(clips,'_entry',lambda *a,operation,**kw:operation(admission_fixture.context))
+     monkeypatch.setattr(clips,'_consume',lambda ctx,path:calls.append(path) or SimpleNamespace(status='blocked'))
+     result=clips.consume_scene_clip_observations(None,None,None,['a','b'],paths=None,logger=None)
+     assert calls==['a']
+--- a/tests/unit/test_scene_revision_records.py
++++ b/tests/unit/test_scene_revision_records.py
+@@ -348,7 +348,7 @@
+     guard=RevisionGuard(frozen);clip=dict(clip_id=cid,source={'sha256':'a'*64})
+     guard.register('clip:'+cid,clip)
+     sidecar=dict(view=clip,local_artifacts=[])
+-    proof=dict(guard=guard,source_run=run,imports={'clip:'+cid:(sidecar,{})})
++    proof=dict(guard=guard,source_run=run,source_frozen=frozen,imports={'clip:'+cid:(sidecar,{})})
+     monkeypatch.setattr(inputs,'load_frozen_inputs',lambda path:frozen)
+     monkeypatch.setattr(origins,'source_clip_record',lambda *args:dict(clip=clip,request={'request':'original'}))
+     first=inherited_clip_record(frozen,cid,context=proof)
+--- /dev/null
++++ b/src/video_ai/runtime/_scene_review_batch.py
+@@ -0,0 +1,135 @@
++"""Owning, append-only review batches; source and scene proofs remain current."""
++from contextlib import contextmanager
++from contextvars import ContextVar
++from copy import deepcopy
++from dataclasses import replace
++from pathlib import Path
++from threading import get_ident
++from time import perf_counter
++
++from ..planning.production_scenes import canonical_digest
++from .manifest import thaw
++from .production_state import ProductionRefused
++from .scene_revision_records import revision_artifact_batch, revision_read_transaction
++from .verification import whole_input_protection, _whole_inputs
++from .scene_review_control import review_admission_control, review_checkpoint
++
++_current = ContextVar('scene_review_batch',default=None)
++
++
++class ReviewBatch:
++    def __init__(self, context, *, stop_requested=None, notify=None):
++        self.context=context; self.store=context['store']; self.thread=get_ident()
++        self.window=_whole_inputs.get(); self.active=True
++        self.stop_requested=stop_requested; self.notify=notify
++        self.identity=self._identity(); self.progress=None; self.records={}; self.scenes={}; self.guards={}
++        self.phase=None; self.received=0; self.started=perf_counter()
++
++    def _identity(self):
++        context=self.context
++        return canonical_digest(dict(options=thaw(context['frozen'].options),
++            config=thaw(context['frozen'].config),
++            **{key:thaw(context.get(key)) for key in
++               ('inputs','rows','plan','bible','wan','execution','execution_budget','units','timeline')}))
++
++    def checkpoint(self):
++        if (not self.active or self.thread!=get_ident() or self.window is not _whole_inputs.get()
++                or self.window.closed or self.store is not self.context['store']):
++            raise ProductionRefused('review batch is outside its owning protected scope')
++        self.store.assert_owned()
++        review_checkpoint(force=True)
++
++    def verify_context(self):
++        if self.identity!=self._identity(): raise ProductionRefused('review batch admitted context changed')
++
++    def report(self, phase, *, clip_id=None):
++        if self.notify is not None and (phase!=self.phase or clip_id is not None):
++            self.notify(dict(phase=phase,received=self.received,clip_id=clip_id,
++                             elapsed_seconds=perf_counter()-self.started))
++        self.phase=phase
++
++    def _read_scene(self, context, scene):
++        from .scene_clip_records import scene_progress
++        from ._continuity_byte_guard import capture_reads
++        self.checkpoint()
++        with revision_read_transaction(), capture_reads() as capture:
++            state, records=scene_progress(context,scene)
++        self.guards[scene['scene_id']]=capture.finish()
++        self.scenes[scene['scene_id']]=(state,records)
++        return state,records
++
++    def snapshot(self):
++        self.checkpoint()
++        self.verify_context()
++        if self.progress is None:
++            from .production_scene_clips import collect_progress
++            self.report('review_preparation')
++            self.progress,self.records=collect_progress(self.context,scene_reader=self._read_scene)
++        return deepcopy((self.progress,self.records))
++
++    def verify(self, *, changed_scene=None, created=()):
++        """Only exact files appended by this receiver may change a baseline."""
++        self.checkpoint()
++        self.verify_context()
++        with revision_read_transaction():
++            self.store.verify_global()
++            for sid,guard in self.guards.items():
++                self.checkpoint()
++                if sid==changed_scene and created:
++                    paths={str(Path(path)) for path in created}
++                    inventories=[]
++                    for inventory in guard.inventories:
++                        additions={path for path in paths if Path(path).parent==Path(inventory.path)
++                                   and inventory.kind=='json_direct' and path.endswith('.json')}
++                        inventories.append(replace(inventory,expected=tuple(sorted(set(inventory.expected)|additions))))
++                    guard=replace(guard,absences=tuple(path for path in guard.absences if path not in paths),
++                                  inventories=tuple(inventories))
++                guard.verify()
++
++    def refresh(self, cid, *, created=()):
++        sid=next(row['budget']['scene_id'] for row in self.context['rows'] if row['budget']['clip_id']==cid)
++        self.verify(changed_scene=sid,created=created)
++        scene=next(scene for scene in self.context['plan']['scenes'] if scene['scene_id']==sid)
++        self._read_scene(self.context,scene)
++        scenes=[]; self.records={}
++        for scene in self.context['plan']['scenes']:
++            state,records=self.scenes[scene['scene_id']]
++            scenes.append(state); self.records.update(records)
++        self.progress=dict(self.progress,scenes=scenes)
++        return deepcopy((self.progress,self.records))
++
++    def wrote_template(self, cid, path):
++        """Admit only the exact deterministic template just written by _finish."""
++        from ._continuity_byte_guard import capture_reads
++        sid=next(row['budget']['scene_id'] for row in self.context['rows'] if row['budget']['clip_id']==cid)
++        guard=self.guards[sid];name=str(path)
++        if name not in guard.absences: return
++        with capture_reads() as capture: self.store.read(path)
++        self.guards[sid]=replace(guard,files=guard.files+capture.finish().files,
++                                absences=tuple(path for path in guard.absences if path!=name))
++
++
++def review_batch(context):
++    batch=_current.get()
++    if batch is not None and batch.context is context:
++        batch.checkpoint()
++        return batch
++    return None
++
++
++@contextmanager
++def review_admission_batch(context, *, stop_requested=None, notify=None):
++    existing=review_batch(context)
++    if existing is not None:
++        yield existing
++        return
++    with review_admission_control(stop_requested=stop_requested), whole_input_protection(), revision_artifact_batch():
++        batch=ReviewBatch(context,stop_requested=stop_requested,notify=notify)
++        token=_current.set(batch)
++        try:
++            batch.checkpoint()
++            yield batch
++            batch.verify()
++        finally:
++            batch.active=False
++            _current.reset(token)
+--- /dev/null
++++ b/src/video_ai/runtime/scene_review_control.py
+@@ -0,0 +1,31 @@
++"""Cooperative pause checks for local admission; mutable signals stay unsealed."""
++from contextlib import contextmanager
++from contextvars import ContextVar
++from threading import get_ident
++from time import monotonic
++
++_control=ContextVar('scene_review_control',default=None)
++
++
++@contextmanager
++def review_admission_control(*, stop_requested=None):
++    current=_control.get()
++    if stop_requested is None or (current is not None and current['active']
++            and current['thread']==get_ident() and current['stop'] is stop_requested):
++        yield
++        return
++    state=dict(active=True,thread=get_ident(),stop=stop_requested,next_poll=0)
++    token=_control.set(state)
++    try: yield
++    finally:
++        state['active']=False
++        _control.reset(token)
++
++
++def review_checkpoint(*, force=False):
++    state=_control.get()
++    if state is None or not state['active'] or state['thread']!=get_ident(): return
++    current=monotonic()
++    if force or current>=state['next_poll']:
++        state['next_poll']=current+0.1
++        if state['stop'](): raise KeyboardInterrupt('review admission paused')
+--- /dev/null
++++ b/tests/unit/test_review_admission_optimization.py
+@@ -0,0 +1,440 @@
++"""Small offline admission fixture: no services, inference, decoding or rendering."""
++from copy import deepcopy
++from collections import Counter
++from contextlib import nullcontext,ExitStack
++from datetime import datetime, timezone
++from dataclasses import dataclass
++import json
++from pathlib import Path
++from time import perf_counter
++from types import SimpleNamespace
++
++import pytest
++
++from video_ai.planning.production_scenes import canonical_digest
++from video_ai.runtime import production_scene_clips as clips, scene_clip_records as clip_records
++from video_ai.runtime import scene_revision_records as revisions, _scene_revision_readers as readers
++from video_ai.runtime import _scene_revision_origins as origins, production_inputs
++from video_ai.runtime.production_state import RunLock, ProductionRefused
++from unit.test_scene_clip_observations import authored, build_observation_template
++from unit.test_scene_comfy_transactions import transaction, Client
++
++
++@pytest.fixture(autouse=True)
++def benchmark_baseline():
++    """Load the saved working baseline only in an isolated benchmark process."""
++    import os
++    baseline=os.environ.get('REVIEW_ADMISSION_BASELINE_DIR')
++    if not baseline: return
++    import importlib
++    for name in ('_continuity_byte_guard','scene_revision_records','image_selection_records',
++                 '_scene_revision_readers','_scene_revision_origins','reference_image_records',
++                 'scene_clip_records','scene_comfy_transactions','production_scene_clips'):
++        module=importlib.import_module('video_ai.runtime.'+name)
++        path=Path(baseline)/(name+'.py')
++        exec(compile(path.read_bytes(),str(path),'exec'),module.__dict__)
++    for name in ('review_admission_batch','_review_snapshot'):
++        clips.__dict__.pop(name,None)
++
++
++@pytest.fixture
++def admission_fixture(runtime_run, monkeypatch):
++    run, _, paths = runtime_run
++    @dataclass
++    class Config:
++        raw: dict
++    frozen = SimpleNamespace(options={'run_id': run.name, 'script_path': str(run/'production/script.txt'),
++                                      'model_stamps': {}}, config=Config(raw={}))
++    counts = Counter()
++    store = clip_records.SceneClipStore(frozen, run, paths=paths,
++        clip_ids=[f'scene_{i:04d}_clip_0001' for i in range(1, 7)])
++    def artifact(name):
++        return store.artifact(store.write_bytes(name, ('synthetic offline '+name).encode()))
++    context = dict(frozen=frozen, store=store, inputs={'visual_bible_sha256':'a'*64}, rows=[], plan={'scenes':[]})
++    observations = []
++    with RunLock(run) as held:
++        store.lock = held
++        upstream = artifact('fixture-upstream.json')
++        store.guard_paths[upstream['path']] = upstream
++        store.write('inputs.json', {'visual_bible_sha256':'a'*64})
++        for i in range(1, 7):
++            sid = f'scene_{i:04d}'; cid = sid+'_clip_0001'
++            selected = dict(scene_id=sid, candidate_id='candidate_0001', **artifact(cid+'/selected.png'))
++            request = dict(inputs_sha256=canonical_digest(context['inputs']), scene_id=sid, clip_id=cid,
++                           selected_image=selected, comparison_images=[], parent=None)
++            clip = dict(schema_version=2, production_strategy='paragraph_jimeng_v1', run_id=run.name,
++                scene_id=sid, clip_id=cid, request_sha256=canonical_digest(request),
++                generated=artifact(cid+'/generated.mp4'), source=artifact(cid+'/source.mp4'),
++                created_at='2026-10-19T10:00:00+00:00')
++            mapping = dict(retained_frames=1); last = dict(image=artifact(cid+'/frame_000001.png'))
++            template = build_observation_template(frozen, clip, request, mapping, last, None)
++            record = dict(clip=clip, request=request, mapping=mapping, last_frame=last,
++                          template=template, accepted=None, rejected=None)
++            store.write(cid+'/fixture-record.json', record)
++            store.write(cid+'/observation-template.json', template)
++            value = authored(template)
++            path = run/(cid+'-authored.json'); path.write_text(json.dumps(value), encoding='utf-8')
++            observations.append(path)
++            context['rows'].append(dict(budget=dict(scene_id=sid, clip_id=cid)))
++            context['plan']['scenes'].append(dict(scene_id=sid))
++        def validate(context, row, parent=None):
++            counts['validate_clip'] += 1
++            folder = store.clip_dir(row['budget']['clip_id'])
++            record = store.read(folder/'fixture-record.json')
++            stored_template=store.read(folder/'observation-template.json')
++            if stored_template is not None:
++                clip_records.equal(stored_template,record['template'],'observation template')
++            record['accepted'] = store.read(folder/'observation-accepted.json')
++            record['rejected'] = store.read(folder/'observation-rejected.json')
++            # Mirrors the real reader's complete immutable original bindings.
++            for name in ('generated','source'):
++                store.validate_artifact(record['clip'][name])
++            clip_records.scan_observation_sources(store, folder, record['template'],
++                record['clip']['created_at'], now=datetime.now(timezone.utc))
++            return record
++        monkeypatch.setattr(clip_records, 'validate_clip', validate)
++        monkeypatch.setattr(clips, 'validate_clip', validate)
++        monkeypatch.setattr('video_ai.runtime.scene_continuity_records.load_continuity_policy', lambda f: None)
++        monkeypatch.setattr(clips, 'complete_value', lambda ctx, records: {'clips':sorted(records)})
++        original = clips.collect_progress
++        def collect(*a, **kw):
++            counts['collect_progress'] += 1
++            return original(*a, **kw)
++        monkeypatch.setattr(clips, 'collect_progress', collect)
++        yield SimpleNamespace(context=context, paths=observations, counts=counts, store=store)
++
++
++def test_batch_uses_one_global_progress_scan(admission_fixture):
++    f = admission_fixture
++    batch = getattr(clips, 'review_admission_batch', lambda context: nullcontext())
++    with batch(f.context):
++        for path in f.paths[:3]:
++            result = clips._consume(f.context, path)
++            assert result.status == 'awaiting_continuity_review'
++    assert f.counts['collect_progress'] == 1
++    assert f.counts['validate_clip'] <= 15
++
++
++def test_inherited_clip_uses_admitted_source_frozen(tmp_path, monkeypatch):
++    source = object(); frozen = SimpleNamespace(options={'script_path':str(tmp_path/'production/script.txt')})
++    proof = {'source_run':tmp_path/'source', 'source_frozen':source,
++             'imports':{'clip:c':({'local_artifacts':[]}, {})},
++             'guard':SimpleNamespace(verify_frozen=lambda *a:None, verify_captured_bytes=lambda:None, register=lambda *a:None)}
++    monkeypatch.setattr(readers, 'proof_for', lambda *a, **kw: proof)
++    monkeypatch.setattr(production_inputs, 'load_frozen_inputs',
++        lambda *a: pytest.fail('already admitted source must not reload'))
++    monkeypatch.setattr(origins, 'source_clip_record', lambda f, key: {'clip':{'clip_id':key}, 'request':{}} if f is source else None)
++    monkeypatch.setattr(readers, 'require_revision_import', lambda *a, **kw: {'clip_id':'c'})
++    assert readers.inherited_clip_record(frozen, 'c')['clip']['clip_id'] == 'c'
++
++
++@pytest.mark.parametrize('mutation', ['bytes','replace','add','remove','absent'])
++def test_semantic_cache_keeps_complete_dependency_guards(tmp_path, mutation):
++    import os
++    from video_ai.runtime._continuity_byte_guard import capture_reads, observe_absence
++    path = tmp_path/'source.json'; path.write_bytes(b'original')
++    absent = tmp_path/'missing.bin'; calls = []
++    def read():
++        calls.append(1)
++        revisions.artifact(path, root=tmp_path)
++        revisions.revision_inventory(tmp_path, root=tmp_path)
++        observe_absence(absent)
++        return {'value':[]}
++    with pytest.raises((ValueError, OSError)):
++        with revisions.revision_artifact_batch():
++            value = revisions.revision_cached_read('fixture', 'key', read)
++            value['value'].append('caller mutation')
++            with capture_reads() as capture:
++                assert revisions.revision_cached_read('fixture', 'key', read) == {'value':[]}
++            assert capture.finish().file_count == 1
++            assert capture.finish().inventory_count == 1
++            assert capture.finish().absence_count == 1
++            assert calls == [1]
++            old = path.stat()
++            if mutation == 'bytes':
++                path.write_bytes(b'modified'); os.utime(path, ns=(old.st_atime_ns, old.st_mtime_ns))
++            elif mutation == 'replace':
++                replacement = tmp_path/'replacement.bin'; replacement.write_bytes(b'original')
++                os.replace(replacement, path); os.utime(path, ns=(old.st_atime_ns, old.st_mtime_ns))
++            elif mutation == 'add': (tmp_path/'new.json').write_bytes(b'new')
++            elif mutation == 'remove': path.unlink()
++            else: absent.write_bytes(b'appeared')
++            revisions.revision_cached_read('fixture', 'key', read)
++
++
++def test_semantic_cache_never_crosses_scope_or_thread(tmp_path):
++    from contextvars import copy_context
++    from concurrent.futures import ThreadPoolExecutor
++    calls = []
++    def read(): calls.append(1); return {'value':len(calls)}
++    def cached(): return revisions.revision_cached_read('fixture', 'key', read)
++    with revisions.revision_artifact_batch():
++        assert cached() == cached()
++        copied = copy_context()
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            assert pool.submit(copied.run, cached).result() != cached()
++    assert copied.run(cached) != {'value':1}
++    assert len(calls) == 3
++
++
++@pytest.mark.parametrize('point', ['before_batch','observation-original','observation-receipt'])
++def test_pause_stops_at_atomic_review_boundaries(admission_fixture, monkeypatch, point):
++    f=admission_fixture; paused=[point=='before_batch']; notices=[]
++    def boundary(name):
++        if name==point: paused[0]=True
++    monkeypatch.setattr(clips,'boundary',boundary)
++    with pytest.raises(KeyboardInterrupt):
++        with clips.review_admission_batch(f.context,stop_requested=lambda:paused[0],notify=notices.append):
++            for path in f.paths[:2]: clips._consume(f.context,path)
++    first=f.store.clip_dir('scene_0001_clip_0001')
++    assert (first/'observation-accepted.json').exists() == (point=='observation-receipt')
++    assert len(list((first/'observations').glob('*.json'))) == (0 if point=='before_batch' else 1)
++    assert not (f.store.clip_dir('scene_0002_clip_0001')/'observation-accepted.json').exists()
++
++
++def test_unchanged_notifications_are_deduplicated(admission_fixture):
++    f=admission_fixture; notices=[]
++    with clips.review_admission_batch(f.context,notify=notices.append) as batch:
++        batch.snapshot(); batch.snapshot()
++        clips._consume(f.context,f.paths[0]); clips._consume(f.context,f.paths[0])
++        clips._consume(f.context,f.paths[1])
++    assert [n['phase'] for n in notices] == ['review_preparation','review_receiving','review_receiving','review_receiving']
++    assert [n['received'] for n in notices if n['clip_id']] == [1,2]
++
++
++def test_pause_during_shared_ancestor_read_is_cooperative(tmp_path):
++    from video_ai.runtime.scene_review_control import review_admission_control
++    frozen=SimpleNamespace(options={'script_path':str(tmp_path/'production/script.txt')})
++    guard=revisions.RevisionGuard(frozen)
++    for i in range(3):
++        path=tmp_path/f'{i}.json';path.write_bytes(b'original');guard.capture(path,root=tmp_path)
++    with pytest.raises(KeyboardInterrupt):
++        with review_admission_control(stop_requested=lambda:True):
++            guard.verify_captured_bytes()
++
++
++def test_paused_continuation_never_enters_preparation(admission_fixture, monkeypatch):
++    import importlib.util
++    f=admission_fixture
++    monkeypatch.setenv('VOYAGER2_RUN_DIR',str(f.store.run_dir))
++    path=Path(__file__).resolve().parents[2]/'.tools/resume_voyager2_after_reboot.py'
++    spec=importlib.util.spec_from_file_location('paused_continuation_fixture',path)
++    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
++    module.STOP=f.store.run_dir/'stop.json'
++    module.STOP.write_text(json.dumps(dict(run_id=f.store.run_dir.name,token=f.store.lock.owner['token'])),encoding='utf-8')
++    monkeypatch.setattr(module,'_main',lambda:pytest.fail('paused continuation started preparation'))
++    with pytest.raises(SystemExit) as exc: module.main()
++    assert exc.value.code==130
++
++
++@pytest.mark.parametrize('mutation',['bytes','replace','new_observation','new_descendant','context'])
++def test_warm_reviews_reject_changed_scene_dependencies(admission_fixture,monkeypatch,mutation):
++    from video_ai.runtime import verification
++    import os
++    # Exercise the strict unretained fallback as well as native protection tests.
++    def unretained(window,path,compute):
++        with path.open('rb') as stream: return compute(stream,path)
++    monkeypatch.setattr(verification._WholeInputWindow,'hash',unretained)
++    f=admission_fixture
++    with pytest.raises((ValueError,OSError)):
++        with clips.review_admission_batch(f.context) as batch:
++            clips._consume(f.context,f.paths[0])
++            path=f.store.clip_dir('scene_0003_clip_0001')/'fixture-record.json'
++            old=path.stat()
++            if mutation=='bytes':
++                raw=path.read_bytes();changed=raw.replace(b'2026-10-19',b'2026-10-18')
++                assert changed!=raw
++                path.write_bytes(changed)
++                os.utime(path,ns=(old.st_atime_ns,old.st_mtime_ns))
++            elif mutation=='replace':
++                replacement=path.with_suffix('.replacement');replacement.write_bytes(path.read_bytes())
++                os.replace(replacement,path);os.utime(path,ns=(old.st_atime_ns,old.st_mtime_ns))
++            elif mutation=='new_observation':
++                target=path.parent/'observations/unexpected.json';target.parent.mkdir(exist_ok=True)
++                target.write_text('{}',encoding='utf-8')
++            elif mutation=='new_descendant':
++                # Previously absent receipt is part of the captured dependency set.
++                (path.parent/'observation-accepted.json').write_text('{}',encoding='utf-8')
++            else: f.context['rows'][0]['parameters']={'seed':123}
++            clips._consume(f.context,f.paths[1])
++    assert not (f.store.clip_dir('scene_0002_clip_0001')/'observation-accepted.json').exists()
++
++
++def test_cached_inherited_records_recheck_row_and_parent(admission_fixture,monkeypatch):
++    from review_admission_helpers import add_shared_sources
++    f=add_shared_sources(admission_fixture,monkeypatch)
++    frozen=f.context['frozen'];row=f.context['rows'][-1];key=row['budget']['clip_id']
++    with revisions.revision_artifact_batch():
++        original=readers.inherited_clip_record(frozen,key,row=row)
++        original['request']['parameters']['seed']='caller mutation'
++        assert readers.inherited_clip_record(frozen,key,row=row)['request']['parameters']=={}
++        with pytest.raises(ProductionRefused,match='parameters'):
++            readers.inherited_clip_record(frozen,key,row=dict(row,parameters={'seed':1}))
++        source=deepcopy(original);source['request']['parameters']={};source['request']['parent']={'clip_id':'expected_parent'}
++        monkeypatch.setattr(origins,'source_clip_record',lambda *a:deepcopy(source))
++        with pytest.raises(ProductionRefused,match='parent'):
++            readers.inherited_clip_record(frozen,key,row=row,parent={'clip':{'clip_id':'different_parent'}})
++
++
++def test_warm_batch_rejects_new_owned_evidence_competing_with_import(admission_fixture,monkeypatch):
++    from review_admission_helpers import add_shared_sources
++    f=add_shared_sources(admission_fixture,monkeypatch)
++    with pytest.raises((ValueError,OSError)):
++        with clips.review_admission_batch(f.context):
++            clips._consume(f.context,f.paths[0])
++            folder=f.store.clip_dir('inherited_0002_clip_0001')
++            folder.mkdir();(folder/'clip.json').write_text('{}',encoding='utf-8')
++            clips._consume(f.context,f.paths[1])
++    assert not (f.store.clip_dir('scene_0002_clip_0001')/'observation-accepted.json').exists()
++
++
++@pytest.mark.parametrize('when',['service','capability'])
++def test_pause_after_service_or_capability_never_submits(transaction,monkeypatch,when):
++    from video_ai.runtime.scene_review_control import review_admission_control
++    from video_ai.runtime.scene_comfy_transactions import recover_or_submit_scene_clip
++    store,request,graph,template=transaction;client=Client(store,request,graph);paused=[False]
++    def ensure():
++        if when=='service': paused[0]=True
++    original=client.object_info
++    def info(**kw):
++        value=original(**kw)
++        if when=='capability': paused[0]=True
++        return value
++    monkeypatch.setattr(client,'object_info',info)
++    with pytest.raises(KeyboardInterrupt):
++        with review_admission_control(stop_requested=lambda:paused[0]):
++            recover_or_submit_scene_clip(store,request,graph,client=client,template=template,
++                ensure_service=ensure,logger=None,timeout=1)
++    assert client.posts==0
++
++
++def test_new_wrong_template_for_accepted_scene_is_rejected(admission_fixture):
++    f=admission_fixture;path=f.store.clip_dir('scene_0001_clip_0001')/'observation-template.json'
++    path.unlink()
++    with pytest.raises((ValueError,OSError)):
++        with clips.review_admission_batch(f.context):
++            clips._consume(f.context,f.paths[0])
++            assert not path.exists()
++            path.write_text('{}',encoding='utf-8')
++            clips._consume(f.context,f.paths[1])
++    assert not (f.store.clip_dir('scene_0002_clip_0001')/'observation-accepted.json').exists()
++
++
++def test_receiver_can_materialize_exact_pending_template(admission_fixture):
++    f=admission_fixture;path=f.store.clip_dir('scene_0006_clip_0001')/'observation-template.json'
++    path.unlink()
++    with clips.review_admission_batch(f.context):
++        clips._consume(f.context,f.paths[0])
++        assert path.exists()
++        clips._consume(f.context,f.paths[1])
++
++
++@pytest.mark.parametrize('existing_empty',[False,True])
++def test_reference_cache_observes_nonjson_request_evidence(tmp_path,monkeypatch,existing_empty):
++    from video_ai.runtime import reference_image_records as refs
++    root=tmp_path/'production/jimeng/s';root.mkdir(parents=True)
++    folder=root/'request_99'
++    if existing_empty: folder.mkdir()
++    monkeypatch.setattr('video_ai.runtime.scene_image_prompts.effective_image_prompt',lambda *a:'prompt')
++    monkeypatch.setattr('video_ai.runtime.reference_visual_prompt.compact_reference_prompt',lambda *a:'prompt')
++    monkeypatch.setattr(refs,'build_reference_prompt',lambda *a:'prompt')
++    monkeypatch.setattr(refs.images,'_run',lambda *a:tmp_path)
++    monkeypatch.setattr(refs,'load_reference_settings',lambda *a:{'model_settings':{}})
++    monkeypatch.setattr(refs,'parse_image_generation',lambda *a:SimpleNamespace(candidates_per_scene=1))
++    def read(): return refs.resolve_reference_prompt(None,{'scene_id':'s'}, {},{'max_prompt_bytes':100})
++    with pytest.raises((ValueError,OSError)):
++        with revisions.revision_artifact_batch():
++            assert revisions.revision_cached_read('reference_test','key',read)=='prompt'
++            folder.mkdir(exist_ok=True);(folder/'unexpected.bin').write_bytes(b'unexpected')
++            revisions.revision_cached_read('reference_test','key',read)
++
++
++def test_byte_proof_cache_verification_stops_before_full_scan(tmp_path,monkeypatch):
++    from video_ai.runtime._continuity_byte_guard import capture_reads
++    from video_ai.runtime.scene_review_control import review_admission_control
++    from video_ai.runtime import manifest
++    path=tmp_path/'original.json';path.write_text('{}')
++    with capture_reads() as capture: manifest.hash_file(path)
++    monkeypatch.setattr(manifest,'hash_file',lambda *a:pytest.fail('continued expensive verification after pause'))
++    with pytest.raises(KeyboardInterrupt):
++        with review_admission_control(stop_requested=lambda:True): capture.finish().verify()
++
++
++def test_cached_source_images_reject_new_owned_evidence(tmp_path,monkeypatch):
++    from video_ai.runtime import image_selection_records as images
++    frozen=SimpleNamespace(options={'script_path':str(tmp_path/'production/script.txt')})
++    canonical=tmp_path/'production/jimeng/s/candidates.json'
++    proof={'imports':{'image:s':({'view_artifact':{'path':str(tmp_path/'view.json')}},{})}}
++    monkeypatch.setattr(origins,'inherited',lambda *a:{'candidates':[]})
++    monkeypatch.setattr(revisions,'require_scene_revision',lambda *a:proof)
++    def read(): return images._candidates(frozen,{'scene_id':'s'},canonical)
++    with pytest.raises((ValueError,OSError)):
++        with revisions.revision_artifact_batch():
++            revisions.revision_cached_read('image_test','key',read)
++            canonical.parent.mkdir(parents=True);canonical.write_text('{}')
++            revisions.revision_cached_read('image_test','key',read)
++
++
++def test_cached_native_import_rejects_new_owned_chain(tmp_path,monkeypatch):
++    frozen=SimpleNamespace(options={'script_path':str(tmp_path/'production/script.txt'),'scene_revision':{}},
++        config=SimpleNamespace(raw={'scene_rendering':{'mode':'temporal_extension_v1'}}))
++    monkeypatch.setattr(readers,'inherited_clip_record',lambda *a:{'clip':'fixture'})
++    def read(): return origins._source_clip_record(frozen,'scene_0001_clip_0001')
++    with pytest.raises((ValueError,OSError)):
++        with revisions.revision_artifact_batch():
++            revisions.revision_cached_read('native_test','key',read)
++            path=tmp_path/'production/scene-clips/chains/scene_0001/result.json'
++            path.parent.mkdir(parents=True);path.write_text('{}')
++            revisions.revision_cached_read('native_test','key',read)
++
++
++def test_review_snapshot_rejects_foreign_thread_and_closed_scope(admission_fixture):
++    from contextvars import copy_context
++    from concurrent.futures import ThreadPoolExecutor
++    f=admission_fixture
++    with clips.review_admission_batch(f.context) as batch:
++        batch.snapshot();copied=copy_context()
++        with ThreadPoolExecutor(max_workers=1) as pool:
++            with pytest.raises(ProductionRefused,match='owning protected scope'):
++                pool.submit(copied.run,batch.snapshot).result()
++    with pytest.raises(ProductionRefused,match='owning protected scope'): copied.run(batch.snapshot)
++
++
++def test_temporal_batch_retains_original_consumer(admission_fixture,monkeypatch):
++    f=admission_fixture;f.context['execution']={'mode':'temporal_extension_v1'};calls=[]
++    monkeypatch.setattr(clips,'_entry',lambda *a,operation,**kw:operation(f.context))
++    monkeypatch.setattr(clips,'_consume',lambda context,path:calls.append(path) or SimpleNamespace(status='awaiting_continuity_review'))
++    monkeypatch.setattr(clips,'review_admission_batch',lambda *a,**kw:pytest.fail('temporal path changed admission protocol'))
++    result=clips.consume_scene_clip_observations(f.context['frozen'],None,None,f.paths[:2],paths=None,logger=None)
++    assert calls==f.paths[:2] and result.status=='awaiting_continuity_review'
++
++
++def test_fixture_measurement(admission_fixture, monkeypatch):
++    """Opt-in report; same fixture and measurement stages before/after changes."""
++    import os
++    output = os.environ.get('REVIEW_ADMISSION_BENCHMARK')
++    if not output:
++        pytest.skip('representative measurement is opt-in')
++    from review_admission_helpers import add_shared_sources
++    f = add_shared_sources(admission_fixture,monkeypatch); stages = {}
++    def measure(name, operation):
++        previous = f.counts.copy(); started = perf_counter()
++        value = operation()
++        stages[name] = dict(seconds=perf_counter()-started, calls=dict(f.counts-previous))
++        return value
++    # Baseline has no batch scope; optimized implementation prepares lazily.
++    from video_ai.runtime.verification import whole_input_protection
++    batch = getattr(clips, 'review_admission_batch', lambda context: nullcontext())
++    with ExitStack() as stack:
++        def prepare():
++            # Match the existing public review API: both versions retain the
++            # same mandatory input protection, including baseline _consume.
++            stack.enter_context(whole_input_protection())
++            stack.enter_context(batch(f.context))
++            return clips._review_snapshot(f.context) if hasattr(clips,'_review_snapshot') else clips.collect_progress(f.context)
++        measure('cold_preparation',prepare)
++        measure('first_receive', lambda: clips._consume(f.context, f.paths[0]))
++        measure('warm_batch_3', lambda: [clips._consume(f.context, p) for p in f.paths[1:4]])
++        measure('final_boundary',stack.close)
++    Path(output).write_text(json.dumps({'fixture':'six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes',
++                                      'stages':stages}, indent=2)+'\n', encoding='utf-8')
+--- /dev/null
++++ b/tests/review_admission_helpers.py
+@@ -0,0 +1,135 @@
++"""Synthetic three-layer inheritance and shared-ancestor fixture extensions."""
++from contextlib import nullcontext
++from copy import deepcopy
++from dataclasses import dataclass
++import hashlib
++import json
++from pathlib import Path
++from types import SimpleNamespace
++
++from video_ai.planning.production_scenes import canonical_digest
++from video_ai.runtime import reference_image_records as refs, scene_revision_records as revisions
++from video_ai.runtime import _scene_revision_origins as origins, _scene_revision_readers as readers
++from video_ai.runtime import production_inputs, scene_clip_records, production_scene_clips
++
++
++def add_shared_sources(fixture, monkeypatch):
++    """Real recursion/guards with synthetic leaf semantics; no media operations."""
++    f=fixture; root=f.store.run_dir/'fixture-sources'; root.mkdir()
++    config=f.context['frozen'].config
++    sources=[]
++    for i in range(3):
++        run=root/f'source-{i}'; (run/'production').mkdir(parents=True)
++        (run/'input.json').write_text(json.dumps({'source':i}),encoding='utf-8')
++        sources.append(SimpleNamespace(options={'script_path':str(run/'production/script.txt'),'run_id':run.name},config=config))
++    current=f.context['frozen']; all_frozen=[current,*sources]
++    guards={}
++    for frozen in all_frozen:
++        guard=revisions.RevisionGuard(frozen)
++        for source in sources:
++            path=Path(source.options['script_path']).parent.parent/'input.json'
++            guard.capture(path,root=root)
++        guards[id(frozen)]=guard
++    # A DAG: each layer also directly depends on the shared oldest ancestor.
++    for i,frozen in enumerate(all_frozen[:-1]):
++        guards[id(frozen)].ancestors=[guards[id(all_frozen[i+1])],guards[id(sources[-1])]]
++    keys=['inherited_0001_clip_0001','inherited_0002_clip_0001']
++    proofs={}
++    for i,frozen in enumerate(all_frozen[:-1]):
++        proofs[id(frozen)]={'source_run':Path(all_frozen[i+1].options['script_path']).parent.parent,
++            'source_frozen':all_frozen[i+1],'guard':guards[id(frozen)],
++            'imports':{'clip:'+key:({'local_artifacts':[]}, {}) for key in keys}}
++    f.store.revision_context=proofs[id(current)]
++    def proof_for(frozen,domain,key,**kw):
++        proof=proofs.get(id(frozen))
++        if proof is not None and (domain=='image' or domain+':'+key in proof['imports']): return proof
++    monkeypatch.setattr(readers,'proof_for',proof_for)
++    def loaded(run):
++        f.counts['load_frozen_inputs']+=1
++        return next(source for source in sources if Path(source.options['script_path']).parent.parent==run)
++    monkeypatch.setattr(production_inputs,'load_frozen_inputs',loaded)
++    monkeypatch.setattr(readers,'require_revision_import',lambda frozen,domain,key,**kw:{'clip_id':key})
++    monkeypatch.setattr(origins,'_origin_clip_ids',lambda frozen,key:([key],keys))
++    monkeypatch.setattr(origins,'_origin_scene_ids',lambda *a:[])
++    monkeypatch.setattr('video_ai.runtime._scene_revision_origin_images.origin_image_scope',lambda *a,**kw:nullcontext())
++    monkeypatch.setattr('video_ai.runtime._scene_revision_origin_clips.origin_clip_scope',lambda *a,**kw:nullcontext())
++    scene={'scene_id':'fixture_reference'}; bible={}; plan={'scenes':[scene]}
++    @dataclass
++    class Model:
++        candidates_per_scene:int=1
++    model=Model(); prompt='synthetic fixture reference'; settings={'capability_sha256':'a'*64}
++    leaf=Path(sources[-1].options['script_path']).parent.parent
++    requests=refs.reference_requests(sources[-1],scene,prompt,[],model)
++    provenance=dict(schema_version=2,production_strategy='paragraph_jimeng_v1',run_id=leaf.name,
++        scene_id=scene['scene_id'],scene_plan_sha256=canonical_digest(plan),visual_bible_sha256=canonical_digest(bible),
++        model_settings={'candidates_per_scene':1},capability_sha256='a'*64,
++        prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest(),references=[],
++        requests=[dict(request_id=r['request_id'],logical_request_sha256=canonical_digest(r)) for r in requests])
++    folder=leaf/'production/reference-images'/scene['scene_id']; folder.mkdir(parents=True)
++    (folder/'provenance.json').write_text(json.dumps(provenance),encoding='utf-8')
++    for request in requests:
++        folder=leaf/'production/jimeng'/scene['scene_id']/request['request_id']; folder.mkdir(parents=True)
++        (folder/'request.json').write_text(json.dumps(request),encoding='utf-8')
++        (folder/'intent.json').write_text('{}',encoding='utf-8')
++    def committed(*a): f.counts['reference_leaf_rebuild']+=1; return leaf
++    monkeypatch.setattr(refs,'_committed',committed)
++    monkeypatch.setattr(refs,'load_reference_settings',lambda *a:settings)
++    monkeypatch.setattr(refs,'validate_reference_inputs',lambda *a:(model,prompt))
++    monkeypatch.setattr(refs,'validate_reference_intent',lambda *a:None)
++    monkeypatch.setattr(refs,'validate_submit_evidence',lambda *a:None)
++    def common(source):
++        origins._json(Path(source.options['script_path']).parent.parent/'input.json',root=root)
++        return {'units':{},'timeline':{}}
++    monkeypatch.setattr(origins,'common',common)
++    monkeypatch.setattr(origins,'origin_timeline',lambda *a:None)
++    def source_plan(*a): f.counts['source_plan_rebuild']+=1; return bible,plan
++    monkeypatch.setattr(refs.images,'load_committed_plan',source_plan)
++    def source_record(source,key):
++        f.counts['source_clip_rebuild']+=1
++        refs.verify_reference_provenance(source,scene,bible,plan)
++        if source is not sources[-1]: return readers.inherited_clip_record(source,key)
++        common(source)
++        return dict(clip={'clip_id':key},request=dict(budget={'clip_id':key},parameters={},narration_bindings=[],parent=None),
++                    accepted={'clip_id':key},rejected=None,template={'clip_id':key})
++    monkeypatch.setattr(origins,'_source_clip_record',source_record)
++    for module,name in ((origins,'source_clip_record'),(refs,'verify_reference_provenance')):
++        original=getattr(module,name)
++        def counted(*a,_original=original,_name=name,**kw):
++            f.counts[_name]+=1
++            return _original(*a,**kw)
++        monkeypatch.setattr(module,name,counted)
++    ordinary=scene_clip_records.validate_clip
++    def validate(context,row,parent=None):
++        if row['budget']['clip_id'] in keys:
++            f.counts['validate_clip']+=1
++            return readers.inherited_clip_record(current,row['budget']['clip_id'],context=f.store.revision_context,row=row,parent=parent)
++        return ordinary(context,row,parent)
++    monkeypatch.setattr(scene_clip_records,'validate_clip',validate)
++    monkeypatch.setattr(production_scene_clips,'validate_clip',validate)
++    f.store.clip_ids=frozenset((*f.store.clip_ids,*keys))
++    for key in keys:
++        sid=key.split('_clip_')[0]
++        f.context['rows'].append(dict(budget=dict(scene_id=sid,clip_id=key),parameters={},narration_bindings=[]))
++        # The source request retains its source budget; use identical parameters.
++        f.context['rows'][-1]['budget']={'scene_id':sid,'clip_id':key}
++        f.context['plan']['scenes'].append({'scene_id':sid})
++    # Preserve exact row equality in the inherited adapter, including scene ID.
++    previous=origins._source_clip_record
++    def with_budget(source,key):
++        value=previous(source,key)
++        value['request']['budget']={'scene_id':key.split('_clip_')[0],'clip_id':key}
++        return value
++    monkeypatch.setattr(origins,'_source_clip_record',with_budget)
++    original_verify=revisions.verify_artifact
++    def verified(*a,**kw):
++        f.counts['revision_artifact_checks']+=1
++        return original_verify(*a,**kw)
++    monkeypatch.setattr(revisions,'verify_artifact',verified)
++    from video_ai.runtime import manifest
++    original_hash=manifest._hash_open_file
++    def hashed(stream,path):
++        f.counts['hash_reads']+=1
++        f.counts['hashed_input_bytes']+=path.stat().st_size
++        return original_hash(stream,path)
++    monkeypatch.setattr(manifest,'_hash_open_file',hashed)
++    return f
+--- /dev/null
++++ b/tests/integration/test_review_admission_batch.py
+@@ -0,0 +1,41 @@
++"""Real receipt admission for tiny testsrc fixtures; no model service or network."""
++import hashlib
++import json
++from pathlib import Path
++
++from scene_clip_helpers import OfflineWan, generate
++from scene_pipeline_helpers import write_clip_observation
++from integration.test_scene_revision_flow import revision_source
++from video_ai.runtime import production_scene_clips as clips
++from video_ai.planning.production_scenes import canonical_digest
++
++
++def test_offline_batch_receipts_keep_original_bindings_and_one_scan(revision_source,monkeypatch):
++    setup=revision_source
++    backend=OfflineWan(setup)  # Caller-created tiny testsrc; never invokes a model.
++    pending=generate(setup,backend)
++    assert pending.status=='awaiting_continuity_review',pending.error
++    observations=[write_clip_observation(setup,template) for template in pending.observation_templates]
++    assert len(observations)>1
++    prior_posts=len(backend.posts);prior_ensures=backend.ensures
++    scans=[];original=clips.collect_progress
++    def collect(*a,**kw): scans.append(1);return original(*a,**kw)
++    monkeypatch.setattr(clips,'collect_progress',collect)
++    result=clips.consume_scene_clip_observations(setup['frozen'],setup['units'],setup['timeline'],observations,
++        paths=setup['paths'],logger=setup['logger'])
++    # Accepting this parent exposes a pending child: retain the public batch's
++    # early stop on the resulting blocked global state.
++    assert result.status=='blocked',result.error
++    assert len(scans)==1
++    assert len(backend.posts)==prior_posts and backend.ensures==prior_ensures
++    for path in observations[:1]:
++        raw=path.read_bytes();value=json.loads(raw)
++        folder=setup['run']/'production/scene-clips'/value['clip_id']
++        receipt=json.loads((folder/'observation-accepted.json').read_bytes())
++        assert receipt['observation']['sha256']==hashlib.sha256(raw).hexdigest()
++        assert Path(receipt['observation']['path']).read_bytes()==raw
++        assert receipt['clip_sha256']==canonical_digest(json.loads((folder/'clip.json').read_bytes()))
++        assert receipt['request_sha256']==canonical_digest(json.loads((folder/'request.json').read_bytes()))
++    for path in observations[1:]:
++        value=json.loads(path.read_bytes())
++        assert not (setup['run']/'production/scene-clips'/value['clip_id']/'observation-accepted.json').exists()
+--- /dev/null
++++ b/scripts/benchmark_review_admission.py
+@@ -0,0 +1,62 @@
++"""Measure only the offline admission fixture, in independent Python processes."""
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import statistics
++import subprocess
++import sys
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--baseline-dir',type=Path,required=True)
++    parser.add_argument('--output',type=Path,required=True)
++    parser.add_argument('--repeats',type=int,default=3)
++    args=parser.parse_args()
++    if not 1<=args.repeats<=5: parser.error('repeats must be 1..5')
++    repo=Path(__file__).resolve().parents[1]
++    baseline=args.baseline_dir.resolve(strict=True);output=args.output.resolve()
++    if output.is_relative_to(Path('E:/VideoAI/work')): parser.error('report must be outside production work')
++    output.parent.mkdir(parents=True,exist_ok=True)
++    report={'fixture':'six pending synthetic clips, two accepted clips, three source layers and shared ancestor DAG',
++            'scope':'Only test runtime writes. No network, model service, video inference or decoding/rendering.',
++            'metric_notes':'Both versions share the same whole_input_protection window, matching the existing public review API. Cold preparation includes protection/batch entry and starts at progress/source admission, after synthetic fixture assembly (application admission cold, not OS cache cold); first receive and warm batch include synchronous raw/receipt persistence; final_boundary includes batch exit proof checks and protection cleanup. Leaf media/plan semantics are stubbed. hash_reads/hashed_input_bytes count application SHA input reads, not physical disk I/O. Timings are not production projections.',
++            'baseline_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(baseline.glob('*.py'))},
++            'optimized_sha256':{str(p.relative_to(repo)):hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in (repo/'src/video_ai/runtime'/name for name in
++                    ('_continuity_byte_guard.py','scene_revision_records.py','image_selection_records.py',
++                     '_scene_revision_readers.py','_scene_revision_origins.py','reference_image_records.py',
++                     'scene_clip_records.py','scene_comfy_transactions.py','production_scene_clips.py',
++                     '_scene_review_batch.py','scene_review_control.py'))},
++            'runs':{},'summary':{}}
++    for mode in ('baseline','optimized'):
++        runs=[]
++        for i in range(args.repeats):
++            raw=output.with_name(output.stem+f'-{mode}-{i+1}.json')
++            env=dict(os.environ,PYTHONPATH=os.pathsep.join((str(repo/'src'),str(repo/'tests'))),
++                     REVIEW_ADMISSION_BENCHMARK=str(raw))
++            env.pop('REVIEW_ADMISSION_BASELINE_DIR',None)
++            if mode=='baseline': env['REVIEW_ADMISSION_BASELINE_DIR']=str(baseline)
++            command=[sys.executable,'-m','pytest','tests/unit/test_review_admission_optimization.py::test_fixture_measurement',
++                     '-q','-p','no:cacheprovider']
++            result=subprocess.run(command,cwd=repo,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
++            if result.returncode:
++                print(result.stdout)
++                raise SystemExit(result.returncode)
++            runs.append(json.loads(raw.read_text(encoding='utf-8')))
++        report['runs'][mode]=runs
++        report['summary'][mode]={}
++        for stage in runs[0]['stages']:
++            values=[run['stages'][stage] for run in runs]
++            calls=values[0]['calls']
++            if any(row['calls']!=calls for row in values): raise RuntimeError('fixture call counts varied')
++            seconds=[row['seconds'] for row in values]
++            report['summary'][mode][stage]=dict(median_seconds=statistics.median(seconds),
++                min_seconds=min(seconds),max_seconds=max(seconds),calls=calls)
++    output.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
++    print(json.dumps(report['summary'],indent=2))
++
++
++if __name__=='__main__': main()

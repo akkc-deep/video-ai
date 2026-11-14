@@ -1,0 +1,53 @@
+﻿{
+    "original_interrupted_baseline":  {
+                                          "stages":  {
+                                                         "frozen":  11.604343799990602,
+                                                         "prepared":  168.92823439999484
+                                                     },
+                                          "calls":  {
+                                                        "validate_production_timeline":  24,
+                                                        "verify_reference_provenance":  112
+                                                    },
+                                          "writes":  false,
+                                          "status":  "TimeoutError",
+                                          "error":  "measurement deadline",
+                                          "seconds":  291.5978828999796
+                                      },
+    "completed_intermediate":  {
+                                   "stages":  {
+                                                  "frozen":  11.595868699951097,
+                                                  "prepared":  240.3150266999728,
+                                                  "review_preparation":  96.36220919998595
+                                              },
+                                   "calls":  {
+                                                 "validate_production_timeline":  26,
+                                                 "verify_reference_provenance":  1106
+                                             },
+                                   "writes":  false,
+                                   "status":  "completed",
+                                   "seconds":  564.4983383999788
+                               },
+    "completed_final":  {
+                            "stages":  {
+                                           "frozen":  11.605078099993989,
+                                           "prepared":  280.7236879999982,
+                                           "review_preparation":  34.121379300020635
+                                       },
+                            "calls":  {
+                                          "validate_production_timeline":  26,
+                                          "verify_reference_provenance":  537
+                                      },
+                            "writes":  false,
+                            "baseline":  false,
+                            "mode":  "read-only sealed-input preparation; no observation receipts written",
+                            "status":  "completed",
+                            "seconds":  377.74234129994875
+                        },
+    "timeline_microbenchmark":  {
+                                    "before":  0.14632140001049265,
+                                    "after":  0.05817999999271706
+                                },
+    "formal_review_receipts_written":  0,
+    "generation_started":  false,
+    "limitation":  "Cold preparation remains slow; successful comparisons use an intermediate implementation, not a successful original baseline."
+}

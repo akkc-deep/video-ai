@@ -1,0 +1,60 @@
+{
+  "status": "accepted_complete",
+  "production_generation": "paused",
+  "requirements": [
+    {
+      "requirement": "Unique artifact bindings and directory inventories within a cold read batch",
+      "evidence": "tests/unit/test_revision_guard_shared_ancestors.py: batch artifact, JSON inventory and raw inventory count tests; actual 08 metrics pending; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "Shared common timeline and source file baselines",
+      "evidence": "typed timeline reuse and shared PCM capture/ownership count tests; direct-origin frozen-font integration test; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "Checkpoint and exit traverse each shared ancestor once",
+      "evidence": "test_boundary_shares_ancestor_pass_across_registered_guards, both checkpoint variants; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "Changes remain detectable",
+      "evidence": "restored mtime tests in test_scene_revision_records.py; same-byte replacement, missing directory appearance, redirected path, closed/foreign contexts, nested capture observer and typed timeline tests in test_revision_guard_shared_ancestors.py; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "No repeated paid submission and no hiding unfinished original tasks",
+      "evidence": "41 revision/prompt integration tests passed; includes unknown effects and completed request without scene manifest; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "PureWindows_PORTABLE_ROOT NameError removed",
+      "evidence": "parse_scene_rendering uses PureWindowsPath(_PORTABLE_ROOT); whole input protection test suite passed; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "Final source real 08 offline performance report",
+      "evidence": "docs/handoffs/repeated-read-acceptance.json; session33154; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    },
+    {
+      "requirement": "Independent code review",
+      "evidence": "review_repeated_reads agent; final 90 scoped unit tests and 41 integration tests passed; completed six-stage real08 report and 244 source hashes verified",
+      "status": "verified"
+    }
+  ],
+  "verification": {
+    "unit_tests": 90,
+    "integration_tests": 41,
+    "integration_seconds": 181.2,
+    "source_files_matched": 244,
+    "benchmark_stages": 6,
+    "benchmark_exit_code": 0
+  },
+  "baseline_limitations": "Baseline times are measured process output: load118.684001s, admission21845.364883s. Original baseline report aborted on missing provenance, so baseline hash counts are unavailable. Intermediate 514372 hash calls must not be represented as original baseline counts.",
+  "metric_limitations": "hash_read_bytes counts actual Python SHA256 read/readinto bytes. It does not represent physical disk I/O or all unrelated JSON parser reads. rglob counts are directory traversal invocations, not OS directory entry calls.",
+  "final_report": "docs/handoffs/repeated-read-resumed-acceptance.json",
+  "remaining": [],
+  "acceptance_scope_update": "User explicitly waived historical before/after comparison; accept final implementation, passing integration tests, completed real08 six-stage offline benchmark and matching source hashes.",
+  "final_evidence": "docs/handoffs/repeated-read-resumed-acceptance.json"
+}

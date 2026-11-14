@@ -1,0 +1,53 @@
+{
+  "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+  "stages": {
+    "cold_preparation": {
+      "seconds": 0.10998100000142585,
+      "calls": {
+        "collect_progress": 1,
+        "validate_clip": 8,
+        "hash_reads": 12,
+        "hashed_input_bytes": 606,
+        "load_frozen_inputs": 6,
+        "source_clip_record": 6,
+        "source_clip_rebuild": 6,
+        "verify_reference_provenance": 12,
+        "revision_artifact_checks": 138,
+        "source_plan_rebuild": 6,
+        "reference_leaf_rebuild": 6
+      }
+    },
+    "first_receive": {
+      "seconds": 0.20398700000077952,
+      "calls": {
+        "collect_progress": 3,
+        "validate_clip": 24,
+        "load_frozen_inputs": 18,
+        "source_clip_record": 18,
+        "source_clip_rebuild": 18,
+        "verify_reference_provenance": 36,
+        "revision_artifact_checks": 438,
+        "source_plan_rebuild": 18,
+        "reference_leaf_rebuild": 18
+      }
+    },
+    "warm_batch_3": {
+      "seconds": 0.6820729999999458,
+      "calls": {
+        "collect_progress": 9,
+        "validate_clip": 72,
+        "load_frozen_inputs": 54,
+        "source_clip_record": 54,
+        "source_clip_rebuild": 54,
+        "verify_reference_provenance": 108,
+        "revision_artifact_checks": 1314,
+        "source_plan_rebuild": 54,
+        "reference_leaf_rebuild": 54
+      }
+    },
+    "final_boundary": {
+      "seconds": 0.001429600000847131,
+      "calls": {}
+    }
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "recorded_at": "2026-11-14T10:42:01.478534+00:00",
+  "status": "paused_by_user",
+  "resume_requires_user_instruction": true,
+  "user_instruction": "暂停视频生成工作，把当前发现的优化问题交接给下一个任务",
+  "run_dir": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\10",
+  "stopped_producer": {
+    "pid": 24596,
+    "creation_identity": "134391152048855622",
+    "wrapper_pid": 14804,
+    "tool_session": 27228,
+    "tool_exit_code": 15,
+    "both_processes_absent": true
+  },
+  "model_service": {
+    "old_pid": 16072,
+    "absent_at_pause": true,
+    "queue8188_refused_at_pause": true,
+    "manifest_healthy_is_historical": true
+  },
+  "counts": {
+    "formally_accepted": 11,
+    "formally_rejected": 1,
+    "pending_observations": 29,
+    "pending_verdicts": {
+      "passed": 25,
+      "failed": 4
+    }
+  },
+  "known_failed_clips": [
+    "scene_0003_clip_0002",
+    "scene_0008_clip_0001",
+    "scene_0014_clip_0001",
+    "scene_0025_clip_0001",
+    "scene_0030_clip_0001"
+  ],
+  "unresolved_original_clips": [
+    "scene_0036_clip_0001"
+  ],
+  "pending_observations": [
+    {
+      "clip_id": "scene_0007_clip_0002",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0007_clip_0002\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0008_clip_0001",
+      "verdict": "failed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0008_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0009_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0009_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0010_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0010_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0011_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0011_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0012_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0012_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0013_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0013_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0014_clip_0001",
+      "verdict": "failed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0014_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0015_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0015_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0016_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0016_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0017_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0017_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0018_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0018_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0019_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0019_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0020_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0020_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0021_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0021_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0022_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0022_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0023_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0023_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0024_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0024_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0025_clip_0001",
+      "verdict": "failed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0025_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0026_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0026_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0027_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0027_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0028_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0028_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0029_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0029_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0030_clip_0001",
+      "verdict": "failed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0030_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0031_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0031_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0032_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0032_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0033_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0033_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0034_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0034_clip_0001\\observation.json",
+      "formal_admission_written": false
+    },
+    {
+      "clip_id": "scene_0035_clip_0001",
+      "verdict": "passed",
+      "observation": "E:\\VideoAI\\scratch\\voyager2-current-review10\\scene_0035_clip_0001\\observation.json",
+      "formal_admission_written": false
+    }
+  ],
+  "source_code_baselines": [
+    {
+      "path": "src/video_ai/runtime/production_scene_clips.py",
+      "bytes": 37972,
+      "sha256": "430fc3b682a6520ba6b272f28fbf6578a2d3e3624797c98aaf873751edf097a2"
+    },
+    {
+      "path": "src/video_ai/runtime/_scene_revision_readers.py",
+      "bytes": 7744,
+      "sha256": "fab4726471ca5be2641c2355e07f84e9beaf6b06a3fe19ebdcf024f4b17e764d"
+    },
+    {
+      "path": "src/video_ai/runtime/scene_revision_records.py",
+      "bytes": 37584,
+      "sha256": "474149cb6999ca77aaacbf95f8e526e18b0863f1455ebe4157729119c3798b4c"
+    },
+    {
+      "path": "src/video_ai/runtime/reference_image_records.py",
+      "bytes": 26267,
+      "sha256": "ce26412498571f4f717dd08d6a2093fcf1bd96bdfdad4330bea5ceb8c61894ce"
+    },
+    {
+      "path": "src/video_ai/runtime/_scene_revision_origins.py",
+      "bytes": 31946,
+      "sha256": "93325c9c1118c6844738f8dca8efefd4741c7e724ca656e6a149286b9ab34695"
+    },
+    {
+      "path": "src/video_ai/runtime/scene_clip_records.py",
+      "bytes": 42350,
+      "sha256": "76bff8fe923663045a86c8400f8895cf335d9afef19f1c034982db09b027e06f"
+    },
+    {
+      "path": ".tools/resume_voyager2_after_reboot.py",
+      "bytes": 11578,
+      "sha256": "b785f8119fc5aefe272870622be1a903bac70cf7a4f61aec4fe714d37a83219a"
+    },
+    {
+      "path": ".tools/continue_voyager2_cached.py",
+      "bytes": 2152,
+      "sha256": "dfb0b24df1347054b0b5a5fadae651a038fb1a6e9cf47bad0aaf9687cea70ebd"
+    }
+  ],
+  "evidence": {
+    "pause": "E:\\VideoAI\\scratch\\voyager2-user-pause-20261114.json",
+    "pause_stack": "E:\\VideoAI\\scratch\\voyager2-user-pause-stack-20261114.json",
+    "preparation_stack": "E:\\VideoAI\\scratch\\voyager2-reboot-loading-stack-20261114.json",
+    "reboot": "E:\\VideoAI\\scratch\\voyager2-reboot-20261114-evidence.json",
+    "producer_log": "E:\\VideoAI\\scratch\\logs\\voyager2-10-after-verified-reboot-2b2174b44f224cbbb200fa9ee68b3d8c.log"
+  },
+  "optimization_status": {
+    "new_src_optimization_implemented": false,
+    "new_optimization_tests_run": false,
+    "new_video_inference_started_after_reboot": false
+  },
+  "scope": "Handoff and explicit pause only. Source hashes bind the current code baseline; they are not a benchmark or a full media audit. Existing unrelated modifications remain untouched."
+}

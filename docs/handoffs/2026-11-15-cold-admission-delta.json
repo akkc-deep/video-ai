@@ -1,0 +1,66 @@
+{
+  "baseline": ".tools\\cold-admission-optimization-baseline-20261115-011834",
+  "head_is_not_baseline": true,
+  "files": [
+    {
+      "path": "src/video_ai/runtime/manifest.py",
+      "baseline_sha256": "ebe3751111bf2879f456c09a84876d04f8e5ddcf0d7f8ceaf3eb19bf40425ab0",
+      "current_sha256": "0e624d3a653325260e12ad90bd6d46c2830a39e3d016b03ce56e984fa04b2e30"
+    },
+    {
+      "path": "tests/unit/test_revision_guard_shared_ancestors.py",
+      "baseline_sha256": "405f34001a579957ec3a847ad534b9de921a472f61e0757cc09227415a5180a3",
+      "current_sha256": "ce903b2cd09d36b082b32ceb7f027d5cadada18068fd78f7585533370dd301fe"
+    },
+    {
+      "path": "src/video_ai/runtime/scene_clip_records.py",
+      "baseline_sha256": "78d98aa466251f43e54c9be5ac9232a9a62308348eec358c68f15d49308be8f4",
+      "current_sha256": "faf5bf05bb276ccec775e3ebde0982ae1af1b3e121bc53b53468ee8f61c7b025"
+    },
+    {
+      "path": "src/video_ai/runtime/reference_image_records.py",
+      "baseline_sha256": "a609998bab5720db425966ed56bc955946c084cdf642ba3e5465cafea368aef5",
+      "current_sha256": "d737d8c59155ea0035017afd398838cfae5f40159f9866e9ce3faade9249462a"
+    },
+    {
+      "path": "src/video_ai/runtime/production_state.py",
+      "baseline_sha256": "cfe074e180cf80d820f560e2729c06b34861f344a92211b57215b670928a2d4b",
+      "current_sha256": "6ebe3c4c5b385efbdbdea081792b4a3db7d7960d41c4640e07aa2e21c754fee5"
+    },
+    {
+      "path": "src/video_ai/runtime/_continuity_byte_guard.py",
+      "baseline_sha256": "0febf62a6f510e884da3eaa371745970e8c208626437dd5a95901743fd90d587",
+      "current_sha256": "d588a9e6c4eb6e258afad31d01dad148952061b76870c5d91b2aa2f1cd587086"
+    },
+    {
+      "path": "src/video_ai/runtime/verification.py",
+      "baseline_sha256": "05846025a8d1ede18ed9d8ffc62a22f79a585a582a5a53738d54b348a9622df5",
+      "current_sha256": "6fb6d8df32ed7595a2ba8f0cb9b59209c98d2a2b19eb534c2702d2517b0778bb"
+    },
+    {
+      "path": "src/video_ai/runtime/scene_revision_records.py",
+      "baseline_sha256": "23ab5a3a689195024a19974605cb3d07b32c359b7d34bf167f09e38f7085117d",
+      "current_sha256": "0d9bb33d9763aff8470f7403eeb0f81f51dd4c0ef6c808b70a41439a3fbea2a8"
+    },
+    {
+      "path": "src/video_ai/runtime/_protected_continuity_inputs.py",
+      "baseline_sha256": "5098f264d888022194d1434155cd1a8ef98ad2c582a607aa087cfa7768bf9237",
+      "current_sha256": "64eafa15e24ec919cb16b49ef53d33b8c3199270bb2b7f70c0fec1da7059d7df"
+    },
+    {
+      "path": "scripts/benchmark_cold_admission.py",
+      "baseline_sha256": null,
+      "current_sha256": "1389846143ef1d9e946e87047f99eb3cd1252c865b1587dd9fb3835491b2581e"
+    },
+    {
+      "path": "tests/unit/test_benchmark_cold_admission.py",
+      "baseline_sha256": null,
+      "current_sha256": "e5b891b051894b9aca82c57e2af8fb79501997a3edf669e673599c0e87a76373"
+    },
+    {
+      "path": "tests/unit/test_cold_admission_performance.py",
+      "baseline_sha256": null,
+      "current_sha256": "3baab5fad72fffb1ee79e60104a3a307d95abb7bf342089ab12d92ad378fb7b5"
+    }
+  ]
+}

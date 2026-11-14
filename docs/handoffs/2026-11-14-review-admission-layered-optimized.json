@@ -1,0 +1,29 @@
+{
+  "fixture": "six pending synthetic clips plus two accepted clips across three inherited layers and a shared ancestor DAG; real observation validator, store, progress, provenance schema and receipt writes; leaf media/plan semantics stubbed; no production writes",
+  "stages": {
+    "cold_preparation": {
+      "seconds": 0.13020989999859012,
+      "calls": {
+        "collect_progress": 1,
+        "validate_clip": 8,
+        "source_clip_record": 6,
+        "source_clip_rebuild": 6,
+        "verify_reference_provenance": 8,
+        "source_plan_rebuild": 2,
+        "reference_leaf_rebuild": 1
+      }
+    },
+    "first_receive": {
+      "seconds": 0.1344621999996889,
+      "calls": {
+        "validate_clip": 2
+      }
+    },
+    "warm_batch_3": {
+      "seconds": 0.3402691999981471,
+      "calls": {
+        "validate_clip": 6
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "run": "E:\\VideoAI\\work\\0002-\u65c5\u884c\u80052\u53f7-\u5373\u68a6\u7248\\process\\revisions\\08",
+  "stages": {
+    "initial_load": {
+      "seconds": 16.308296899980633,
+      "hash_calls": 12623,
+      "hashed_bytes": 6735998094,
+      "directory_traversals": 571,
+      "unique_hashed_paths": 5022,
+      "max_hashes_per_path": 4
+    }
+  },
+  "network_requests": 0,
+  "source_sha256": {
+    "scene_revision_records.py": "e53a328e1aac2cf3b427e2828d47d6e05987cd344cda38bd6f3365bc4278be97",
+    "_scene_revision_origins.py": "41c4fac9a62ed0219dea217cbedbe3fb9a985db56940fc030a88bf0894216f3c",
+    "verification.py": "e1fe4f72677b55d358893d6609bfd8f9088f8750323ea4ce18cd08b7ec7108b8"
+  }
+}

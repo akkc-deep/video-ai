@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "req_key": "jimeng_t2i_v40",
+  "input_field": "image_urls",
+  "max_images": 10,
+  "max_image_bytes": 15000000,
+  "min_width": 1,
+  "min_height": 1,
+  "max_width": 4096,
+  "max_height": 4096,
+  "formats": [
+    "jpeg",
+    "png"
+  ],
+  "max_prompt_bytes": 2400,
+  "evidence": {
+    "source_url": "https://docs.volcengine.com/docs/jimeng-ai/jimeng-ai-image-generation-40-interface-documentation?lang=zh",
+    "source_sha256": "7ce05caa18b6b74bc993afb3fa8eabc6aa6bce78450230724a9b826c9b8530a3",
+    "verified_by": "Codex: retrieved official source; prompt byte ceiling and positive minimum dimensions are local operational bounds",
+    "verified_at": "2026-11-08T08:31:56.723468+00:00"
+  }
+}

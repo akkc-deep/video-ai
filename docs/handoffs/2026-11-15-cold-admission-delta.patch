@@ -1,0 +1,2241 @@
+--- a/src/video_ai/runtime/manifest.py
++++ b/src/video_ai/runtime/manifest.py
+@@ -62,6 +62,7 @@
+         if (_whole_inputs.get() is not None and path.suffix.casefold() in ('.json', '.txt', '.yaml', '.yml', '.eml')
+                 and path.stat().st_size <= _MAX_PROTECTED_TEXT_FILE_BYTES):
+             _, protected = protected_bytes(path)
++            return protected  # protected_bytes already observes the identity.
+         else:
+             protected = protected_hash(path, _hash_open_file)
+     observe_file(protected)
+--- a/tests/unit/test_revision_guard_shared_ancestors.py
++++ b/tests/unit/test_revision_guard_shared_ancestors.py
+@@ -221,7 +221,9 @@
+     with records.revision_artifact_batch():
+         for _ in range(30):
+             records.RevisionGuard(frozen).capture(path, root=tmp_path)
+-    assert len(calls) == 2
++    # The admitted file proof supplies the first ownership baseline; only the
++    # fresh batch-exit identity check needs another stat.
++    assert len(calls) == 1
+ 
+ def test_shared_origin_timeline_parses_once_and_rejects_typed_change(monkeypatch):
+     from unit.test_production_timeline import make_timeline
+--- a/src/video_ai/runtime/scene_clip_records.py
++++ b/src/video_ai/runtime/scene_clip_records.py
+@@ -73,6 +73,8 @@
+             from .verification import read_bytes
+             if read_bytes(target) != raw: raise ProductionRefused('immutable scene clip bytes differ: '+str(target))
+             return target
++        from ._protected_continuity_inputs import invalidate_protected_read_pass
++        invalidate_protected_read_pass()
+         target.parent.mkdir(parents=True, exist_ok=True)
+         temporary = self.path(target.with_name(target.name+'.'+uuid4().hex+'.tmp'))
+         with temporary.open('xb') as stream:
+@@ -551,6 +553,12 @@
+ 
+ @verified_read
+ def collect_progress(context, *, scene_reader=None):
++    from .scene_revision_records import revision_read_transaction, revision_artifact_batch
++    with revision_read_transaction(), revision_artifact_batch():
++        return _collect_progress(context, scene_reader=scene_reader)
++
++
++def _collect_progress(context, *, scene_reader=None):
+     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+         from .temporal_scene_records import temporal_progress_view
+         return temporal_progress_view(context)
+--- a/src/video_ai/runtime/reference_image_records.py
++++ b/src/video_ai/runtime/reference_image_records.py
+@@ -214,7 +214,9 @@
+     batch = _artifact_batch.get()
+     if batch is None or not batch['active'] or batch['thread'] != get_ident():
+         return images._load_accepted(frozen, None, None, bible, plan, before=index)
+-    key = (id(frozen), canonical_digest(bible), canonical_digest(plan), index)
++    from .scene_revision_records import source_read_scope_identity
++    key = (id(frozen), canonical_digest(bible), canonical_digest(plan), index,
++           source_read_scope_identity())
+     cache = batch.setdefault('reference_prior_batches', {})
+     if key not in cache:
+         with capture_reads() as capture:
+--- a/src/video_ai/runtime/production_state.py
++++ b/src/video_ai/runtime/production_state.py
+@@ -106,6 +106,8 @@
+ 
+ def write_exclusive(path, data):
+     raw = json_bytes(data)
++    from ._protected_continuity_inputs import invalidate_protected_read_pass
++    invalidate_protected_read_pass()
+     path.parent.mkdir(parents=True, exist_ok=True)
+     with path.open('xb') as file:
+         file.write(raw); file.flush(); os.fsync(file.fileno())
+@@ -114,6 +116,8 @@
+ 
+ def sync_file(path):
+     """Re-establish durability of an existing immutable artifact before cursor commit."""
++    from ._protected_continuity_inputs import invalidate_protected_read_pass
++    invalidate_protected_read_pass()
+     # Windows CRT _commit requires a writable handle; r+b neither truncates nor edits.
+     with path.open('r+b') as file:
+         os.fsync(file.fileno())
+--- a/src/video_ai/runtime/_continuity_byte_guard.py
++++ b/src/video_ai/runtime/_continuity_byte_guard.py
+@@ -183,17 +183,25 @@
+ 
+     def verify(self):
+         from .manifest import hash_file
+-        from ._protected_continuity_inputs import verify_protected_continuity_file
++        from ._protected_continuity_inputs import verify_protected_continuity_file, _current_read_pass
+         from .execution_limits import execution_deadline
+         review_checkpoint(force=True)
++        state = _current_read_pass()
++        if state is not None:
++            with state['window'].lock:
++                if (_current_read_pass() is state
++                        and state['guards'].get(id(self)) is self):
++                    return
++        reusable = state is not None
+         deadline = execution_deadline(300,monotonic())
+         token = _captures.set(())
+         try:
+             for baseline in self.files:
+                 _check_time(deadline)
+-                if verify_protected_continuity_file(baseline):
++                if verify_protected_continuity_file(baseline, prepare_existing=True):
+                     _check_time(deadline)
+                     continue
++                reusable = False
+                 path = _safe(baseline.path)
+                 _check_time(deadline)
+                 before = path.stat()
+@@ -214,18 +222,23 @@
+                     raise ValueError('byte proof file changed: ' + baseline.path)
+             for spec in self.inventories:
+                 _check_time(deadline)
+-                if _scan(spec, deadline) != spec.expected:
+-                    raise ValueError('byte proof directory inventory changed: ' + spec.path)
++                from ._protected_continuity_inputs import verify_read_inventory
++                verify_read_inventory(spec, deadline)
+                 _check_time(deadline)
+             for name in self.absences:
+-                _check_time(deadline)
+-                path = _safe(name)
+-                _check_time(deadline)
+-                if path.exists():
+-                    raise ValueError('byte proof absent path appeared: ' + name)
++                from ._protected_continuity_inputs import verify_read_absence
++                verify_read_absence(name, deadline)
+             _check_time(deadline)
++        except BaseException:
++            from ._protected_continuity_inputs import fail_protected_read_pass
++            fail_protected_read_pass()
++            raise
+         finally:
+             _captures.reset(token)
++        if reusable:
++            with state['window'].lock:
++                if _current_read_pass() is state and len(state['guards']) < 32768:
++                    state['guards'][id(self)] = self
+ 
+ 
+ class Capture:
+@@ -237,6 +250,7 @@
+         self._inventories = {}
+         self._absences = set()
+         self._inventory_entries = 0
++        self._replayed = {}
+         self._lock = RLock()
+         self._closed = False
+         self._failed = False
+@@ -253,6 +267,7 @@
+             self._files.clear()
+             self._inventories.clear()
+             self._absences.clear()
++            self._replayed.clear()
+ 
+     def finish(self):
+         with self._lock:
+@@ -293,6 +308,62 @@
+             for capture in active:
+                 capture._failed = True
+             raise
++
++
++def replay_guard(guard: ByteGuard):
++    """Merge an already verified proof, without interpreting filesystem paths.
++
++    The caller verifies the immutable guard before replay. Ordinary observe_*
++    still qualifies arbitrary new reads and lazy inventories independently.
++    """
++    if not _captures.get():
++        return
++    review_checkpoint()
++    with _builders() as captures:
++        targets = [capture for capture in captures
++                   if capture._replayed.get(id(guard)) is not guard]
++        for capture in targets:
++            new_files = 0
++            for row in guard.files:
++                old = capture._files.get(row.path)
++                if row.path in capture._absences or (old is not None and old.key() != row.key()):
++                    raise ValueError('conflicting observed file identity')
++                new_files += old is None
++            if len(capture._files) + new_files > capture._maximum_files:
++                raise CaptureLimit('byte capture file limit exceeded')
++            new_specs = new_entries = 0
++            for row in guard.inventories:
++                key = row.path, row.kind, row.pattern or ''
++                old = capture._inventories.get(key)
++                if old is not None and old != row:
++                    raise ValueError('conflicting observed inventory')
++                if old is None:
++                    new_specs += 1
++                    new_entries += len(row.expected)
++            if len(capture._inventories) + new_specs > capture._maximum_files:
++                raise CaptureLimit('byte capture directory specification limit exceeded')
++            if capture._inventory_entries + new_entries > capture._maximum_inventory_entries:
++                raise CaptureLimit('byte capture inventory entry limit exceeded')
++            for name in guard.absences:
++                if name in capture._files:
++                    raise ValueError('conflicting observed absence')
++            new_absences = sum(name not in capture._absences for name in guard.absences)
++            if len(capture._absences) + new_absences > capture._maximum_files:
++                raise CaptureLimit('byte capture absence limit exceeded')
++        # Validate every builder before updating any of them. _builders poisons
++        # all active captures if a conflict/capacity error is caught by a caller.
++        for capture in targets:
++            for row in guard.files:
++                capture._files.setdefault(row.path, row)
++            for row in guard.inventories:
++                key = row.path, row.kind, row.pattern or ''
++                if key not in capture._inventories:
++                    capture._inventories[key] = row
++                    capture._inventory_entries += len(row.expected)
++            capture._absences.update(guard.absences)
++            # Retain the object to prevent id reuse, bounded by builder capacity.
++            if len(capture._replayed) < max(1, capture._maximum_files):
++                capture._replayed[id(guard)] = guard
+ 
+ 
+ def observe_file(identity):
+--- a/src/video_ai/runtime/verification.py
++++ b/src/video_ai/runtime/verification.py
+@@ -102,6 +102,7 @@
+         if ((stat.st_dev,stat.st_ino,stat.st_size,stat.st_mtime_ns) != self.stamp[:4]
+                 or self._metadata() != self.metadata or self._canonical_path() != path):
+             raise OSError(f'file changed during verification: {path}')
++        return stat
+ 
+     def close(self):
+         if self.handle is not None:
+@@ -130,6 +131,8 @@
+         self.continuity = None
+         self.byte_contents = {}
+         self.byte_content_size = 0
++        self.read_passes = {}
++        self.read_generation = 0
+         for root in _writable_roots.get():
+             self.writable_roots[root] = self.writable_roots.get(root,0)+1
+ 
+@@ -154,7 +157,9 @@
+             # comparison for each protected hit in a large revision closure.
+             entry = None if self.closed else self.entries.get(path)
+             if entry is not None:
+-                entry.verify(path)
++                from ._protected_continuity_inputs import verify_entry_in_read_pass
++                if not verify_entry_in_read_pass(self, path, entry):
++                    entry.verify(path)
+                 return entry.identity
+         return None
+ 
+@@ -183,6 +188,8 @@
+     def enter_writer(self, root):
+         with self.lock:
+             if self.closed: return
++            from ._protected_continuity_inputs import invalidate_protected_read_pass
++            invalidate_protected_read_pass(self)
+             # This state is shared with earlier copy_context workers. Their
+             # context-local writable-root tuples cannot see a later writer.
+             self.writable_roots[root] = self.writable_roots.get(root,0)+1
+@@ -204,13 +211,19 @@
+ 
+     def verify(self):
+         with self.lock:
++            checked = self.continuity.verify() if self.continuity is not None else ()
+             for path, entry in self.entries.items():
+-                entry.verify(path)
+-            if self.continuity is not None:
+-                self.continuity.verify()
++                if id(entry) not in (checked or ()):
++                    entry.verify(path)
+ 
+     def close(self):
+         with self.lock:
++            from ._protected_continuity_inputs import invalidate_protected_read_pass
++            error = None
++            try:
++                invalidate_protected_read_pass(self)
++            except BaseException as exc:
++                error = exc
+             self.closed = True
+             entries = list(self.entries.values())
+             if self.continuity is not None:
+@@ -220,7 +233,6 @@
+             self.byte_contents.clear()
+             self.byte_content_size = 0
+             self.writable_roots.clear()
+-        error = None
+         for entry in entries:
+             try: entry.close()
+             except OSError as exc:
+@@ -506,8 +518,20 @@
+ def protected_bytes(path):
+     """Share small JSON bytes only while their mandatory native lease is live."""
+     from ._continuity_byte_guard import observe_file
+-    path = Path(path).resolve(strict=True)
++    path = Path(path)
+     window = _whole_inputs.get()
++    # This branch consumes only previously captured bytes and a live native
++    # entry. It does not open/interpret a filesystem path; uncached reads keep
++    # canonical resolution and the strict original read protocol below.
++    if (window is not None and not window.closed and path.is_absolute()
++            and '..' not in path.parts):
++        with window.lock:
++            saved = window.byte_contents.get(path)
++            reusable = saved is not None and window.get(path) == saved[0]
++        if reusable:
++            observe_file(saved[0])
++            return saved[1], saved[0]
++    path = path.resolve(strict=True)
+     eligible = (os.name == 'nt' and window is not None and not window.closed
+                 and path.name.casefold() != 'manifest.json'
+                 and not window.owned(path) and path.stat().st_size <= _MAX_PROTECTED_TEXT_FILE_BYTES)
+@@ -556,5 +580,7 @@
+     @wraps(function)
+     def consume(*args, **kwargs):
+         with whole_input_protection(), validation_session():
+-            return function(*args, **kwargs)
++            from ._protected_continuity_inputs import protected_read_pass
++            with protected_read_pass():
++                return function(*args, **kwargs)
+     return consume
+--- a/src/video_ai/runtime/scene_revision_records.py
++++ b/src/video_ai/runtime/scene_revision_records.py
+@@ -38,7 +38,8 @@
+     if current is not None and current['active'] and current['thread'] == get_ident():
+         yield
+         return
+-    state = dict(active=True, thread=get_ident(), bindings={}, inventories={}, captures={}, raw_inventories={}, ownership={}, timelines={})
++    state = dict(active=True, thread=get_ident(), bindings={}, binding_proofs={},
++                 inventories={}, inventory_proofs={}, captures={}, artifact_proofs={}, raw_inventories={}, ownership={}, timelines={})
+     token = _artifact_batch.set(state)
+     try:
+         yield
+@@ -53,8 +54,21 @@
+             if _optional_path_identity(path) != expected:
+                 raise ProductionRefused('revision captured file ownership changed')
+         if recheck_bindings:
+-            for value, root, empty in state['bindings'].values():
+-                verify_artifact(value, root=root, allow_empty=empty)
++            for key, (value, root, empty) in state['bindings'].items():
++                proof = state['binding_proofs'].get(key)
++                if proof is None or any(row.path == value['path'] for row in proof.files):
++                    verify_artifact(value, root=root, allow_empty=empty)
++                    if proof is not None:
++                        # Artifact bindings promise bytes and ownership, not an
++                        # unchanged mtime. Additional declaration dependencies
++                        # still retain the full captured proof contract.
++                        from ._continuity_byte_guard import ByteGuard
++                        ByteGuard(tuple(row for row in proof.files if row.path != value['path']),
++                                  proof.inventories, proof.absences).verify()
++                else:
++                    # Declaration-only siblings need not exist on disk. Their
++                    # complete metadata closure is the binding, not raw media.
++                    proof.verify()
+         for (directory, root), expected in state['inventories'].items():
+             if tuple(revision_inventory(directory, root=root)) != expected:
+                 raise ProductionRefused('revision evidence inventory changed')
+@@ -72,14 +86,8 @@
+ 
+ def replay_revision_reads(guard):
+     """Expose a memo's complete closure to any enclosing origin capture."""
+-    from ._continuity_byte_guard import observe_file, observe_inventory, observe_absence
+-    for file in guard.files:
+-        observe_file({name:getattr(file,name) for name in
+-                      ('path','bytes','mtime_ns','sha256','verified_at')})
+-    for inventory in guard.inventories:
+-        observe_inventory(inventory.path,inventory.kind,inventory.expected,pattern=inventory.pattern)
+-    for path in guard.absences:
+-        observe_absence(path)
++    from ._continuity_byte_guard import replay_guard
++    replay_guard(guard)
+ 
+ 
+ def revision_cached_read(namespace, key, read):
+@@ -93,21 +101,28 @@
+     if batch is None or not batch['active'] or batch['thread'] != get_ident():
+         return read()
+     cache = batch.setdefault('semantic_reads', {})
+-    key = (namespace,key)
++    key = (namespace,key,source_read_scope_identity())
+     if key not in cache:
+         from ._continuity_byte_guard import capture_reads
+         with capture_reads() as capture:
+             value = read()
+         guard = capture.finish()
+-        from ._protected_continuity_inputs import verify_protected_continuity_file
+-        for file in guard.files:
+-            verify_protected_continuity_file(file,prepare_existing=True)
+         cache[key] = (deepcopy(value),guard)
+     else:
+         _, guard = cache[key]
+         guard.verify()
+         replay_revision_reads(guard)
+     return deepcopy(cache[key][0])
++
++
++def source_read_scope_identity():
++    """Separate full-content ancestry from declaration-only sibling reads."""
++    from ._scene_revision_origin_images import _source_images
++    from ._scene_revision_origin_clips import _scope
++    images = _source_images.get()
++    clips = _scope.get()
++    return ((images[0], images[1]) if images is not None else None,
++            (clips['identity'], clips['required'], clips['known']) if clips is not None else None)
+ 
+ 
+ def revision_read_identity(frozen):
+@@ -139,21 +154,23 @@
+ 
+ def revision_inventory(directory, *, root):
+     """Snapshot once per local batch; capture observers still see every use."""
+-    from ._continuity_byte_guard import observe_inventory, _captures
++    from ._continuity_byte_guard import observe_inventory, capture_reads
+     state = _artifact_batch.get()
+-    if state is not None and state['active'] and state['thread'] == get_ident() and not _captures.get():
++    if state is not None and state['active'] and state['thread'] == get_ident():
+         key = (str(directory), str(root))
+-        saved = state['inventories'].get(key)
++        if key in state['inventories']:
++            replay_revision_reads(state['inventory_proofs'][key])
++            return list(state['inventories'][key])
+     else:
+         state = None
+-        saved = None
+-    if saved is None:
++    with capture_reads() if state is not None else nullcontext() as capture:
+         folder = safe_path(directory, root)
+         saved = tuple(sorted(str(safe_path(p, root)) for p in folder.rglob('*.json')))
+-        if state is not None:
+-            state['inventories'][key] = saved
+-            state['ownership'].setdefault(str(folder), _optional_path_identity(folder))
+-    observe_inventory(directory, 'revision_json', saved)
++        observe_inventory(folder, 'revision_json', saved)
++    if state is not None:
++        state['inventories'][key] = saved
++        state['inventory_proofs'][key] = capture.finish()
++        state['ownership'].setdefault(str(folder), _optional_path_identity(folder))
+     return list(saved)
+ 
+ 
+@@ -175,7 +192,15 @@
+             current = dict(active=True, thread=get_ident(), checked=set())
+             token = _guard_pass.set(current)
+         try:
+-            key = (self, _captures.get())
++            version = None
++            if isinstance(self, RevisionGuard):
++                review_checkpoint()
++                self.verify_frozen(self.frozen)
++                version = self.dependency_version()
++            from .verification import _whole_inputs
++            window = _whole_inputs.get()
++            key = (self, _captures.get(), version,
++                   window.read_generation if window is not None else 0)
+             if key in current['checked']:
+                 return
+             result = function(self)
+@@ -199,8 +224,9 @@
+     try:
+         # A new batch has no entry from the prior read window. Overlapping
+         # ancestor proofs share one fresh boundary read, never prior memo entries.
+-        with revision_artifact_batch(recheck_bindings=False):
+-            for expected, read in tuple(state['inputs'].values()):
++        from ._protected_continuity_inputs import protected_read_pass
++        with protected_read_pass(fresh=True), revision_artifact_batch(recheck_bindings=False):
++            for expected, read, _ in tuple(state['inputs'].values()):
+                 if canonical_digest(thaw(read())) != expected:
+                     raise ProductionRefused('revision local read input changed')
+             for guard in tuple(state['checked']):
+@@ -229,7 +255,9 @@
+     state = dict(active=True, thread=get_ident(), checked={}, inputs={})
+     token = _read_transaction.set(state)
+     try:
+-        yield
++        from ._protected_continuity_inputs import protected_read_pass
++        with protected_read_pass():
++            yield
+     finally:
+         state['active'] = False
+         _read_transaction.reset(token)
+@@ -248,12 +276,15 @@
+     contexts cannot reuse the admission.
+     """
+     with revision_read_transaction():
++        from ._protected_continuity_inputs import invalidate_protected_read_pass
++        invalidate_protected_read_pass()
+         state = _read_transaction.get()
+         previous = state.get('checkpoints', False)
+         state['checkpoints'] = True
+         try:
+             yield
+         finally:
++            invalidate_protected_read_pass()
+             state['checkpoints'] = previous
+ 
+ 
+@@ -282,17 +313,23 @@
+     """Compare a local input; re-read its full loader at transaction exit.
+ 
+     Retain only a canonical digest, so callers cannot mutate a cached object.
+-    Outside a live local read scope, or during byte capture, always load fresh.
++    Capture the original loader's closure and replay it for nested consumers.
++    Outside a live local read scope always load fresh.
+     """
+-    from ._continuity_byte_guard import _captures
++    from ._continuity_byte_guard import capture_reads
+     state = _read_transaction.get()
+     if (state is None or not state['active'] or state['thread'] != get_ident()
+-            or _captures.get()):
++            or not state.get('reuse_allowed', True)):
+         return canonical_digest(thaw(value)) == canonical_digest(thaw(read()))
+     previous = state['inputs'].get(key)
+     if previous is None:
+-        previous = (canonical_digest(thaw(read())), read)
++        with capture_reads() as capture:
++            digest = canonical_digest(thaw(read()))
++        previous = (digest, read, capture.finish())
+         state['inputs'][key] = previous
++    else:
++        previous[2].verify()
++        replay_revision_reads(previous[2])
+     return canonical_digest(thaw(value)) == previous[0]
+ 
+ 
+@@ -331,8 +368,6 @@
+     from .verification import _whole_inputs, protected_bytes
+     if _whole_inputs.get() is not None:
+         raw, identity = protected_bytes(path)
+-        from ._continuity_byte_guard import observe_file
+-        observe_file(identity)
+         return raw
+     with path.open('rb') as stream:
+         before = os.fstat(stream.fileno()); raw = stream.read(); after = os.fstat(stream.fileno())
+@@ -345,26 +380,39 @@
+ 
+ def artifact(path, *, root=None, allow_empty=False):
+     path = Path(path); root = Path(root) if root is not None else path.parent
+-    from ._continuity_byte_guard import _captures
++    from ._continuity_byte_guard import capture_reads
+     batch = _artifact_batch.get()
+-    if (batch is not None and batch['active'] and batch['thread'] == get_ident()
+-            and not _captures.get()):
+-        key = (str(root), str(path), allow_empty)
++    if batch is not None and batch['active'] and batch['thread'] == get_ident():
++        scope = source_read_scope_identity()
++        key = (str(root), str(path), allow_empty, scope)
+         if key in batch['captures']:
++            replay_revision_reads(batch['artifact_proofs'][key])
+             return dict(batch['captures'][key])
+     else:
+         batch = None
++    if batch is None:
++        return _read_artifact(path, root=root, allow_empty=allow_empty)
++    with capture_reads() as capture:
++        result = _read_artifact(path, root=root, allow_empty=allow_empty)
++    proof = capture.finish()
++    batch['captures'][key] = dict(result)
++    batch['artifact_proofs'][key] = proof
++    for row in proof.files:
++        if row.path == str(path):
++            batch['ownership'].setdefault(str(path), row.ownership[:2])
++    binding_key = (str(root), allow_empty, canonical_digest(result), scope)
++    batch['bindings'][binding_key] = (dict(result), root, allow_empty)
++    batch['binding_proofs'][binding_key] = proof
++    return result
++
++
++def _read_artifact(path, *, root, allow_empty):
+     safe_path(path, root)
+     from .manifest import hash_file
+     value=hash_file(path)
+     safe_path(path,root)
+     integer(value.bytes,'revision artifact bytes',0 if allow_empty else 1)
+     result = dict(path=str(path),bytes=value.bytes,sha256=value.sha256)
+-    if batch is not None:
+-        batch['captures'][key] = dict(result)
+-        batch['ownership'].setdefault(str(path), path_identity(path))
+-        binding_key = (str(root), allow_empty, canonical_digest(result))
+-        batch['bindings'][binding_key] = (dict(result), root, allow_empty)
+     return result
+ 
+ 
+@@ -373,12 +421,11 @@
+     require_production_repair_origin(value)
+     object_fields(value, ('path','bytes','sha256'), 'revision Artifact')
+     integer(value['bytes'], 'revision artifact bytes',0 if allow_empty else 1)
+-    from ._continuity_byte_guard import _captures
+     batch = _artifact_batch.get()
+-    if (batch is not None and batch['active'] and batch['thread'] == get_ident()
+-            and not _captures.get()):
+-        key = (str(root), allow_empty, canonical_digest(value))
++    if batch is not None and batch['active'] and batch['thread'] == get_ident():
++        key = (str(root), allow_empty, canonical_digest(value), source_read_scope_identity())
+         if key in batch['bindings']:
++            replay_revision_reads(batch['binding_proofs'][key])
+             return Path(value['path'])
+     else:
+         batch = None
+@@ -386,6 +433,8 @@
+         raise ProductionRefused('revision captured bytes changed: '+value['path'])
+     if batch is not None:
+         batch['bindings'][key] = (deepcopy(value), root, allow_empty)
++        capture_key = (str(root), str(Path(value['path'])), allow_empty, source_read_scope_identity())
++        batch['binding_proofs'][key] = batch['artifact_proofs'][capture_key]
+     return Path(value['path'])
+ 
+ 
+@@ -399,7 +448,13 @@
+         self.run = Path(frozen.options['script_path']).parent.parent
+         self.options_sha256=canonical_digest(frozen.options)
+         self.files, self.directories, self.absent, self.views = {}, {}, {}, {}
++        self._absence_proofs = {}
+         self.ancestors = []
++        self._dependency_version = 0
++
++    def dependency_version(self):
++        return (self._dependency_version,
++                tuple((id(parent), parent.dependency_version()) for parent in self.ancestors))
+ 
+     def capture(self, path, *, root, allow_empty=False, expected=None):
+         value = artifact(path, root=root, allow_empty=allow_empty)
+@@ -415,21 +470,27 @@
+         else:
+             identity = path_identity(path)
+         if previous is not None and previous[3] != identity: raise ProductionRefused('revision captured file ownership changed')
++        if previous is None:
++            self._dependency_version += 1
+         self.files[key] = (value,str(root),allow_empty,identity)
+         return value
+ 
+     def capture_directory(self, path, *, root, expected=None):
+-        folder = safe_path(path,root)
++        folder = Path(path)
+         inventory = revision_inventory(folder, root=root)
+         key = str(folder)
+         if (expected is not None and inventory != sorted(expected)) or (key in self.directories and self.directories[key][0] != inventory):
+             raise ProductionRefused('revision evidence inventory changed')
++        if key not in self.directories:
++            self._dependency_version += 1
+         self.directories[key] = (inventory,str(root))
+         return inventory
+ 
+     def capture_absent(self, path, *, root):
+         path = safe_path(path,root)
+         if path.exists() or str(path) in self.files: raise ProductionRefused('revision expected absent evidence changed')
++        if str(path) not in self.absent:
++            self._dependency_version += 1
+         self.absent[str(path)] = str(root)
+ 
+     def register(self, import_id, view):
+@@ -454,20 +515,28 @@
+     @verified_read
+     @_unique_guard_pass
+     def verify_captured_bytes(self):
+-        from ._continuity_byte_guard import observe_inventory, observe_absence, _captures
++        from ._continuity_byte_guard import capture_reads
+         review_checkpoint()
+-        self.verify_frozen(self.frozen)
+         transaction = _read_transaction.get()
+         if (transaction is not None and transaction['active']
+                 and transaction['thread'] == get_ident()):
+-            capture_key = (self, _captures.get())
+-            if _captures.get():
+-                if capture_key in transaction.setdefault('capture_checked', set()):
+-                    return
+-            elif self in transaction['checked']:
++            previous = transaction['checked'].get(self)
++            if (transaction.get('reuse_allowed', True) and previous is not None
++                    and previous[0] == self.dependency_version()):
++                replay_revision_reads(previous[1])
+                 return
+         else:
+             transaction = None
++        if transaction is None:
++            self._verify_dependencies()
++        else:
++            with capture_reads() as capture:
++                self._verify_dependencies()
++            transaction['checked'][self] = (self.dependency_version(), capture.finish())
++
++    def _verify_dependencies(self):
++        from ._continuity_byte_guard import ByteGuard
++        from ._protected_continuity_inputs import verify_read_absence
+         for ancestor in self.ancestors:ancestor.verify_captured_bytes()
+         for value,root,empty,identity in self.files.values():
+             review_checkpoint()
+@@ -476,14 +545,20 @@
+         for directory,(inventory,root) in self.directories.items():
+             current = revision_inventory(directory, root=root)
+             if current != inventory: raise ProductionRefused('revision evidence inventory changed')
+-            observe_inventory(directory,'revision_json',current)
+         for path,root in self.absent.items():
+-            if safe_path(path,root).exists(): raise ProductionRefused('revision absent evidence appeared')
+-            observe_absence(path)
+-        if transaction is not None:
+-            transaction['checked'][self] = None
+-            if _captures.get():
+-                transaction.setdefault('capture_checked', set()).add(capture_key)
++            current = Path(path)
++            if not current.is_absolute() or '..' in current.parts or not current.is_relative_to(root):
++                raise ProductionRefused('revision evidence path escapes root')
++            try:
++                verify_read_absence(path, None)
++            except ValueError as exc:
++                if str(exc).startswith('byte proof absent path appeared:'):
++                    raise ProductionRefused('revision absent evidence appeared') from exc
++                raise
++            proof = self._absence_proofs.get(path)
++            if proof is None:
++                proof = self._absence_proofs[path] = ByteGuard((), (), (path,))
++            replay_revision_reads(proof)
+ 
+     def verify_global(self):
+         self.verify_captured_bytes()
+@@ -497,7 +572,12 @@
+ 
+ 
+ def path_identity(path):
+-    value = Path(path).stat()
++    from ._protected_continuity_inputs import path_identity_in_read_pass
++    path = Path(path)
++    held = path_identity_in_read_pass(path)
++    if held is not None:
++        return held
++    value = path.stat()
+     return value.st_dev,value.st_ino
+ 
+ 
+--- a/src/video_ai/runtime/_protected_continuity_inputs.py
++++ b/src/video_ai/runtime/_protected_continuity_inputs.py
+@@ -7,11 +7,209 @@
+ import os
+ from pathlib import Path
+ import stat
++from contextlib import contextmanager
++from contextvars import ContextVar
++from threading import get_ident
++from time import monotonic
+ from types import SimpleNamespace
+ 
+ _MAX_SOURCE_PINS = 32768
+ _MAX_DIRECTORIES = 65536
+ _MAX_RECORDS = 32768
++_read_pass = ContextVar('protected_continuity_read_pass', default=None)
++
++
++def _current_read_pass():
++    from . import verification
++    state = _read_pass.get()
++    if (state is None or not state['active'] or state['thread'] != get_ident()
++            or state['window'].closed or verification._whole_inputs.get() is not state['window']):
++        return None
++    from .scene_revision_records import _read_transaction
++    transaction = _read_transaction.get()
++    if transaction is not None and transaction.get('checkpoints', False):
++        return None
++    return state
++
++
++def verify_entry_in_read_pass(window, path, entry):
++    state = _current_read_pass()
++    if state is None or state['window'] is not window:
++        return False
++    if window.continuity is None:
++        window.continuity = _Protection(window)
++    try:
++        return window.continuity.verify_entry_in_pass(path, entry)
++    except BaseException:
++        fail_protected_read_pass()
++        raise
++
++
++def path_identity_in_read_pass(path):
++    """Return ownership only from the owning pass's original live lease."""
++    state = _current_read_pass()
++    if state is None:
++        return None
++    window = state['window']
++    with window.lock:
++        protection = window.continuity
++        if protection is None:
++            return None
++        expected = protection.records.get(path)
++        entry = protection.pins.get(path) or window.entries.get(path)
++        if expected is None or entry is None or entry.handle is None:
++            return None
++        protection._verify_in_pass(path, expected, entry)
++        return expected[4][:2]
++
++
++def fail_protected_read_pass():
++    state = _current_read_pass()
++    if state is None:
++        return
++    with state['window'].lock:
++        state['active'] = False
++        state['window'].read_generation += 1
++        state['checked'].clear()
++        for transaction in state['transactions'].values():
++            transaction['reuse_allowed'] = False
++
++
++def _flush_read_pass(state):
++    from ._continuity_byte_guard import _captures, _scan, _safe, _check_time
++    from .execution_limits import execution_deadline
++    window = state['window']
++    token = _captures.set(())
++    try:
++        if state['rows']:
++            if window.closed or window.continuity is None:
++                raise OSError('protected read window closed before boundary')
++            window.continuity._verify_rows(tuple(state['rows'].values()))
++        deadline = execution_deadline(300, monotonic())
++        for spec in state['inventories'].values():
++            if _scan(spec, deadline) != spec.expected:
++                raise ValueError('byte proof directory inventory changed: ' + spec.path)
++        for name in state['absences']:
++            _check_time(deadline)
++            if _safe(name).exists():
++                raise ValueError('byte proof absent dependency appeared: ' + name)
++    finally:
++        _captures.reset(token)
++        state['checked'].clear()
++        state['rows'].clear()
++        state['inventories'].clear()
++        state['absences'].clear()
++        state['parents'].clear()
++        state['guards'].clear()
++        state['record_checks'].clear()
++
++
++@contextmanager
++def protected_read_pass(*, fresh=False):
++    """Deduplicate physical checks only inside one synchronous native read."""
++    from . import verification
++    window = verification._whole_inputs.get()
++    if verification.os.name != 'nt' or window is None or window.closed:
++        yield
++        return
++    from .scene_revision_records import _read_transaction
++    transaction = _read_transaction.get()
++    if transaction is not None and transaction.get('checkpoints', False):
++        yield
++        return
++    current = _current_read_pass()
++    if not fresh and current is not None:
++        if transaction is not None:
++            with window.lock:
++                current['transactions'][id(transaction)] = transaction
++        yield
++        return
++    transactions = {id(transaction): transaction} if transaction is not None else {}
++    state = dict(active=True, thread=get_ident(), window=window, transactions=transactions,
++                 checked={}, rows={}, inventories={}, absences=set(), parents={}, guards={}, record_checks={})
++    with window.lock:
++        window.read_passes[id(state)] = state
++    token = _read_pass.set(state)
++    try:
++        yield
++    finally:
++        state['active'] = False
++        _read_pass.reset(token)
++        with window.lock:
++            window.read_passes.pop(id(state), None)
++            _flush_read_pass(state)
++
++
++def invalidate_protected_read_pass(window=None):
++    """End all borrowed read periods before a writer/checkpoint changes state."""
++    from . import verification
++    window = window or verification._whole_inputs.get()
++    if window is None:
++        return
++    with window.lock:
++        window.read_generation += 1
++        states = tuple(window.read_passes.values())
++        window.read_passes.clear()
++        for state in states:
++            state['active'] = False
++            for transaction in state['transactions'].values():
++                transaction['reuse_allowed'] = False
++        error = None
++        for state in states:
++            try:
++                _flush_read_pass(state)
++            except BaseException as exc:
++                if error is None:
++                    error = exc
++        if error is not None:
++            raise error
++
++
++def verify_read_inventory(spec, deadline):
++    from ._continuity_byte_guard import _scan
++    state = _current_read_pass()
++    key = spec.path, spec.kind, spec.pattern
++    if state is not None:
++        with state['window'].lock:
++            old = state['inventories'].get(key)
++            if old is not None:
++                if old != spec:
++                    raise ValueError('byte proof directory inventory changed: ' + spec.path)
++                return
++            generation = state['window'].read_generation
++    try:
++        if _scan(spec, deadline) != spec.expected:
++            raise ValueError('byte proof directory inventory changed: ' + spec.path)
++    except BaseException:
++        fail_protected_read_pass()
++        raise
++    if state is not None:
++        with state['window'].lock:
++            if not state['active'] or state['window'].read_generation != generation:
++                raise ValueError('input write interrupted proof scan')
++            state['inventories'][key] = spec
++
++
++def verify_read_absence(name, deadline):
++    from ._continuity_byte_guard import _safe, _check_time
++    state = _current_read_pass()
++    if state is not None:
++        with state['window'].lock:
++            if name in state['absences']:
++                return
++            generation = state['window'].read_generation
++    _check_time(deadline)
++    try:
++        if _safe(name).exists():
++            raise ValueError('byte proof absent path appeared: ' + name)
++    except BaseException:
++        fail_protected_read_pass()
++        raise
++    if state is not None:
++        with state['window'].lock:
++            if not state['active'] or state['window'].read_generation != generation:
++                raise ValueError('input write interrupted proof scan')
++            state['absences'].add(name)
+ 
+ 
+ def _ownership(value):
+@@ -129,16 +327,33 @@
+     def _verify(self, path, expected, entry):
+         parents = self._parents(path)
+         for parent in parents:
+-            parent.verify()
+-        before = path.stat()
++            self._verify_parent(parent)
++        self._verify_file(path, expected, entry)
++        for parent in parents:
++            self._verify_parent(parent)
++
++    def _verify_parent(self, parent, *, canonical=False):
++        state = _current_read_pass()
++        previous = state['parents'].get(parent.path) if state is not None else None
++        if previous is not None and previous[0] is parent and (previous[1] or not canonical):
++            return
++        try:
++            parent.verify(canonical=canonical)
++        except BaseException:
++            fail_protected_read_pass()
++            raise
++        if state is not None and state['active']:
++            state['parents'][parent.path] = (parent, canonical)
++
++    def _verify_file(self, path, expected, entry):
++        before = entry.verify(path)
++        if before is None:  # Compatible with existing native-entry adapters.
++            before = path.stat()
+         _matches(path, before, expected)
+         if before.st_nlink != 1:
+             raise ValueError(f'protected continuity hardlink changed: {path}')
+         _identity(entry, expected)
+-        entry.verify(path)
+         _matches(path, path.stat(), expected)
+-        for parent in parents:
+-            parent.verify()
+ 
+     def prepare(self, record, roots, *, existing_only=False):
+         from ._continuity_byte_guard import _safe
+@@ -181,11 +396,11 @@
+                     except OSError:
+                         return
+                     pending[parent] = held
+-                held.verify(canonical=True)
++                self._verify_parent(held, canonical=True)
+             # Recheck strict spelling under the entire anchored chain.
+             _safe(path)
+             for held in (*self.directories_for(ancestors), *pending.values()):
+-                held.verify()
++                self._verify_parent(held)
+             if entry is None:
+                 try:
+                     reader = _locked_reader(path)
+@@ -209,7 +424,7 @@
+             entry.verify(path)
+             _matches(path, path.stat(), expected)
+             for parent in ancestors:
+-                (self.directories.get(parent) or pending[parent]).verify(canonical=True)
++                self._verify_parent(self.directories.get(parent) or pending[parent], canonical=True)
+             self.directories.update(pending)
+             if new_entry is not None:
+                 self.pins[path] = new_entry
+@@ -225,26 +440,84 @@
+         return tuple(self.directories[parent] for parent in ancestors if parent in self.directories)
+ 
+     def verify_record(self, record):
++        baseline = _key(record)
++        state = _current_read_pass()
++        if state is not None:
++            saved = state['record_checks'].get(baseline)
++            if saved is not None and saved[0] is self and saved[1].handle is not None:
++                return True
+         path = Path(record.path)
+         expected = self.records.get(path)
+         if expected is None:
+             return False
+-        if _key(record) != expected:
++        if baseline != expected:
+             raise ValueError(f'protected continuity baseline changed: {path}')
+         entry = self.pins.get(path) or self.window.entries.get(path)
+         if entry is None or entry.handle is None:
+             return False
+         if any(parent not in self.directories for parent in path.parents):
+             return False
+-        self._verify(path, expected, entry)
++        self._verify_in_pass(path, expected, entry)
+         return True
+ 
++    def _verify_in_pass(self, path, expected, entry):
++        state = _current_read_pass()
++        key = path, expected, id(entry)
++        if state is not None and state['checked'].get(key) is entry:
++            return
++        try:
++            self._verify(path, expected, entry)
++        except BaseException:
++            fail_protected_read_pass()
++            raise
++        if state is not None and state['active']:
++            state['checked'][key] = entry
++            state['rows'][key] = (path, expected, entry)
++            state['record_checks'][expected] = (self, entry)
++
++    def verify_entry_in_pass(self, path, entry):
++        if _current_read_pass() is None:
++            return False
++        expected = self.records.get(path)
++        if expected is None:
++            # The window already holds the original mandatory-shared digest
++            # entry. Qualify its parent chain once, without opening or hashing
++            # another file, rather than rechecking it on every JSON lookup.
++            identity = entry.identity
++            record = SimpleNamespace(path=identity.path, bytes=identity.bytes,
++                mtime_ns=identity.mtime_ns, sha256=identity.sha256,
++                ownership=_ownership(path.stat()))
++            self.prepare(record, (), existing_only=True)
++            expected = self.records.get(path)
++        if expected is None or entry.handle is None:
++            return False
++        _identity(entry, expected)
++        self._verify_in_pass(path, expected, entry)
++        return True
++
+     def verify(self):
++        rows = []
+         for path, expected in self.records.items():
+             entry = self.pins.get(path) or self.window.entries.get(path)
+             if entry is None or entry.handle is None:
+                 raise OSError(f'protected continuity lease lost: {path}')
+-            self._verify(path, expected, entry)
++            rows.append((path, expected, entry))
++        return self._verify_rows(rows)
++
++    def _verify_rows(self, rows):
++        parents = {}
++        for path, expected, entry in rows:
++            if entry.handle is None or self.records.get(path) != expected:
++                raise OSError(f'protected continuity lease lost: {path}')
++            for parent in self._parents(path):
++                parents.setdefault(parent.path, parent)
++        for parent in parents.values():
++            parent.verify()
++        for path, expected, entry in rows:
++            self._verify_file(path, expected, entry)
++        for parent in parents.values():
++            parent.verify()
++        return {id(entry) for _, _, entry in rows}
+ 
+     def close(self):
+         entries = [*self.pins.values(), *self.directories.values()]
+@@ -286,6 +559,10 @@
+     with window.lock:
+         if window.closed:
+             return False
++        if window.continuity is not None and window.continuity.verify_record(record):
++            return True
++        if not prepare_existing:
++            return False
+         if prepare_existing:
+             if window.continuity is None:
+                 window.continuity = _Protection(window)
+--- /dev/null
++++ b/scripts/benchmark_cold_admission.py
+@@ -0,0 +1,349 @@
++"""Bounded, read-only cold source admission probe; never advances generation.
++
++Only the public RunLock lifecycle and the requested JSON report may write.
++ffmpeg/ffprobe decoding to stdout is allowed; rendering to files is refused.
++Use a separate process per source version. Cold means fresh application scopes,
++not an operating-system disk-cache flush. Instrumentation adds timing overhead.
++"""
++import argparse
++from collections import Counter
++from contextlib import ExitStack, contextmanager
++from functools import lru_cache, wraps
++import hashlib
++import importlib
++import json
++import math
++import os
++from pathlib import Path
++import sys
++from time import perf_counter
++from types import SimpleNamespace
++
++
++class ProbeSideEffect(RuntimeError):
++    pass
++
++
++@lru_cache(maxsize=1)
++def windows_argument_api():
++    import ctypes
++    from ctypes import wintypes
++    shell32 = ctypes.WinDLL('shell32', use_last_error=True)
++    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
++    parse = shell32.CommandLineToArgvW
++    parse.argtypes = (wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int))
++    parse.restype = ctypes.POINTER(wintypes.LPWSTR)
++    release = kernel32.LocalFree
++    release.argtypes = (ctypes.c_void_p,)
++    release.restype = ctypes.c_void_p
++    return ctypes, parse, release
++
++
++def process_arguments(command):
++    """Audit events contain Windows' serialized command line, without a shell."""
++    if isinstance(command, (list, tuple)):
++        return [str(item) for item in command]
++    if not isinstance(command, str) or os.name != 'nt' or not command or '\0' in command:
++        raise ProbeSideEffect('probe requires an explicit native decoder command')
++    ctypes, parse, release = windows_argument_api()
++    count = ctypes.c_int()
++    arguments = parse(command, ctypes.byref(count))
++    if not arguments:
++        raise ProbeSideEffect('Windows refused decoder command-line parsing')
++    try:
++        return [arguments[index] for index in range(count.value)]
++    finally:
++        release(ctypes.cast(arguments, ctypes.c_void_p))
++
++
++class ReadOnlyGuard:
++    """Audit Python mutations and process/network entrypoints during admission."""
++    def __init__(self):
++        self.active = False
++        self.processes = Counter()
++        sys.addaudithook(self.check)
++
++    def __enter__(self):
++        self.active = True
++        return self
++
++    def __exit__(self, *exc):
++        self.active = False
++
++    @contextmanager
++    def suspended(self):
++        previous = self.active
++        self.active = False
++        try: yield
++        finally: self.active = previous
++
++    def check(self, event, args):
++        if not self.active: return
++        if event == 'open':
++            if args[0] == os.devnull:
++                return
++            flags = args[2] or 0
++            if flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND):
++                raise ProbeSideEffect('probe refused file write: '+str(args[0]))
++        elif event in ('os.remove', 'os.rename', 'os.mkdir', 'os.rmdir', 'os.link',
++                       'os.symlink', 'os.truncate', 'os.chmod', 'os.utime'):
++            raise ProbeSideEffect('probe refused filesystem mutation: '+event)
++        elif event in ('socket.connect', 'socket.bind', 'socket.getaddrinfo',
++                       'os.system', 'os.exec', 'os.posix_spawn', 'os.spawn'):
++            raise ProbeSideEffect('probe refused external effect: '+event)
++        elif event == 'subprocess.Popen':
++            executable, command = args[:2]
++            command = process_arguments(command)
++            if not command: raise ProbeSideEffect('probe refused an empty process command')
++            if executable is None: executable = command[0]
++            name = Path(str(executable)).name.casefold()
++            environment = args[3] if len(args) > 3 and args[3] is not None else os.environ
++            if '-report' in command or environment.get('FFREPORT'):
++                raise ProbeSideEffect('probe refused decoder log-file output')
++            allowed = name in ('ffprobe', 'ffprobe.exe') and '-o' not in command
++            if name in ('ffmpeg', 'ffmpeg.exe'):
++                allowed = (len(command) >= 4 and command[-1] in ('-', 'pipe:1')
++                    and '-i' in command and '-f' in command
++                    and command[command.index('-f')+1] in ('null', 'rawvideo'))
++            if not allowed:
++                raise ProbeSideEffect('probe refused non-decoder process: '+str(executable))
++            self.processes[name] += 1
++
++
++def select_source(root):
++    try: root = Path(root).resolve(strict=True)
++    except OSError as exc: raise ValueError('source root does not exist: '+str(root)) from exc
++    source = root/'src' if (root/'src/video_ai/__init__.py').is_file() else root
++    if not (source/'video_ai/__init__.py').is_file():
++        raise ValueError('source root must contain src/video_ai or video_ai')
++    return source
++
++
++class CallCounts:
++    """Wrap named functions and imported aliases, avoiding a global profiler."""
++    def __init__(self):
++        self.counts = Counter()
++        self.restore = []
++
++    def install(self):
++        aliases = {}
++        targets = {
++            '_scene_revision_origins': ('capture_origin', '_read_source_clip_record', '_source_clip_record'),
++            'reference_image_records': ('_verify_reference_provenance', 'build_reference_image_acceptance',
++                'require_reference_image_acceptance', '_prior'),
++            'image_selection_records': ('load_committed_plan', '_load_accepted', '_candidates'),
++            'scene_revision_records': ('require_scene_revision', 'revision_inventory', 'revision_raw_inventory',
++                'revision_cached_read', '_verify_read_boundary'),
++            'scene_clip_records': ('scene_context', 'collect_progress', 'validate_clip'),
++            '_protected_continuity_inputs': ('verify_protected_continuity_file',),
++            'manifest': ('_hash_open_file',),
++        }
++        for module_name, names in targets.items():
++            module = importlib.import_module('video_ai.runtime.'+module_name)
++            for name in names:
++                function = getattr(module, name, None)
++                if function is not None:
++                    aliases[function] = self.wrapper(module_name+'.'+name, function)
++        scenes = importlib.import_module('video_ai.planning.production_scenes')
++        aliases[scenes.canonical_digest] = self.wrapper('canonical_digest', scenes.canonical_digest)
++        for module in tuple(sys.modules.values()):
++            if not getattr(module, '__name__', '').startswith('video_ai.'): continue
++            for name, value in tuple(vars(module).items()):
++                try: replacement = aliases.get(value)
++                except TypeError: continue
++                if replacement is not None: self.patch(module, name, replacement)
++        methods = {
++            'scene_revision_records': {'RevisionGuard': ('verify_captured_bytes', 'verify_frozen')},
++            '_continuity_byte_guard': {'ByteGuard': ('verify',)},
++            '_protected_continuity_inputs': {'_Directory': ('verify',), '_Protection': ('_verify', 'verify_record', 'verify')},
++            'verification': {'_NativeInput': ('verify', '_canonical_path'), '_WholeInputWindow': ('verify', 'close')},
++        }
++        for module_name, classes in methods.items():
++            module = importlib.import_module('video_ai.runtime.'+module_name)
++            for class_name, names in classes.items():
++                cls = getattr(module, class_name)
++                for name in names:
++                    self.patch(cls, name, self.wrapper(class_name+'.'+name, getattr(cls, name)))
++        self.patch(Path, 'stat', self.wrapper('Path.stat', Path.stat))
++        self.patch(os, 'scandir', self.wrapper('os.scandir', os.scandir))
++        return self
++
++    def wrapper(self, label, function):
++        @wraps(function)
++        def counted(*args, **kwargs):
++            self.counts[label] += 1
++            if label == '_scene_revision_origins.capture_origin' and self.counts[label] % 25 == 1:
++                print('[cold-probe] source '+str(args[0].options['run_id'])+' '+str(args[1])+':'+str(args[2])
++                      +' (node '+str(self.counts[label])+')', flush=True)
++            return function(*args, **kwargs)
++        return counted
++
++    def patch(self, owner, name, replacement):
++        self.restore.append((owner, name, getattr(owner, name)))
++        setattr(owner, name, replacement)
++
++    def close(self):
++        for owner, name, original in reversed(self.restore): setattr(owner, name, original)
++        self.restore.clear()
++
++
++def measure_probe(runtime, *, max_seconds, counts=None, publish=None):
++    """Keep phase cleanup inside timings and retain partial results on failure."""
++    counts = counts if counts is not None else Counter()
++    report = dict(complete=False, status='running', phases={}, collected_records=None)
++    started = perf_counter()
++    report['bound_policy'] = ('Cooperative deadline at admission checkpoints; single OS reads/decoder '
++        'calls and cleanup may overrun. Incomplete phases are never completion measurements.')
++    def stopped(): return perf_counter()-started >= max_seconds
++    def save():
++        report['elapsed_seconds'] = perf_counter()-started
++        report['deadline_exceeded'] = report['elapsed_seconds'] >= max_seconds
++        report['calls'] = dict(counts)
++        if publish is not None: publish(report)
++    @contextmanager
++    def phase(name):
++        before = Counter(counts); begin = perf_counter()
++        row = report['phases'][name] = dict(status='running')
++        save()
++        try:
++            yield
++            row['status'] = 'completed'
++        except BaseException as exc:
++            row['status'] = 'interrupted' if isinstance(exc, KeyboardInterrupt) else 'failed'
++            row['error'] = dict(kind=type(exc).__name__, message=str(exc))
++            raise
++        finally:
++            row['seconds'] = perf_counter()-begin
++            row['calls'] = dict(Counter(counts)-before)
++            save()
++    stack = ExitStack()
++    try:
++        with runtime.revision_scope(), runtime.control(stopped):
++            try:
++                with phase('load_frozen_inputs'):
++                    if stopped(): raise KeyboardInterrupt('probe deadline')
++                    frozen = runtime.load_frozen()
++                with phase('protection_setup'):
++                    stack.enter_context(runtime.lock())
++                    stack.enter_context(runtime.protection(frozen))
++                with phase('load_prepared_inputs'):
++                    if stopped(): raise KeyboardInterrupt('probe deadline')
++                    units, timeline = runtime.load_prepared(frozen)
++                with phase('entry_preflight_and_collect'):
++                    if stopped(): raise KeyboardInterrupt('probe deadline')
++                    def operation(context):
++                        _, records = runtime.collect(context)
++                        report['collected_records'] = len(records)
++                        return SimpleNamespace(status='probe_complete', error=None)
++                    result = runtime.entry(frozen, units, timeline, operation)
++                    report['entry_status'] = result.status
++                    if result.status == 'interrupted': raise KeyboardInterrupt(str(result.error))
++                    if result.status != 'probe_complete':
++                        raise RuntimeError('entry refused preflight: '+str(result.error))
++            finally:
++                with phase('final_protection_cleanup'): stack.close()
++        report.update(complete=True, status='completed')
++    except KeyboardInterrupt as exc:
++        report.update(status='interrupted', error=dict(kind=type(exc).__name__, message=str(exc)))
++    except Exception as exc:
++        report.update(status='failed', error=dict(kind=type(exc).__name__, message=str(exc)))
++    finally:
++        save()
++    return report
++
++
++class Runtime:
++    def __init__(self, run, guard):
++        from video_ai.runtime import production_inputs, production_image_selection, production_scene_clips
++        from video_ai.runtime import scene_clip_records, scene_revision_records, scene_review_control, verification
++        from video_ai.runtime.production_state import RunLock
++        self.inputs, self.prepared, self.clips = production_inputs, production_image_selection, production_scene_clips
++        self.records, self.revisions, self.verification = scene_clip_records, scene_revision_records, verification
++        self.revision_scope = scene_revision_records.revision_scope
++        self.control = lambda stop: scene_review_control.review_admission_control(stop_requested=stop)
++        self.run, self.guard, self.RunLock = run, guard, RunLock
++        self.held_lock = None
++
++    def load_frozen(self):
++        with self.revisions.revision_read_transaction(): return self.inputs.load_frozen_inputs(self.run)
++
++    @contextmanager
++    def lock(self):
++        # This is the sole authorized production write: the public lock lifecycle.
++        with self.guard.suspended():
++            lock = self.RunLock(self.run)
++            lock.__enter__()
++        self.held_lock = lock
++        try: yield lock
++        finally:
++            with self.guard.suspended(): lock.__exit__(*sys.exc_info())
++            self.held_lock = None
++
++    def protection(self, frozen): return self.verification.scene_input_protection(frozen)
++
++    def load_prepared(self, frozen):
++        with self.revisions.revision_read_transaction(): return self.prepared.load_prepared_inputs(frozen)
++
++    def collect(self, context): return self.records.collect_progress(context)
++
++    def entry(self, frozen, units, timeline, operation):
++        from video_ai.runtime.paths import RuntimePaths
++        from video_ai.runtime.scene_execution_records import rendering_mode
++        if rendering_mode(frozen) is not None and not (self.run/'production/scene-rendering/execution-budget.json').is_file():
++            raise ProbeSideEffect('read-only probe requires existing execution-budget.json')
++        # _entry uses only these logger attributes during read-only preflight.
++        # Constructing RunLogger would create directories, so use no writer API.
++        logger = SimpleNamespace(run_dir=self.run, production=True)
++        return self.clips._entry(frozen, units, timeline, paths=RuntimePaths.from_config(frozen.config),
++            logger=logger, lock=self.held_lock, operation=operation)
++
++
++def main(argv=None):
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--run-dir', type=Path, required=True)
++    parser.add_argument('--output', type=Path, required=True)
++    parser.add_argument('--max-seconds', type=float, default=120)
++    parser.add_argument('--source-root', type=Path, help='Checkout/snapshot root or its src directory; selected before imports')
++    args = parser.parse_args(argv)
++    if not math.isfinite(args.max_seconds) or args.max_seconds <= 0:
++        parser.error('max-seconds must be a positive finite number')
++    if any(name == 'video_ai' or name.startswith('video_ai.') for name in sys.modules):
++        parser.error('source selection requires a fresh Python process')
++    try: source = select_source(args.source_root or Path(__file__).resolve().parents[1])
++    except (OSError, ValueError) as exc: parser.error(str(exc))
++    run = args.run_dir.resolve(strict=True); output = args.output.resolve()
++    if output.is_relative_to(run) or output.is_relative_to(Path('E:/VideoAI/work')):
++        parser.error('report must be outside production work and the probed run')
++    output.parent.mkdir(parents=True, exist_ok=True)
++    sys.dont_write_bytecode = True
++    sys.path.insert(0, str(source))
++    guard = ReadOnlyGuard()
++    runtime = Runtime(run, guard)
++    from video_ai.runtime.execution_limits import production_execution
++    production_probe = production_execution(measure_probe)
++    metadata = dict(schema_version=1, run_dir=str(run), source_root=str(source), max_seconds=args.max_seconds,
++        execution_policy='unlimited_v1 with an independent cooperative max-seconds cap',
++        scope='Read-only real cold admission; no generation, observation admission, persistence or network. '
++              'Public RunLock lifecycle may write/reclaim its own lock evidence. Decoding to stdout is allowed.',
++        timing='Instrumented wall time; fresh application admission scopes, OS cache unchanged. '
++               'Incomplete/interrupted timings are bounded prefixes, not full baseline completion.',
++        source_sha256={str(path.relative_to(source)):hashlib.sha256(path.read_bytes()).hexdigest()
++            for path in sorted((source/'video_ai/runtime').glob('*.py'))})
++    def publish(report):
++        with guard.suspended():
++            output.write_text(json.dumps(dict(metadata, **report), indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
++        print('[cold-probe] '+report['status']+' '+str(round(report['elapsed_seconds'], 3))+'s '
++            +', '.join(name+':'+value['status'] for name, value in report['phases'].items()), flush=True)
++    instrumentation = CallCounts().install()
++    try:
++        with guard:
++            report = production_probe(runtime, max_seconds=args.max_seconds, counts=instrumentation.counts, publish=publish)
++    finally:
++        instrumentation.close()
++    report['decoder_processes'] = dict(guard.processes)
++    publish(report)
++    return 0 if report['complete'] else 130 if report['status'] == 'interrupted' else 1
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+--- /dev/null
++++ b/tests/unit/test_benchmark_cold_admission.py
+@@ -0,0 +1,155 @@
++"""Offline checks for the production probe's bounds and read-only contract."""
++from contextlib import contextmanager, nullcontext
++import importlib.util
++from pathlib import Path
++import json
++import os
++import subprocess
++import sys
++from types import SimpleNamespace
++
++import pytest
++
++
++def probe_module():
++    path = Path(__file__).resolve().parents[2]/'scripts/benchmark_cold_admission.py'
++    assert path.is_file(), 'cold probe must be implemented'
++    spec = importlib.util.spec_from_file_location('cold_probe_test', path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def test_probe_measures_cleanup_and_never_advances_generation():
++    probe = probe_module(); events = []
++    @contextmanager
++    def scope(name):
++        events.append(name+' enter')
++        try: yield
++        finally: events.append(name+' exit')
++    class Runtime:
++        revision_scope = lambda self: scope('revision')
++        control = lambda self, stop: nullcontext()
++        load_frozen = lambda self: events.append('frozen') or 'frozen'
++        lock = lambda self: scope('lock')
++        protection = lambda self, frozen: scope('protection')
++        def load_prepared(self, frozen):
++            with scope('prepared boundary'): return 'units', 'timeline'
++        def entry(self, frozen, units, timeline, operation):
++            events.append('entry'); operation('context')
++            return SimpleNamespace(status='probe_complete', error=None)
++        def collect(self, context): events.append('collect'); return [], {'clip': {}}
++    report = probe.measure_probe(Runtime(), max_seconds=10)
++    assert report['complete'] is True
++    assert list(report['phases']) == ['load_frozen_inputs', 'protection_setup',
++        'load_prepared_inputs', 'entry_preflight_and_collect', 'final_protection_cleanup']
++    assert events.index('prepared boundary exit') < events.index('entry')
++    assert events.index('collect') < events.index('protection exit') < events.index('lock exit')
++    assert events[-1] == 'revision exit'
++    assert report['collected_records'] == 1
++
++
++def test_interrupted_probe_reports_partial_phase_and_closes_protection():
++    probe = probe_module(); closed = []
++    @contextmanager
++    def protection():
++        try: yield
++        finally: closed.append(True)
++    runtime = SimpleNamespace(revision_scope=nullcontext, control=lambda stop:nullcontext(),
++        load_frozen=lambda:object(), lock=nullcontext, protection=lambda frozen:protection(),
++        load_prepared=lambda frozen:(_ for _ in ()).throw(KeyboardInterrupt('deadline')))
++    report = probe.measure_probe(runtime, max_seconds=1)
++    assert not report['complete'] and report['status'] == 'interrupted'
++    assert report['phases']['load_prepared_inputs']['status'] == 'interrupted'
++    assert report['phases']['final_protection_cleanup']['status'] == 'completed'
++    assert closed == [True]
++
++
++def test_readonly_guard_refuses_mutation_network_and_rendering(tmp_path):
++    probe = probe_module(); guard = probe.ReadOnlyGuard()
++    with guard:
++        with pytest.raises(probe.ProbeSideEffect): (tmp_path/'forbidden.json').write_text('{}')
++        with pytest.raises(probe.ProbeSideEffect): guard.check('socket.connect', ())
++        with pytest.raises(probe.ProbeSideEffect):
++            guard.check('subprocess.Popen', ('ffmpeg.exe', ['ffmpeg.exe', '-i', 'x', 'movie.mp4']))
++        guard.check('subprocess.Popen', ('ffmpeg.exe', ['ffmpeg.exe', '-i', 'x', '-f', 'null', '-']))
++        guard.check('subprocess.Popen', ('ffprobe.exe', ['ffprobe.exe', '-show_streams', 'x']))
++    assert not (tmp_path/'forbidden.json').exists()
++
++
++def test_readonly_guard_allows_the_exact_null_device_only(tmp_path):
++    probe = probe_module(); guard = probe.ReadOnlyGuard()
++    with guard:
++        with open(os.devnull, 'wb') as sink:
++            assert sink.write(b'discarded decoder diagnostics') > 0
++        with pytest.raises(probe.ProbeSideEffect):
++            (tmp_path / 'nul.log').write_bytes(b'file')
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='Exercises native Windows command-line parsing')
++@pytest.mark.parametrize('format_name', ['null', 'rawvideo'])
++@pytest.mark.parametrize('explicit_executable', [True, False])
++def test_windows_audit_command_string_allows_stdout_decode(format_name, explicit_executable):
++    probe = probe_module(); guard = probe.ReadOnlyGuard()
++    executable = r'C:\Program Files\Video Tools\ffmpeg.exe'
++    arguments = [executable, '-nostdin', '-v', 'error', '-xerror', '-i',
++        r'C:\Video Work\scene input.mp4', '-f', format_name, '-']
++    command = subprocess.list2cmdline(arguments)
++    with guard:
++        guard.check('subprocess.Popen', (executable if explicit_executable else None, command, None, {}))
++    assert guard.processes['ffmpeg.exe'] == 1
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='Exercises native Windows command-line parsing')
++def test_windows_quoted_ffprobe_and_escaping_round_trip():
++    probe = probe_module(); guard = probe.ReadOnlyGuard()
++    executable = r'C:\Program Files\Video Tools\ffprobe.exe'
++    arguments = [executable, '-v', 'error', '-show_streams', '-of', 'json',
++        'C:\\Video Work\\input "quoted".mp4']
++    command = subprocess.list2cmdline(arguments)
++    assert probe.process_arguments(command) == arguments
++    with guard:
++        guard.check('subprocess.Popen', (executable, command, None, {}))
++    assert guard.processes['ffprobe.exe'] == 1
++
++
++@pytest.mark.parametrize(('tool', 'arguments', 'environment'), [
++    ('ffmpeg.exe', ['-i', 'input.mp4', '-f', 'rawvideo', 'render.raw'], {}),
++    ('ffprobe.exe', ['-show_streams', '-o', 'metadata.json', 'input.mp4'], {}),
++    ('ffmpeg.exe', ['-report', '-i', 'input.mp4', '-f', 'null', '-'], {}),
++    ('ffmpeg.exe', ['-i', 'input.mp4', '-f', 'null', '-'], {'FFREPORT': 'file=leak.log'}),
++    ('ffprobe.exe', ['-report', '-show_streams', 'input.mp4'], {}),
++])
++def test_decoder_file_and_report_outputs_remain_forbidden(tool, arguments, environment):
++    probe = probe_module(); guard = probe.ReadOnlyGuard()
++    executable = str(Path(r'C:\Program Files\Video Tools')/tool) if os.name == 'nt' else tool
++    arguments = [executable, *arguments]
++    command = subprocess.list2cmdline(arguments) if os.name == 'nt' else arguments
++    with guard, pytest.raises(probe.ProbeSideEffect):
++        guard.check('subprocess.Popen', (executable, command, None, environment))
++    assert not guard.processes
++
++
++def test_source_root_selection_accepts_snapshot_root_before_product_imports(tmp_path):
++    probe = probe_module(); package = tmp_path/'src/video_ai'; package.mkdir(parents=True)
++    (package/'__init__.py').write_text('')
++    assert probe.select_source(tmp_path) == tmp_path/'src'
++    with pytest.raises(ValueError): probe.select_source(tmp_path/'missing')
++
++
++def test_cli_missing_options_is_partial_readonly_report(tmp_path):
++    root = Path(__file__).resolve().parents[2]
++    run = tmp_path/'unprepared-run'; run.mkdir()
++    output = tmp_path/'probe.json'
++    result = subprocess.run([sys.executable, str(root/'scripts/benchmark_cold_admission.py'),
++        '--run-dir', str(run), '--output', str(output), '--max-seconds', '1'],
++        capture_output=True, text=True, timeout=30, cwd=root)
++    assert result.returncode == 1, result.stdout+result.stderr
++    report = json.loads(output.read_text(encoding='utf-8'))
++    assert report['complete'] is False and report['status'] == 'failed'
++    assert report['phases']['load_frozen_inputs']['status'] == 'failed'
++    assert report['phases']['final_protection_cleanup']['status'] == 'completed'
++    assert report['source_root'] == str(root/'src')
++    assert report['execution_policy'] == 'unlimited_v1 with an independent cooperative max-seconds cap'
++    assert report['source_sha256'] and report['calls'] is not None
++    assert list(run.iterdir()) == []
+--- /dev/null
++++ b/tests/unit/test_cold_admission_performance.py
+@@ -0,0 +1,627 @@
++"""Read-proof cost must follow unique dependencies, not capture nesting."""
++import os
++from types import SimpleNamespace
++
++import pytest
++
++from video_ai.runtime import _continuity_byte_guard as guards
++from video_ai.runtime import _protected_continuity_inputs as native
++from video_ai.runtime import manifest, scene_revision_records as revisions, verification
++
++
++def proof(tmp_path):
++    path = tmp_path / 'input.json'
++    path.write_bytes(b'{"value":1}')
++    with guards.capture_reads() as capture:
++        manifest.hash_file(path)
++        guards.observe_inventory(tmp_path, 'json_direct', [path])
++        guards.observe_absence(tmp_path / 'missing.json')
++    return capture.finish()
++
++
++def test_stable_bytes_observes_protected_identity_once(tmp_path, monkeypatch):
++    path = tmp_path / 'input.json'
++    path.write_bytes(b'{"value":1}')
++    observed = []
++    original = guards.observe_file
++
++    def observe(value):
++        observed.append(value.path)
++        return original(value)
++
++    monkeypatch.setattr(guards, 'observe_file', observe)
++    with verification.whole_input_protection():
++        assert revisions.stable_bytes(path, root=tmp_path) == b'{"value":1}'
++    assert observed == [str(path)]
++
++
++def test_hash_file_observes_protected_text_once(tmp_path, monkeypatch):
++    path = tmp_path / 'input.json'
++    path.write_bytes(b'{"value":1}')
++    observed = []
++    original = guards.observe_file
++
++    def observe(value):
++        observed.append(value.path)
++        return original(value)
++
++    monkeypatch.setattr(guards, 'observe_file', observe)
++    with verification.whole_input_protection():
++        manifest.hash_file(path)
++    assert observed == [str(path)]
++
++
++def test_progress_scan_shares_one_read_transaction_and_artifact_batch(tmp_path):
++    from video_ai.runtime.scene_clip_records import collect_progress
++    path = tmp_path / 'source.json'
++    path.write_bytes(b'original')
++    context = dict(store=SimpleNamespace(run_dir=tmp_path), inputs={},
++                   plan={'scenes': [{'scene_id': 'a'}, {'scene_id': 'b'}]})
++    periods = []
++
++    def read(current, scene):
++        periods.append((revisions._read_transaction.get(), revisions._artifact_batch.get()))
++        revisions.artifact(path, root=tmp_path)
++        return dict(scene_id=scene['scene_id']), {}
++
++    collect_progress(context, scene_reader=read)
++    assert all(transaction is not None and batch is not None for transaction, batch in periods)
++    assert periods[0][0] is periods[1][0] and periods[0][1] is periods[1][1]
++    assert not periods[0][0]['active'] and not periods[0][1]['active']
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_new_native_entries_share_parent_qualification_in_one_pass(tmp_path, monkeypatch):
++    paths = [tmp_path / f'input-{i}.json' for i in range(4)]
++    for path in paths:
++        path.write_bytes(b'{"value":1}')
++    checks = []
++    original = native._Directory.verify
++
++    def verify(self, **kwargs):
++        checks.append(self.path)
++        return original(self, **kwargs)
++
++    with verification.whole_input_protection():
++        # The first native entry establishes the common directory chain.
++        with native.protected_read_pass():
++            manifest.hash_file(paths[0])
++            manifest.hash_file(paths[0])
++            monkeypatch.setattr(native._Directory, 'verify', verify)
++            for path in paths[1:]:
++                manifest.hash_file(path)
++                manifest.hash_file(path)
++            assert not checks
++        assert len(checks) == 2 * len(paths[0].parents)
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_revision_ownership_reuses_live_read_pass_proof(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    path = tmp_path / 'input.json'
++    expected = revisions.path_identity(path)
++    with verification.whole_input_protection():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        with revisions.revision_read_transaction():
++            admitted.verify()
++            with monkeypatch.context() as patch:
++                def forbidden(self, *args, **kwargs):
++                    raise AssertionError('ownership repeated a verified native file stat')
++                patch.setattr(type(path), 'stat', forbidden)
++                for _ in range(10):
++                    assert revisions.path_identity(path) == expected
++
++
++def test_captured_input_comparison_replays_one_loader_proof(tmp_path):
++    path = tmp_path / 'input.json'
++    path.write_bytes(b'{"value":1}')
++    calls = []
++
++    def read():
++        calls.append(True)
++        return revisions._json(path, root=tmp_path)
++
++    with verification.whole_input_protection(), revisions.revision_read_transaction():
++        for _ in range(4):
++            with guards.capture_reads() as capture:
++                assert revisions.revision_read_matches('same', {'value': 1}, read)
++            assert {row.path for row in capture.finish().files} == {str(path)}
++        assert len(calls) == 1
++    assert len(calls) == 2  # A fresh complete loader runs at the boundary.
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_immutable_guard_reuses_complete_qualified_closure(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    checks = []
++    original = native._Protection.verify_record
++
++    def verify(self, row):
++        checks.append(row.path)
++        return original(self, row)
++
++    with verification.whole_input_protection():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        monkeypatch.setattr(native._Protection, 'verify_record', verify)
++        with revisions.revision_read_transaction():
++            for _ in range(5):
++                admitted.verify()
++            assert len(checks) == 1
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_qualified_file_reuse_does_not_rebuild_ancestor_paths(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    row = admitted.files[0]
++    with verification.whole_input_protection(), revisions.revision_read_transaction():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        assert native.verify_protected_continuity_file(row)
++        with monkeypatch.context() as patch:
++            def forbidden(self):
++                raise AssertionError('qualified native record rebuilt parent chain')
++            patch.setattr(type(tmp_path), 'parents', property(forbidden))
++            for _ in range(5):
++                assert native.verify_protected_continuity_file(row, prepare_existing=True)
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_semantic_memo_miss_does_not_rewalk_admitted_proof(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    with verification.whole_input_protection(), revisions.revision_read_transaction():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        with revisions.revision_artifact_batch():
++            def read():
++                revisions.replay_revision_reads(admitted)
++                return {'value': 1}
++
++            with monkeypatch.context() as patch:
++                def forbidden(*args, **kwargs):
++                    raise AssertionError('successful memo read redundantly walked its complete proof')
++                patch.setattr(native, 'verify_protected_continuity_file', forbidden)
++                assert revisions.revision_cached_read('qualified-fixture', 'key', read) == {'value': 1}
++            # First actual proof verification can anchor an existing lease;
++            # cache hits and the batch/read boundaries still verify all rows.
++            assert revisions.revision_cached_read('qualified-fixture', 'key', read) == {'value': 1}
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_guard_memo_never_reuses_unleased_owned_files(tmp_path):
++    admitted = proof(tmp_path)
++    path = tmp_path / 'input.json'
++    stamp = path.stat()
++    with verification.whole_input_protection(), verification.writable_validation_session(tmp_path):
++        with revisions.revision_read_transaction():
++            admitted.verify()
++            path.write_bytes(b'{"value":2}')
++            os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
++            with pytest.raises(ValueError, match='byte proof file changed'):
++                admitted.verify()
++
++
++def test_trusted_replay_only_merges_existing_proof_rows(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    with monkeypatch.context() as patch:
++        def forbidden(*args, **kwargs):
++            raise AssertionError('replay repeated filesystem path qualification')
++        patch.setattr(guards, '_safe', forbidden)
++        with guards.capture_reads() as outer:
++            revisions.replay_revision_reads(admitted)
++            with guards.capture_reads() as inner:
++                revisions.replay_revision_reads(admitted)
++                revisions.replay_revision_reads(admitted)
++    assert outer.finish() == admitted
++    assert inner.finish() == admitted
++    outer.finish().verify()
++
++
++def test_artifact_cache_replays_complete_nested_capture_without_path_walk(tmp_path, monkeypatch):
++    path = tmp_path / 'fact.json'
++    path.write_bytes(b'fact')
++    with revisions.revision_artifact_batch():
++        with guards.capture_reads() as first:
++            expected = revisions.artifact(path, root=tmp_path)
++        with monkeypatch.context() as patch:
++            def forbidden(*args, **kwargs):
++                raise AssertionError('cached artifact repeated path walk')
++            patch.setattr(revisions, 'safe_path', forbidden)
++            with guards.capture_reads() as second:
++                assert revisions.artifact(path, root=tmp_path) == expected
++        assert first.finish() == second.finish()
++
++
++def test_inventory_cache_replays_capture_without_rescanning(tmp_path, monkeypatch):
++    path = tmp_path / 'fact.json'
++    path.write_bytes(b'fact')
++    scans = []
++    original = type(tmp_path).rglob
++
++    def scan(self, *args, **kwargs):
++        scans.append(self)
++        return original(self, *args, **kwargs)
++
++    monkeypatch.setattr(type(tmp_path), 'rglob', scan)
++    with revisions.revision_artifact_batch():
++        with guards.capture_reads() as first:
++            assert revisions.revision_inventory(tmp_path, root=tmp_path) == [str(path)]
++        for _ in range(5):
++            with guards.capture_reads() as second:
++                assert revisions.revision_inventory(tmp_path, root=tmp_path) == [str(path)]
++            assert first.finish() == second.finish()
++        assert len(scans) == 1
++    assert len(scans) == 2
++
++
++def test_revision_guard_observes_each_inventory_once(tmp_path, monkeypatch):
++    frozen = SimpleNamespace(options={'script_path': str(tmp_path / 'production/script.txt')})
++    guard = revisions.RevisionGuard(frozen)
++    guard.capture_directory(tmp_path, root=tmp_path)
++    calls = []
++    original = guards.observe_inventory
++
++    def observe(*args, **kwargs):
++        calls.append(True)
++        return original(*args, **kwargs)
++
++    monkeypatch.setattr(guards, 'observe_inventory', observe)
++    with guards.capture_reads() as captured:
++        guard.verify_captured_bytes()
++    assert captured.finish().inventory_count == 1
++    assert len(calls) == 1
++
++
++@pytest.mark.parametrize('strong_second', [False, True])
++def test_artifact_cache_preserves_declaration_only_source_scope(tmp_path, monkeypatch, strong_second):
++    import hashlib
++    from video_ai.runtime._scene_revision_origin_images import origin_image_scope, source_image_required
++    frozen = SimpleNamespace(options={})
++    raw, metadata = tmp_path / 'raw.bin', tmp_path / 'metadata.json'
++    payload = b'original data'
++    metadata.write_bytes(b'original declaration')
++    if strong_second:
++        raw.write_bytes(payload)
++    original = manifest.hash_file
++
++    def declared(path):
++        if path == raw and not source_image_required(frozen, 'b'):
++            original(metadata)
++            return manifest.FileIdentity(str(raw), len(payload), 0,
++                hashlib.sha256(payload).hexdigest(), manifest.now())
++        return original(path)
++
++    monkeypatch.setattr(manifest, 'hash_file', declared)
++    with revisions.revision_artifact_batch():
++        with origin_image_scope(frozen, {'a'}), guards.capture_reads() as weak:
++            result = revisions.artifact(raw, root=tmp_path)
++        assert {row.path for row in weak.finish().files} == {str(metadata)}
++        if strong_second:
++            with origin_image_scope(frozen, {'a', 'b'}), guards.capture_reads() as strong:
++                assert revisions.artifact(raw, root=tmp_path) == result
++            assert str(raw) in {row.path for row in strong.finish().files}
++
++
++def test_replay_retains_conflict_and_failed_capture_rules(tmp_path):
++    admitted = proof(tmp_path)
++    with guards.capture_reads() as capture:
++        guards.observe_inventory(tmp_path, 'json_direct', [])
++        with pytest.raises(ValueError, match='conflicting observed inventory'):
++            revisions.replay_revision_reads(admitted)
++    with pytest.raises(ValueError, match='successful scope closure'):
++        capture.finish()
++
++
++def test_replay_retains_capacity_and_failed_capture_rules(tmp_path):
++    admitted = proof(tmp_path)
++    with guards.capture_reads(maximum_files=0) as capture:
++        with pytest.raises(guards.CaptureLimit):
++            revisions.replay_revision_reads(admitted)
++    with pytest.raises(ValueError, match='successful scope closure'):
++        capture.finish()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_window_exit_checks_unique_entries_and_shared_parents_once(tmp_path, monkeypatch):
++    paths = [tmp_path / f'input-{i}.json' for i in range(4)]
++    for path in paths:
++        path.write_bytes(b'{"value":1}')
++    with verification.whole_input_protection():
++        with guards.capture_reads() as capture:
++            for path in paths:
++                manifest.hash_file(path)
++        native.prepare_continuity_inputs(capture.finish().files, immutable_roots=(tmp_path,))
++        directory_checks = []
++        file_checks = []
++        verify_directory = native._Directory.verify
++        verify_file = verification._NativeInput.verify
++
++        def directory(self, **kwargs):
++            directory_checks.append(self.path)
++            return verify_directory(self, **kwargs)
++
++        def file(self, path):
++            file_checks.append(path)
++            return verify_file(self, path)
++
++        monkeypatch.setattr(native._Directory, 'verify', directory)
++        monkeypatch.setattr(verification._NativeInput, 'verify', file)
++        verification._whole_inputs.get().verify()
++        parents = {parent for path in paths for parent in path.parents}
++        assert len(directory_checks) == 2 * len(parents)
++        assert len(file_checks) == len(paths)
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_read_transaction_shares_native_checks_across_nested_captures(tmp_path, monkeypatch):
++    admitted = proof(tmp_path)
++    checked = []
++    original = verification._NativeInput.verify
++    with verification.whole_input_protection():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++
++        def verify(self, path):
++            checked.append(path)
++            return original(self, path)
++
++        monkeypatch.setattr(verification._NativeInput, 'verify', verify)
++        with revisions.revision_read_transaction():
++            for _ in range(5):
++                with guards.capture_reads() as capture:
++                    admitted.verify()
++                    revisions.replay_revision_reads(admitted)
++                assert capture.finish() == admitted
++            assert len(checked) == 1
++        assert len(checked) == 2  # First use and fresh read-boundary verification.
++
++
++@pytest.mark.parametrize('kind', ['images', 'clips'])
++def test_semantic_memo_separates_effective_source_scope(kind):
++    from video_ai.runtime._scene_revision_origin_images import origin_image_scope, source_image_required
++    from video_ai.runtime._scene_revision_origin_clips import origin_clip_scope, source_clip_required
++    frozen = SimpleNamespace(options={})
++    calls = []
++
++    def read():
++        calls.append(True)
++        return (source_image_required(frozen, 'b') if kind == 'images'
++                else source_clip_required(frozen, 'b'))
++
++    def scope(required):
++        return (origin_image_scope(frozen, required) if kind == 'images'
++                else origin_clip_scope(frozen, required, all_ids={'a', 'b'}))
++
++    with revisions.revision_artifact_batch():
++        with scope({'a'}):
++            assert revisions.revision_cached_read('scope-fixture', 'same-input', read) is False
++        with scope({'a', 'b'}):
++            assert revisions.revision_cached_read('scope-fixture', 'same-input', read) is True
++    assert len(calls) == 2
++
++
++def test_growing_guard_rechecks_new_absence_before_return(tmp_path):
++    frozen = SimpleNamespace(options={'script_path': str(tmp_path / 'production/script.txt')})
++    guard = revisions.RevisionGuard(frozen)
++    missing = tmp_path / 'new-dependency.json'
++    with revisions.revision_read_transaction():
++        guard.verify_captured_bytes()
++        guard.capture_absent(missing, root=tmp_path)
++        missing.write_bytes(b'new evidence')
++        try:
++            with pytest.raises(revisions.ProductionRefused, match='absent evidence appeared'):
++                guard.verify_captured_bytes()
++        finally:
++            missing.unlink()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_growing_guard_shares_already_verified_absences(tmp_path, monkeypatch):
++    frozen = SimpleNamespace(options={'script_path': str(tmp_path / 'production/script.txt')})
++    guard = revisions.RevisionGuard(frozen)
++    missing = tmp_path / 'missing.json'
++    guard.capture_absent(missing, root=tmp_path)
++    checks = []
++    original = type(missing).stat
++
++    def stat(self, *args, **kwargs):
++        if self == missing:
++            checks.append(True)
++        return original(self, *args, **kwargs)
++
++    with verification.whole_input_protection(), revisions.revision_read_transaction():
++        with monkeypatch.context() as patch:
++            patch.setattr(type(missing), 'stat', stat)
++            for index in range(5):
++                guard.capture_absent(tmp_path / f'other-{index}.json', root=tmp_path)
++                with guards.capture_reads() as captured:
++                    guard.verify_captured_bytes()
++                assert str(missing) in captured.finish().absences
++                if index == 0:
++                    first_checks = len(checks)
++            assert first_checks > 0 and len(checks) == first_checks
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_write_in_already_active_writer_ends_physical_reuse(tmp_path):
++    from video_ai.runtime.production_state import write_exclusive
++    admitted = proof(tmp_path)
++    missing = tmp_path / 'missing.json'
++    with verification.whole_input_protection(immutable_roots=(tmp_path,)):
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        with verification.writable_validation_session(tmp_path):
++            with revisions.revision_read_transaction():
++                admitted.verify()
++                write_exclusive(missing, {'new': True})
++                try:
++                    with pytest.raises(ValueError, match='inventory changed|absent path appeared'):
++                        admitted.verify()
++                finally:
++                    missing.unlink()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++@pytest.mark.parametrize('invalidate', ['write', 'failure'])
++def test_invalidated_transaction_retains_all_exit_obligations(tmp_path, invalidate):
++    from video_ai.runtime.production_state import write_exclusive
++    frozen = SimpleNamespace(options={'script_path': str(tmp_path / 'production/script.txt')})
++    guard = revisions.RevisionGuard(frozen)
++    missing = tmp_path / 'missing.json'
++    guard.capture_absent(missing, root=tmp_path)
++    with verification.whole_input_protection(), verification.writable_validation_session(tmp_path):
++        with pytest.raises(ValueError, match='absent evidence appeared'):
++            with revisions.revision_read_transaction():
++                guard.verify_captured_bytes()
++                if invalidate == 'failure':
++                    native.fail_protected_read_pass()
++                write_exclusive(missing, {'new': True})
++                # No later access: exit must still check the original absence.
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_transaction_borrowing_outer_pass_is_invalidated_by_writer(tmp_path):
++    from video_ai.runtime.production_state import write_exclusive
++    frozen = SimpleNamespace(options={'script_path': str(tmp_path / 'production/script.txt')})
++    guard = revisions.RevisionGuard(frozen)
++    missing = tmp_path / 'missing.json'
++    guard.capture_absent(missing, root=tmp_path)
++    with verification.whole_input_protection(), verification.writable_validation_session(tmp_path):
++        with native.protected_read_pass(), revisions.revision_read_transaction():
++            guard.verify_captured_bytes()
++            write_exclusive(missing, {'new': True})
++            try:
++                with pytest.raises(ValueError, match='absent evidence appeared'):
++                    guard.verify_captured_bytes()
++            finally:
++                missing.unlink()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_foreign_writer_cannot_publish_an_older_inventory_scan(tmp_path, monkeypatch):
++    from concurrent.futures import ThreadPoolExecutor
++    from threading import Event
++    admitted = proof(tmp_path)
++    started, released = Event(), Event()
++    scan = guards._scan
++
++    def delayed(spec, deadline):
++        if not started.is_set():
++            started.set()
++            assert released.wait(3)
++        return scan(spec, deadline)
++
++    with verification.whole_input_protection():
++        native.prepare_continuity_inputs(admitted.files, immutable_roots=(tmp_path,))
++        window = verification._whole_inputs.get()
++        monkeypatch.setattr(guards, '_scan', delayed)
++
++        def writer():
++            assert started.wait(3)
++            try:
++                window.enter_writer(tmp_path / 'other')
++                window.leave_writer(tmp_path / 'other')
++            finally:
++                released.set()
++
++        with ThreadPoolExecutor(max_workers=1) as workers:
++            future = workers.submit(writer)
++            with revisions.revision_read_transaction():
++                with pytest.raises(ValueError, match='write interrupted proof scan'):
++                    admitted.verify()
++            future.result()
++        assert not window.read_passes
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_failed_physical_check_disables_earlier_success_marks(tmp_path, monkeypatch):
++    first = tmp_path / 'input.json'
++    first.write_bytes(b'first')
++    second = tmp_path / 'second.json'
++    second.write_bytes(b'second')
++    with guards.capture_reads() as capture:
++        manifest.hash_file(first)
++        manifest.hash_file(second)
++    rows = {row.path: row for row in capture.finish().files}
++    with verification.whole_input_protection():
++        native.prepare_continuity_inputs(rows.values(), immutable_roots=(tmp_path,))
++        checks = []
++        fail = [False]
++        original_file = verification._NativeInput.verify
++
++        def file(self, path):
++            checks.append(path)
++            if fail[0] and path == second:
++                raise ValueError('native file check failed')
++            return original_file(self, path)
++
++        monkeypatch.setattr(verification._NativeInput, 'verify', file)
++        with revisions.revision_read_transaction():
++            assert native.verify_protected_continuity_file(rows[str(first)])
++            fail[0] = True
++            with pytest.raises(ValueError, match='native file check failed'):
++                native.verify_protected_continuity_file(rows[str(second)])
++            fail[0] = False
++            assert native.verify_protected_continuity_file(rows[str(first)])
++            assert checks.count(first) == 2
++
++
++def test_default_guard_verify_remains_fresh_between_calls(tmp_path):
++    admitted = proof(tmp_path)
++    admitted.verify()
++    (tmp_path / 'new.json').write_bytes(b'new')
++    with pytest.raises(ValueError, match='inventory changed'):
++        admitted.verify()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows native sharing')
++def test_protected_input_reader_qualifies_native_entries_once(tmp_path, monkeypatch):
++    path = tmp_path / 'input.json'
++    path.write_bytes(b'{"value":1}')
++    checks = []
++    original = verification._NativeInput.verify
++
++    def verify(self, current):
++        checks.append(current)
++        return original(self, current)
++
++    monkeypatch.setattr(verification._NativeInput, 'verify', verify)
++
++    @verification.protected_input_read
++    def read():
++        manifest.hash_file(path)
++        manifest.hash_file(path)
++        primed = len(checks)
++        for _ in range(8):
++            assert revisions.stable_bytes(path, root=tmp_path) == b'{"value":1}'
++        assert len(checks) == primed
++
++    read()
++
++
++@pytest.mark.skipif(os.name != 'nt', reason='real Windows reparse attributes')
++def test_read_pass_rejects_live_reparse_at_its_boundary(tmp_path):
++    import ctypes
++    from ctypes import wintypes
++    import struct
++    from unit.test_protected_continuity_inputs import reparse_writer, reparse_control, mount_payload
++    directory, target = tmp_path / 'empty', tmp_path / 'target'
++    directory.mkdir()
++    target.mkdir()
++    with guards.capture_reads() as capture:
++        guards.observe_inventory(directory, 'children', [])
++    admitted = capture.finish()
++    held = native._Directory(directory)
++    kernel, writer = reparse_writer(directory)
++    installed = False
++    try:
++        with verification.whole_input_protection():
++            with pytest.raises((ValueError, OSError)):
++                with revisions.revision_read_transaction():
++                    admitted.verify()
++                    reparse_control(kernel, writer, 0x900A4, mount_payload(target))
++                    installed = True
++            assert not verification._whole_inputs.get().read_passes
++    finally:
++        if installed:
++            reparse_control(kernel, writer, 0x900AC, struct.pack('<LHH', 0xA0000003, 0, 0))
++        close = kernel.CloseHandle
++        close.argtypes = [wintypes.HANDLE]
++        close.restype = wintypes.BOOL
++        assert close(writer)
++        held.close()

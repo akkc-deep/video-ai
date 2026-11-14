@@ -1,0 +1,111 @@
+{
+  "status": "accepted_complete",
+  "video_generation": "paused",
+  "baseline_from_session_75403": {
+    "initial_load_seconds": 118.684001,
+    "initial_revision_admission_seconds": 21845.364883,
+    "warm_source_check_seconds": [
+      4.922246,
+      5.013353,
+      4.939625
+    ],
+    "warm_config_load_seconds": [
+      4.916762,
+      4.962143,
+      4.930426
+    ],
+    "limitation": "Original benchmark failed after these stages because scene_0019 provenance.json was absent. No complete baseline report or hash counts were produced."
+  },
+  "changes": [
+    "Deduplicate shared ancestor guard visits within one verification pass",
+    "Wrap revision admission in a local read transaction with exit validation",
+    "Deduplicate identical artifact bindings within first structure scan and revalidate unique bindings at exit"
+  ],
+  "pending": [],
+  "intermediate_benchmark_session": 63369,
+  "intermediate_benchmark_warning": "Started before artifact scan deduplication; must not be presented as final-version evidence",
+  "intermediate_benchmark_result": {
+    "run": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\08",
+    "stages": {
+      "initial_load": {
+        "seconds": 397.59491849999176,
+        "hash_calls": 514372,
+        "hashed_bytes": 229701864108,
+        "unique_hashed_paths": 5022,
+        "max_hashes_per_path": 250
+      },
+      "initial_revision_admission": {
+        "seconds": 1355.501703499991,
+        "hash_calls": 15799,
+        "hashed_bytes": 4110528995,
+        "unique_hashed_paths": 15799,
+        "max_hashes_per_path": 1
+      },
+      "warm_source_check": {
+        "seconds": 13.696602000010898,
+        "hash_calls": 21861,
+        "hashed_bytes": 5705977608,
+        "unique_hashed_paths": 15799,
+        "max_hashes_per_path": 2
+      },
+      "warm_config_load": {
+        "seconds": 13.724663100001635,
+        "hash_calls": 21872,
+        "hashed_bytes": 5726046280,
+        "unique_hashed_paths": 15810,
+        "max_hashes_per_path": 2
+      },
+      "three_reads_one_transaction": {
+        "seconds": 42.297440299997106,
+        "hash_calls": 64677,
+        "hashed_bytes": 12490946918,
+        "unique_hashed_paths": 15799,
+        "max_hashes_per_path": 11
+      }
+    },
+    "network_requests": 0
+  },
+  "latest_changes": [
+    "Directory JSON inventory batch deduplication with exit inventory recheck",
+    "Fix PureWindows_PORTABLE_ROOT NameError",
+    "Checkpoint and transaction exit share a single fresh ancestor traversal across input loaders and guards",
+    "Cold revision admission shares captured file baselines across node guards, rechecks unique bindings at exit, bypasses capture memo under dependency observers",
+    "Historical non-JSON directory enumeration shared across source nodes with exit inventory recheck",
+    "Revision integration fixture now uses isolated tool and voice model paths and synthetic reference WAV; actual ffmpeg binaries copied into test tree",
+    "Fix unmanaged revision fallback from legacy shared/runs to RuntimePaths.runs_root",
+    "Observation run identity derives validated run from generated artifact ancestry instead of legacy shared/runs",
+    "Batch captures now retain and recheck filesystem identity, rejecting identical-byte file replacement and appearance of previously missing empty directories",
+    "Completed non-reference image result no longer bypasses unfinished scene-manifest check",
+    "Guard verification deduplication keyed by capture observer context; active dependency captures bypass directory memo",
+    "Completed image request validation uses existing declared metadata scope only for explicitly regenerated images; task/download bindings remain checked",
+    "Shared captures reuse batch original filesystem ownership baseline and verify once at exit; 30-node identity queries reduced from 32 to 2",
+    "Common immutable ProductionTimeline reused within cold-admission batch using typed canonical JSON key; captures and closed/foreign contexts reparse",
+    "Standalone guard checks enter validation_session so retained native handles can authenticate warm hash reuse",
+    "Source capture enters existing sealed scene input protection for direct capture-origin consumers",
+    "Source capture uses pure read-only whole_input_protection, avoiding writer-root promotion/eviction when nested in an existing read window",
+    "Fresh boundary disables outer artifact/inventory memo only during boundary checks, restoring outer original baselines afterward"
+  ],
+  "verification": "Final boundary implementation:177 scoped tests passed in10.41s. Prior implementation:41 integration tests passed in178.63s. Final full integration rerun interrupted at user pause; cannot claim final integration success.",
+  "current_benchmark_session": 48813,
+  "current_benchmark_report": "docs/handoffs/repeated-read-resumed-acceptance.json",
+  "current_benchmark_status": "completed, exit0, six stages; all244 current source hashes match",
+  "current_benchmark_warning": "Older acceptance.json is intermediate; final-validated.json must complete and match all source hashes",
+  "remaining_audit": [],
+  "integration_failure": "tests/integration/test_scene_revision_flow.py setup: isolated PathPolicy rejects example config tools ffmpeg at E:/VideoAI/shared/tools; fixture must relocate tools before freeze_inputs, no production config changes",
+  "integration_session": 85607,
+  "integration_status": "completed: 41 passed in 181.20s, exit code 0",
+  "benchmark_harness_changes": "Added audited production-write denial, actual hash read byte counts and explicit checkpoint/exit stage; next run required",
+  "previous_benchmark_70607": "Stopped own benchmark PID9076 after py-spy confirmed exact command line and repeated inventory scan stack; only initial-load result exists, not a final performance result",
+  "intermediate_88800_status": "Completed with source_changed; initial admission 354.0686 sec, warm source 15.0734sec, checkpoint 35.226sec; not final code evidence",
+  "review_status": "Independent follow-up confirms fresh-boundary fix preserves baselines and restores contexts on error; no remaining blocker in reviewed change",
+  "stopped_processes": {
+    "15212": "pytest final two integration files, session70819",
+    "31000": "offline real08 benchmark, session90252"
+  },
+  "handoff_entry": "docs/handoffs/repeated-read-next-task.json",
+  "resumed_unit_verification": "90 passed in 2.02s, exit code 0",
+  "acceptance_scope_update": "User explicitly waived historical before/after comparison; accept final implementation, passing integration tests, completed real08 six-stage offline benchmark and matching source hashes.",
+  "final_evidence": "docs/handoffs/repeated-read-resumed-acceptance.json",
+  "remaining": [],
+  "production_generation": "paused"
+}
