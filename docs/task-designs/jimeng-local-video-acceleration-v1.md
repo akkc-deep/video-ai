@@ -116,6 +116,8 @@
 
 原六项 LVA-01～LVA-06 已完成，原生质量路径仍为默认。LVA-04 的 LightX2V 原生 LoRA adapter 因混合 diff/diff_b/diff_m 未加载而在采样前拒绝；这不是模型推理质量失败，也不能据此认定所有后端均不兼容。
 
-后续替代实验单独登记为 LVA-07，专项设计：`docs/task-designs/LVA-07-wrapper-backend-design.md`，任务板：`docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md`。其方向为在独立 Comfy worker/隔离依赖环境中评估 Kijai ComfyUI-WanVideoWrapper，先做 40 步 Wrapper control，再验证两个专家 LoRA 的每个 tensor 是否完整加载/应用，最后才允许 4-step 实际采样。Wrapper 是 WIP，禁止安装到生产 Comfy 或跟随浮动 main；base model 若更换，必须作为独立变量建立基线。
+后续替代实验以 LVA-07 为专项总称，专项设计：`docs/task-designs/LVA-07-wrapper-backend-design.md`，唯一执行任务板：`docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md`。2026-11-17 拆为六项顺序任务：LVA-07-01 环境与加载路径只读审查 → LVA-07-02 两专家 LoRA CPU 兼容性验证 → LVA-07-03 投入决策和具体资源清单 → LVA-07-04 隔离 worker/workflow/恢复 harness → LVA-07-05 最小真实 GPU 门槛 → LVA-07-06 条件扩展矩阵和结论。先确认 Wrapper 对此前失败的 high/low 两组1022权重、特别是混合 diff/diff_b/diff_m 的处理能力，再决定是否值得安装独立 GPU 环境和投入真实推理；不能先跑40步来代替兼容性审查。
+
+源码审查、CPU fixture、完整模型 consumed/applied 和真实视频质量分别记录；CPU 小张量通过不等于完整双专家加载成功。真实阶段须在 fast POST 前完成完整模型/LoRA准入，然后先做1份低运动40步 control，人工质量通过后再做1份4-step候选；通过后才补齐获授权的冷1热3、高运动和父子矩阵。已有合格样本复用，不为填矩阵重复生成。Wrapper 是 WIP，禁止安装到生产 Comfy 或跟随浮动 main；base model 若更换，必须作为独立变量建立基线。环境/权重只在必要准入边界建立证明并复用，不向正常生成加入重复全库扫描。
 
 LVA-07 是实验设计，不是生产迁移决定。即梦生图不改；原生 Wan 40-step、超分、合成、审核与断点恢复路径保持；不安装依赖、不下载模型、不启动 GPU、不恢复暂停生产，除非后续具体实验清单另获授权。

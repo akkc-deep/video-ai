@@ -6,6 +6,32 @@
 
 本任务首先是独立后端兼容性实验，不是立即迁移生产，也不预设 Wrapper 一定能加载该 LoRA 或一定更快。只有完成完整模型/LoRA准入、实际采样、技术验收和人工质量验收，才能报告可用候选。原生 quality 工作流继续作为回退和对照。
 
+## Execution breakdown and decision gates（2026-11-17）
+
+本次只拆分任务；尚未执行环境审查或兼容性实验。任务状态与顺序统一以 `docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md` 为准。原 LVA-07 作为本专项的总称，执行任务拆为 LVA-07-01～LVA-07-06；不重复执行已完成的 LVA-01～LVA-06。
+
+| 顺序 | 任务 | 交付与进入下一步的条件 |
+| --- | --- | --- |
+| 1 | LVA-07-01 环境与加载路径只读审查 | 固定候选 commit，核对 Windows/Python/torch/CUDA 与必需/可选依赖；追踪普通 LoRA、diff、diff_b、diff_m 的 converter → loader → patch 路径。形成兼容矩阵和阻断项；不安装、不导入节点、不启动服务/GPU。 |
+| 2 | LVA-07-02 两专家 LoRA 的 CPU 兼容性验证 | 使用固定 Wrapper 的实际处理函数，核对全部输入 key 的目标、shape、dtype，验证各 patch 类型的数值语义及两专家原子失败。CPU fixture 必须标注与完整模型的证据差距；缺依赖时先呈现最小隔离 CPU 环境清单，不在生产安装。 |
+| 3 | LVA-07-03 投入决策与具体资源清单 | 汇总前两项，给出继续、停止或证据不足；继续时列出独立环境、模型复用/下载、完整模型准入、预计资源、命令和最小 GPU 样本。未证明混合 delta 支持则不准备批量 GPU 实验。 |
+| 4 | LVA-07-04 隔离 worker、workflow 与恢复 harness | 仅在继续决定及相应具体安装授权后准备隔离环境和 adapter；完成离线身份、双专家准入、原 ID 恢复和输出契约验证。此项不执行视频采样，不接入生产默认。 |
+| 5 | LVA-07-05 最小真实 GPU 门槛 | 获具体 GPU 授权后先做完整模型/LoRA 实际应用准入，再做一个低运动 40-step control；control 人工质量通过后才做一个同输入 4-step 候选。技术/质量失败即停止，不直接跑冷1热3全矩阵。 |
+| 6 | LVA-07-06 条件扩展矩阵与实验结论 | 仅当前项技术和人工质量通过后，补齐获授权的低/高运动与父子链冷1热3；复用已完成且计时边界相容的样本。父片接受后才生成子片，汇总性能、恢复和质量证据；负面结论同样可完成实验，不推广。 |
+
+**必须区分四层证据：** 源码看似支持 → 实际 Wrapper 函数的 CPU 映射/数值验证 → 完整双专家模型上实际 consumed/applied → 视频采样与人工质量。前一层不能冒充后一层。完整模型的实际应用准入必须在 fast 生成 POST 前通过；仅 CPU 小张量通过不得登记完整模型已应用。merge/unmerge、FP8 路径和 modulation/bias 等目标参数必须与准备使用的实际配置一致；若无法在预算内证明，记录证据不足并停止。
+
+**两组 LoRA 的确切对象：** 当前证据指同一套官方 1022 配方的 high 与 low 两组专家权重，不是两套不同版本的 LoRA pair。来源 revision 为 `57adea585d1d21085e2dfc91ce3c7b646cdd9345`，既有目录为 `E:/VideoAI/shared/models/comfyui/loras/`。
+
+| 专家与文件 | 字节数 / 已记录 SHA256 | 既有 header 分类计数 |
+| --- | --- | --- |
+| high：`wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors` | 634645944 / `887c3bdeb74e83859c920438e16ca31f39ab18ce189abc5f0e36f8348c5bbb19` | 1500 tensors：普通 LoRA weight 810、diff_b 447、diff 202、diff_m 41 |
+| low：`wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors` | 739472104 / `8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1` | 1749 tensors：普通 LoRA weight 974、diff_b 531、diff 244、diff_m 0 |
+
+以上来自 `LVA-04-source-research.json`、`LVA-04-native-rejection-evidence.json` 和 `LVA-04-results.md`，是历史身份/header证据，不是本轮新验真或 Wrapper 应用计数。原生 high 准入失败，low 未进入运行时准入；必须独立验证两者。不得为适配 Wrapper 删掉41个 diff_m、忽略 bias/modulation、只用普通 rank64 部分或悄悄替换另一套权重。
+
+**校验预算：** 身份准入与逐 tensor 诊断在明确边界执行一次并保存结果；同一受保护事务复用，不把全模型哈希、全库扫描、逐 key 审计加到每个采样步或每帧。媒体沿用一次必要全解码；恢复时重建可信证明。任何数量由真实输入清单与消费记录核对，不能将 tensor 数直接当 patch 数。
+
 ## Scope / Non-goals
 
 - 只覆盖即梦图片已经人工选定之后的本地生成：Comfy 服务、Wan I2V、视频技术检查及现有片段输出接口。即梦 API、图片候选、下载、选图和通知完全不改。
@@ -61,7 +87,7 @@
 
 ### 4. Experiment matrix (single-factor)
 
-每个实验使用新 root / 新 profile identity，单 GPU 串行；低运动、高运动、父片、子片素材沿用 LVA-01 fixture。冷1次、同一 owned service 热3次；先完成技术验证，再进行人工质量审核。
+每个实验使用新 root / 新 profile identity，单 GPU 串行；低运动、高运动、父片、子片素材沿用 LVA-01 fixture。先完成 LVA-07-01～04，再由 LVA-07-05 只运行最小低运动门槛。通过后才由 LVA-07-06 补齐冷1次、同一 owned service 热3次；已有合格样本在同 profile/服务/计时边界满足条件时计入，不为凑矩阵重做。先完成技术验证，再进行人工质量审核。
 
 | Trial | Backend | Model / LoRA | Steps | Purpose |
 |---|---|---|---:|---|
@@ -115,6 +141,7 @@
 ### Real media / GPU acceptance
 
 - 先 W1 40-step 运行1个低运动93帧样本，证明 Wrapper 的输出契约与原生下游兼容；若 W1 的图像质量或基础参数无法对齐，停止，不执行 fast。
+- 上述真实视频门槛在环境只读审查、两组 LoRA 的 CPU 兼容性验证与投入决策之后；不得为调查明显不支持的 mixed delta 先跑40步。W1 同 base 不兼容时只记录拒绝；准备 W3 需另列模型变量与资源清单，不自动下载或采样。
 - 完成 W2 或 W4 的真实4-step样本，要求两个 LoRA 专家所有权重均被实际应用，真实 sampler调用/timesteps确认；输出完整93帧/PTS/尺寸/16fps。
 - 低运动质量通过后，才测试高运动与父子链。父片真实人工接受前不得启动子片；子片使用同 profile、同 backend 的新父片真实末帧。
 - 人工检查主体身份/结构、动作连贯、纹理细节、闪烁、颜色、镜头运动、尾帧与下一段接缝。技术检查不替代观看；不允许仅凭同字节或无异常日志自动记为质量通过。
@@ -131,7 +158,7 @@
 
 ## Task state and authorization boundary
 
-初始化为 NOT_STARTED，设计完成后可由用户明确要求开始时转为 READY/IN_PROGRESS。写入设计/任务板不等于授权安装节点、安装依赖、下载/改写模型、启动Comfy服务、执行真实GPU推理或恢复原生产。实际下载、环境安装和新GPU试验必须先呈现固定commit、依赖、模型/LoRA大小与SHA、具体命令及预计资源占用，再取得该项单独授权。
+原 LVA-07 的 NOT_STARTED 为拆分前历史状态。2026-11-17 按本次任务拆分初始化 LVA-07-01 为 READY、LVA-07-02～06 为 NOT_STARTED；READY 仅表示可开始只读审查，本轮没有开始或完成审查。后续任务开始前完成自身专项设计并回填任务板，不把本总体设计冒充全部子任务的实施就绪设计。写入设计/任务板不等于授权安装节点、安装依赖、下载/改写模型、启动Comfy服务、执行真实GPU推理或恢复原生产。实际下载、环境安装和新GPU试验必须先呈现固定commit、依赖、模型/LoRA大小与SHA、具体命令及预计资源占用，再取得该项单独授权；同一具体授权不重复索取。
 
 ## Risks and explicit stop conditions
 

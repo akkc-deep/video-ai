@@ -5,13 +5,14 @@
 - **Project ID:** `jimeng-local-video-acceleration-v1`，任务前缀 `LVA`。
 - **Goal:** 提高质量验收通过的本地有效视频秒数 / 从选图完成到本地成片的墙钟时间；优先消除没有新增保护作用的重复全局校验，断点恢复正确性不得退化。
 - **Scope:** 适用分支 `v1`、生产策略 `paragraph_jimeng_v1`，从即梦图片已经人工选定开始，覆盖本地 ComfyUI / Wan2.2 视频生成、片段处理、超分、合成和交付检查。保留原始输入、选中图片、全部视频帧、连续性及人工审核机制、最终 1080P 输出要求。禁止修改 `src/video_ai/adapters/jimeng.py`、`src/video_ai/runtime/jimeng_candidates.py`、`src/video_ai/runtime/jimeng_reference_candidates.py` 和任何即梦提交、候选、下载、选图协议；上游问题仅记未来事项。
-- **Completion condition:** 六项任务分别交付其范围内的代码、针对性单元/集成验证、benchmark JSON 和 Markdown 报告；真实实验按固定输入完成可复现对照，区分局部、端到端、正常生成和恢复结果，保留质量、失败和未验证限制。加速实验未通过时保留原质量路径及明确的拒绝推广结论，不以软件测试代替真实质量验收；需要的真实实验未获授权或未执行时，不登记对应任务已完成。
-- **Overall design:** `docs/task-designs/jimeng-local-video-acceleration-v1.md`，以下六项一一对应第 8 节 A–F，不额外扩展项目范围。
+- **Completion condition:** 原六项任务分别交付其范围内的代码、针对性单元/集成验证、benchmark JSON 和 Markdown 报告，其完成记录保留。LVA-07 各子任务按自身边界交付审查、CPU证据、投入决定、实现或真实实验，不要求只读审查先写产品代码或跑GPU。真实实验按固定输入完成可复现对照，区分局部、端到端、正常生成和恢复结果，保留质量、失败和未验证限制。加速实验未通过时保留原质量路径及明确的拒绝推广结论，不以软件测试代替真实质量验收；需要的真实实验未获授权或未执行时，不登记对应任务已完成。
+- **Overall design:** `docs/task-designs/jimeng-local-video-acceleration-v1.md`，原六项一一对应第 8 节 A–F；后续 LVA-07 专项按其已有设计拆为六个执行任务，不扩展到生产迁移。
 - **Existing results:** `docs/task-designs/video-generation-performance-results.md` 记录已完成的能力缓存、轮询、提帧/PNG 证明批处理、媒体复制批次校验、合成解码合并等。先对照现状，不能重复实施或把历史收益登记为本板新收益。
 - **Authorization evidence:** 2026-11-15 用户要求“docs\task-designs\jimeng-local-video-acceleration-v1.md 按照这个设计拆分任务”。本次只授权任务拆分和建板；真实 GPU 推理、付费 API、恢复暂停生产须另有明确授权。
 - **Subsequent experiment authorization:** 2026-11-15 用户在知悉三组选材、新实验run冷1/热3和人工质量确认要求后明确回复“同意，按这个做吧”。授权自行挑选已选素材及新的本地GPU实验；未授权付费调用或恢复旧生产，不代表已经人工接受新视频质量。
 
-- **Final project state:** `COMPLETED`。Order6 LVA-06于 `2026-11-16T19:23:23.328032+00:00` 完成真实矩阵、全部质量与原ID恢复证据收尾；六项既定任务均已完成。结果为保持原质量默认并明确不推广未通过候选，不是恢复暂停生产或证明全片加速。
+- **Original six-task state:** `COMPLETED`。Order6 LVA-06于 `2026-11-16T19:23:23.328032+00:00` 完成真实矩阵、全部质量与原ID恢复证据收尾；原六项既定任务均已完成。结果为保持原质量默认并明确不推广未通过候选，不是恢复暂停生产或证明全片加速。
+- **LVA-07 split evidence (2026-11-17):** 用户要求完整读取三份设计/任务文档后拆分，先做环境兼容审查，不急于安装，先确认此前失败的两组 LoRA 能否被 Wrapper 正确处理，再决定 GPU 投入。原 LVA-07 的 NOT_STARTED 聚合行由 LVA-07-01～06 执行行取代，LVA-07 保留为专项总称而非另一个待执行任务；这是范围拆分，不是完成/启动状态迁移。LVA-07-01 初始化 READY，其余 NOT_STARTED，Handoff 均 None。仅拆分与设计已交付，未执行环境审查、安装或新 GPU；原六项状态/历史证据不变。
 
 ## Workflow
 
@@ -34,7 +35,13 @@
 | 3 | LVA-03 | P1 / C：Comfy 模型生命周期与依赖感知准备重叠 | COMPLETED | LVA-01, LVA-02 | docs/task-designs/LVA-03-design.md | docs/task-handoffs/LVA-03-handoff.md |
 | 4 | LVA-04 | P1 实验 / D：独立 Wan 高速配置与质量验证 | COMPLETED | LVA-01, LVA-02 | docs/task-designs/LVA-04-design.md | docs/task-handoffs/LVA-04-handoff.md |
 | 5 | LVA-05 | P2 / E：超分模型复用、受限流水线与编码实验 | COMPLETED | LVA-01, LVA-02, LVA-03 | docs/task-designs/LVA-05-design.md | docs/task-handoffs/LVA-05-handoff.md |
-| 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |\n| 7 | LVA-07 | P1 实验 / G：隔离 WanVideoWrapper 后端与 LightX2V 兼容验证 | NOT_STARTED | LVA-01, LVA-04 | docs/task-designs/LVA-07-wrapper-backend-design.md | None |
+| 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |
+| 7 | LVA-07-01 | 环境与 Wrapper 加载路径只读审查 | COMPLETED | LVA-04 | docs/task-designs/LVA-07-01-design.md | None |
+| 8 | LVA-07-02 | 两专家 mixed-delta LoRA CPU 兼容性验证 | NOT_STARTED | LVA-07-01, LVA-04 | None | None |
+| 9 | LVA-07-03 | 是否投入的决策与具体环境/GPU资源清单 | NOT_STARTED | LVA-07-01, LVA-07-02, LVA-01 | None | None |
+| 10 | LVA-07-04 | 隔离 worker、workflow 与恢复 harness | NOT_STARTED | LVA-07-03, LVA-07-02, LVA-02 | None | None |
+| 11 | LVA-07-05 | 最小低运动真实 GPU 对照与人工质量门槛 | NOT_STARTED | LVA-07-04, LVA-07-03, LVA-01 | None | None |
+| 12 | LVA-07-06 | 条件扩展冷/热及父子矩阵与实验结论 | NOT_STARTED | LVA-07-05, LVA-07-04, LVA-01 | None | None |
 
 ## Task Details
 
@@ -157,6 +164,81 @@
 - **First action:** 按 `docs/task-designs/LVA-06-design.md` 在 `tests/unit/test_final_local_video_benchmark.py` 写 `test_identical_final_profile_reuses_one_matrix_and_never_sums_trial_envelopes` RED；T0=0/Tend=100与重叠人工区间断言并集30、non-human70、未全部质量接受cost=null、同profile只一矩阵，再实施已规定plan/session/summarizer，不先跑GPU或重做设计。
 - **State evidence:** 2026-11-15 初始化为 `NOT_STARTED`；没有本板端到端收益或质量通过证据。
 
+## LVA-07 Task Details
+
+LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。以下范围均从该设计拆出；不得把本轮任务拆分视为已执行环境审查。父专项不再另列执行状态；子任务状态只见本板。后续专项设计为 None 的任务需在准备交接前完成设计并回填，不能直接据此启动实现。
+
+此前失败的“两组”在已提供证据中是同一套1022权重的 high/low 专家：high=1500 tensors（810普通weight/447 diff_b/202 diff/41 diff_m），low=1749（974/531/244/0）。这些是 header 计数，不是 applied patch 数；high 原生失败，low 运行时未到达。逐组核对不能相互代替。若还指另一套版本，需补充其身份后另行纳入，不能自行换权重。
+
+### LVA-07-01
+
+- **Goal:** 在零安装、零GPU前提下确定当前环境冲突和 Wrapper mixed-delta 支持路径，决定是否值得进入CPU验证。
+- **Scope:** 固定候选 Wrapper 完整 commit，审阅 README、依赖、节点注册、converter/loader/patch及采样路径；核对 Windows/Python ABI/torch/CUDA、FP8、merge/unmerge、模型结构与可选加速依赖。不导入节点，不修改生产或下载模型。
+- **Acceptance:** 环境与依赖兼容矩阵有固定版本依据；普通LoRA/diff/diff_b/diff_m均有处理函数和目标映射或明确拒绝证据；high/low分别记录；输出“进入CPU验证/停止/证据不足”，无实际加载或速度主张，0安装/服务/生成POST/GPU。
+- **Dependencies:** LVA-04 的历史环境、权重身份与原生拒绝证据。
+- **Sources:** ① docs/task-designs/LVA-07-01-design.md；② docs/task-designs/LVA-07-wrapper-backend-design.md；③ docs/task-designs/LVA-04-results.md、LVA-04-source-research.json、LVA-04-native-rejection-evidence.json；④ https://github.com/kijai/ComfyUI-WanVideoWrapper 的固定commit源码与依赖声明。
+- **Deliverables:** `docs/task-designs/LVA-07-environment-review.json` / `.md`，已交付固定源码、环境/依赖矩阵、两专家与四类patch路径、停止结论及解除条件；原始只读取证在 `E:/VideoAI/scratch/benchmarks/LVA-07-01-source-audit/`。
+- **First action:** 只读查询 Wrapper 候选完整 commit，之后绑定该SHA阅读README及实际LoRA转换/patch路径，先定位41个diff_m的目标及应用方式。
+- **State evidence:** 2026-11-17 拆分初始化READY，已关联本项审查设计；无前驱交接。用户明确要求“完成任务LVA-07-01”，完整读取专项设计和历史证据后执行 `READY -> IN_PROGRESS`；本次仅只读审查，不安装、不导入节点、不启动服务或GPU。Handoff=None。
+- **Completion evidence (2026-11-17):** 完整重读本项设计后执行 `IN_PROGRESS -> COMPLETED`。Wrapper候选固定为 `a7439db30bed0c5b5fa437d77ae8a7bb220dfd00`（1.4.8），18份固定源码文本有SHA256；审阅其版本提交与父提交、实际converter/loader/merged/unmerged路径，分别记录high1500/low1749历史tensor分类（非应用计数）。源码显示diff_m→modulation.diff有转换，但unmerged只查CustomLinear.weight，遗漏bias/norm/modulation；merged的非叶模块遍历也有block/head自有modulation跳过缺口，随后patches被清空。high41个diff_m不能据转换成功认领已应用；low无diff_m亦未证明完整兼容。结论停止当前候选安装/推理准备，非宣称Wrapper普遍不支持。
+- **Environment/verification evidence:** `python.exe -I -S`查询Python3.13.14；只读version.py/METADATA/WHEEL确认torch2.14.1+cu130/CUDA13.0、Comfy0.44.0，本轮Comfy HEAD `2c75dc1b379a59e0880619d029607af5169a62ef`；nvidia-smi查询RTX5090Dv2/610.88/24455MiB。当前缺8项声明依赖，PyPI只读索引/wheel标签不作联合运行兼容证明。两个base各仅读180728字节header及8字节长度，结构/scale有候选路径，未发现必须换Kijai base的强制条件，未完整load/重哈希。实际命令：JSON ConvertFrom-Json解析exit0，报告rg覆盖exit0，stdlib文档核对18/18文本SHA、两专家计数/零操作边界通过，git diff --check exit0；diff范围只有原有设计/任务板和新审查文档，没有产品代码/模型/workflow修改。不跑产品测试或GPU；0安装/模型下载/节点导入/服务启动/生成POST/GPU采样/远程源码执行，旧生产仍暂停。CPU数值、全部tensor映射、完整模型应用、媒体质量及提速均未验证。
+- **Successor preparation:** 按Order选中LVA-07-02，观察NOT_STARTED。其“前项支持进入CPU验证”的进入条件未成立；本项完成状态保留，后继Status/Design document/Handoff原值保持，不写部分交接。后续若另行决定CPU负向复现，须先完成该项具体隔离环境与设计，安装按已列具体命令另获授权；当前不自动投入或绕过mixed-delta门槛。
+
+### LVA-07-02
+
+- **Goal:** 用真实 Wrapper 处理函数确认两组权重的映射和混合delta数学语义，先排除“忽略不支持项仍显示成功”的假兼容。
+- **Scope:** 在前项支持进入CPU验证时，读取锁定high/low全部key/shape/dtype，逐项映射到base结构；针对普通LoRA、diff、diff_b、diff_m验证实际converter/patch函数的CPU数值行为、strength、merge/unmerge及FP8边界。使用小张量/局部参数副本时明确覆盖范围，不把模拟函数当真实Wrapper。若缺依赖，先给出最小独立CPU环境及命令，取得该项安装授权；不污染生产、不启动GPU或服务。
+- **Acceptance:** 每个输入tensor都有消费/目标或拒绝原因；41个high diff_m与两侧全部bias/diff不被遗漏；数学结果与声明语义一致、未识别/shape/dtype/NaN/Inf及单专家失败导致pair原子拒绝。输出源码、CPU实际执行与完整模型未验证项的分层结论；缺依赖/映射不完整不得记通过。unsupported可形成明确否决结论，不能制造GPU候选。
+- **Dependencies:** LVA-07-01 的固定源码、依赖及支持路径；LVA-04 的两权重锁定身份与header证据。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的兼容准入与身份表；② LVA-07-01实际审查交付；③ docs/task-designs/LVA-04-source-research.json、LVA-04-native-rejection-evidence.json；④ 固定commit实际converter/loader/patch函数。自身详细设计在准备时完成并关联。
+- **Deliverables:** CPU兼容验证代码/定向用例和逐tensor JSON、Markdown结论；确切实现及报告路径在本项设计中确定，当前不伪造已有文件。
+- **First action:** 依据已固定源码，为high diff_m和low diff_b建立调用真实Wrapper函数的最小CPU失败复现，并扩展至全部映射；不先实现完整服务adapter。
+- **State evidence:** NOT_STARTED；没有CPU加载、应用或数值验证结果；不会因前项源码存在某个节点就自动宣称兼容。
+
+### LVA-07-03
+
+- **Goal:** 基于环境与CPU证据，判断是否值得投入隔离环境和真实GPU实验，并使后续投入具体可审阅。
+- **Scope:** 汇总继续/停止/证据不足的理由；继续时固定目标runtime/commit、base与LoRA复用或下载身份、字节数/SHA、FP8/offload策略、预计磁盘/RAM/VRAM和命令；列出CPU证据未覆盖的完整模型实际准入，以及先少量后扩展的GPU预算。此项只写清单，不执行安装/下载/GPU。
+- **Acceptance:** 不支持mixed delta或关键依赖无解时明确停止；证据不足列解除条件而不冒充通过。继续决定只能说明值得尝试，不能证明模型已应用或质量通过；具体安装/下载/GPU授权范围可逐项审阅，最小计划原则上1个40步低运动control及通过后的1个4步候选，W3替代模型需单列而不自动投入。
+- **Dependencies:** LVA-07-01 环境/源码审查；LVA-07-02 CPU实际证据与局限；LVA-01 固定素材及原生质量/计时边界。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md；② LVA-07-01/02实际交付；③ docs/task-designs/LVA-01-gpu-results.md、LVA-04-results.md；④ 原模型与workflow身份记录。自身详细设计在准备时完成并关联。
+- **Deliverables:** docs/task-designs/LVA-07-environment-manifest.json 和投入决策/命令文档（拟交付）；未核定值显式未验证，不伪造commit或资源数字。
+- **First action:** 按两项实际证据逐条判定混合delta、环境和模型结构是否具备继续条件，再汇总具体资源与剩余风险。
+- **State evidence:** NOT_STARTED；尚无继续决定或具体新安装/GPU授权。原任务拆分不构成这些操作授权。
+
+### LVA-07-04
+
+- **Goal:** 在决定值得投入后，准备独立可恢复的Wrapper实验路径，使真实测试有确定接口和失败边界。
+- **Scope:** 按已获具体授权的清单准备独立checkout/runtime/owned worker；实现wan_wrapper_backend、观察/benchmark入口和独立workflow/mapping/provenance，复用原ID恢复和媒体契约。离线覆盖身份漂移、缺节点、双专家原子准入、unknown不重发、完成媒体复用及owned退出；不执行视频采样、不改生产默认。需要启动服务的节点能力探测按具体清单授权执行。
+- **Acceptance:** 固定环境/源码/模型身份，/object_info实际探测与离线模拟区分；40步/4步图映射、sigma/split/seed/完整帧约束固定；完整模型LoRA实际应用门槛可在fast POST前执行，任意未应用项拒绝。原quality图、即梦代码和旧run不变，离线针对性测试/恢复记录可复现，所有owned服务有退出证据。
+- **Dependencies:** LVA-07-03 的继续决定/固定环境清单及具体授权；LVA-07-02 的真实映射与数学验证；LVA-02 的身份/恢复契约。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的Architecture/Tests；② LVA-07-02/03实际交付；③ docs/task-designs/LVA-02-design.md；④ workflows/wan22_i2v_14b_api.json及mapping；⑤ src/video_ai/runtime/scene_comfy_transactions.py、production_scene_clips.py。自身详细设计在准备时完成并关联。
+- **Deliverables:** 总体设计已有的 src/video_ai/experiments/wan_wrapper_backend.py、scripts/observe_wan_wrapper_comfy.py、scripts/benchmark_wan_wrapper.py、Wrapper工作流三件套及定向测试；具体接口在本项专项设计完成，不宣称当前已有实现。
+- **First action:** 按已完成专项设计先建立缺失mixed-delta/节点身份与unknown恢复的定向失败用例，再实现隔离profile及adapter；安装只执行已经具体授权的命令。
+- **State evidence:** NOT_STARTED；尚无隔离环境、服务、workflow或实现验证结果。缺少继续决定不得自动准备为READY。
+
+### LVA-07-05
+
+- **Goal:** 用最小真实样本确认完整双专家应用和Wrapper视频契约，决定是否值得扩展矩阵。
+- **Scope:** 在本项具体GPU授权下，先完成实际base和high/low完整加载/应用准入，记录每tensor目标和实际patch证据；然后1个低运动93帧/768×432/16fps的40步control，技术与人工质量通过后才运行同输入4步候选。实际调用数、sigma/CFG/split、offload/VRAM和计时分层记录；不直接执行全矩阵。
+- **Acceptance:** 完整模型准入不能由CPU fixture代替，未应用/未知key/shape冲突在fast POST前拒绝；control与fast分别有完整帧/PTS及人工质量结论，任何失败停止。若base或scheduler不等价明确报告，W1不兼容不自动换W3；恢复原ID、不重发unknown、服务退出可核对。仅有1样本不宣布P50/P95或稳定加速。
+- **Dependencies:** LVA-07-04 可执行隔离harness及针对性验证；LVA-07-03 固定资源/最小GPU清单与具体授权；LVA-01 素材/质量基线。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的Model gate/Experiment matrix/Real media；② LVA-07-03/04实际manifest、命令及离线证据；③ docs/task-designs/LVA-01-gpu-results.md。自身详细设计在准备时完成并关联。
+- **Deliverables:** 实际应用准入、原始请求/输出/技术及人工质量/资源证据和最小对照结果；结果追加至 docs/task-designs/LVA-07-results.json / .md（拟交付）。
+- **First action:** 在获授权的独立worker执行完整双专家模型/LoRA应用准入；失败不发fast生成POST，成功后才进入最小control。
+- **State evidence:** NOT_STARTED；没有GPU实际准入、采样、媒体或人工质量结果；不得承接旧LVA-04/06授权自动运行。
+
+### LVA-07-06
+
+- **Goal:** 在最小候选通过后，完成可复现性能/质量/恢复结论，给出是否值得后续另行设计生产接入的建议。
+- **Scope:** 按已获扩展授权补齐低/高运动和父子链各冷1热3，只有profile、owned服务和计时边界相容时复用最小样本；父片真实人工接受后才生成同profile子片。汇总阶段/端到端、冷/热、GPU/VRAM/offload、失败率及人工等待；验证原ID恢复和完成产物不重做。若前项否决不启动本矩阵，保留未执行事实与专项否决报告。
+- **Acceptance:** 全部实际完成样本的完整帧/PTS、质量与连续性可追溯，恢复无重复生成/unknown重发；冷1热3缺样不虚报完成、局部收益不冒充整片加速，更换base不归因纯后端。结论区分可继续研究/不支持/无收益/质量失败/未验证；负面结果可按自身实验停止分支收尾，未执行的后续任务不伪装COMPLETED。不恢复生产或自动推广。
+- **Dependencies:** LVA-07-05 的最小样本实际技术/人工质量及是否扩展决定；LVA-07-04 的恢复/服务/媒体接口；LVA-01 的完整fixture和原生比较边界。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的Performance/Tests；② LVA-07-05实际结果及扩展清单；③ docs/task-designs/LVA-01-gpu-results.md；④ LVA-07-04实际恢复/输出证据。自身详细设计在准备时完成并关联。
+- **Deliverables:** docs/task-designs/LVA-07-results.json / .md 的最终兼容、性能、恢复、质量与拒绝/未验证报告，链接实际原始证据。
+- **First action:** 核对最小样本的真实技术/人工质量、扩展授权和可复用计时边界，计算尚缺样本后再运行；不为填表重做已有视频。
+- **State evidence:** NOT_STARTED；没有扩展矩阵、加速或生产推广结论。前置失败时不能按Order自动绕过门槛。
+
 ## Risks
 
 - **授权与实测缺口：** 设计明确真实推理需新实验 run 和明确许可。建板不具备该许可；未完成真实测量时仅能记录已交付部分，不能把整项记完成。
@@ -166,14 +248,4 @@
 - **资源与并行：** 同连续链必须串行，单 GPU 盲目并发或多个超分模型可造成换入换出/OOM；所有不可变任务证据仍由持锁协调线程写入。
 - **重复工作与归因：** 既有性能结果只作历史输入；实际源码已覆盖的优化不重做，微基准和历史收益不计成本轮整片收益。
 - **工作区保全：** 建板时工作区已有其他源码、测试和报告改动；本板不覆盖它们，不改变既有任务状态或生产锁。
-
-
-### LVA-07
-
-- **Goal:** 验证 Kijai ComfyUI-WanVideoWrapper 是否能完整加载当前 Wan2.2 I2V 14B 双专家与 LVA-04 失败的 LightX2V 4-step high/low LoRA，并在 RTX 5090D V2 上产生质量可接受的本地视频加速候选。
-- **Scope:** 只做隔离后端兼容性实验。独立 pin Wrapper commit、worker、Comfy 服务、依赖环境、workflow/mapping/provenance 和 backend adapter；先验证原 base 的 Wrapper 40-step quality 路径，再审计 high/low LoRA 每个 tensor 是否完整 consumed/applied，成功后才允许4-step实际采样。若需 Kijai 重打包 base，作为不同模型变量单独建立质量基线。保持旧原生工作流、旧 LVA-04 结果、生产配置、任务身份和恢复协议不变。即梦生图代码/API/候选/下载/选图/通知完全不改。
-- **Acceptance:** ① Wrapper commit、Comfy commit、依赖、模型/LoRA/节点源码完整SHA固定；隔离环境不修改生产 Python/CUDA/Comfy/custom_nodes。② /object_info 与实际节点字段匹配；high/low 两专家每个LoRA tensor均有 consumed/applied 证据，任何未加载/静默跳过/不兼容均在POST前原子拒绝。③ Wrapper 40-step control 的输入/采样/输出契约可解释；base 或 scheduler 不等价时明确标注，不做纯后端加速归因。④ fast候选真实采样步数、sigma、CFG、split、LoRA strength可追溯，输出完整帧数/PTS/尺寸/FPS并通过有限值/媒体检查。⑤ 父片实际人工接受后才生成同profile子片，连续性真实验收；中断恢复只查原ID、不重发未知请求，完成媒体不重复生成。⑥ 冷1/热3阶段与端到端对照、GPU/VRAM/offload、失败率和人工等待分开报告；未获真实GPU/质量证据不得称高速模式可用或接入生产。
-- **Dependencies:** LVA-01 的原生质量/耗时基线与固定素材；LVA-04 的原生 LightX2V LoRA 不兼容证据和来源锁定。LVA-02 的恢复/身份约束沿用，但不重新实施其校验候选；LVA-03/LVA-05/LVA-06 的已完成结果作为下游接口与媒体契约参考。
-- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md；② docs/task-designs/LVA-04-results.md、LVA-04-native-rejection-evidence.json、LVA-04-design.md；③ docs/task-designs/LVA-01-gpu-results.md；④ workflows/wan22_i2v_14b_api.json、mapping；⑤ src/video_ai/runtime/production_scene_clips.py、src/video_ai/runtime/scene_comfy_transactions.py；⑥ https://github.com/kijai/ComfyUI-WanVideoWrapper、其 nodes_model_loading.py、nodes_sampler.py 与 README。
-- **First action:** 在不安装/下载/启动GPU的前提下，审查 Wrapper 固定 commit 的 README、requirements、节点注册与模型/LoRA加载路径，生成环境兼容清单；先写 node capability / mixed-delta fixture 的 RED 测试，再实现隔离 backend profile。不得先把 Wrapper 安装到当前生产 Comfy。
-- **State evidence:** 2026-11-17 新增；仅完成设计和任务板登记。未 pin 最终 Wrapper commit、未安装依赖、未下载模型、未启动服务、未运行真实 GPU；原生产继续暂停。
+- **Wrapper证据层次：** 源码支持、CPU验证、完整模型实际应用与真实视频质量分别验收；前置不支持或证据不足时停止后续投入，不因任务顺序自动安装/推理。
