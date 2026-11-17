@@ -110,3 +110,12 @@
 ## 9. 明确非目标
 
 **不修改即梦生图链路**（提交、候选、轮询、下载、选图、通知）；不改变原始文稿/TTS、不删减内容、不降低视频帧数、不跳过连续性验收、不偷偷降低最终输出画质、不把离线局部基准外推成整片耗时。
+
+
+## 后续扩展：LVA-07 WanVideoWrapper 后端实验
+
+原六项 LVA-01～LVA-06 已完成，原生质量路径仍为默认。LVA-04 的 LightX2V 原生 LoRA adapter 因混合 diff/diff_b/diff_m 未加载而在采样前拒绝；这不是模型推理质量失败，也不能据此认定所有后端均不兼容。
+
+后续替代实验单独登记为 LVA-07，专项设计：`docs/task-designs/LVA-07-wrapper-backend-design.md`，任务板：`docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md`。其方向为在独立 Comfy worker/隔离依赖环境中评估 Kijai ComfyUI-WanVideoWrapper，先做 40 步 Wrapper control，再验证两个专家 LoRA 的每个 tensor 是否完整加载/应用，最后才允许 4-step 实际采样。Wrapper 是 WIP，禁止安装到生产 Comfy 或跟随浮动 main；base model 若更换，必须作为独立变量建立基线。
+
+LVA-07 是实验设计，不是生产迁移决定。即梦生图不改；原生 Wan 40-step、超分、合成、审核与断点恢复路径保持；不安装依赖、不下载模型、不启动 GPU、不恢复暂停生产，除非后续具体实验清单另获授权。
