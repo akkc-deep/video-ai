@@ -34,11 +34,11 @@
 | 3 | LVA-03 | P1 / C：Comfy 模型生命周期与依赖感知准备重叠 | COMPLETED | LVA-01, LVA-02 | docs/task-designs/LVA-03-design.md | docs/task-handoffs/LVA-03-handoff.md |
 | 4 | LVA-04 | P1 实验 / D：独立 Wan 高速配置与质量验证 | COMPLETED | LVA-01, LVA-02 | docs/task-designs/LVA-04-design.md | docs/task-handoffs/LVA-04-handoff.md |
 | 5 | LVA-05 | P2 / E：超分模型复用、受限流水线与编码实验 | COMPLETED | LVA-01, LVA-02, LVA-03 | docs/task-designs/LVA-05-design.md | docs/task-handoffs/LVA-05-handoff.md |
-| 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |
+| 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |\n| 7 | LVA-07 | P1 实验 / G：隔离 WanVideoWrapper 后端与 LightX2V 兼容验证 | NOT_STARTED | LVA-01, LVA-04 | docs/task-designs/LVA-07-wrapper-backend-design.md | None |
 
 ## Task Details
 
-以下 Sources 均为仓库根目录下的相对路径，按所列顺序阅读；“本板任务交付”在前项完成后以其实际证据为准，不表示文件已存在。各项在初始化时均无实现或完成证据。每项详细设计需沿用总体方案全文的共同约束。
+以下 Sources 均为仓库根目录下的相对路径，按所列顺序阅读；“本板任务交付”在前项完成后以其实际证据为准，不表示文件已存在。各项在初始化时均无实现或完成证据。每项详细设计需沿用总体方案全文的共同约束。LVA-07 是原六项完成后的独立后续实验扩展。
 
 ### LVA-01
 
@@ -166,3 +166,14 @@
 - **资源与并行：** 同连续链必须串行，单 GPU 盲目并发或多个超分模型可造成换入换出/OOM；所有不可变任务证据仍由持锁协调线程写入。
 - **重复工作与归因：** 既有性能结果只作历史输入；实际源码已覆盖的优化不重做，微基准和历史收益不计成本轮整片收益。
 - **工作区保全：** 建板时工作区已有其他源码、测试和报告改动；本板不覆盖它们，不改变既有任务状态或生产锁。
+
+
+### LVA-07
+
+- **Goal:** 验证 Kijai ComfyUI-WanVideoWrapper 是否能完整加载当前 Wan2.2 I2V 14B 双专家与 LVA-04 失败的 LightX2V 4-step high/low LoRA，并在 RTX 5090D V2 上产生质量可接受的本地视频加速候选。
+- **Scope:** 只做隔离后端兼容性实验。独立 pin Wrapper commit、worker、Comfy 服务、依赖环境、workflow/mapping/provenance 和 backend adapter；先验证原 base 的 Wrapper 40-step quality 路径，再审计 high/low LoRA 每个 tensor 是否完整 consumed/applied，成功后才允许4-step实际采样。若需 Kijai 重打包 base，作为不同模型变量单独建立质量基线。保持旧原生工作流、旧 LVA-04 结果、生产配置、任务身份和恢复协议不变。即梦生图代码/API/候选/下载/选图/通知完全不改。
+- **Acceptance:** ① Wrapper commit、Comfy commit、依赖、模型/LoRA/节点源码完整SHA固定；隔离环境不修改生产 Python/CUDA/Comfy/custom_nodes。② /object_info 与实际节点字段匹配；high/low 两专家每个LoRA tensor均有 consumed/applied 证据，任何未加载/静默跳过/不兼容均在POST前原子拒绝。③ Wrapper 40-step control 的输入/采样/输出契约可解释；base 或 scheduler 不等价时明确标注，不做纯后端加速归因。④ fast候选真实采样步数、sigma、CFG、split、LoRA strength可追溯，输出完整帧数/PTS/尺寸/FPS并通过有限值/媒体检查。⑤ 父片实际人工接受后才生成同profile子片，连续性真实验收；中断恢复只查原ID、不重发未知请求，完成媒体不重复生成。⑥ 冷1/热3阶段与端到端对照、GPU/VRAM/offload、失败率和人工等待分开报告；未获真实GPU/质量证据不得称高速模式可用或接入生产。
+- **Dependencies:** LVA-01 的原生质量/耗时基线与固定素材；LVA-04 的原生 LightX2V LoRA 不兼容证据和来源锁定。LVA-02 的恢复/身份约束沿用，但不重新实施其校验候选；LVA-03/LVA-05/LVA-06 的已完成结果作为下游接口与媒体契约参考。
+- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md；② docs/task-designs/LVA-04-results.md、LVA-04-native-rejection-evidence.json、LVA-04-design.md；③ docs/task-designs/LVA-01-gpu-results.md；④ workflows/wan22_i2v_14b_api.json、mapping；⑤ src/video_ai/runtime/production_scene_clips.py、src/video_ai/runtime/scene_comfy_transactions.py；⑥ https://github.com/kijai/ComfyUI-WanVideoWrapper、其 nodes_model_loading.py、nodes_sampler.py 与 README。
+- **First action:** 在不安装/下载/启动GPU的前提下，审查 Wrapper 固定 commit 的 README、requirements、节点注册与模型/LoRA加载路径，生成环境兼容清单；先写 node capability / mixed-delta fixture 的 RED 测试，再实现隔离 backend profile。不得先把 Wrapper 安装到当前生产 Comfy。
+- **State evidence:** 2026-11-17 新增；仅完成设计和任务板登记。未 pin 最终 Wrapper commit、未安装依赖、未下载模型、未启动服务、未运行真实 GPU；原生产继续暂停。
