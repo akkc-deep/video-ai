@@ -229,6 +229,31 @@ def test_artifact_cache_replays_complete_nested_capture_without_path_walk(tmp_pa
         assert first.finish() == second.finish()
 
 
+def test_reference_prior_replays_complete_proof_without_path_walk(tmp_path, monkeypatch):
+    from video_ai.runtime import reference_image_records as refs
+    path = tmp_path / 'accepted.json'
+    path.write_bytes(b'original')
+
+    def load(*args, **kwargs):
+        manifest.hash_file(path)
+        guards.observe_inventory(tmp_path, 'json_direct', [path])
+        guards.observe_absence(tmp_path / 'missing.json')
+        return [{'accepted': True}]
+
+    monkeypatch.setattr(refs.images, '_load_accepted', load)
+    frozen = SimpleNamespace(options={})
+    with revisions.revision_artifact_batch():
+        with guards.capture_reads() as first:
+            expected = refs._prior(frozen, {}, {'batches': [['s']]}, {'scene_id': 's'})
+        with monkeypatch.context() as patch:
+            def forbidden(*args, **kwargs):
+                raise AssertionError('reference prior replay repeated filesystem qualification')
+            patch.setattr(guards, '_safe', forbidden)
+            with guards.capture_reads() as second:
+                assert refs._prior(frozen, {}, {'batches': [['s']]}, {'scene_id': 's'}) == expected
+        assert first.finish() == second.finish()
+
+
 def test_inventory_cache_replays_capture_without_rescanning(tmp_path, monkeypatch):
     path = tmp_path / 'fact.json'
     path.write_bytes(b'fact')

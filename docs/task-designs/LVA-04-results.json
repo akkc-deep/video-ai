@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-04",
+  "status": "COMPLETED",
+  "implementation": "delivered",
+  "offline": "passed",
+  "fast_validated": false,
+  "default_mode": "quality",
+  "default_adoption": false,
+  "production_resumed": false,
+  "downloads_performed": 2,
+  "new_gpu_trials": 5,
+  "packages_installed": 0,
+  "validation": {
+    "targeted_tests": 79,
+    "seconds": 5.0,
+    "result": "passed",
+    "offline_report": "E:\\VideoAI\\scratch\\benchmarks\\LVA-04-offline-final-results.json",
+    "offline_report_sha256": "99043f73741c0f896625a0008cffabaa853a5fe5587f6f0ef504ee366969b83c",
+    "offline_simulation": {
+      "schema_version": 1,
+      "task_id": "LVA-04",
+      "scope": "offline_tiny_artifacts_and_fake_HTTP_only",
+      "status": "passed",
+      "real_network_calls": 0,
+      "real_gpu_trials": 0,
+      "real_media_checks": 0,
+      "unknown_recovery": {
+        "simulated_initial_posts": 1,
+        "recovery_posts": 0,
+        "original_id_recovered": true
+      },
+      "completed_recovery": {
+        "posts": 0,
+        "producers": 0
+      },
+      "elapsed_seconds": 0.20086549999541603,
+      "fast_validated": false,
+      "quality": "not_run",
+      "default_adoption": false,
+      "factors": {
+        "distill": {
+          "status": "not_run",
+          "gpu_seconds": null,
+          "quality": "not_run"
+        },
+        "sage": {
+          "status": "rejected_unsupported",
+          "gpu_seconds": null,
+          "quality": "not_run"
+        },
+        "cache": {
+          "status": "rejected_unsupported",
+          "gpu_seconds": null,
+          "quality": "not_run"
+        },
+        "compile": {
+          "status": "rejected_unsupported",
+          "gpu_seconds": null,
+          "quality": "not_run"
+        },
+        "combination": {
+          "status": "rejected_unsupported",
+          "gpu_seconds": null,
+          "quality": "not_run"
+        }
+      }
+    }
+  },
+  "original": {
+    "workflow_sha256": "5f3768f6e83bf6be21287457c7c15e811d8f6949b7b5c5ac5460c267c8f98666",
+    "mapping_sha256": "a3ea755e0fa5fb5413151ee9a551467b6fc0359e2a56a48312a9830316abb437"
+  },
+  "review": {
+    "artifact": "docs/task-designs/LVA-04-review.md",
+    "critical": 0,
+    "important_found": 3,
+    "important_fixed_red_green": 3,
+    "deferred_minors": 0
+  },
+  "environment": {
+    "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+    "packages": {
+      "torch": "2.14.1+cu130",
+      "numpy": "2.5.4",
+      "comfy-aimdo": "0.6.0",
+      "comfy-kitchen": "0.2.40"
+    },
+    "cuda": "13.0",
+    "driver_devices": [
+      "NVIDIA GeForce RTX 5090 D v2, 610.88"
+    ],
+    "comfy": "0.44.0",
+    "source_binary_artifacts": 516
+  },
+  "factors": {
+    "distill": {
+      "status": "failed",
+      "decision": "rejected_incompatible_native_patch_format",
+      "attempts": 1,
+      "generated_fast_videos": 0,
+      "actual_sigma": null,
+      "applied_patch_counts": null,
+      "quality": "not_evaluable_no_candidate_video",
+      "gpu_inference_seconds": null,
+      "speedup": null
+    },
+    "sage": {
+      "status": "unsupported",
+      "reason": "sageattention absent; distill rejected",
+      "gpu_seconds": null,
+      "quality": "not_run"
+    },
+    "cache": {
+      "status": "rejected_unsupported",
+      "reason": "no verified native dual-expert cache; distill rejected",
+      "gpu_seconds": null,
+      "quality": "not_run"
+    },
+    "compile": {
+      "status": "unsupported",
+      "reason": "triton absent; distill rejected",
+      "compile_cold_seconds": null,
+      "quality": "not_run"
+    },
+    "combination": {
+      "status": "rejected",
+      "reason": "no independently accepted accelerated factors",
+      "gpu_seconds": null,
+      "quality": "not_run"
+    }
+  },
+  "manifest": {
+    "path": "docs\\task-designs\\LVA-04-gpu-manifest.json",
+    "sha256": "54ea929f38a033fb6960bf96857f75d1ee20047a8452a1e7b715ec550979b50d",
+    "download_bytes": 1374118048,
+    "commands": "docs/task-designs/LVA-04-gpu-commands.md",
+    "max_proposed_native_trials": 32
+  },
+  "scopes": {
+    "local_offline": "passed tiny protocol simulation",
+    "normal": "4 actual quality native videos; 1 original fast graph rejected before sampler",
+    "recovery": "actual stopped-service replay: 0 HTTP / 0 producers; original failed prompt ID preserved",
+    "end_to_end": "not_measured",
+    "human_quality": "fast not evaluable: no video; new quality control not automatically accepted despite exact prior-reference bytes",
+    "physical_weight_transfer": "not_measured",
+    "compile_cold_cost": "not_run"
+  },
+  "authorization_gate": "Satisfied: user 同意，继续吧 authorizes pinned download and up to 32 serial new native GPU trials, subject to technical and human parent gates.",
+  "limitations": [
+    "This is a completed experimental rejection, not a validated usable fast mode.",
+    "The official files include non-LoRA delta formats; no new converter, merge, Wrapper or alternative recipe was attempted.",
+    "No fast video, fast quality/continuity score, fast actual sigma, accepted patch count, speedup or full-film throughput exists.",
+    "Historical base evidence contains path/size/mtime stamps only. Full SHA admitted now; historical full-content equality cannot be retroactively proved.",
+    "New quality control was not granted a new human acceptance; no receipt was fabricated.",
+    "Existing production and predecessor known defects remain outside this change."
+  ],
+  "remaining": [],
+  "gpu_run_state": "docs/task-designs/LVA-04-gpu-run-state.json",
+  "outcome": "fast_candidate_rejected_incompatible_native_patch_format",
+  "new_gpu_graph_attempts": 5,
+  "completed_native_videos": 4,
+  "failed_fast_graph_attempts": 1,
+  "gpu_results": "docs/task-designs/LVA-04-gpu-results.json",
+  "rejection_evidence": "docs/task-designs/LVA-04-native-rejection-evidence.json",
+  "real_recovery": "E:/VideoAI/scratch/benchmarks/LVA-04-real-recovery-receipt.json",
+  "all_owned_services_closed": true,
+  "acceptance": {
+    "1": "Independent workflow/mapping/provenance/profile/request/intent/service identities delivered; original quality bytes unchanged.",
+    "2": "Actual fixed environment and official weights attempted; selected strict native adapter rejected mixed deltas, other factors explicitly unsupported/rejected. No invented patch/sigma/speed data.",
+    "3": "Quality control preserves all 93 frames and PTS/finite checks; fast stops before sampler; parent/child gates not bypassed. Actual recovery 0 HTTP/0 producers.",
+    "4": "Technical incompatibility establishes negative candidate outcome; no candidate video exists for human judgment, marked not_evaluable, never accepted or fast validated.",
+    "5": "Normal/recovery and native/whole-film scopes separated; default quality and paused production retained."
+  },
+  "successor_preparation": {
+    "task_id": "LVA-05",
+    "status": "READY",
+    "design": "docs/task-designs/LVA-05-design.md",
+    "handoff": "docs/task-handoffs/LVA-05-handoff.md",
+    "implementation_started": false,
+    "gpu_authorized": false
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-04",
+  "source_quality_sha256": "5f3768f6e83bf6be21287457c7c15e811d8f6949b7b5c5ac5460c267c8f98666",
+  "workflow_sha256": "247fc1a6e04c8a4cab0403f5c6a0cec5ecac36595c5553fea3fee4b07b9039bc",
+  "source_repository": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras",
+  "revision": "57adea585d1d21085e2dfc91ce3c7b646cdd9345",
+  "reference_workflow": {
+    "url": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras/resolve/57adea585d1d21085e2dfc91ce3c7b646cdd9345/wan2.2_i2v_scale_fp8_comfyui_with_lora.json",
+    "sha256": "aecf199c8451c2272fb53f6a96854c12cd596297326f426a6d7bf4533c7383b8",
+    "bytes": 37227,
+    "selected_nodes": [
+      {
+        "id": 91,
+        "type": "INTConstant",
+        "widgets": [
+          2
+        ]
+      },
+      {
+        "id": 94,
+        "type": "INTConstant",
+        "widgets": [
+          4
+        ]
+      },
+      {
+        "id": 99,
+        "type": "FloatToSigmas",
+        "widgets": []
+      },
+      {
+        "id": 100,
+        "type": "StringToFloatList",
+        "widgets": [
+          "1.0, 0.9375001, 0.8333333, 0.625, 0.0000"
+        ]
+      },
+      {
+        "id": 80,
+        "type": "WanVideoSetLoRAs",
+        "widgets": []
+      },
+      {
+        "id": 79,
+        "type": "WanVideoSetLoRAs",
+        "widgets": []
+      },
+      {
+        "id": 27,
+        "type": "WanVideoSampler",
+        "widgets": [
+          6,
+          1,
+          1.0000000000000002,
+          42,
+          "fixed",
+          true,
+          "euler",
+          0,
+          1,
+          false,
+          "comfy",
+          0,
+          10,
+          ""
+        ]
+      },
+      {
+        "id": 35,
+        "type": "WanVideoTorchCompileSettings",
+        "widgets": [
+          "inductor",
+          false,
+          "default",
+          false,
+          64,
+          true,
+          128
+        ]
+      },
+      {
+        "id": 56,
+        "type": "WanVideoLoraSelect",
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 97,
+        "type": "WanVideoLoraSelect",
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 22,
+        "type": "WanVideoModelLoader",
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      },
+      {
+        "id": 71,
+        "type": "WanVideoModelLoader",
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      },
+      {
+        "id": 90,
+        "type": "WanVideoSampler",
+        "widgets": [
+          6,
+          1,
+          1.0000000000000002,
+          42,
+          "fixed",
+          true,
+          "euler",
+          0,
+          1,
+          false,
+          "comfy",
+          10,
+          -1,
+          ""
+        ]
+      }
+    ],
+    "native_comfy_reference": false,
+    "reference_runtime": "ComfyUI WanVideoWrapper custom nodes, not current native graph"
+  },
+  "weights": [
+    {
+      "rfilename": "wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "blobId": "70a7b43e9c345375cbf5c5d8cc471ea006a5d4ae",
+      "size": 634645944,
+      "lfs": {
+        "sha256": "887c3bdeb74e83859c920438e16ca31f39ab18ce189abc5f0e36f8348c5bbb19",
+        "size": 634645944,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "blobId": "56ebfd3237c412eb06aa04e07c26d1fe137fe922",
+      "size": 739472104,
+      "lfs": {
+        "sha256": "8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1",
+        "size": 739472104,
+        "pointerSize": 134
+      }
+    }
+  ],
+  "recipe": {
+    "steps": 4,
+    "cfg": 1,
+    "split": 2,
+    "shift": 5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "sigma_points": [
+      1,
+      0.9375,
+      0.8333333333333334,
+      0.625,
+      0
+    ]
+  },
+  "node_source": "src/video_ai/experiments/wan_fast_nodes.py",
+  "validation": "not_run_native_compatibility_and_quality_pending",
+  "default_adoption": false,
+  "node_source_sha256": "f72387773bbdec78666c522eab8cca18d23670f3cf733cf5899a2f866461fffd",
+  "media_source": "src/video_ai/experiments/wan_fast_media.py",
+  "media_source_sha256": "290ec91011e7b73bbf81d8c4ee238a5279277870ddc885defb6c0488d6d5e84e",
+  "quality_mapping_sha256": "a3ea755e0fa5fb5413151ee9a551467b6fc0359e2a56a48312a9830316abb437",
+  "recipes": {
+    "quality": {
+      "steps": 40,
+      "cfg": 3.5,
+      "split": 15,
+      "lora": false
+    },
+    "fast_experimental": {
+      "steps": 4,
+      "cfg": 1,
+      "split": 2,
+      "shift": 5,
+      "sampler": "euler",
+      "scheduler": "simple",
+      "sigma_points": [
+        1,
+        0.9375,
+        0.8333333333333334,
+        0.625,
+        0
+      ]
+    }
+  }
+}

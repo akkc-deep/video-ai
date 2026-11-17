@@ -90,6 +90,12 @@ def _bind_inventory(store,directory,inventory):
 
 def _capture_composition_guard(context,candidate):
     """Give downstream guards every admitted composition byte without freezing review writes."""
+    from .scene_validation_pass import scene_guard_validation
+    with scene_guard_validation(context['store'],context['composition_store']):
+        return _capture_composition_guard_in_pass(context,candidate)
+
+
+def _capture_composition_guard_in_pass(context,candidate):
     store=context['composition_store']; base=context['store']
     if store.lock is not None:
         store.verify_global()

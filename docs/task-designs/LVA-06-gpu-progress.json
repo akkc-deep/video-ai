@@ -1,0 +1,14 @@
+{
+  "task_id": "LVA-06",
+  "status": "COMPLETED",
+  "completed_at_utc": "2026-11-16T19:23:23.328032+00:00",
+  "controller_completed": true,
+  "active_owned_services": 0,
+  "total_completed_native_samples": 16,
+  "total_upscale_frames": 1424,
+  "total_final1080p_candidates": 12,
+  "all_quality_accepted": true,
+  "completion": "docs/task-designs/LVA-06-completion.json",
+  "production_resumed": false,
+  "next": null
+}

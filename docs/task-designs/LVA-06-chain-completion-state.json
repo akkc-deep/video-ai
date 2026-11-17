@@ -1,0 +1,879 @@
+{
+  "task_id": "LVA-06",
+  "fixture": "chain",
+  "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain",
+  "plan_sha256": "220c087ed0a5a94ac8f5e1ff263dda522871ca6fb3424ca37efdf2c3474d7758",
+  "status": "quality_accepted",
+  "pending_review": null,
+  "review": [],
+  "summary": {
+    "schema_version": 1,
+    "task_id": "LVA-06",
+    "profile": "quality_strict_serial_x264",
+    "matrix_count": 1,
+    "report_identities": {
+      "baseline": "new_actual_quality_matrix",
+      "final": "new_actual_quality_matrix"
+    },
+    "batches": [
+      {
+        "batch_id": "chain",
+        "mode": "normal",
+        "batch_wall_seconds": 6498.513538599014,
+        "human_wait_seconds": 2027.951196193695,
+        "non_human_envelope_seconds": 4470.562342405319,
+        "active_span_seconds": 4415.376700162888,
+        "idle_other_waiting_seconds": 55.18564224243164,
+        "trial_scheduling_envelopes_seconds": [
+          6476.797670125961,
+          6484.010836362839,
+          6491.245648860931,
+          6498.510541200638
+        ],
+        "envelope_scope": "Overlapping trial envelopes include batch queueing; never sum for throughput.",
+        "accepted_video_seconds": 42.5,
+        "cost_per_usable_video_second": 105.18970217424281,
+        "cost_missing_reason": null,
+        "quality_decisions": [
+          {
+            "kind": "parent",
+            "start": 1794849880.5681937,
+            "end": 1794850618.845384,
+            "decision": "accepted",
+            "decision_artifact": {
+              "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\reviews\\parent-user-decision.json",
+              "bytes": 3640,
+              "sha256": "652d1ebeaa1fdcc1fc0902a76746b906df918b5919a2519b3cb1715962d901e0"
+            },
+            "media_artifacts": [
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\output\\parent_child\\cold_1_00001_.mp4",
+                "bytes": 769566,
+                "sha256": "c2f678d5a6c9f3d9829bb93150ae0cbca0294fec7fff434e31a4da7669c980b8"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\cold_1\\retained.mp4",
+                "bytes": 713209,
+                "sha256": "e2a51e55e702967a3ca88c2a4d1161c7294024560799c21a0970216d2af24e27"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\cold_1\\frame_000093.png",
+                "bytes": 277663,
+                "sha256": "606b69269c64164aedec402c3f9e91423cab4fa7e1ee6fc09b60e219bc000c92"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\output\\parent_child\\warm_1_00001_.mp4",
+                "bytes": 769566,
+                "sha256": "555f3bf69bcd37c2c0064deb2c66d3122a9aca8eeb6f15c4a5dbde07ef39b16e"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_1\\retained.mp4",
+                "bytes": 713209,
+                "sha256": "e2a51e55e702967a3ca88c2a4d1161c7294024560799c21a0970216d2af24e27"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_1\\frame_000093.png",
+                "bytes": 277663,
+                "sha256": "606b69269c64164aedec402c3f9e91423cab4fa7e1ee6fc09b60e219bc000c92"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\output\\parent_child\\warm_2_00001_.mp4",
+                "bytes": 769566,
+                "sha256": "5b6cf90e6150f45bd8556e12123adcd70719446c5593399c16cb667426be9a41"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_2\\retained.mp4",
+                "bytes": 713209,
+                "sha256": "e2a51e55e702967a3ca88c2a4d1161c7294024560799c21a0970216d2af24e27"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_2\\frame_000093.png",
+                "bytes": 277663,
+                "sha256": "606b69269c64164aedec402c3f9e91423cab4fa7e1ee6fc09b60e219bc000c92"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\output\\parent_child\\warm_3_00001_.mp4",
+                "bytes": 769566,
+                "sha256": "9437aeffcfb8390b4aacd7b6fe8a12ee77c22261414c02e485d703da4116cf8f"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_3\\retained.mp4",
+                "bytes": 713209,
+                "sha256": "e2a51e55e702967a3ca88c2a4d1161c7294024560799c21a0970216d2af24e27"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_parent\\trials\\warm_3\\frame_000093.png",
+                "bytes": 277663,
+                "sha256": "606b69269c64164aedec402c3f9e91423cab4fa7e1ee6fc09b60e219bc000c92"
+              }
+            ]
+          },
+          {
+            "kind": "child_continuity",
+            "start": 1794852226.8479457,
+            "end": 1794853516.5219517,
+            "decision": "accepted",
+            "decision_artifact": {
+              "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\reviews\\child-continuity-user-decision.json",
+              "bytes": 4772,
+              "sha256": "a8cf94c6c0bdb6d2a50759bd2bb3936ba305753cac022d25528d3b39a4765c3c"
+            },
+            "media_artifacts": [
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\output\\parent_child\\cold_1_child_00001_.mp4",
+                "bytes": 775740,
+                "sha256": "c63c2fb578be51604da13e85508207d39a20d5ac5808d1dfeb0b82fff3ae81d9"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\cold_1_child\\retained.mp4",
+                "bytes": 680363,
+                "sha256": "fb064f81a115815500ae4169b8c26ee7cc73bc35aa5a4b7758662da2ce427c12"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\cold_1_child\\frame_000078.png",
+                "bytes": 225387,
+                "sha256": "b5458962f4065439c4b6b913381761433e1185fc6706e064c0e732162224e157"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\output\\parent_child\\warm_1_child_00001_.mp4",
+                "bytes": 775740,
+                "sha256": "d7fede2afdb4860e26c52c6ffeba60e22c668bc94d229319e46aabb583accb0b"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_1_child\\retained.mp4",
+                "bytes": 680363,
+                "sha256": "fb064f81a115815500ae4169b8c26ee7cc73bc35aa5a4b7758662da2ce427c12"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_1_child\\frame_000078.png",
+                "bytes": 225387,
+                "sha256": "b5458962f4065439c4b6b913381761433e1185fc6706e064c0e732162224e157"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\output\\parent_child\\warm_2_child_00001_.mp4",
+                "bytes": 775740,
+                "sha256": "ca369e878da1d573e045a989d3e20cd40cf73e147ff41f38edcb7a546972b965"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_2_child\\retained.mp4",
+                "bytes": 680363,
+                "sha256": "fb064f81a115815500ae4169b8c26ee7cc73bc35aa5a4b7758662da2ce427c12"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_2_child\\frame_000078.png",
+                "bytes": 225387,
+                "sha256": "b5458962f4065439c4b6b913381761433e1185fc6706e064c0e732162224e157"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\output\\parent_child\\warm_3_child_00001_.mp4",
+                "bytes": 775740,
+                "sha256": "a66761b5e2045c35631b43bbd9dfcb108523813402b49b116b161f9896f5506a"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_3_child\\retained.mp4",
+                "bytes": 680363,
+                "sha256": "fb064f81a115815500ae4169b8c26ee7cc73bc35aa5a4b7758662da2ce427c12"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\trials\\warm_3_child\\frame_000078.png",
+                "bytes": 225387,
+                "sha256": "b5458962f4065439c4b6b913381761433e1185fc6706e064c0e732162224e157"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\review\\cold_1\\parent-child-native.mp4",
+                "bytes": 1392796,
+                "sha256": "6eb66eeb4c0b702a595c927d144ba1f276484aa6a90aa6aa16f17c7b99f26f08"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\review\\warm_1\\parent-child-native.mp4",
+                "bytes": 1392796,
+                "sha256": "6eb66eeb4c0b702a595c927d144ba1f276484aa6a90aa6aa16f17c7b99f26f08"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\review\\warm_2\\parent-child-native.mp4",
+                "bytes": 1392796,
+                "sha256": "6eb66eeb4c0b702a595c927d144ba1f276484aa6a90aa6aa16f17c7b99f26f08"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\native_child\\review\\warm_3\\parent-child-native.mp4",
+                "bytes": 1392796,
+                "sha256": "6eb66eeb4c0b702a595c927d144ba1f276484aa6a90aa6aa16f17c7b99f26f08"
+              }
+            ]
+          },
+          {
+            "kind": "final",
+            "start": 1794854387.3020191,
+            "end": 1794856552.177358,
+            "decision": "accepted",
+            "decision_artifact": {
+              "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\reviews\\final-user-decision.json",
+              "bytes": 1587,
+              "sha256": "19f6d03ca57b9b98e1a2c2e301693e64e15b964ea8b9b23c9a945e5a8e6f4ea3"
+            },
+            "media_artifacts": [
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\upscale\\postprocess\\parent_child_chain_cold_1\\candidate-1080p.mp4",
+                "bytes": 7184689,
+                "sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\upscale\\postprocess\\parent_child_chain_warm_1\\candidate-1080p.mp4",
+                "bytes": 7184689,
+                "sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\upscale\\postprocess\\parent_child_chain_warm_2\\candidate-1080p.mp4",
+                "bytes": 7184689,
+                "sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9"
+              },
+              {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\upscale\\postprocess\\parent_child_chain_warm_3\\candidate-1080p.mp4",
+                "bytes": 7184689,
+                "sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9"
+              }
+            ]
+          }
+        ],
+        "stages": [
+          {
+            "name": "native_parent",
+            "trial": null,
+            "start": 1794847888.7546284,
+            "end": 1794849880.549192,
+            "active_seconds": 1991.7917017999862,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\native_parent.json",
+                "bytes": 35621,
+                "sha256": "2754b2a0b97bcfe6583e022a3ef1dfcdb6b41c04f41bedc37a344d1a7daadfd3"
+              }
+            }
+          },
+          {
+            "name": "native_child",
+            "trial": null,
+            "start": 1794850643.654589,
+            "end": 1794852224.974986,
+            "active_seconds": 1581.3139923999843,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\native_child.json",
+                "bytes": 38692,
+                "sha256": "b3c2ce86a23b71c5925143f560eac6dc30af7c64abfc44e7c31ec5da1c8ef286"
+              }
+            }
+          },
+          {
+            "name": "continuity_preview",
+            "trial": null,
+            "start": 1794852224.9899838,
+            "end": 1794852226.8298175,
+            "active_seconds": 1.834737800003495,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\continuity_preview.json",
+                "bytes": 1469,
+                "sha256": "0ec92ac8a88225c9f5f24d59aba48034ed274890ae7141dc3f2abc32936bb8a4"
+              }
+            }
+          },
+          {
+            "name": "upscale_chain",
+            "trial": null,
+            "start": 1794853546.824383,
+            "end": 1794854357.293945,
+            "active_seconds": 810.466978499986,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\upscale_chain.json",
+                "bytes": 1798762,
+                "sha256": "a702307c639924095535c79569acd11c495b022bb038f01c0b6148206ead0b93"
+              }
+            }
+          },
+          {
+            "name": "composition",
+            "trial": "cold_1",
+            "start": 1794854357.2964122,
+            "end": 1794854365.5422997,
+            "active_seconds": 8.243213699985063,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\composition_cold_1.json",
+                "bytes": 70872,
+                "sha256": "d4b48310f0a2cb66fe9d9b17d4e56a5d131096aabec416f9590f59a7691d3c2f"
+              }
+            }
+          },
+          {
+            "name": "composition",
+            "trial": "warm_1",
+            "start": 1794854365.544298,
+            "end": 1794854372.755466,
+            "active_seconds": 7.207332899997709,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\composition_warm_1.json",
+                "bytes": 70873,
+                "sha256": "ef55a62aeba2d1d5c2db4054e4831c9adea09b0d501d0f5987dd8b47e3f9e260"
+              }
+            }
+          },
+          {
+            "name": "composition",
+            "trial": "warm_2",
+            "start": 1794854372.757883,
+            "end": 1794854379.9902785,
+            "active_seconds": 7.229499200009741,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\composition_warm_2.json",
+                "bytes": 70873,
+                "sha256": "ea84af34e99d3f055b56f6ec17eb041274da31a07e77e1b0125bfea8fc507db7"
+              }
+            }
+          },
+          {
+            "name": "composition",
+            "trial": "warm_3",
+            "start": 1794854379.992278,
+            "end": 1794854387.2551708,
+            "active_seconds": 7.259796800004551,
+            "evidence": {
+              "receipt": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-20261116-072639-e2a8e6-chain\\stage-results\\composition_warm_3.json",
+                "bytes": 70874,
+                "sha256": "d22777063d8649aa79280d56dcbdb362e34f3c2cf52ecb5bd0be752c6d8a7d30"
+              }
+            }
+          }
+        ],
+        "resources": {
+          "parent": {
+            "node_calls": {
+              "wan.vae_loader": 1,
+              "wan.image_load": 1,
+              "wan.text_loader": 1,
+              "wan.text_encode": 2,
+              "wan.image_conditioning": 1,
+              "wan.model_loader": 2,
+              "wan.high_sample": 4,
+              "wan.low_sample": 4,
+              "wan.vae_decode": 4,
+              "wan.video_prepare": 4,
+              "wan.encode": 4
+            },
+            "node_cpu_wall_seconds": {
+              "wan.vae_loader": 0.08205300002009608,
+              "wan.image_load": 0.014381299988599494,
+              "wan.text_loader": 0.36829450001823716,
+              "wan.text_encode": 1.614753900008509,
+              "wan.image_conditioning": 2.26033049999387,
+              "wan.model_loader": 0.1018323999887798,
+              "wan.high_sample": 705.0226722999942,
+              "wan.low_sample": 1171.7519103999657,
+              "wan.vae_decode": 12.680092199967476,
+              "wan.video_prepare": 0.00010619999375194311,
+              "wan.encode": 2.2232560999982525
+            },
+            "model_method_calls": {
+              "comfy.model_load": 15
+            },
+            "model_method_cpu_wall_seconds": {
+              "comfy.model_load": 0.5212348999630194
+            },
+            "physical_model_load_count": null,
+            "device_sampled_peak_vram_mib": 20638,
+            "device_mean_gpu_utilization_percent": 97.62328042328042,
+            "gpu_samples": 945,
+            "malformed_events": 0,
+            "backend": "native Comfy ImageUpscaleWithModel / RealESRGAN",
+            "scope": "Method/node CPU wall intervals and device-wide samples, not kernel time, physical transfers or exclusive-process peaks.",
+            "device_low_utilization": {
+              "threshold_percent": 5,
+              "max_sample_gap_seconds": 6,
+              "intervals": [
+                {
+                  "start_seconds": 14.53883069998119,
+                  "end_seconds": 22.813434599986067,
+                  "samples": 5
+                },
+                {
+                  "start_seconds": 503.8196366999764,
+                  "end_seconds": 505.86868509999476,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 981.026570099988,
+                  "end_seconds": 983.0702936999733,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 1458.4871505999763,
+                  "end_seconds": 1460.5343657999765,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 1933.6061157999793,
+                  "end_seconds": 1937.6930581999768,
+                  "samples": 3
+                }
+              ],
+              "observed_span_seconds": 18.50153350000619,
+              "scope": "Adjacent device-wide samples, including desktop/startup; not exclusive or kernel idle."
+            },
+            "service_result": {
+              "returncode": 0,
+              "timed_out": false,
+              "metrics_finalized": true,
+              "wall_seconds": 1965.7777142999985,
+              "observed_peak_process_rss_bytes": 16629239808,
+              "rss_samples": 1951,
+              "physical_model_load_count": null
+            },
+            "retained_logical_file_bytes": 29776858,
+            "peak_logical_file_bytes": null,
+            "disk_scope": "Retained file lengths at phase end; filesystem/temp peak not sampled, no files deleted for benefit."
+          },
+          "child": {
+            "node_calls": {
+              "wan.vae_loader": 1,
+              "wan.image_load": 4,
+              "wan.text_loader": 1,
+              "wan.text_encode": 2,
+              "wan.image_conditioning": 4,
+              "wan.model_loader": 2,
+              "wan.high_sample": 4,
+              "wan.low_sample": 4,
+              "wan.vae_decode": 4,
+              "wan.video_prepare": 4,
+              "wan.encode": 4
+            },
+            "node_cpu_wall_seconds": {
+              "wan.vae_loader": 0.10125649999827147,
+              "wan.image_load": 0.052331099985167384,
+              "wan.text_loader": 0.37711500001023524,
+              "wan.text_encode": 1.6812193999940064,
+              "wan.image_conditioning": 7.588499899953604,
+              "wan.model_loader": 0.1260508999985177,
+              "wan.high_sample": 551.786529999983,
+              "wan.low_sample": 919.6293332999921,
+              "wan.vae_decode": 10.771350500028348,
+              "wan.video_prepare": 0.00010559998918324709,
+              "wan.encode": 2.0163108000415377
+            },
+            "model_method_calls": {
+              "comfy.model_load": 18
+            },
+            "model_method_cpu_wall_seconds": {
+              "comfy.model_load": 0.5481949999812059
+            },
+            "physical_model_load_count": null,
+            "device_sampled_peak_vram_mib": 21147,
+            "device_mean_gpu_utilization_percent": 97.1336898395722,
+            "gpu_samples": 748,
+            "malformed_events": 0,
+            "backend": "native Comfy ImageUpscaleWithModel / RealESRGAN",
+            "scope": "Method/node CPU wall intervals and device-wide samples, not kernel time, physical transfers or exclusive-process peaks.",
+            "device_low_utilization": {
+              "threshold_percent": 5,
+              "max_sample_gap_seconds": 6,
+              "intervals": [
+                {
+                  "start_seconds": 2.1027273000217974,
+                  "end_seconds": 2.1027273000217974,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 6.270994400023483,
+                  "end_seconds": 14.465892600012012,
+                  "samples": 5
+                },
+                {
+                  "start_seconds": 18.588705700007267,
+                  "end_seconds": 20.64121940001496,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 391.0249847000232,
+                  "end_seconds": 395.1117398000206,
+                  "samples": 3
+                },
+                {
+                  "start_seconds": 769.549351900001,
+                  "end_seconds": 773.6380138999957,
+                  "samples": 3
+                },
+                {
+                  "start_seconds": 1148.0604262000124,
+                  "end_seconds": 1150.110610600008,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 1526.5255267000175,
+                  "end_seconds": 1528.5774076000089,
+                  "samples": 2
+                }
+              ],
+              "observed_span_seconds": 22.52489429997513,
+              "scope": "Adjacent device-wide samples, including desktop/startup; not exclusive or kernel idle."
+            },
+            "service_result": {
+              "returncode": 0,
+              "timed_out": false,
+              "metrics_finalized": true,
+              "wall_seconds": 1555.1292107999907,
+              "observed_peak_process_rss_bytes": 16661192704,
+              "rss_samples": 1542,
+              "physical_model_load_count": null
+            },
+            "retained_logical_file_bytes": 10187534,
+            "peak_logical_file_bytes": null,
+            "disk_scope": "Retained file lengths at phase end; filesystem/temp peak not sampled, no files deleted for benefit."
+          },
+          "upscale": {
+            "node_calls": {
+              "wan.image_load": 680,
+              "upscale.model_loader": 1,
+              "upscale.inference": 680
+            },
+            "node_cpu_wall_seconds": {
+              "wan.image_load": 8.133836800756399,
+              "upscale.model_loader": 0.2054282999888528,
+              "upscale.inference": 383.4659397000796
+            },
+            "model_method_calls": {
+              "comfy.model_load": 680
+            },
+            "model_method_cpu_wall_seconds": {
+              "comfy.model_load": 55.50881980045233
+            },
+            "physical_model_load_count": null,
+            "device_sampled_peak_vram_mib": 6407,
+            "device_mean_gpu_utilization_percent": 40.702777777777776,
+            "gpu_samples": 360,
+            "malformed_events": 0,
+            "backend": "native Comfy ImageUpscaleWithModel / RealESRGAN",
+            "scope": "Method/node CPU wall intervals and device-wide samples, not kernel time, physical transfers or exclusive-process peaks.",
+            "device_low_utilization": {
+              "threshold_percent": 5,
+              "max_sample_gap_seconds": 6,
+              "intervals": [
+                {
+                  "start_seconds": 0.03804130002390593,
+                  "end_seconds": 54.64261040001293,
+                  "samples": 26
+                },
+                {
+                  "start_seconds": 60.9426991000073,
+                  "end_seconds": 60.9426991000073,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 71.17828809999628,
+                  "end_seconds": 73.21826960000908,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 105.94167530001141,
+                  "end_seconds": 105.94167530001141,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 143.10618600001908,
+                  "end_seconds": 147.2054546000145,
+                  "samples": 3
+                },
+                {
+                  "start_seconds": 161.5274211000069,
+                  "end_seconds": 167.66570959999808,
+                  "samples": 4
+                },
+                {
+                  "start_seconds": 173.80120960000204,
+                  "end_seconds": 175.84174850001,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 184.02297160000307,
+                  "end_seconds": 192.20716150000226,
+                  "samples": 5
+                },
+                {
+                  "start_seconds": 196.30800530000124,
+                  "end_seconds": 202.45512850000523,
+                  "samples": 4
+                },
+                {
+                  "start_seconds": 214.74124980001943,
+                  "end_seconds": 216.94563650002237,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 225.12137440001243,
+                  "end_seconds": 225.12137440001243,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 237.54469950002385,
+                  "end_seconds": 239.59232019999763,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 258.00227019999875,
+                  "end_seconds": 276.4156831,
+                  "samples": 10
+                },
+                {
+                  "start_seconds": 319.5226456000237,
+                  "end_seconds": 327.7001283999998,
+                  "samples": 5
+                },
+                {
+                  "start_seconds": 333.8419558000169,
+                  "end_seconds": 337.9394365000189,
+                  "samples": 3
+                },
+                {
+                  "start_seconds": 342.02901910000946,
+                  "end_seconds": 342.02901910000946,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 348.15285230000154,
+                  "end_seconds": 360.4235396000149,
+                  "samples": 7
+                },
+                {
+                  "start_seconds": 370.6355050000129,
+                  "end_seconds": 386.98999570001615,
+                  "samples": 9
+                },
+                {
+                  "start_seconds": 395.17281350001576,
+                  "end_seconds": 409.496096900024,
+                  "samples": 8
+                },
+                {
+                  "start_seconds": 417.67670660000294,
+                  "end_seconds": 417.67670660000294,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 429.9641625000222,
+                  "end_seconds": 429.9641625000222,
+                  "samples": 1
+                },
+                {
+                  "start_seconds": 477.04130760001135,
+                  "end_seconds": 479.0893027000129,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 485.21869780001,
+                  "end_seconds": 489.31421260000207,
+                  "samples": 3
+                },
+                {
+                  "start_seconds": 495.5621002000116,
+                  "end_seconds": 513.9863818000013,
+                  "samples": 10
+                },
+                {
+                  "start_seconds": 540.557221199997,
+                  "end_seconds": 561.0140096000105,
+                  "samples": 11
+                },
+                {
+                  "start_seconds": 569.2144450000196,
+                  "end_seconds": 581.4960532000114,
+                  "samples": 7
+                },
+                {
+                  "start_seconds": 606.0475454000116,
+                  "end_seconds": 626.4996210999961,
+                  "samples": 11
+                },
+                {
+                  "start_seconds": 651.102893800009,
+                  "end_seconds": 665.4429319000046,
+                  "samples": 8
+                },
+                {
+                  "start_seconds": 671.5779540000076,
+                  "end_seconds": 679.7575229000067,
+                  "samples": 5
+                },
+                {
+                  "start_seconds": 683.8490183000104,
+                  "end_seconds": 685.8852003000211,
+                  "samples": 2
+                },
+                {
+                  "start_seconds": 698.161743100005,
+                  "end_seconds": 712.4967134000035,
+                  "samples": 8
+                },
+                {
+                  "start_seconds": 722.7269331999996,
+                  "end_seconds": 737.0496620000049,
+                  "samples": 8
+                }
+              ],
+              "observed_span_seconds": 292.1145567999629,
+              "scope": "Adjacent device-wide samples, including desktop/startup; not exclusive or kernel idle."
+            },
+            "service_result": {
+              "returncode": 0,
+              "timed_out": false,
+              "metrics_finalized": true,
+              "wall_seconds": 765.3852870000119,
+              "observed_peak_process_rss_bytes": 1506451456,
+              "rss_samples": 759,
+              "physical_model_load_count": null
+            },
+            "retained_logical_file_bytes": 2373411752,
+            "peak_logical_file_bytes": null,
+            "disk_scope": "Retained file lengths at phase end; filesystem/temp peak not sampled, no files deleted for benefit."
+          }
+        },
+        "counters": {
+          "probe": 52,
+          "post": 688,
+          "get": 4575,
+          "actual_sha_bytes": 12776342086,
+          "actual_sha_calls": 21391,
+          "decode": 48,
+          "producer": 32
+        },
+        "failed": 0,
+        "redone": 0,
+        "counters_complete": true,
+        "counter_scope": "Direct coordinator invocation deltas, accumulated once per completed stage; interrupted invocation missing counts explicit."
+      }
+    ],
+    "local_groups": [
+      {
+        "batch_id": "chain",
+        "stage": "native_child",
+        "mode": "normal",
+        "temperature": "process_cold",
+        "samples": 1,
+        "p50_seconds": 380.535818400007,
+        "p95_seconds": 380.535818400007,
+        "scope": "local stage only; three warm observations are descriptive"
+      },
+      {
+        "batch_id": "chain",
+        "stage": "native_child",
+        "mode": "normal",
+        "temperature": "warm_process",
+        "samples": 3,
+        "p50_seconds": 377.47848059999524,
+        "p95_seconds": 377.49225365999155,
+        "scope": "local stage only; three warm observations are descriptive"
+      },
+      {
+        "batch_id": "chain",
+        "stage": "native_parent",
+        "mode": "normal",
+        "temperature": "process_cold",
+        "samples": 1,
+        "p50_seconds": 480.87181680000504,
+        "p95_seconds": 480.87181680000504,
+        "scope": "local stage only; three warm observations are descriptive"
+      },
+      {
+        "batch_id": "chain",
+        "stage": "native_parent",
+        "mode": "normal",
+        "temperature": "warm_process",
+        "samples": 3,
+        "p50_seconds": 477.9635908000055,
+        "p95_seconds": 477.98105106999867,
+        "scope": "local stage only; three warm observations are descriptive"
+      },
+      {
+        "batch_id": "chain",
+        "stage": "upscale_chain",
+        "mode": "normal",
+        "temperature": "process_cold",
+        "samples": 1,
+        "p50_seconds": 165.20966599992244,
+        "p95_seconds": 165.20966599992244,
+        "scope": "local stage only; three warm observations are descriptive"
+      },
+      {
+        "batch_id": "chain",
+        "stage": "upscale_chain",
+        "mode": "normal",
+        "temperature": "warm_process",
+        "samples": 3,
+        "p50_seconds": 167.21652409998933,
+        "p95_seconds": 167.2485550999758,
+        "scope": "local stage only; three warm observations are descriptive"
+      }
+    ],
+    "attribution": {
+      "defaults": [
+        {
+          "item": "quality/strict/serial/libx264 medium CRF18",
+          "source": "docs/task-designs/LVA-05-completion.json",
+          "new_gain": false
+        },
+        {
+          "item": "historical capability cache, batch extraction/copy, single AV decode",
+          "source": "docs/task-designs/video-generation-performance-results.md",
+          "new_gain": false
+        }
+      ],
+      "experimental": [
+        {
+          "item": "validation candidate",
+          "adopted": false,
+          "source": "docs/task-designs/LVA-02-results.json"
+        },
+        {
+          "item": "bounded preparation",
+          "adopted": false,
+          "source": "docs/task-designs/LVA-03-results.json"
+        },
+        {
+          "item": "prefetch/writeback mixed local observations; parent writeback 1.56%",
+          "adopted": false,
+          "source": "docs/task-designs/LVA-05-gpu-results.json"
+        }
+      ],
+      "rejected": [
+        {
+          "item": "distill native mixed diff/diff_b/diff_m incompatibility",
+          "source": "docs/task-designs/LVA-04-completion.json"
+        },
+        {
+          "item": "NVENC RGB differs in 93/93 frames",
+          "source": "docs/task-designs/LVA-05-completion.json"
+        }
+      ],
+      "unverified": [
+        "Sage/cache/compile unsupported or unverified",
+        "combined I/O not run",
+        "107-scene full-film throughput",
+        "physical weight transfers, kernel/exclusive idle"
+      ]
+    },
+    "full_film_throughput": null,
+    "causal_speedup": null,
+    "historical_comparison": "LVA-01 separate timing/environment/scheduling; no causal before/after ratio"
+  },
+  "invocation_counters": {
+    "post": 0,
+    "get": 0,
+    "producer": 0,
+    "decode": 0,
+    "probe": 0,
+    "actual_sha_calls": 0,
+    "actual_sha_bytes": 0
+  },
+  "production_resumed": false
+}

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-01",
+  "status": "completed_all_quality_accepted",
+  "production_strategy": "paragraph_jimeng_v1",
+  "original_workflow": "workflows/wan22_i2v_14b_api.json",
+  "original_mapping": "workflows/wan22_i2v_14b_api.mapping.json",
+  "diagnostic_launcher": "scripts/observe_local_comfy.py",
+  "node_collector": "src/video_ai/runtime/local_comfy_metrics.py",
+  "collector_scope": "Executed on installed environment; CPU node/model method wall intervals and device-wide GPU samples, not CUDA kernel or exclusive-process measurements.",
+  "parameters_policy": "Freeze exact selected-image identities, existing quality request parameters and native16 full-frame budgets; no fast mode or frame reduction.",
+  "fixtures": [
+    {
+      "id": "low_motion",
+      "selected_image_sha256": "0e3305d2d725c874d23c25c3271d027a342751832a2a8e301a0b2c7057ee6001",
+      "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+      "seed": 264244520398999,
+      "width": 768,
+      "height": 432,
+      "generated_frames": 93,
+      "retained_frames": 93,
+      "seed_low": 0,
+      "source_request": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\09\\production\\scene-clips\\scene_0001_clip_0001\\request.json",
+      "steps": 40,
+      "cfg": 3.5
+    },
+    {
+      "id": "high_motion",
+      "selected_image_sha256": "bfb281db55836b733295618fe122960e76d719ca5911328d074d64adbf49f150",
+      "prompt_sha256": "565a7be25b5a54efb93b3375c01c6a508f1c1eb80aecb3fec691a8e1a53cc5c4",
+      "seed": 264244520399048,
+      "width": 768,
+      "height": 432,
+      "generated_frames": 93,
+      "retained_frames": 93,
+      "seed_low": 0,
+      "source_request": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\10\\production\\scene-clips\\scene_0026_clip_0001\\request.json",
+      "steps": 40,
+      "cfg": 3.5
+    },
+    {
+      "id": "parent_child",
+      "selected_image_sha256": "1878fc5f503fad17199745e74fddcc4de41104e19ce08f6b5581e233062bd9ab",
+      "prompt_sha256": "fdf97421a5265670f7af9599ad290e1238b6e07b7d43d4db3ac40eb5e544c39a",
+      "seed": 264244520399004,
+      "width": 768,
+      "height": 432,
+      "generated_frames": 93,
+      "retained_frames": 93,
+      "parent_acceptance_required": true,
+      "child_input_policy": "Exact retained last-frame PNG of the accepted parent; record its SHA after each parent trial, never substitute initial selected image.",
+      "seed_low": 0,
+      "source_request": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\10\\production\\scene-clips\\scene_0003_clip_0001\\request.json",
+      "steps": 40,
+      "cfg": 3.5
+    }
+  ],
+  "trials_per_fixture": [
+    {
+      "id": "cold_1",
+      "temperature": "cold",
+      "owned_service_fresh": true
+    },
+    {
+      "id": "warm_1",
+      "temperature": "warm",
+      "owned_service_fresh": false
+    },
+    {
+      "id": "warm_2",
+      "temperature": "warm",
+      "owned_service_fresh": false
+    },
+    {
+      "id": "warm_3",
+      "temperature": "warm",
+      "owned_service_fresh": false
+    }
+  ],
+  "warm_definition": "A dedicated diagnostic harness must own one Comfy process for the three fixed-graph repeats, within a bounded experiment phase. Record actual model load/cache events; process warmth does not prove model residency. Production per-stage shutdown remains unchanged. If baseline lifecycle forces a fresh process, label it process_cold/disk_warm and do not count it as a model-warm trial. Harness/node instrumentation must be completed before GPU execution.",
+  "timing": {
+    "start": "Selected image acceptance complete, before local admission/preparation",
+    "end": "Local 1080p candidate passes delivery checks; publishing excluded",
+    "human_wait": "Recorded tool-question/user-response intervals; take union within each completion envelope and retain concurrent computation/scheduling; never infer GPU time by subtraction.",
+    "baseline": "Use unprofiled wall clock for performance; targeted tracing is a separate diagnostic run",
+    "reconstructed_evidence": "docs/task-designs/LVA-01-timing-evidence.json"
+  },
+  "required_evidence": [
+    "Comfy version and node identities",
+    "Python/PyTorch/CUDA/driver identity",
+    "model/workflow/mapping SHA and frozen request/graph identity",
+    "cold/warm model load/unload counts",
+    "image/text/high/low/VAE/encode stage times",
+    "GPU utilization samples and sampled VRAM peak",
+    "probe/trim/last-frame times",
+    "upscale inference/IO/proof and model loads",
+    "composition/audio/subtitle/delivery times",
+    "full frame/PTS checks",
+    "human quality verdict and failure/redo reasons",
+    "normal and original-task recovery evidence"
+  ],
+  "unverified": [
+    "Uninterrupted full-film production throughput and acceleration attribution (LVA-06 scope)"
+  ],
+  "existing_runs_policy": "Read only; no paused production resume, lock removal, paid calls, or unknown request resubmission",
+  "authorization_evidence": "2026-11-15 user: 同意，按这个做吧 — confirms selection proposals/new experiment GPU cold1/warm3 and later human video review; does not constitute quality acceptance.",
+  "cache_policy": "New diagnostic process only: KSamplerAdvanced IS_CHANGED returns NaN so identical seeded samples execute; original model/text/input caching retained; original workflow bytes and all quality parameters unchanged. Warm means process warm, with actual model-load behavior reported independently."
+}

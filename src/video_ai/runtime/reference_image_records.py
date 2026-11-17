@@ -209,7 +209,7 @@ def _prior(frozen, bible, plan, scene):
     index = next((i for i, ids in enumerate(plan['batches'], 1) if scene['scene_id'] in ids), None)
     if index is None: raise ProductionRefused('reference scene has no committed batch')
     from .scene_revision_records import _artifact_batch
-    from ._continuity_byte_guard import capture_reads, observe_file, observe_inventory, observe_absence
+    from ._continuity_byte_guard import capture_reads
     from threading import get_ident
     batch = _artifact_batch.get()
     if batch is None or not batch['active'] or batch['thread'] != get_ident():
@@ -222,10 +222,6 @@ def _prior(frozen, bible, plan, scene):
         with capture_reads() as capture:
             value = images._load_accepted(frozen, None, None, bible, plan, before=index)
         guard = capture.finish()
-        # Anchor only native handles already held for these verified bytes.
-        from ._protected_continuity_inputs import verify_protected_continuity_file
-        for file in guard.files:
-            verify_protected_continuity_file(file, prepare_existing=True)
         cache[key] = (deepcopy(value), guard)
         batch.setdefault('reference_prior_guards', []).append(guard)
     else:
@@ -233,12 +229,8 @@ def _prior(frozen, bible, plan, scene):
         # This read-only batch already captured the first read. Its exit
         # verifies every baseline; repeated hits only replay dependencies.
         # Replay dependencies so an enclosing scene proof remains complete.
-        for file in guard.files:
-            observe_file({name: getattr(file, name) for name in ('path', 'bytes', 'mtime_ns', 'sha256', 'verified_at')})
-        for inventory in guard.inventories:
-            observe_inventory(inventory.path, inventory.kind, inventory.expected, pattern=inventory.pattern)
-        for path in guard.absences:
-            observe_absence(path)
+        from .scene_revision_records import replay_revision_reads
+        replay_revision_reads(guard)
     return deepcopy(cache[key][0])
 
 

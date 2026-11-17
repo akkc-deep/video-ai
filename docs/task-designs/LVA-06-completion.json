@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-06",
+  "status": "COMPLETED",
+  "completed_at_utc": "2026-11-16T19:23:23.328032+00:00",
+  "final_user_message": "视频没问题",
+  "board": "docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md",
+  "design": "docs/task-designs/LVA-06-design.md",
+  "evidence": {
+    "results": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-results.json",
+      "bytes": 95222,
+      "sha256": "818b725f0e52f736fe9865fec2b96f2a6f53f0739342abca182d978918ada717"
+    },
+    "gpu_results": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-gpu-results.json",
+      "bytes": 216750,
+      "sha256": "29b9e7cd7ad9e5334fccc3c6773e3862d874059af8692566d46f6218a17a6997"
+    },
+    "audit": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-evidence-audit.json",
+      "bytes": 117882,
+      "sha256": "97389e2099d7aaff237653e3598df9f687240b8987e61f04ef97537cb80e5deb"
+    },
+    "measured_summary": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-measured-summary.json",
+      "bytes": 77996,
+      "sha256": "ff3ce4625a6f7cd183d48ae8e9ffe8c68e1806985d501ef31491c62b5de4cbac"
+    },
+    "manifest": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-experiment-manifest.json",
+      "bytes": 486627,
+      "sha256": "ba88dfc0950e905e527d73e11e8ddc660593540c78502588065403b35c779d26"
+    },
+    "authorization": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-authorization.json",
+      "bytes": 613,
+      "sha256": "fd88d240d411b6b446f7fef5b57f0a50f547306cf45be5201c69b8a70150e8a7"
+    }
+  },
+  "acceptance": {
+    "fixed_three_batches": "low/high/chain eachcold1/warm3;16 native,1424 retained/upscaled contributions,12 final1080P/16fps",
+    "timing": "actual selected-material handoffT0 and technicalTend; UTC human union,non-overlap active spans and overlapping per-trial envelopes separated",
+    "quality": "all12 actual final candidates accepted in3 explicit same-byte groups;7 genuine stage/group decisions with exact media identities",
+    "normal_recovery": "1440 unique original IDs,3 actual stopped-service completed replays0HTTP/producer/decode; required authenticity reads retained; unknown-only originalGET/drift covered offline",
+    "attribution": "baseline/final same behavior => one matrix; historical adopted vs experimental/rejected/unverified separated; no new accelerated default,causal/full-film throughput null",
+    "resources": "7 actual owned services exit0/finalized,original identities gone; sampled GPU/RSS and logical end lengths,physical/kernel/peak gaps explicit",
+    "verification": "77 targeted tests already passed on unchanged code; fresh actual completed recoveries/read-only final summary/evidence audit passed"
+  },
+  "counts": {
+    "batch_count": 3,
+    "trials_per_batch": 4,
+    "logical_final_trials": 12,
+    "native_requests": 16,
+    "upscale_requests": 1424,
+    "total_unique_original_prompt_ids": 1440,
+    "generated_native_frames": 1440,
+    "retained_contribution_frames": 1424,
+    "final1080p_candidates": 12,
+    "unique_final_content": 3,
+    "genuine_quality_group_decisions": 7,
+    "genuine_final_group_decisions": 3,
+    "all_final_quality_accepted": true,
+    "accepted_trial_video_seconds": 89.0,
+    "batch_wall_seconds": 19724.332578659058,
+    "human_wait_union_within_batches_seconds": 10282.214775562286,
+    "non_human_envelope_seconds": 9442.117803096771,
+    "known_request_failures": 0,
+    "known_request_redos": 0,
+    "failure_rate": 0.0,
+    "redo_rate": 0.0,
+    "planned_repeats_are_redos": false,
+    "mixed_fixture_cost_per_accepted_trial_video_second": 106.09121127075024,
+    "cost_scope": "Descriptive fixed-cohort metric across serial non-overlapping batches.12 planned repeated trial outputs,3 unique contents. Not a whole-film production forecast or independent hot-clip latency."
+  },
+  "verification": {
+    "passed": 77,
+    "failed": 0,
+    "seconds": 26.24,
+    "command": "E:/VideoAI/shared/envs/video-ai/Scripts/python.exe -X utf8 -m pytest tests/unit/test_final_local_video_benchmark.py tests/integration/test_final_local_video_benchmark_flow.py tests/unit/test_local_video_metrics.py tests/unit/test_local_comfy_metrics.py tests/unit/test_scene_comfy_send_checks.py tests/unit/test_upscale_phase_lifecycle.py tests/unit/test_upscale_observer.py tests/unit/test_gpu_baseline_experiment.py tests/unit/test_gpu_baseline_postprocess.py -q -p no:cacheprovider",
+    "log": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-06-targeted-tests.txt",
+      "bytes": 183,
+      "sha256": "22935c3cd9591eda2d7e757553d8466002fb83e23da672c5ab01f71db05cbd74"
+    },
+    "legacy_failures": "Prior LVA-05 five path-policy fixtures disclosed in its results; not rerun or repaired; no whole-suite claim.",
+    "scope": "Implementation77 targeted tests passed on source identities still identical to approved manifest; no whole-repository green claim. Final runtime receipt audit and real completed recoveries are fresh closure checks; no new GPU/FFmpeg verification pass.",
+    "final_read_only_audit": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-evidence-audit.json",
+      "bytes": 117882,
+      "sha256": "97389e2099d7aaff237653e3598df9f687240b8987e61f04ef97537cb80e5deb"
+    },
+    "source_workflow_identity_roles_verified": [
+      "source_benchmark_final_local_video",
+      "source_benchmark_local_gpu",
+      "source_final_local_video_benchmark",
+      "source_final_local_video_execution",
+      "source_local_comfy_metrics",
+      "source_local_video_metrics",
+      "source_observe_final_comfy",
+      "source_observe_local_comfy",
+      "source_observe_upscale_comfy",
+      "source_postprocess_local_gpu",
+      "source_upscale_experiment",
+      "source_upscale_manifest",
+      "source_wan_fast_profiles",
+      "upscale_mapping",
+      "upscale_workflow",
+      "wan_mapping",
+      "wan_workflow"
+    ]
+  },
+  "all_owned_services_closed": true,
+  "production_resumed": false,
+  "defaults_changed": false,
+  "downloads": 0,
+  "paid_calls": 0,
+  "successor": null,
+  "remaining": []
+}

@@ -47,7 +47,13 @@
          return temporal_progress_view(context)
 --- a/src/video_ai/runtime/reference_image_records.py
 +++ b/src/video_ai/runtime/reference_image_records.py
-@@ -214,7 +214,9 @@
+@@ -209,21 +209,19 @@
+     index = next((i for i, ids in enumerate(plan['batches'], 1) if scene['scene_id'] in ids), None)
+     if index is None: raise ProductionRefused('reference scene has no committed batch')
+     from .scene_revision_records import _artifact_batch
+-    from ._continuity_byte_guard import capture_reads, observe_file, observe_inventory, observe_absence
++    from ._continuity_byte_guard import capture_reads
+     from threading import get_ident
      batch = _artifact_batch.get()
      if batch is None or not batch['active'] or batch['thread'] != get_ident():
          return images._load_accepted(frozen, None, None, bible, plan, before=index)
@@ -58,6 +64,30 @@
      cache = batch.setdefault('reference_prior_batches', {})
      if key not in cache:
          with capture_reads() as capture:
+             value = images._load_accepted(frozen, None, None, bible, plan, before=index)
+         guard = capture.finish()
+-        # Anchor only native handles already held for these verified bytes.
+-        from ._protected_continuity_inputs import verify_protected_continuity_file
+-        for file in guard.files:
+-            verify_protected_continuity_file(file, prepare_existing=True)
+         cache[key] = (deepcopy(value), guard)
+         batch.setdefault('reference_prior_guards', []).append(guard)
+     else:
+@@ -231,12 +229,8 @@
+         # This read-only batch already captured the first read. Its exit
+         # verifies every baseline; repeated hits only replay dependencies.
+         # Replay dependencies so an enclosing scene proof remains complete.
+-        for file in guard.files:
+-            observe_file({name: getattr(file, name) for name in ('path', 'bytes', 'mtime_ns', 'sha256', 'verified_at')})
+-        for inventory in guard.inventories:
+-            observe_inventory(inventory.path, inventory.kind, inventory.expected, pattern=inventory.pattern)
+-        for path in guard.absences:
+-            observe_absence(path)
++        from .scene_revision_records import replay_revision_reads
++        replay_revision_reads(guard)
+     return deepcopy(cache[key][0])
+ 
+ 
 --- a/src/video_ai/runtime/production_state.py
 +++ b/src/video_ai/runtime/production_state.py
 @@ -106,6 +106,8 @@
@@ -1611,7 +1641,7 @@
 +    assert list(run.iterdir()) == []
 --- /dev/null
 +++ b/tests/unit/test_cold_admission_performance.py
-@@ -0,0 +1,627 @@
+@@ -0,0 +1,652 @@
 +"""Read-proof cost must follow unique dependencies, not capture nesting."""
 +import os
 +from types import SimpleNamespace
@@ -1840,6 +1870,31 @@
 +            patch.setattr(revisions, 'safe_path', forbidden)
 +            with guards.capture_reads() as second:
 +                assert revisions.artifact(path, root=tmp_path) == expected
++        assert first.finish() == second.finish()
++
++
++def test_reference_prior_replays_complete_proof_without_path_walk(tmp_path, monkeypatch):
++    from video_ai.runtime import reference_image_records as refs
++    path = tmp_path / 'accepted.json'
++    path.write_bytes(b'original')
++
++    def load(*args, **kwargs):
++        manifest.hash_file(path)
++        guards.observe_inventory(tmp_path, 'json_direct', [path])
++        guards.observe_absence(tmp_path / 'missing.json')
++        return [{'accepted': True}]
++
++    monkeypatch.setattr(refs.images, '_load_accepted', load)
++    frozen = SimpleNamespace(options={})
++    with revisions.revision_artifact_batch():
++        with guards.capture_reads() as first:
++            expected = refs._prior(frozen, {}, {'batches': [['s']]}, {'scene_id': 's'})
++        with monkeypatch.context() as patch:
++            def forbidden(*args, **kwargs):
++                raise AssertionError('reference prior replay repeated filesystem qualification')
++            patch.setattr(guards, '_safe', forbidden)
++            with guards.capture_reads() as second:
++                assert refs._prior(frozen, {}, {'batches': [['s']]}, {'scene_id': 's'}) == expected
 +        assert first.finish() == second.finish()
 +
 +

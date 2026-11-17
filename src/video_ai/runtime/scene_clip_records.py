@@ -18,6 +18,7 @@ from . import image_selection_records as images
 from .verification import verified_read
 from .execution_limits import command_timeout
 from .scene_review_control import review_checkpoint
+from .scene_validation_pass import scene_guard_validation, verify_inventory_once, _ordinary
 
 
 def equal(actual, expected, label):
@@ -102,6 +103,10 @@ class SceneClipStore:
         return {key: getattr(identity, key) for key in ('path', 'bytes', 'sha256')}
 
     def validate_artifact(self, value):
+        from .scene_validation_pass import validate_artifact_once
+        return validate_artifact_once(self, value, self._validate_artifact_uncached)
+
+    def _validate_artifact_uncached(self, value):
         from .scene_color_repair_records import require_production_repair_origin
         require_production_repair_origin(value)
         object_fields(value, ('path', 'bytes', 'sha256'), 'scene Artifact')
@@ -125,8 +130,12 @@ class SceneClipStore:
         if self.revision_context is not None: self.revision_context['guard'].verify_captured_bytes()
         for value in self.guard_paths.values(): self.validate_artifact(value)
         for directory,inventory in self.guard_directories.items():
-            if {str(path) for path in Path(directory).rglob('*.json')}!=inventory:
-                raise ProductionRefused('upstream evidence inventory changed')
+            def strict_check():
+                if {str(path) for path in Path(directory).rglob('*.json')}!=inventory:
+                    raise ProductionRefused('upstream evidence inventory changed')
+            if _ordinary(self):
+                verify_inventory_once(directory,inventory,recursive=True,strict_check=strict_check)
+            else: strict_check()
         for stamp in self.frozen.options['model_stamps'].values(): ArtifactStamp.from_dict(thaw(stamp)).verify()
 
     def capture_guard(self, request, graph):
@@ -167,14 +176,19 @@ class SceneClipStore:
         # A new child must retain current parent admission through every send guard.
         admission = getattr(self,'continuity_context',None)
         new_child = parent is not None and self.read(folder/'intent.json') is None
+        @scene_guard_validation(self)
         def guard():
             self.verify_global()
             if new_child and admission is not None:
                 from .scene_continuity_records import require_scene_continuity_acceptance
                 require_scene_continuity_acceptance(self.frozen,*admission,clip_id=parent['clip_id'])
             for directory,inventory in inventories.items():
-                if {str(path) for path in directory.glob('*.json')}!=inventory:
-                    raise ProductionRefused('parent observation inventory changed before send')
+                def strict_check():
+                    if {str(path) for path in directory.glob('*.json')}!=inventory:
+                        raise ProductionRefused('parent observation inventory changed before send')
+                if _ordinary(self):
+                    verify_inventory_once(directory,inventory,recursive=False,strict_check=strict_check)
+                else: strict_check()
             for value in paths.values(): self.validate_artifact(value)
             equal(canonical_digest(self.read(folder/'request.json')), expected_request, 'send request')
             equal(canonical_digest(self.read(folder/'graph.json')), expected_graph, 'send graph')

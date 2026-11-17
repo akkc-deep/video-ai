@@ -57,7 +57,11 @@ def config_for_server(config, url, run):
     data['services'].update(ollama=url, tts=url)
     actual = load_config(Path('E:/VideoAI/shared/config/production.json'))
     for name in ('ffmpeg', 'ffprobe'):
-        data['tools'][name] = str(actual.tools[name])
+        # Keep executable tools inside the fixture's allowed runtime root.
+        import shutil
+        target = config.tools[name]
+        if target != actual.tools[name]: shutil.copyfile(actual.tools[name], target)
+        data['tools'][name] = str(target)
     file = run/'http-production-config.json'
     file.write_text(json.dumps(data), encoding='utf-8')
     return load_config(file)

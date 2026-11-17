@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-05",
+  "status": "COMPLETED",
+  "updated_at_utc": "2026-11-16T06:25:01.785569+00:00",
+  "scope": "Completed authorized negative/default-non-adoption experiment; bounded I/O works, local timing differences disclosed, NVENC rejected on full-pixel contract.",
+  "design": "docs/task-designs/LVA-05-design.md",
+  "plan": "docs/task-designs/LVA-05-plan.md",
+  "review": "docs/task-designs/LVA-05-review.md",
+  "verification": {
+    "targeted": {
+      "passed": 98,
+      "failed": 0,
+      "seconds": 9.51,
+      "command": "& E:/VideoAI/shared/envs/video-ai/Scripts/python.exe -X utf8 -m pytest tests/unit/test_upscale_pipeline.py tests/unit/test_scene_encoding_experiment.py tests/unit/test_upscale_manifest.py tests/unit/test_upscale_observer.py tests/unit/test_upscale_phase_lifecycle.py tests/unit/test_scene_stage_preparation.py tests/unit/test_scene_upscale_transactions.py tests/unit/test_scene_upscale_service_preparation.py tests/integration/test_upscale_pipeline_recovery.py tests/integration/test_upscale_offline_commands.py -q -p no:cacheprovider"
+    },
+    "legacy_flow": {
+      "file": "tests/integration/test_scene_upscale_flow.py",
+      "failed": [
+        "test_authentic_scene_upscale_and_readonly_replay",
+        "test_accepted_local_media_receipts_restore_outer_commits_without_reextract_or_post",
+        "test_future_frame_conflict_stops_earlier_new_posts_and_transient_copy_keeps_original_task",
+        "test_authentic_200_frame_chain_submits_only_93_92_15_and_contributes_every_retained_frame",
+        "test_later_frame_pending_raw_conflict_and_orphan_body_prevent_all_earlier_new_posts"
+      ],
+      "combined_passed": 90,
+      "combined_failed": 5,
+      "seconds": 9.6,
+      "cause": "Existing fixture initialization: isolated .test-runtime tool-env policy refuses E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe in production_inputs.freeze_inputs. No LVA-05 call reached; no outside-scope repair.",
+      "rerun_for_closure": false
+    }
+  },
+  "offline": {
+    "upscale": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-offline-final-results.json",
+      "bytes": 21009,
+      "sha256": "de1e9bbad0e1b4ad0a8dee4af63aa15e72de3d5ca27f7b9252bea49b167e48cf"
+    },
+    "encoding": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-encoding-offline-results.json",
+      "bytes": 3018,
+      "sha256": "9fdc034432cee4dab9a644f054f7fad544ef6eeedaa92c336a3a23ac6e99d3ab"
+    },
+    "cpu_factor_batches": 16,
+    "synthetic_frames": 48,
+    "gpu_executed": false,
+    "real_model_loaded": false,
+    "full_rgb_equal_across_factors": true,
+    "completed_replay_http": 0,
+    "completed_replay_decodes": 0,
+    "encoder_status": "available_driver_unverified",
+    "nvenc_status": "not_run_awaiting_authorization"
+  },
+  "gpu": {
+    "manifest": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-experiment-manifest.json",
+      "bytes": 14012585,
+      "sha256": "9cef6989ed1133e41e8ed5151a7f04414c7a629f39c510a26fb52e4bf658cd96"
+    },
+    "authorized": true,
+    "executed": true,
+    "max_owned_phases": 16,
+    "max_frame_requests": 5696,
+    "max_nvenc_requests": 12,
+    "max_cpu_encoding_baselines": 12,
+    "model": {
+      "path": "E:\\VideoAI\\shared\\models\\comfyui\\upscale_models\\RealESRGAN_x4plus.pth",
+      "bytes": 67040989,
+      "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1"
+    },
+    "physical_weight_loads": null,
+    "performance_gain": "No general repeatable default benefit; observed local deltas in actual matrix.",
+    "human_quality": "Previously accepted source content preserved by complete ordered RGB identity; no new human viewing/decision claimed.",
+    "commands": "docs/task-designs/LVA-05-gpu-commands.md",
+    "execution_manifest": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-execution-manifest-v2.json",
+      "bytes": 14013083,
+      "sha256": "52d263bef4caa197f58145c1c5c98bd759d334455ad61b1f7c889435017a7ee3"
+    },
+    "measured_owned_phases": 12,
+    "actual_frame_requests": 4272,
+    "unique_prompt_ids": 4272,
+    "actual_nvenc_requests": 1,
+    "actual_software_encoding_baselines": 1,
+    "encoding": {
+      "status": "rejected_pixel_contract",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-encoding-low-cold_1",
+      "result": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-encoding-low-cold_1\\results.json",
+        "bytes": 21048,
+        "sha256": "4a8bb7690530b7db7be15f2632b50e7e80fe5cd6e48158e7ed6264c72497557b"
+      },
+      "software_seconds": 1.0836643000075128,
+      "nvenc_seconds": 0.6508975999895483,
+      "software_bytes": 5854912,
+      "nvenc_bytes": 5577524,
+      "frames": 93,
+      "rgb_different_frames": 93,
+      "pts_frame_dimensions_rate_colors_equal": true,
+      "colors": {
+        "color_range": null,
+        "color_space": null,
+        "color_transfer": null,
+        "color_primaries": null
+      },
+      "decode_count_per_output": 1,
+      "visual_review": "not_run_after_technical_rejection",
+      "remaining_cases": {
+        "count": 11,
+        "status": "not_run_after_decisive_pixel_rejection"
+      },
+      "qp_is_crf": false
+    }
+  },
+  "adoption": {
+    "factor": "serial",
+    "encoder": "libx264",
+    "changed": false,
+    "production_resumed": false,
+    "downloads": 0,
+    "native_generation_requests": 0
+  },
+  "successor": {
+    "task_id": "LVA-06",
+    "status": "READY",
+    "prepared": true,
+    "design": "docs/task-designs/LVA-06-design.md",
+    "handoff": "docs/task-handoffs/LVA-06-handoff.md",
+    "implementation_started": false,
+    "gpu_authorized": false,
+    "builder_check": "nothing important left"
+  },
+  "remaining": [],
+  "limitations": [
+    "Twelve sequential independent processes per fixture/factor, process-cold1/warm3; not OS-cache-cold or randomized ABBA/confidence inference. Local deltas are observations, not universal speedup.",
+    "Frozen experiment identity guards contribute materially to wall time; their costs are included equally in factor comparisons. Harness timings are not production/full-film throughput.",
+    "GPU kernel durations, physical weight transfers, exclusive GPU idle and filesystem allocated-cluster peaks are unmeasured. Device sampling/RSS/logical files are separately labeled.",
+    "Whole ordered RGB equals genuinely accepted source; no new quality acceptance, combination or promotion is claimed. NVENC technical rejection precedes visual review.",
+    "Legacy five flow-fixture path-policy failures remain disclosed; no broad unrelated repair."
+  ],
+  "real_gpu_results": {
+    "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-gpu-results.json",
+    "bytes": 217161,
+    "sha256": "eb78dd5411a1ebace38b407cb0b525a6006b5d2d43add5894ecad8223453c140"
+  },
+  "real_completed_recovery": {
+    "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-gpu-recovery.json",
+    "bytes": 4300,
+    "sha256": "f3b3ab0a7b3e6ef611d3cce862b34fa16e10f7f005f8b4917f4507c9facb7a29"
+  }
+}

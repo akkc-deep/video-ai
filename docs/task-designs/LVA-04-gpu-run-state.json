@@ -1,0 +1,22 @@
+{
+  "task_id": "LVA-04",
+  "authorization": "User: 同意，继续吧 — authorizes pinned two-LoRA download and up to 32 new serial GPU trials, with original technical/human gates.",
+  "manifest_sha256": "54ea929f38a033fb6960bf96857f75d1ee20047a8452a1e7b715ec550979b50d",
+  "stage": "closed_rejected_candidate",
+  "active_service": null,
+  "completed_phases": [
+    "E:\\VideoAI\\scratch\\benchmarks\\LVA-04-quality-low_motion-20261116-01",
+    "E:\\VideoAI\\scratch\\benchmarks\\LVA-04-fast_experimental-low_motion-20261116-01"
+  ],
+  "gpu_trials": 5,
+  "quality": "fast_not_evaluable_no_video; quality_control_not_newly_accepted",
+  "production_resumed": false,
+  "downloads": "verified_both_official_pins",
+  "download_receipt": "E:/VideoAI/scratch/benchmarks/LVA-04-download-receipt.json",
+  "prepared_initial_phases": "E:/VideoAI/scratch/benchmarks/LVA-04-prepared-initial-phases.json",
+  "graph_attempts": 5,
+  "completed_native_videos": 4,
+  "failed_fast_attempts": 1,
+  "all_owned_services_closed": true,
+  "outcome": "rejected_incompatible_native_patch_format"
+}

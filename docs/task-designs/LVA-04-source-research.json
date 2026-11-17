@@ -1,0 +1,171 @@
+{
+  "source_repository": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras",
+  "api": "https://huggingface.co/api/models/lightx2v/Wan2.2-Distill-Loras?blobs=true",
+  "revision": "57adea585d1d21085e2dfc91ce3c7b646cdd9345",
+  "weights": [
+    {
+      "rfilename": "wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "blobId": "70a7b43e9c345375cbf5c5d8cc471ea006a5d4ae",
+      "size": 634645944,
+      "lfs": {
+        "sha256": "887c3bdeb74e83859c920438e16ca31f39ab18ce189abc5f0e36f8348c5bbb19",
+        "size": 634645944,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "blobId": "56ebfd3237c412eb06aa04e07c26d1fe137fe922",
+      "size": 739472104,
+      "lfs": {
+        "sha256": "8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1",
+        "size": 739472104,
+        "pointerSize": 134
+      }
+    }
+  ],
+  "reference_workflow": {
+    "url": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras/resolve/57adea585d1d21085e2dfc91ce3c7b646cdd9345/wan2.2_i2v_scale_fp8_comfyui_with_lora.json",
+    "sha256": "aecf199c8451c2272fb53f6a96854c12cd596297326f426a6d7bf4533c7383b8",
+    "bytes": 37227,
+    "selected_nodes": [
+      {
+        "id": 91,
+        "type": "INTConstant",
+        "widgets": [
+          2
+        ]
+      },
+      {
+        "id": 94,
+        "type": "INTConstant",
+        "widgets": [
+          4
+        ]
+      },
+      {
+        "id": 99,
+        "type": "FloatToSigmas",
+        "widgets": []
+      },
+      {
+        "id": 100,
+        "type": "StringToFloatList",
+        "widgets": [
+          "1.0, 0.9375001, 0.8333333, 0.625, 0.0000"
+        ]
+      },
+      {
+        "id": 80,
+        "type": "WanVideoSetLoRAs",
+        "widgets": []
+      },
+      {
+        "id": 79,
+        "type": "WanVideoSetLoRAs",
+        "widgets": []
+      },
+      {
+        "id": 27,
+        "type": "WanVideoSampler",
+        "widgets": [
+          6,
+          1,
+          1.0000000000000002,
+          42,
+          "fixed",
+          true,
+          "euler",
+          0,
+          1,
+          false,
+          "comfy",
+          0,
+          10,
+          ""
+        ]
+      },
+      {
+        "id": 35,
+        "type": "WanVideoTorchCompileSettings",
+        "widgets": [
+          "inductor",
+          false,
+          "default",
+          false,
+          64,
+          true,
+          128
+        ]
+      },
+      {
+        "id": 56,
+        "type": "WanVideoLoraSelect",
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 97,
+        "type": "WanVideoLoraSelect",
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 22,
+        "type": "WanVideoModelLoader",
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      },
+      {
+        "id": 71,
+        "type": "WanVideoModelLoader",
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      },
+      {
+        "id": 90,
+        "type": "WanVideoSampler",
+        "widgets": [
+          6,
+          1,
+          1.0000000000000002,
+          42,
+          "fixed",
+          true,
+          "euler",
+          0,
+          1,
+          false,
+          "comfy",
+          10,
+          -1,
+          ""
+        ]
+      }
+    ],
+    "native_comfy_reference": false,
+    "reference_runtime": "ComfyUI WanVideoWrapper custom nodes, not current native graph"
+  },
+  "local_lora_directory_present": false,
+  "local_sageattention": false,
+  "local_triton": false,
+  "research_only_no_weight_download": true
+}

@@ -177,7 +177,12 @@ class SceneMediaStore(SceneClipStore):
         for artifact in self.guard_paths.values(): self.validate_artifact(artifact)
         for directory,expected in self.guard_directories.items():
             folder=self._lexical(directory)
-            if {str(p) for p in folder.rglob('*.json')}!=set(expected): raise ProductionRefused('captured JSON inventory changed')
+            def strict_check():
+                if {str(p) for p in folder.rglob('*.json')}!=set(expected): raise ProductionRefused('captured JSON inventory changed')
+            from .scene_validation_pass import verify_inventory_once, _ordinary
+            if _ordinary(self):
+                verify_inventory_once(folder,expected,recursive=True,strict_check=strict_check)
+            else: strict_check()
         for value in self.guard_absent_paths:
             path=self._lexical(value)
             if path.exists(): raise ProductionRefused('promoted original staging unexpectedly reappeared')
@@ -421,6 +426,8 @@ class SceneMediaStore(SceneClipStore):
         capture(request)
         for path in (self.root/'inputs.json',folder/'request.json',folder/'graph.json'):
             captures[str(path)] = self.artifact(path)
+        from .scene_validation_pass import scene_guard_validation
+        @scene_guard_validation(self)
         def guard():
             self.verify_global()
             for artifact in captures.values():

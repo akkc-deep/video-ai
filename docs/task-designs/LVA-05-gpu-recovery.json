@@ -1,0 +1,120 @@
+{
+  "task_id": "LVA-05",
+  "scope": "Actual completed GPU batches, strict full source/history/output identities; no model inference or media rerun.",
+  "updated_at_utc": "2026-11-16T06:19:27.460103+00:00",
+  "counts": {
+    "http": 0,
+    "media_commands": 0
+  },
+  "cases": [
+    {
+      "phase": "low-serial",
+      "frames": 372,
+      "seconds": 30.51310400001239,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-serial\\invocations\\e720a7e570f9404daabcb4d8c9920826.json"
+    },
+    {
+      "phase": "low-prefetch",
+      "frames": 372,
+      "seconds": 29.344559299992397,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-prefetch\\invocations\\ac8671175fc64fcca5877eb4eae43517.json"
+    },
+    {
+      "phase": "low-writeback",
+      "frames": 372,
+      "seconds": 29.176732500025537,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-writeback\\invocations\\87fa0a2aa71d476b92c3b502c02b8ba1.json"
+    },
+    {
+      "phase": "high-serial",
+      "frames": 372,
+      "seconds": 30.61894069999107,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-serial\\invocations\\062322f2ff90466d8adbd2f854038200.json"
+    },
+    {
+      "phase": "high-prefetch",
+      "frames": 372,
+      "seconds": 29.50198050000472,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-prefetch\\invocations\\8d72cf9523644d3eb2245b0a86feaff6.json"
+    },
+    {
+      "phase": "high-writeback",
+      "frames": 372,
+      "seconds": 29.329976499982877,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-writeback\\invocations\\9ce46fa169dc4fccb163428661af5282.json"
+    },
+    {
+      "phase": "parent-serial",
+      "frames": 372,
+      "seconds": 28.86511270000483,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-serial\\invocations\\ab6d223bdd7d4bd98b991a90bba459b5.json"
+    },
+    {
+      "phase": "parent-prefetch",
+      "frames": 372,
+      "seconds": 24.916912899992894,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-prefetch\\invocations\\38c22bebe0ce4f7f97bdab9897ae0176.json"
+    },
+    {
+      "phase": "parent-writeback",
+      "frames": 372,
+      "seconds": 22.281521600001724,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-writeback\\invocations\\301ab1f51f2d437c8b493fabb9bec473.json"
+    },
+    {
+      "phase": "child-serial",
+      "frames": 308,
+      "seconds": 18.751569799991557,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-serial\\invocations\\058563b618da405fa76a9536a2d56e97.json"
+    },
+    {
+      "phase": "child-prefetch",
+      "frames": 308,
+      "seconds": 18.469941599993035,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-prefetch\\invocations\\b6fc8516a9a146569ee46616b59b2841.json"
+    },
+    {
+      "phase": "child-writeback",
+      "frames": 308,
+      "seconds": 18.332595199986827,
+      "http": 0,
+      "local_media_commands": 0,
+      "new_gpu_requests": 0,
+      "diagnostic": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-writeback\\invocations\\3a8478761e6a4783b2f2b5592c859e9d.json"
+    }
+  ],
+  "status": "passed"
+}

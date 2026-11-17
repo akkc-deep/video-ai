@@ -15,13 +15,15 @@
 
 ## 验证
 
-最新聚焦验证：348 passed，1项独立性能测量用例按设计跳过。包含依赖捕获、原生文件保护、来源范围、修订与 checkpoint、场景记录/任务事务，以及真实回执入账集成；未运行无关全套或额外生产媒体审查循环。
+最新聚焦验证：349 passed，1项独立性能测量用例按设计跳过。包含依赖捕获、原生文件保护、来源范围、修订与 checkpoint、场景记录/任务事务，以及真实回执入账集成；未运行无关全套或额外生产媒体审查循环。
 
-日志：`E:/VideoAI/scratch/logs/cold-memo-miss-green-b0081edc06804ac69bc8bd64e2b942c8.log`。
+日志：`E:/VideoAI/scratch/logs/cold-final-prior-suite-a752b543c0b44ee7ab096bf328ce4e4b.log`。
 
 一次独立完整审查发现两项 Important：清空事务 guard 注册表会漏掉退出复验，借用外层物理作用域的事务会漏掉失效通知。三项复现先失败、修复后全部通过，并通过上述完整聚焦检查。无 Critical 或待处理 Minor。
 
-独立审查之后，真实尾段采样又定位到已有合格记录仍重建祖先路径、增长 guard 重查缺失路径，以及成功语义读取后立即再遍历完整依赖三处成本。作者分别完成 RED/GREEN 并运行348项检查；这三处尾段补丁未另行独立复审。实际命中仍绑定完整基线、原生保护对象和活动句柄，失效及新鲜边界检查不变。
+独立审查之后，真实尾段采样又定位到已有合格记录仍重建祖先路径、增长 guard 重查缺失路径、成功语义读取后立即再遍历完整依赖，以及 `_prior` 手写回放绕过新纯回放函数四处成本。作者分别完成 RED/GREEN 并运行349项检查；这些尾段补丁未另行独立复审。实际命中仍绑定完整基线、原生保护对象和活动句柄，失效及新鲜边界检查不变。
+
+扩展的 `test_reference_image_records.py` 有6项既有夹具失败，全部在调用参考图代码前拒绝位于独立测试根目录之外的共享ffmpeg.exe；准确保存的基线同样复现6 failed/1 passed，因此未修改无关路径政策。失败用例是 `test_prompt_contains_only_referenced_stable_bible_rows`、`test_reference_bindings_deduplicate_one_original_preserving_all_uses`、`test_wan_builder_rejects_legacy_text_only_related_candidates`、`test_reference_resolution_rejects_tampered_commit[source/schema/extra]`。基线日志为 `cold-prior-baseline-fixture-6537b6852d11468cb9cc22002b5e573d.log`。
 
 ## 测量边界
 
@@ -35,7 +37,9 @@
 
 v6在1200秒截止时推进到第一个来源片段的scene_context，1034个capture_origin调用已开始，仍未完成。其尾段有6,875,770次verify_record，暴露了上述完整依赖重复遍历，不能把它当成成功优化。
 
-最终报告待填：`E:/VideoAI/scratch/voyager2-cold-admission-optimized-v7-20261115.json`。计时含仪器开销，应用缓存冷启动，不清空操作系统磁盘缓存。
+v7尾段采样找到了 `_prior` 仍用observe_file/inventory/absence重新解释既有证明的问题。已取消该旧版只读探测并明确标记complete=false；完整源码保存，未停止生产进程。
+
+最终报告待填：`E:/VideoAI/scratch/voyager2-cold-admission-optimized-v8-20261115.json`。计时含仪器开销，应用缓存冷启动，不清空操作系统磁盘缓存。
 
 ## 工作流保护
 

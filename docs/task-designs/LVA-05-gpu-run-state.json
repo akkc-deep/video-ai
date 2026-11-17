@@ -1,0 +1,303 @@
+{
+  "task_id": "LVA-05",
+  "authorization": "user: 同意",
+  "manifest_sha256": "9cef6989ed1133e41e8ed5151a7f04414c7a629f39c510a26fb52e4bf658cd96",
+  "updated_at_utc": "2026-11-16T06:25:01.785569+00:00",
+  "status": "completed_measured_negative_default_adoption",
+  "active_phase": null,
+  "completed_phases": [
+    {
+      "phase": "low-serial",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-serial",
+      "frame_count": 372,
+      "wall_seconds": 501.41241560000344,
+      "verification": {
+        "validation_calls": 4514,
+        "validation_seconds": 232.22077730015735,
+        "post": 372,
+        "get": 1536
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 531.7914951999846,
+        "observed_peak_process_rss_bytes": 1496199168,
+        "rss_samples": 528,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "low-prefetch",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-prefetch",
+      "frame_count": 372,
+      "wall_seconds": 502.2316731000028,
+      "verification": {
+        "validation_calls": 4499,
+        "validation_seconds": 232.3911617998383,
+        "post": 372,
+        "get": 1521
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 515.9733547999931,
+        "observed_peak_process_rss_bytes": 1494294528,
+        "rss_samples": 512,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "low-writeback",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-low-writeback",
+      "frame_count": 372,
+      "wall_seconds": 503.1057829000056,
+      "verification": {
+        "validation_calls": 4495,
+        "validation_seconds": 233.76127650160925,
+        "post": 372,
+        "get": 1517
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 516.8501975000254,
+        "observed_peak_process_rss_bytes": 1494691840,
+        "rss_samples": 513,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "high-serial",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-serial",
+      "frame_count": 372,
+      "wall_seconds": 521.5552398000145,
+      "verification": {
+        "validation_calls": 4576,
+        "validation_seconds": 237.8977590999275,
+        "post": 372,
+        "get": 1598
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 535.4983203999873,
+        "observed_peak_process_rss_bytes": 1496653824,
+        "rss_samples": 532,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "high-prefetch",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-prefetch",
+      "frame_count": 372,
+      "wall_seconds": 518.4561871000042,
+      "verification": {
+        "validation_calls": 4559,
+        "validation_seconds": 237.57266450076713,
+        "post": 372,
+        "get": 1581
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 532.4435662999749,
+        "observed_peak_process_rss_bytes": 1495990272,
+        "rss_samples": 529,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "high-writeback",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-high-writeback",
+      "frame_count": 372,
+      "wall_seconds": 518.7223863999825,
+      "verification": {
+        "validation_calls": 4571,
+        "validation_seconds": 238.2138719004579,
+        "post": 372,
+        "get": 1593
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 532.8297950999986,
+        "observed_peak_process_rss_bytes": 1495093248,
+        "rss_samples": 530,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "parent-serial",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-serial",
+      "frame_count": 372,
+      "wall_seconds": 503.40972170000896,
+      "verification": {
+        "validation_calls": 4487,
+        "validation_seconds": 234.11997310069273,
+        "post": 372,
+        "get": 1509
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 517.2180178999843,
+        "observed_peak_process_rss_bytes": 1496051712,
+        "rss_samples": 514,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "parent-prefetch",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-prefetch",
+      "frame_count": 372,
+      "wall_seconds": 502.0888797999942,
+      "verification": {
+        "validation_calls": 4482,
+        "validation_seconds": 234.21873530000448,
+        "post": 372,
+        "get": 1504
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 516.0348128000041,
+        "observed_peak_process_rss_bytes": 1493872640,
+        "rss_samples": 512,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "parent-writeback",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-parent-writeback",
+      "frame_count": 372,
+      "wall_seconds": 495.53327340001124,
+      "verification": {
+        "validation_calls": 4482,
+        "validation_seconds": 230.7278359005577,
+        "post": 372,
+        "get": 1504
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 541.3131735000061,
+        "observed_peak_process_rss_bytes": 1493688320,
+        "rss_samples": 538,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "child-serial",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-serial",
+      "frame_count": 308,
+      "wall_seconds": 410.45338620000985,
+      "verification": {
+        "validation_calls": 3710,
+        "validation_seconds": 190.92094030074077,
+        "post": 308,
+        "get": 1244
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 424.25853500000085,
+        "observed_peak_process_rss_bytes": 1495867392,
+        "rss_samples": 422,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "child-prefetch",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-prefetch",
+      "frame_count": 308,
+      "wall_seconds": 413.009506900009,
+      "verification": {
+        "validation_calls": 3712,
+        "validation_seconds": 192.67056649862207,
+        "post": 308,
+        "get": 1246
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 427.0397564000159,
+        "observed_peak_process_rss_bytes": 1494425600,
+        "rss_samples": 425,
+        "physical_model_load_count": null
+      }
+    },
+    {
+      "phase": "child-writeback",
+      "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-writeback",
+      "frame_count": 308,
+      "wall_seconds": 409.6604088000022,
+      "verification": {
+        "validation_calls": 3707,
+        "validation_seconds": 190.6034378002514,
+        "post": 308,
+        "get": 1241
+      },
+      "service": {
+        "returncode": 0,
+        "timed_out": false,
+        "metrics_finalized": true,
+        "wall_seconds": 423.64043649999076,
+        "observed_peak_process_rss_bytes": 1494634496,
+        "rss_samples": 421,
+        "physical_model_load_count": null
+      }
+    }
+  ],
+  "remaining_phases": [],
+  "combination_gate": "actual_single_factor_technical_and_genuine_user_quality_acceptance",
+  "gpu_samples_completed": 4272,
+  "production_resumed": false,
+  "execution_manifest": "docs\\task-designs\\LVA-05-execution-manifest-v2.json",
+  "execution_manifest_sha256": "52d263bef4caa197f58145c1c5c98bd759d334455ad61b1f7c889435017a7ee3",
+  "startup_failure": {
+    "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-01-low-serial",
+    "error": "configuration str passed to Path-only load_config",
+    "http_requests": 0,
+    "gpu_requests": 0,
+    "regression": "7 observer/lifecycle passed /0.22s"
+  },
+  "active_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-child-writeback",
+  "startup_corrections": [
+    "configuration Path conversion",
+    "owner-before-listener readiness race"
+  ],
+  "startup_inference_requests": 0,
+  "driver_session_id": 49587,
+  "driver_order": [
+    "low-serial",
+    "low-prefetch",
+    "low-writeback",
+    "high-serial",
+    "high-prefetch",
+    "high-writeback",
+    "parent-serial",
+    "parent-prefetch",
+    "parent-writeback",
+    "child-serial",
+    "child-prefetch",
+    "child-writeback"
+  ],
+  "coordinator_policy": "Single serial driver; do not concurrently resume an active root; no combination or adoption without gates.",
+  "active_service": false,
+  "encoding_case": "low-cold_1",
+  "encoding_status": "rejected_pixel_contract",
+  "remaining_encoding_cases": "11 not run after decisive pixel-contract rejection",
+  "recovery": "12 actual completed batches:0HTTP/0media/0newGPU",
+  "new_human_decisions": 0
+}

@@ -1,0 +1,47 @@
+{
+  "task_id": "LVA-06",
+  "status": "COMPLETED",
+  "completed_at_utc": "2026-11-16T19:23:23.328032+00:00",
+  "gpu_executed": true,
+  "all_final_quality_accepted": true,
+  "active_owned_services": 0,
+  "counts": {
+    "batch_count": 3,
+    "trials_per_batch": 4,
+    "logical_final_trials": 12,
+    "native_requests": 16,
+    "upscale_requests": 1424,
+    "total_unique_original_prompt_ids": 1440,
+    "generated_native_frames": 1440,
+    "retained_contribution_frames": 1424,
+    "final1080p_candidates": 12,
+    "unique_final_content": 3,
+    "genuine_quality_group_decisions": 7,
+    "genuine_final_group_decisions": 3,
+    "all_final_quality_accepted": true,
+    "accepted_trial_video_seconds": 89.0,
+    "batch_wall_seconds": 19724.332578659058,
+    "human_wait_union_within_batches_seconds": 10282.214775562286,
+    "non_human_envelope_seconds": 9442.117803096771,
+    "known_request_failures": 0,
+    "known_request_redos": 0,
+    "failure_rate": 0.0,
+    "redo_rate": 0.0,
+    "planned_repeats_are_redos": false,
+    "mixed_fixture_cost_per_accepted_trial_video_second": 106.09121127075024,
+    "cost_scope": "Descriptive fixed-cohort metric across serial non-overlapping batches.12 planned repeated trial outputs,3 unique contents. Not a whole-film production forecast or independent hot-clip latency."
+  },
+  "manifest": {
+    "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-experiment-manifest.json",
+    "bytes": 486627,
+    "sha256": "ba88dfc0950e905e527d73e11e8ddc660593540c78502588065403b35c779d26"
+  },
+  "completion": {
+    "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-06-completion.json",
+    "bytes": 6278,
+    "sha256": "e7a3a695dfaffdee54ba5f820b24357cc9acc3a5db9b3c35097a637f78551c04"
+  },
+  "summary": "docs/task-designs/LVA-06-measured-summary.json",
+  "production_resumed": false,
+  "remaining": []
+}

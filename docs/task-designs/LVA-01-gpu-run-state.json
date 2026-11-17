@@ -1,0 +1,124 @@
+{
+  "task_id": "LVA-01",
+  "board": "docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md",
+  "status": "COMPLETED",
+  "authorization": "Authorized new experiments; user accepted low/high/new-parent native quality: 画面没问题.",
+  "roots": {
+    "low": "E:/VideoAI/scratch/benchmarks/LVA-01-gpu-low-20261115-01",
+    "parent": "E:/VideoAI/scratch/benchmarks/LVA-01-gpu-parent-20261115-01",
+    "high": "E:/VideoAI/scratch/benchmarks/LVA-01-gpu-high-20261115-01",
+    "child": "E:/VideoAI/scratch/benchmarks/LVA-01-gpu-child-20261115-01",
+    "upscale_low": "E:/VideoAI/scratch/benchmarks/LVA-01-upscale-low-20261115-01",
+    "upscale_high": "E:/VideoAI/scratch/benchmarks/LVA-01-upscale-high-20261115-01",
+    "upscale_chain": "E:/VideoAI/scratch/benchmarks/LVA-01-upscale-chain-20261115-01",
+    "upscale_child": "E:/VideoAI/scratch/benchmarks/LVA-01-upscale-child-20261115-01"
+  },
+  "active_service_exec_session": null,
+  "active_high_trial_exec_session": null,
+  "completed": {
+    "low": 4,
+    "parent": 4,
+    "high": 4,
+    "child": 4
+  },
+  "environment": "E:/VideoAI/scratch/benchmarks/LVA-01-environment-20261115-01/environment.json",
+  "human_observations_pending": [],
+  "rules": [
+    "Do not resume or write original production.",
+    "No paid requests.",
+    "One owned model inference service at a time.",
+    "Child submission only after new-parent human approval; no fake acceptance.",
+    "Native upscale/1080p only after corresponding human native observation.",
+    "Do not restart or resubmit unknown intents; resume original IDs only."
+  ],
+  "next_action": "LVA-01 complete and successor LVA-02 READY with exact design/handoff. If explicitly starting LVA-02, consume linked handoff and record READY -> IN_PROGRESS before implementation.",
+  "child_command": "benchmark_local_gpu.py run-child --root NEW_CHILD_SERVICE_ROOT --parent-root PARENT_ROOT --trial all",
+  "pending_postprocess": "None. All GPU/media generation and composition complete; only final human decision and evidence/report/task closure remain.",
+  "updated_at_utc": "2026-11-15T10:14:50.810052+00:00",
+  "service_results": {
+    "low": {
+      "exit_code": 15,
+      "timed_out": false,
+      "seconds": 2406.553674099996,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": false,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "parent": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1983.153481100002,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "high": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1910.1664283999999,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "child": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1572.616815900008,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "upscale_low": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 389.95321080001304,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "upscale_high": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 408.2293720000016,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "upscale_parent": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 416.68937059999735,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    },
+    "upscale_child": {
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 457.06766630000493,
+      "scope": "Only this new owned process was stopped; node metrics are CPU wall intervals; no quality claim.",
+      "metrics_finalized": true,
+      "partial_metrics_policy": "On forced stop, use the last valid checkpoint only; the in-flight node and unsampled GPU peak remain unverified."
+    }
+  },
+  "native_quality_accepted_at_utc": "2026-11-15T07:12:38.704600+00:00",
+  "active_child_trial_exec_session": null,
+  "active_postprocess_exec_session": null,
+  "completed_postprocess": {
+    "low": 4,
+    "high": 4,
+    "parent": 4,
+    "child": 4
+  },
+  "accepted_child_and_final_low_high_at_utc": "2026-11-15T09:05:02.710795+00:00",
+  "timing_evidence": "docs/task-designs/LVA-01-timing-evidence.json",
+  "final_chain_quality_accepted_at_utc": "2026-11-15T09:50:34.724Z",
+  "completed_at_utc": "2026-11-15T09:54:03.690734+00:00",
+  "successor_preparation": {
+    "task_id": "LVA-02",
+    "status": "READY",
+    "design": "docs/task-designs/LVA-02-design.md",
+    "handoff": "docs/task-handoffs/LVA-02-handoff.md",
+    "implementation_started": false
+  }
+}

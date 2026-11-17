@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-01",
+  "status": "COMPLETED",
+  "scope": "Historical offline snapshot; current real GPU evidence is in LVA-01-gpu-results.json",
+  "overall_design": "docs/task-designs/jimeng-local-video-acceleration-v1.md",
+  "design": "docs/task-designs/LVA-01-design.md",
+  "validation_ledger": "docs/task-designs/LVA-01-validation-ledger.md",
+  "gpu_protocol": "docs/task-designs/LVA-01-gpu-experiments.json",
+  "benchmark": {
+    "report": "E:\\VideoAI\\scratch\\logs\\LVA-01-offline-reviewed.json",
+    "environment": {
+      "python": "3.12.10",
+      "platform": "Windows-11-10.0.26300-SP0",
+      "tools": {
+        "ffmpeg": {
+          "sha256": "3256173f3f8bffd7df12227c68adf68025edb1832273a9530688a7bb1ed8edec"
+        },
+        "ffprobe": {
+          "sha256": "f0d36ecbbdd3bcfac3efa078c96c7271c2e68b3810595552ac3b7f17e9a65c52"
+        }
+      }
+    },
+    "parameters": {
+      "width": 128,
+      "height": 72,
+      "frames": 9,
+      "fps": 16
+    },
+    "summary": {
+      "normal": {
+        "plain_mean_seconds": 0.31320777499968244,
+        "observed_mean_seconds": 0.7905122500014841,
+        "observer_ratio": 2.5239228176959707,
+        "samples_per_condition": 4
+      },
+      "recovery": {
+        "plain_mean_seconds": 0.08322834999853512,
+        "observed_mean_seconds": 0.22369707500001823,
+        "observer_ratio": 2.6877509286674006,
+        "samples_per_condition": 4
+      }
+    },
+    "paired_output_bytes_equal": true,
+    "source_unchanged": true
+  },
+  "offline_production_profiles": {
+    "normal": {
+      "report": "E:\\VideoAI\\scratch\\logs\\LVA-01-production-reviewed\\normal.json",
+      "profiled_wall_seconds": 81.55702919999749,
+      "totals": {
+        "hash_requests": 13545,
+        "hash_computations": 6704,
+        "hashed_bytes": 52311601,
+        "file_accesses": 13545,
+        "referenced_bytes": 66673354,
+        "unknown_size_accesses": 0,
+        "probe_processes": 38,
+        "full_decode_processes": 64,
+        "partial_decode_processes": 6,
+        "media_processes": 79,
+        "model_stamp_checks": 952
+      },
+      "retained_events": 20000,
+      "dropped_detail_events": 35982,
+      "aggregate_complete": true,
+      "observation_errors": 0,
+      "unique_files": 240,
+      "self_time_hotspots": [
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:104:validate_artifact",
+          "caller": "video_ai/runtime/scene_clip_records.py:178",
+          "calls": 6270,
+          "self_seconds": 28.778240299769095,
+          "inclusive_seconds": 32.10916019989236
+        },
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:104:validate_artifact",
+          "caller": "video_ai/runtime/scene_clip_records.py:126",
+          "calls": 6030,
+          "self_seconds": 27.707076699996833,
+          "inclusive_seconds": 30.7097585999727
+        },
+        {
+          "source": "video_ai/runtime/verification.py:461:protected_hash",
+          "caller": "video_ai/runtime/verification.py:552",
+          "calls": 6158,
+          "self_seconds": 2.221643000135373,
+          "inclusive_seconds": 3.9995350004246575
+        },
+        {
+          "source": "video_ai/runtime/verification.py:518:protected_bytes",
+          "caller": "video_ai/runtime/manifest.py:64",
+          "calls": 4883,
+          "self_seconds": 2.080467400039197,
+          "inclusive_seconds": 5.277728600412956
+        },
+        {
+          "source": "video_ai/runtime/verification.py:501:_read_open_bytes",
+          "caller": "video_ai/runtime/verification.py:550",
+          "calls": 6158,
+          "self_seconds": 1.771910200273851,
+          "inclusive_seconds": 1.771910200273851
+        },
+        {
+          "source": "video_ai/runtime/production_scene_clips.py:253:_input",
+          "caller": "video_ai/runtime/production_scene_clips.py:409",
+          "calls": 3,
+          "self_seconds": 1.4904966000030981,
+          "inclusive_seconds": 1.8596316999974078
+        },
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:445:validate_clip",
+          "caller": "video_ai/runtime/production_scene_clips.py:431",
+          "calls": 3,
+          "self_seconds": 1.4214858999548596,
+          "inclusive_seconds": 3.086954300000798
+        }
+      ]
+    },
+    "recovery": {
+      "report": "E:\\VideoAI\\scratch\\logs\\LVA-01-production-reviewed\\recovery.json",
+      "profiled_wall_seconds": 12.609712699995725,
+      "totals": {
+        "hash_requests": 1383,
+        "hash_computations": 1771,
+        "hashed_bytes": 39821990,
+        "file_accesses": 1383,
+        "referenced_bytes": 39941228,
+        "unknown_size_accesses": 0,
+        "probe_processes": 17,
+        "full_decode_processes": 28,
+        "partial_decode_processes": 6,
+        "media_processes": 34,
+        "model_stamp_checks": 28
+      },
+      "retained_events": 8021,
+      "dropped_detail_events": 0,
+      "aggregate_complete": true,
+      "observation_errors": 0,
+      "unique_files": 228,
+      "self_time_hotspots": [
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:445:validate_clip",
+          "caller": "video_ai/runtime/production_scene_clips.py:502",
+          "calls": 3,
+          "self_seconds": 1.393366900018009,
+          "inclusive_seconds": 2.97936240000854
+        },
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:104:validate_artifact",
+          "caller": "video_ai/runtime/scene_clip_records.py:386",
+          "calls": 300,
+          "self_seconds": 1.351074899903324,
+          "inclusive_seconds": 1.6486885000340408
+        },
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:104:validate_artifact",
+          "caller": "video_ai/runtime/scene_clip_records.py:511",
+          "calls": 264,
+          "self_seconds": 1.186570500023663,
+          "inclusive_seconds": 1.443407499944442
+        },
+        {
+          "source": "video_ai/runtime/scene_comfy_transactions.py:299:validate_scene_submission",
+          "caller": "video_ai/runtime/scene_clip_records.py:481",
+          "calls": 12,
+          "self_seconds": 0.944620699956431,
+          "inclusive_seconds": 1.3975787999879685
+        },
+        {
+          "source": "video_ai/runtime/scene_clip_records.py:445:validate_clip",
+          "caller": "video_ai/runtime/scene_clip_records.py:591",
+          "calls": 6,
+          "self_seconds": 0.8157411000574939,
+          "inclusive_seconds": 3.7917995999814593
+        },
+        {
+          "source": "video_ai/runtime/verification.py:518:protected_bytes",
+          "caller": "video_ai/config.py:40",
+          "calls": 897,
+          "self_seconds": 0.6969664998614462,
+          "inclusive_seconds": 1.1324977999029215
+        },
+        {
+          "source": "video_ai/runtime/verification.py:461:protected_hash",
+          "caller": "video_ai/runtime/verification.py:552",
+          "calls": 1222,
+          "self_seconds": 0.45133019990316825,
+          "inclusive_seconds": 0.809343999979319
+        }
+      ]
+    }
+  },
+  "verification": [
+    {
+      "command": "python -u -X utf8 -m pytest tests/unit/test_local_video_metrics.py tests/integration/test_local_video_metrics_flow.py tests/unit/test_scene_comfy_send_checks.py -q -s -p no:cacheprovider",
+      "passed": 27,
+      "seconds": 120.07,
+      "log": "E:/VideoAI/scratch/logs/LVA-01-tests-final.txt"
+    },
+    {
+      "command": "python -X utf8 -m pytest tests/unit/test_scene_media_performance.py -q -k \"not test_owned_service_cache_identity_rejects_pid_reuse\" -p no:cacheprovider",
+      "passed": 22,
+      "deselected": 1,
+      "seconds": 4.75,
+      "log": "E:/VideoAI/scratch/logs/LVA-01-media-regression.txt"
+    },
+    {
+      "command": "python -X utf8 -m pytest tests/unit/test_local_comfy_metrics.py -q -p no:cacheprovider",
+      "passed": 6,
+      "seconds": 0.1,
+      "log": "E:/VideoAI/scratch/logs/LVA-01-comfy-harness-tests.txt"
+    }
+  ],
+  "existing_failure": {
+    "test": "tests/unit/test_scene_media_performance.py::test_owned_service_cache_identity_rejects_pid_reuse",
+    "reason": "Existing fixture constructs _OwnedService via object.__new__ without process_identity; AttributeError at production_scene_clips.py:202. Reproduced alone without observer import; production file unchanged.",
+    "log": "E:/VideoAI/scratch/logs/LVA-01-existing-failure.txt"
+  },
+  "review": "Fresh reviewer found decode classification, native startup order, and Windows hard-stop summary-loss issues; all fixed with RED/GREEN tests. Follow-up found no remaining Critical/Important findings. Actual Comfy/GPU never launched.",
+  "safeguards": {
+    "real_gpu_runs": 0,
+    "paid_calls": 0,
+    "paused_production_resumed": false,
+    "original_run_mutation": false,
+    "existing_user_changes_preserved": true
+  },
+  "remaining": [
+    "Confirm three selected-image/motion-class fixtures and freeze their existing quality parameters.",
+    "Validate supplied Comfy observer on this hardware and connect fixed-input experiment orchestration after identities and authorization are confirmed.",
+    "Obtain explicit authorization for new experiment runs only.",
+    "Execute low-motion/high-motion/parent-child cold1/warm3; collect full 1080p delivery and human acceptance.",
+    "Compute real per-clip P50/P95, usable-video-second cost, failure/redo and wait-separated end-to-end baseline."
+  ],
+  "limitations": [
+    "All timings are isolated synthetic fixtures; no real Wan/upscale or full-film speedup measured.",
+    "sys.setprofile diagnostic overhead measured explicitly; use unprofiled wall time for performance.",
+    "Raw events are capped at20000; exact selected-function callsite aggregates survive truncation.",
+    "Only current thread and named identity helpers observed; not Comfy internals or all network workers.",
+    "GPU protocol contains null identities and is not execution-ready."
+  ],
+  "comfy_instrumentation": {
+    "collector": "src/video_ai/runtime/local_comfy_metrics.py",
+    "launcher": "scripts/observe_local_comfy.py",
+    "status": "stub_verified_hardware_unverified",
+    "graph_submissions": 0,
+    "timing": "CPU node/model method wall intervals; GPU device-wide sampled peaks",
+    "hard_stop_policy": "metrics_finalized false; retain last valid aggregate checkpoint only",
+    "initialization": "native main allocator/device setup precedes reversible import-hook instrumentation"
+  },
+  "snapshot_kind": "historical_offline_evidence",
+  "current_gpu_results": "docs/task-designs/LVA-01-gpu-results.json",
+  "latest_milestone": "All16native/1424upscale/12final technically complete and actual quality accepted; see current GPU results/completion."
+}

@@ -1,0 +1,40 @@
+{
+  "task_id": "LVA-04",
+  "status": "COMPLETED",
+  "outcome": "fast_candidate_rejected_incompatible_native_patch_format",
+  "completed_at_utc": "2026-11-16T03:10:09.082278+00:00",
+  "board": "docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md",
+  "design": "docs/task-designs/LVA-04-design.md",
+  "results": "docs\\task-designs\\LVA-04-results.json",
+  "gpu_results": "docs/task-designs/LVA-04-gpu-results.json",
+  "official_weight_downloads": 2,
+  "graph_attempts": 5,
+  "completed_quality_videos": 4,
+  "fast_videos": 0,
+  "fast_failed_prompt_id": "66cd1918-4276-4ee6-ac84-8d6235b70ba3",
+  "fast_validated": false,
+  "default_adoption": false,
+  "all_owned_services_closed": true,
+  "production_resumed": false,
+  "verification": {
+    "tests": 79,
+    "seconds": 5.0,
+    "actual_recovery_http": 0,
+    "actual_recovery_producers": 0
+  },
+  "acceptance": {
+    "1": "Independent workflow/mapping/provenance/profile/request/intent/service identities delivered; original quality bytes unchanged.",
+    "2": "Actual fixed environment and official weights attempted; selected strict native adapter rejected mixed deltas, other factors explicitly unsupported/rejected. No invented patch/sigma/speed data.",
+    "3": "Quality control preserves all 93 frames and PTS/finite checks; fast stops before sampler; parent/child gates not bypassed. Actual recovery 0 HTTP/0 producers.",
+    "4": "Technical incompatibility establishes negative candidate outcome; no candidate video exists for human judgment, marked not_evaluable, never accepted or fast validated.",
+    "5": "Normal/recovery and native/whole-film scopes separated; default quality and paused production retained."
+  },
+  "successor_preparation": {
+    "task_id": "LVA-05",
+    "status": "READY",
+    "design": "docs/task-designs/LVA-05-design.md",
+    "handoff": "docs/task-handoffs/LVA-05-handoff.md",
+    "implementation_started": false,
+    "gpu_authorized": false
+  }
+}

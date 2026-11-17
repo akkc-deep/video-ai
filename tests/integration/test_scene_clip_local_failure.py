@@ -1,3 +1,6 @@
+from scene_validation_helpers import isolated_runtime_run as runtime_run, scene_validation_config
+
+
 def test_transient_trim_failure_recovers_original_submission_without_terminal(runtime_run,tmp_path,monkeypatch):
     from scene_clip_helpers import prepared_wan,OfflineWan,generate
     from video_ai.media import video

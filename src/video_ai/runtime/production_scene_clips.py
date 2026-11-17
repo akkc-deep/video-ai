@@ -127,6 +127,7 @@ class _OwnedService:
     def __init__(self,frozen,paths,logger,lock):
         self.frozen,self.paths,self.logger,self.lock=frozen,paths,logger,lock
         self.run=logger.run_dir; self.manager=None; self.handle=None
+        self._handle_binding=None
         self.lease=None; self.sampler=None; self.stage='source_clips'
 
     def _start_resources(self,manifest):
@@ -141,7 +142,9 @@ class _OwnedService:
         self.sampler.start()
 
     def ensure(self):
-        if self.handle is not None: return
+        if self.handle is not None:
+            self.capability_identity()
+            return
         from .services import ServiceManager,port_listening
         from .service_specs import build_service_specs
         from .logging import RunLogger
@@ -191,6 +194,7 @@ class _OwnedService:
         self.handle=self.manager.ensure(build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui'])
         from .production_state import process_started_at
         self.process_identity = process_started_at(self.handle.pid) if self.handle.owned else None
+        self._handle_binding=(self.handle.pid,self.handle.started_at,self.handle.url,id(self.handle.process))
         if not self.handle.owned: raise ProductionRefused('Comfy service is not owned by this run')
 
     def capability_identity(self):
@@ -199,7 +203,11 @@ class _OwnedService:
         handle=self.handle
         if (handle is None or not handle.owned or handle.process is None
                 or handle.process.poll() is not None
+                or self.process_identity is None
                 or process_started_at(handle.pid)!=self.process_identity):
+            raise ProductionRefused('owned Comfy service identity changed')
+        current=(handle.pid,handle.started_at,handle.url,id(handle.process))
+        if getattr(self,'_handle_binding',current)!=current:
             raise ProductionRefused('owned Comfy service identity changed')
         return id(self),handle.pid,handle.started_at,handle.url
 
@@ -352,7 +360,72 @@ def _finish(context,errors=None,*,snapshot=None):
     return _result(store.run_dir,status,scenes=scenes,templates=templates,error=error)
 
 
+def _preparation_job(context,row,graph):
+    from .scene_stage_preparation import PreparationJob
+    b=row['budget']
+    selected=next(s for s in context['wan']['scenes'] if s['scene_id']==b['scene_id'])
+    source={k:selected[k] for k in ('path','bytes','sha256')}
+    return PreparationJob(clip_id=b['clip_id'],source=source,
+        parameters_sha256=canonical_digest(row),
+        workflow_sha256=canonical_digest({k:context['inputs'][k] for k in ('workflow','mapping')}),
+        graph_bytes=json.dumps(graph,ensure_ascii=False,allow_nan=False).encode(),
+        parent_required=b['parent_clip_id'] is not None)
+
+
+def _verify_preparation_source(context,job):
+    store=context['store']; store.assert_owned()
+    # Only the dependencies read by this worker. Full original submission
+    # guards still authenticate models, tools, parent and all upstream evidence.
+    store.validate_artifact(dict(job.source))
+    for name in ('workflow','mapping'): store.validate_artifact(context['inputs'][name])
+
+
+def _prepared_graph(context,row,graph,pool,metrics):
+    from copy import deepcopy
+    job=_preparation_job(context,row,graph)
+    _verify_preparation_source(context,job)
+    value=pool.take(job)
+    if value is None or value.error is not None:
+        pool.discard(); metrics.event('prepare_discarded',clip_id=job.clip_id)
+        return graph
+    metrics.event('prepare_ready',clip_id=job.clip_id,seconds=value.read_seconds)
+    # Source bytes are a speculative pre-read, never a persisted media proof.
+    result=json.loads(value.graph_bytes)
+    if canonical_digest(result)!=canonical_digest(graph):
+        raise ProductionRefused('prepared graph differs from current graph')
+    metrics.event('prepare_consumed',clip_id=job.clip_id)
+    return deepcopy(result)
+
+
 def _produce(context,*,paths,logger,client_factory,service_factory):
+    from .scene_stage_preparation import ScenePreparationPool,ScenePhaseMetrics,preparation_enabled
+    if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
+        from .production_temporal_scene_clips import produce_temporal_clips
+        return produce_temporal_clips(context,paths=paths,logger=logger)
+    metrics=ScenePhaseMetrics(); pool=ScenePreparationPool(enabled=preparation_enabled())
+    metrics.event('phase_enter'); result=None
+    try:
+        result=_produce_phase(context,paths=paths,logger=logger,client_factory=client_factory,
+                              service_factory=service_factory,pool=pool,metrics=metrics)
+        if getattr(result,'status',None)=='awaiting_continuity_review': metrics.event('review_return')
+        return result
+    finally:
+        original=sys.exception()
+        pool.close(); metrics.event('phase_exit')
+        report=metrics.report()
+        report.update(candidate=pool.enabled,preparation=pool.report(),
+            result_status=getattr(result,'status',None),
+            exception_type=type(original).__name__ if original else None,
+            result_error_type=(getattr(result,'error',None) or {}).get('kind'))
+        try:
+            context['store'].assert_owned()
+            logger.save_json('scene-clips/performance/'+uuid4().hex+'.json',report)
+        except Exception as diagnostic:
+            # Diagnostics cannot replace the transaction/cleanup outcome.
+            if original is not None: original.add_note('phase diagnostic failed: '+type(diagnostic).__name__)
+
+
+def _produce_phase(context,*,paths,logger,client_factory,service_factory,pool,metrics):
     review_checkpoint(force=True)
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .production_temporal_scene_clips import produce_temporal_clips
@@ -377,16 +450,21 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
     if load_continuity_policy(context['frozen']) is not None:
         from .production_scene_continuity import ensure_initial_epoch
         ensure_initial_epoch(context['frozen'],context['units'],context['timeline'],paths=paths,logger=logger,lock=store.lock)
-    service=None; errors={}; result=None;capability_cache={}
+    service=None; errors={}; result=None;capability_cache={}; service_started=False
+    queued=None
     def service_identity():
         identify=getattr(service,'capability_identity',None)
         return identify() if callable(identify) else None
     def ensure():
-        nonlocal service
+        nonlocal service,service_started
         review_checkpoint(force=True)
         store.assert_owned()
         if service is None: service=(service_factory or _OwnedService)(context['frozen'],paths,logger,store.lock)
+        metrics.event('ensure_request')
         service.ensure(); store.assert_owned()
+        if not service_started:
+            metrics.event('actual_start',service_identity=service_identity())
+            service_started=True
         review_checkpoint(force=True)
     try:
         for scene in context['plan']['scenes']:
@@ -407,16 +485,35 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
                         require_scene_continuity_acceptance(context['frozen'],context['units'],context['timeline'],
                             clip_id=parent['clip']['clip_id'])
                     input_record=_input(context,row,parent,paths=paths,logger=logger)
-                    graph=graph_for(context,row); request=expected_request(context,row,input_record,parent)
+                    graph=graph_for(context,row)
+                    if queued==cid:
+                        graph=_prepared_graph(context,row,graph,pool,metrics); queued=None
+                    request=expected_request(context,row,input_record,parent)
                     store.write(folder/'graph.json',graph); store.write(folder/'request.json',request); boundary('request')
                     factory=client_factory or SceneComfyClient
                     client=factory(context['frozen'].config.services['comfyui'],
                         request_timeout=context['frozen'].config.timeouts['comfy_request'],ownership_check=store.capture_guard(request,graph),
                         **({'send_checks_only':True} if client_factory is None else {}))
+                    if pool.enabled and queued is None:
+                        # Exactly the next scene in committed plan order. Never a
+                        # child, completed request or a different execution order.
+                        scenes=context['plan']['scenes']; index=scenes.index(scene)
+                        if index+1<len(scenes):
+                            next_scene=scenes[index+1]['scene_id']
+                            next_row=next((r for r in context['rows'] if r['budget']['scene_id']==next_scene),None)
+                            if next_row is not None and not next_row['budget']['parent_clip_id']:
+                                next_folder=store.clip_dir(next_row['budget']['clip_id'])
+                                if store.read(next_folder/'intent.json') is None and store.read(next_folder/'clip.json') is None:
+                                    job=_preparation_job(context,next_row,graph_for(context,next_row))
+                                    _verify_preparation_source(context,job)
+                                    if pool.submit(job):
+                                        queued=job.clip_id; metrics.event('prepare_queued',clip_id=queued)
+                    metrics.event('tracking_enter',clip_id=cid)
                     submission=recover_or_submit_scene_clip(store,request,graph,client=client,template=context['template'],
                         ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['wan'],
                         request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'],
                         capability_cache=capability_cache,service_identity=service_identity)
+                    metrics.event('tracking_exit',clip_id=cid)
                     try:
                         _technical(context,row,submission,request,paths=paths,logger=logger)
                     except InvalidGeneratedMedia as exc:
@@ -448,8 +545,10 @@ def _produce(context,*,paths,logger,client_factory,service_factory):
     finally:
         original=sys.exception()
         if service is not None:
-            try: service.close()
+            try:
+                service.close(); metrics.event('close',service_identity=None)
             except Exception as cleanup:
+                metrics.event('close_failed')
                 if original is not None:
                     original.add_note('service cleanup failed: '+str(cleanup))
                 elif result is not None:

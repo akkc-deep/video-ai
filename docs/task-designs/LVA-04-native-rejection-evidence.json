@@ -1,0 +1,181 @@
+{
+  "task_id": "LVA-04",
+  "scope": "Read existing pinned safetensors headers only; no inference or repeated full-weight hash",
+  "weights": [
+    {
+      "role": "lora_high",
+      "path": "E:\\VideoAI\\shared\\models\\comfyui\\loras\\wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "pinned_sha256": "887c3bdeb74e83859c920438e16ca31f39ab18ce189abc5f0e36f8348c5bbb19",
+      "header_bytes": 181552,
+      "header_sha256": "3299c288529f3f87686faf1923eef26238737cb88582ef1483ebfd294d524fc2",
+      "tensors": 1500,
+      "suffix_counts": {
+        "diff_b": 447,
+        "weight": 810,
+        "diff": 202,
+        "diff_m": 41
+      },
+      "non_lora_count": 690,
+      "non_lora_examples": {
+        "diffusion_model.blocks.0.cross_attn.k.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.norm_k.diff": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.norm_q.diff": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.o.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.q.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.v.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.diff_m": {
+          "shape": [
+            1,
+            6,
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.ffn.0.diff_b": {
+          "shape": [
+            13824
+          ],
+          "dtype": "BF16"
+        }
+      },
+      "diff_m_keys": [
+        "diffusion_model.blocks.0.diff_m",
+        "diffusion_model.blocks.1.diff_m",
+        "diffusion_model.blocks.10.diff_m",
+        "diffusion_model.blocks.11.diff_m",
+        "diffusion_model.blocks.12.diff_m",
+        "diffusion_model.blocks.13.diff_m",
+        "diffusion_model.blocks.14.diff_m",
+        "diffusion_model.blocks.15.diff_m",
+        "diffusion_model.blocks.16.diff_m",
+        "diffusion_model.blocks.17.diff_m",
+        "diffusion_model.blocks.18.diff_m",
+        "diffusion_model.blocks.19.diff_m",
+        "diffusion_model.blocks.2.diff_m",
+        "diffusion_model.blocks.20.diff_m",
+        "diffusion_model.blocks.21.diff_m",
+        "diffusion_model.blocks.22.diff_m",
+        "diffusion_model.blocks.23.diff_m",
+        "diffusion_model.blocks.24.diff_m",
+        "diffusion_model.blocks.25.diff_m",
+        "diffusion_model.blocks.26.diff_m",
+        "diffusion_model.blocks.27.diff_m",
+        "diffusion_model.blocks.28.diff_m",
+        "diffusion_model.blocks.29.diff_m",
+        "diffusion_model.blocks.3.diff_m",
+        "diffusion_model.blocks.30.diff_m",
+        "diffusion_model.blocks.31.diff_m",
+        "diffusion_model.blocks.32.diff_m",
+        "diffusion_model.blocks.33.diff_m",
+        "diffusion_model.blocks.34.diff_m",
+        "diffusion_model.blocks.35.diff_m",
+        "diffusion_model.blocks.36.diff_m",
+        "diffusion_model.blocks.37.diff_m",
+        "diffusion_model.blocks.38.diff_m",
+        "diffusion_model.blocks.39.diff_m",
+        "diffusion_model.blocks.4.diff_m",
+        "diffusion_model.blocks.5.diff_m",
+        "diffusion_model.blocks.6.diff_m",
+        "diffusion_model.blocks.7.diff_m",
+        "diffusion_model.blocks.8.diff_m",
+        "diffusion_model.blocks.9.diff_m",
+        "diffusion_model.head.diff_m"
+      ]
+    },
+    {
+      "role": "lora_low",
+      "path": "E:\\VideoAI\\shared\\models\\comfyui\\loras\\wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "pinned_sha256": "8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1",
+      "header_bytes": 214112,
+      "header_sha256": "07eaa1f7b0ad23944feadd27db81fdb2475d0b0b8a1cee5cd538c68dbbada9fc",
+      "tensors": 1749,
+      "suffix_counts": {
+        "diff_b": 531,
+        "weight": 974,
+        "diff": 244
+      },
+      "non_lora_count": 775,
+      "non_lora_examples": {
+        "diffusion_model.blocks.0.cross_attn.k.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.k_img.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.norm_k.diff": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.norm_k_img.diff": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.norm_q.diff": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.o.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.q.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        },
+        "diffusion_model.blocks.0.cross_attn.v.diff_b": {
+          "shape": [
+            5120
+          ],
+          "dtype": "BF16"
+        }
+      },
+      "diff_m_keys": []
+    }
+  ]
+}

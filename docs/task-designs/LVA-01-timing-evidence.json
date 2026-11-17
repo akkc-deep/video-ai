@@ -1,0 +1,562 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-01",
+  "reconstructed_at_utc": "2026-11-15T09:19:33.868208+00:00",
+  "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+  "selection_declaration_source": {
+    "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+    "line": 608,
+    "raw_line_including_newline_sha256": "bd9ea3f413b94414a39000a15b4f65146106dcad37e5b4af17991a9ee739c686"
+  },
+  "selected_identity_source": {
+    "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+    "line": 591,
+    "raw_line_including_newline_sha256": "bedd796f03437fc5ea2e81b0289c64981617c0100d12c9cb4142a78ddb05885c"
+  },
+  "viewed_input_source": {
+    "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+    "line": 595,
+    "raw_line_including_newline_sha256": "2fba3d8a3040ac436a2d6ccc6a1c824327c3a61c98086d7205899391f749b546"
+  },
+  "source_identities": [
+    {
+      "phase": "low",
+      "selected_image_sha256": "0e3305d2d725c874d23c25c3271d027a342751832a2a8e301a0b2c7057ee6001",
+      "input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2"
+    },
+    {
+      "phase": "parent",
+      "selected_image_sha256": "1878fc5f503fad17199745e74fddcc4de41104e19ce08f6b5581e233062bd9ab",
+      "input_sha256": "317e2605d1c529d6ed50e166cd77adc13f8c478f86e31989e786d55383c281f3"
+    },
+    {
+      "phase": "high",
+      "selected_image_sha256": "bfb281db55836b733295618fe122960e76d719ca5911328d074d64adbf49f150",
+      "input_sha256": "422738d468f77c0022439db2a13892f12ad7b556300e69437b277dc54f233a33"
+    }
+  ],
+  "review_intervals": {
+    "low_native": {
+      "posted_at_utc": "2026-11-15T04:49:09.478Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 826,
+        "raw_line_including_newline_sha256": "8606dec9a86ec3ede48b0668b26fad8385ab5932cb8262669edc721a24907643"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "画面没问题",
+        "timestamp": "2026-11-15T07:11:46.200Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1638,
+          "raw_line_including_newline_sha256": "d06d2eca54b60b0d8ab96aa1f09082482e4db4c61cd3a2d1e4ebd6e5e5a8ec6c"
+        }
+      },
+      "response_interval_seconds": 8556.72200012207
+    },
+    "parent_native": {
+      "posted_at_utc": "2026-11-15T05:20:40.052Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 1146,
+        "raw_line_including_newline_sha256": "61a66f70117c6cbb410de8be94d6d4c4564e1abceb8f95f2faf5ee4e4af15d21"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "画面没问题",
+        "timestamp": "2026-11-15T07:11:46.200Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1638,
+          "raw_line_including_newline_sha256": "d06d2eca54b60b0d8ab96aa1f09082482e4db4c61cd3a2d1e4ebd6e5e5a8ec6c"
+        }
+      },
+      "response_interval_seconds": 6666.148000001907
+    },
+    "high_native": {
+      "posted_at_utc": "2026-11-15T05:56:22.266Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 1398,
+        "raw_line_including_newline_sha256": "bbe9ac1046c485f177cc220d3ad1115767d8b05afa58737698414ed0971dd026"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "画面没问题",
+        "timestamp": "2026-11-15T07:11:46.200Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1638,
+          "raw_line_including_newline_sha256": "d06d2eca54b60b0d8ab96aa1f09082482e4db4c61cd3a2d1e4ebd6e5e5a8ec6c"
+        }
+      },
+      "response_interval_seconds": 4523.934000015259
+    },
+    "child_native": {
+      "posted_at_utc": "2026-11-15T07:20:21.056Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 1755,
+        "raw_line_including_newline_sha256": "ae0201fec83de3f42ded30ab69b9fa8b6527710e07aa8a446de83c444101c5fb"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "response_interval_seconds": 6226.9509999752045
+    },
+    "low_high_final": {
+      "posted_at_utc": "2026-11-15T07:48:35.093Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 2029,
+        "raw_line_including_newline_sha256": "4a7c8cf3a9aecac56544bfebf7ed572b720f894a4c3d9caa5cb34456b00a9dec"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "response_interval_seconds": 4532.914000034332
+    },
+    "final_chain": {
+      "posted_at_utc": "2026-11-15T09:08:01.438Z",
+      "source": {
+        "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+        "line": 2225,
+        "raw_line_including_newline_sha256": "0a50a81cf4389e434cc95bbc639f6cbee80ac4071f9b15d415de3d4893427824"
+      },
+      "time_basis": "Recorded review-tool invocation checkpoint; any posting latency retained.",
+      "decision": {
+        "text": "没问题，继续吧",
+        "timestamp": "2026-11-15T09:50:34.724Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2444,
+          "raw_line_including_newline_sha256": "727d0a23a8ac1ad265b34aae668663446b026d06859ee1e4ed0f3192dda73825"
+        }
+      },
+      "response_interval_seconds": 2553.2860000133514
+    }
+  },
+  "samples": [
+    {
+      "case": "low",
+      "trial": "cold_1",
+      "temperature": "cold",
+      "candidate_sha256": "6c141c85511b18c62ff298f893e28ad4aaa7658ec49283ab0ca6d2d85c56a337",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:41:53.228Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1954,
+          "raw_line_including_newline_sha256": "df2bbf1f2a4a9befc0e6bd481380dfddc317de63cfc6e2f20d52e07ab3f77589"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 11582.567999839783,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 8556.72200012207,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 1992.6998709401776,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "low",
+      "trial": "warm_1",
+      "temperature": "warm_process",
+      "candidate_sha256": "6c141c85511b18c62ff298f893e28ad4aaa7658ec49283ab0ca6d2d85c56a337",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:43:02.010Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1962,
+          "raw_line_including_newline_sha256": "32d64c6faffd3a8f0952532f746fa9f26d2d8b4bb84515ce8cd8fb810f08fe2d"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 11651.349999904633,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 8556.72200012207,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2004.533333316926,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "low",
+      "trial": "warm_2",
+      "temperature": "warm_process",
+      "candidate_sha256": "6c141c85511b18c62ff298f893e28ad4aaa7658ec49283ab0ca6d2d85c56a337",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:44:06.619Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1971,
+          "raw_line_including_newline_sha256": "91cd84c63a3273d545ae9fc8de8a48eb224c3e3c3ccce2858cfd26e67ed3dfde"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 11715.958999872208,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 8556.72200012207,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2015.648860193068,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "low",
+      "trial": "warm_3",
+      "temperature": "warm_process",
+      "candidate_sha256": "6c141c85511b18c62ff298f893e28ad4aaa7658ec49283ab0ca6d2d85c56a337",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:45:36.312Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 1990,
+          "raw_line_including_newline_sha256": "bd2b112f423649437145b98cdb427ff143df431e81027fc423c8bf0e9059cf29"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 11805.651999950409,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 8556.72200012207,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2031.0799139699627,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "high",
+      "trial": "cold_1",
+      "temperature": "cold",
+      "candidate_sha256": "cec21ce29f4da3406ba7aefe013efda1a3d2567cfa0e04f33889357621ce8b97",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:48:27.330Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2027,
+          "raw_line_including_newline_sha256": "2bbd460149952a5dcf233584496b87b387298b3b453b6428a037a80e3e59c07f"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 11976.669999837875,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 4523.934000015259,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2060.5023655635055,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "high",
+      "trial": "warm_1",
+      "temperature": "warm_process",
+      "candidate_sha256": "cec21ce29f4da3406ba7aefe013efda1a3d2567cfa0e04f33889357621ce8b97",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:49:49.487Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2041,
+          "raw_line_including_newline_sha256": "fe5116968864c5e856bcf9b672e90766a0515874ff14dcf57eb8c3839328f683"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 12058.826999902725,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 4598.328000068665,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2074.636903209071,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "high",
+      "trial": "warm_2",
+      "temperature": "warm_process",
+      "candidate_sha256": "cec21ce29f4da3406ba7aefe013efda1a3d2567cfa0e04f33889357621ce8b97",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:51:17.577Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2049,
+          "raw_line_including_newline_sha256": "11e0a05a453d6b279c04c8c78ee9757204eb2f0e984bf7934e4c98f429e524f8"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 12146.916999816895,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 4686.417999982834,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2089.7921720115087,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "high",
+      "trial": "warm_3",
+      "temperature": "warm_process",
+      "candidate_sha256": "cec21ce29f4da3406ba7aefe013efda1a3d2567cfa0e04f33889357621ce8b97",
+      "video_seconds": 5.8125,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_utc": "2026-11-15T07:52:42.268Z",
+        "time_basis": "First recorded successful candidate tool output; observed availability includes polling/notification delay, not exact decode finish.",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2069,
+          "raw_line_including_newline_sha256": "a801885615c1f76ad26d352fc2743eb19df8152bacb793c88984d16f6ee0aeb0"
+        }
+      },
+      "selection_to_observed_technical_delivery_seconds": 12231.607999801636,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 4771.108999967575,
+      "quality_decision": {
+        "text": "没问题",
+        "timestamp": "2026-11-15T09:04:08.007Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2180,
+          "raw_line_including_newline_sha256": "f0b4b2fd2bc2a69979133e3cc7c6c3608cae5cd339c021016b558e0ae9629cc4"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 2104.3626666325395,
+      "selection_to_quality_acceptance_seconds": 16517.34699988365,
+      "selection_to_quality_acceptance_per_usable_video_second": 2841.694107506865
+    },
+    {
+      "case": "chain",
+      "trial": "cold_1",
+      "temperature": "cold",
+      "candidate_sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9",
+      "video_seconds": 10.625,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_unix": 1794733663.2144516,
+        "time_basis": "Measured enclosing wrapper after complete170-frame composition, delivery checks and candidate SHA.",
+        "source_artifact": "E:\\VideoAI\\scratch\\benchmarks\\LVA-01-upscale-child-20261115-01\\postprocess\\parent_child_chain_cold_1\\phase-timing.json"
+      },
+      "selection_to_observed_technical_delivery_seconds": 16732.554451465607,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 12893.098999977112,
+      "quality_decision": {
+        "text": "没问题，继续吧",
+        "timestamp": "2026-11-15T09:50:34.724Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2444,
+          "raw_line_including_newline_sha256": "727d0a23a8ac1ad265b34aae668663446b026d06859ee1e4ed0f3192dda73825"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 1574.8286542555866,
+      "selection_to_quality_acceptance_seconds": 19304.06399989128,
+      "selection_to_quality_acceptance_per_usable_video_second": 1816.8530823427088
+    },
+    {
+      "case": "chain",
+      "trial": "warm_1",
+      "temperature": "warm_process",
+      "candidate_sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9",
+      "video_seconds": 10.625,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_unix": 1794733738.9262958,
+        "time_basis": "Measured enclosing wrapper after complete170-frame composition, delivery checks and candidate SHA.",
+        "source_artifact": "E:\\VideoAI\\scratch\\benchmarks\\LVA-01-upscale-child-20261115-01\\postprocess\\parent_child_chain_warm_1\\phase-timing.json"
+      },
+      "selection_to_observed_technical_delivery_seconds": 16808.266295671463,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 12950.587295770645,
+      "quality_decision": {
+        "text": "没问题，继续吧",
+        "timestamp": "2026-11-15T09:50:34.724Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2444,
+          "raw_line_including_newline_sha256": "727d0a23a8ac1ad265b34aae668663446b026d06859ee1e4ed0f3192dda73825"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 1581.9544748867258,
+      "selection_to_quality_acceptance_seconds": 19304.06399989128,
+      "selection_to_quality_acceptance_per_usable_video_second": 1816.8530823427088
+    },
+    {
+      "case": "chain",
+      "trial": "warm_2",
+      "temperature": "warm_process",
+      "candidate_sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9",
+      "video_seconds": 10.625,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_unix": 1794733815.354222,
+        "time_basis": "Measured enclosing wrapper after complete170-frame composition, delivery checks and candidate SHA.",
+        "source_artifact": "E:\\VideoAI\\scratch\\benchmarks\\LVA-01-upscale-child-20261115-01\\postprocess\\parent_child_chain_warm_2\\phase-timing.json"
+      },
+      "selection_to_observed_technical_delivery_seconds": 16884.69422197342,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 13027.015222072601,
+      "quality_decision": {
+        "text": "没问题，继续吧",
+        "timestamp": "2026-11-15T09:50:34.724Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2444,
+          "raw_line_including_newline_sha256": "727d0a23a8ac1ad265b34aae668663446b026d06859ee1e4ed0f3192dda73825"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 1589.1476914798511,
+      "selection_to_quality_acceptance_seconds": 19304.06399989128,
+      "selection_to_quality_acceptance_per_usable_video_second": 1816.8530823427088
+    },
+    {
+      "case": "chain",
+      "trial": "warm_3",
+      "temperature": "warm_process",
+      "candidate_sha256": "0d2d4e0eae5a87f34b3c5b14de74230a714f859cb4fb56064b07ae37436118c9",
+      "video_seconds": 10.625,
+      "experiment_selection_complete_at_utc": "2026-11-15T04:28:50.660Z",
+      "endpoint": {
+        "technical_available_at_unix": 1794733891.814792,
+        "time_basis": "Measured enclosing wrapper after complete170-frame composition, delivery checks and candidate SHA.",
+        "source_artifact": "E:\\VideoAI\\scratch\\benchmarks\\LVA-01-upscale-child-20261115-01\\postprocess\\parent_child_chain_warm_3\\phase-timing.json"
+      },
+      "selection_to_observed_technical_delivery_seconds": 16961.15479183197,
+      "review_response_interval_union_seconds_clipped_to_technical_delivery": 13103.475791931152,
+      "quality_decision": {
+        "text": "没问题，继续吧",
+        "timestamp": "2026-11-15T09:50:34.724Z",
+        "source": {
+          "session_file": "rollout-2026-11-15T04-00-24-01a1dba5-9331-7e12-a85b-b6a187dde2ba.jsonl",
+          "line": 2444,
+          "raw_line_including_newline_sha256": "727d0a23a8ac1ad265b34aae668663446b026d06859ee1e4ed0f3192dda73825"
+        }
+      },
+      "selection_to_observed_delivery_per_accepted_video_second": 1596.3439804077148,
+      "selection_to_quality_acceptance_seconds": 19304.06399989128,
+      "selection_to_quality_acceptance_per_usable_video_second": 1816.8530823427088
+    }
+  ],
+  "limitations": [
+    "T0 is this experiment choosing fixed existing selected/preadapted production inputs; original upstream selection/adaptation is outside this experiment.",
+    "Common-T0 sample envelopes include actual other-fixture scheduling, review response and notification delay; overlap and must not be summed into throughput.",
+    "Response interval unions include time while computation continued; do not subtract them from elapsed and call the remainder GPU time.",
+    "Measured native/postprocess phase P50/P95 stay separate; uninterrupted full-film throughput remains unmeasured."
+  ],
+  "groups": {
+    "low": {
+      "cold": {
+        "samples": 1,
+        "observed_selection_completion_latency_p50_seconds": 11582.567999839783,
+        "observed_selection_completion_latency_p95_seconds": 11582.567999839783,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      },
+      "warm_process": {
+        "samples": 3,
+        "observed_selection_completion_latency_p50_seconds": 11715.958999872208,
+        "observed_selection_completion_latency_p95_seconds": 11796.682699942588,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      }
+    },
+    "high": {
+      "cold": {
+        "samples": 1,
+        "observed_selection_completion_latency_p50_seconds": 11976.669999837875,
+        "observed_selection_completion_latency_p95_seconds": 11976.669999837875,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      },
+      "warm_process": {
+        "samples": 3,
+        "observed_selection_completion_latency_p50_seconds": 12146.916999816895,
+        "observed_selection_completion_latency_p95_seconds": 12223.138899803162,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      }
+    },
+    "chain": {
+      "cold": {
+        "samples": 1,
+        "observed_selection_completion_latency_p50_seconds": 16732.554451465607,
+        "observed_selection_completion_latency_p95_seconds": 16732.554451465607,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      },
+      "warm_process": {
+        "samples": 3,
+        "observed_selection_completion_latency_p50_seconds": 16884.69422197342,
+        "observed_selection_completion_latency_p95_seconds": 16953.508734846117,
+        "scope": "Overlapping common-selection experiment envelopes under actual scheduling; not standalone throughput."
+      }
+    }
+  }
+}

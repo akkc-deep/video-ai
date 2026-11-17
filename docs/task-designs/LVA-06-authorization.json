@@ -1,0 +1,10 @@
+{
+  "task_id": "LVA-06",
+  "user_message": "同意",
+  "recorded_at_utc": "2026-11-16T12:08:46.784684+00:00",
+  "scope": "Explicit approval of immediately preceding concrete LVA-06 GPU manifest/commands: up to16 Wan,1424 frame upscales,12 compositions; genuine media reviews still required.",
+  "manifest_file_sha256": "ba88dfc0950e905e527d73e11e8ddc660593540c78502588065403b35c779d26",
+  "manifest_canonical_sha256": "c9f66424f4316c210a96d826f27b63c0c3f31986fcd3a62e52803a4c752953a8",
+  "plan_sha256": "220c087ed0a5a94ac8f5e1ff263dda522871ca6fb3424ca37efdf2c3474d7758",
+  "production_resumed": false
+}

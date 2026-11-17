@@ -1,0 +1,91 @@
+{
+  "task_id": "LVA-05",
+  "outcome": "completed_measured_experiment_default_adoption_rejected",
+  "completed_at_utc": "2026-11-16T06:25:01.785569+00:00",
+  "board": "docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md",
+  "design": "docs/task-designs/LVA-05-design.md",
+  "evidence": {
+    "main_results": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-results.json",
+      "bytes": 7215,
+      "sha256": "6c81be975ff3ef1ccaa4a9411211cde12c4f5ffef042df0b872f7eb0c14db372"
+    },
+    "gpu_results": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-gpu-results.json",
+      "bytes": 217161,
+      "sha256": "eb78dd5411a1ebace38b407cb0b525a6006b5d2d43add5894ecad8223453c140"
+    },
+    "recovery": {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-05-gpu-recovery.json",
+      "bytes": 4300,
+      "sha256": "f3b3ab0a7b3e6ef611d3cce862b34fa16e10f7f005f8b4917f4507c9facb7a29"
+    },
+    "encoding_result": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-encoding-low-cold_1\\results.json",
+      "bytes": 21048,
+      "sha256": "4a8bb7690530b7db7be15f2632b50e7e80fe5cd6e48158e7ed6264c72497557b"
+    }
+  },
+  "verification": {
+    "targeted_passed": 98,
+    "seconds": 9.51,
+    "legacy_fixture_failures": 5
+  },
+  "measured_owned_phases": 12,
+  "real_upscaled_frames": 4272,
+  "unique_prompt_ids": 4272,
+  "full_rgb_source_equal": true,
+  "new_human_decisions": 0,
+  "encoding": {
+    "status": "rejected_pixel_contract",
+    "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-encoding-low-cold_1",
+    "result": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-05-20261116-03-encoding-low-cold_1\\results.json",
+      "bytes": 21048,
+      "sha256": "4a8bb7690530b7db7be15f2632b50e7e80fe5cd6e48158e7ed6264c72497557b"
+    },
+    "software_seconds": 1.0836643000075128,
+    "nvenc_seconds": 0.6508975999895483,
+    "software_bytes": 5854912,
+    "nvenc_bytes": 5577524,
+    "frames": 93,
+    "rgb_different_frames": 93,
+    "pts_frame_dimensions_rate_colors_equal": true,
+    "colors": {
+      "color_range": null,
+      "color_space": null,
+      "color_transfer": null,
+      "color_primaries": null
+    },
+    "decode_count_per_output": 1,
+    "visual_review": "not_run_after_technical_rejection",
+    "remaining_cases": {
+      "count": 11,
+      "status": "not_run_after_decisive_pixel_rejection"
+    },
+    "qp_is_crf": false
+  },
+  "resource_closure": {
+    "measured_services": 12,
+    "all_exit_zero": true,
+    "all_metrics_finalized": true,
+    "owned_pids_remaining": [],
+    "port_8189_listening": false
+  },
+  "defaults_changed": false,
+  "production_resumed": false,
+  "physical_weight_loads": null,
+  "combination": "not_run_untested",
+  "acceptance_branch": "Real measured negative/default rejection; original genuine source quality retained by full-RGB identity, no new user acceptance inferred.",
+  "successor_preparation": {
+    "task_id": "LVA-06",
+    "status": "READY",
+    "prepared": true,
+    "design": "docs/task-designs/LVA-06-design.md",
+    "handoff": "docs/task-handoffs/LVA-06-handoff.md",
+    "implementation_started": false,
+    "gpu_authorized": false,
+    "builder_check": "nothing important left"
+  },
+  "status": "COMPLETED"
+}

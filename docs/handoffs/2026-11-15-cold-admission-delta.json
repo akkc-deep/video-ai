@@ -20,7 +20,7 @@
     {
       "path": "src/video_ai/runtime/reference_image_records.py",
       "baseline_sha256": "a609998bab5720db425966ed56bc955946c084cdf642ba3e5465cafea368aef5",
-      "current_sha256": "d737d8c59155ea0035017afd398838cfae5f40159f9866e9ce3faade9249462a"
+      "current_sha256": "f64fc58cf20ec4ce491eafdbdbb10641cef912fb14084b42a130dcb7f13f3388"
     },
     {
       "path": "src/video_ai/runtime/production_state.py",
@@ -36,6 +36,16 @@
       "path": "src/video_ai/runtime/verification.py",
       "baseline_sha256": "05846025a8d1ede18ed9d8ffc62a22f79a585a582a5a53738d54b348a9622df5",
       "current_sha256": "6fb6d8df32ed7595a2ba8f0cb9b59209c98d2a2b19eb534c2702d2517b0778bb"
+    },
+    {
+      "path": "src/video_ai/runtime/temporal_scene_admission.py",
+      "baseline_sha256": "05baab21d41dba4157a9a2856fcf4075a68af5ea3feb873b696cae27b38e7da7",
+      "current_sha256": "2a526f1da860a9b3d6773ca7b21ec8f28635690560689b8780e51ee78546374b"
+    },
+    {
+      "path": "src/video_ai/runtime/storage.py",
+      "baseline_sha256": "32ca6c76a7433eb5eb3e3b1d7ce53de0b92cd3adb2bd98d4064b3ad256471d41",
+      "current_sha256": "d61d2729a15707a200eeabb7954a6d14ee63c72a5fd376266039e23f5874030f"
     },
     {
       "path": "src/video_ai/runtime/scene_revision_records.py",
@@ -60,7 +70,7 @@
     {
       "path": "tests/unit/test_cold_admission_performance.py",
       "baseline_sha256": null,
-      "current_sha256": "3baab5fad72fffb1ee79e60104a3a307d95abb7bf342089ab12d92ad378fb7b5"
+      "current_sha256": "b7649da3bed56402d97fa72431094600e3b5722ca8f5f722b41e8f35d7ad27b3"
     }
   ]
 }
