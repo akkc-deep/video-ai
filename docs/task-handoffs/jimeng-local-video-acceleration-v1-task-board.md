@@ -186,14 +186,15 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 
 ### LVA-07-02
 
-- **Goal:** 用真实 Wrapper 处理函数确认两组权重的映射和混合delta数学语义，先排除“忽略不支持项仍显示成功”的假兼容。
-- **Scope:** 在前项支持进入CPU验证时，读取锁定high/low全部key/shape/dtype，逐项映射到base结构；针对普通LoRA、diff、diff_b、diff_m验证实际converter/patch函数的CPU数值行为、strength、merge/unmerge及FP8边界。使用小张量/局部参数副本时明确覆盖范围，不把模拟函数当真实Wrapper。若缺依赖，先给出最小独立CPU环境及命令，取得该项安装授权；不污染生产、不启动GPU或服务。
-- **Acceptance:** 每个输入tensor都有消费/目标或拒绝原因；41个high diff_m与两侧全部bias/diff不被遗漏；数学结果与声明语义一致、未识别/shape/dtype/NaN/Inf及单专家失败导致pair原子拒绝。输出源码、CPU实际执行与完整模型未验证项的分层结论；缺依赖/映射不完整不得记通过。unsupported可形成明确否决结论，不能制造GPU候选。
-- **Dependencies:** LVA-07-01 的固定源码、依赖及支持路径；LVA-04 的两权重锁定身份与header证据。
-- **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的兼容准入与身份表；② LVA-07-01实际审查交付；③ docs/task-designs/LVA-04-source-research.json、LVA-04-native-rejection-evidence.json；④ 固定commit实际converter/loader/patch函数。自身详细设计在准备时完成并关联。
-- **Deliverables:** CPU兼容验证代码/定向用例和逐tensor JSON、Markdown结论；确切实现及报告路径在本项设计中确定，当前不伪造已有文件。
-- **First action:** 依据已固定源码，为high diff_m和low diff_b建立调用真实Wrapper函数的最小CPU失败复现，并扩展至全部映射；不先实现完整服务adapter。
-- **State evidence:** NOT_STARTED；没有CPU加载、应用或数值验证结果；不会因前项源码存在某个节点就自动宣称兼容。
+- **Goal:** 用固定版本 Wrapper 的真实转换/加载/patch函数，在小型 CPU 模型上复现 LightX2V High/Low mixed-delta 的实际映射、遗漏与数值语义，给出最小修复设计；区分源码静态风险与真实函数执行证据。
+- **Scope:** 固定 Wrapper commit `a7439db30bed0c5b5fa437d77ae8a7bb220dfd00`。先 RED 测试，调用真实 `standardize_lora_key_format`、key mapping、converter、loader、merged/unmerged patch函数；覆盖普通LoRA、diff、diff_b、diff_m、bias/norm、block/head modulation、key collision、FP8 scale、High/Low原子应用。逐tensor记录输入key、标准化key、目标参数、shape/dtype、consumed/applied/拒绝原因与实际数值。不得用手写仿真函数代替Wrapper真实实现；若真实函数无法导入，明确BLOCKED并先提交最小隔离CPU环境/依赖清单，等待安装授权，不假称CPU验证通过。
+- **Acceptance:** ① 两组LoRA全部输入tensor均有逐项映射/消费/应用/拒绝记录。② 实际固定版本Wrapper函数在CPU执行，数学预期由格式/源码独立推导；diff_m语义不明确则停止，不猜公式。③ Merged/Unmerged的遗漏和数值差异可复现；High或Low任一失败时不得部分修改模型或返回可用pair。④ FP8 scale、strength、alpha/rank、dtype转换和重复应用/移除边界明确。⑤ 先交付CPU结果和最小修复设计；本任务不修改Wrapper checkout、生产代码、LoRA原文件或Comfy环境，不启动GPU/服务/视频POST，不下载模型。
+- **Dependencies:** LVA-07-01 固定源码、环境和依赖审查；LVA-04 两组LoRA历史身份/header证据。
+- **Design document:** `docs/task-designs/LVA-07-02-design.md`。
+- **Sources:** ① LVA-07-01 的 `LVA-07-environment-review.md/.json`；② `LVA-04-results.md`、`LVA-04-source-research.json`、`LVA-04-native-rejection-evidence.json`；③ 固定 Wrapper commit 的 `nodes_model_loading.py`、`custom_linear.py`、`utils.py` 及实际调用模块。
+- **Deliverables:** `docs/task-designs/LVA-07-02-results.json/.md`；若CPU实测支持修复，另交 `docs/task-designs/LVA-07-02-fix-design.md`；获准后才建立隔离CPU测试环境和实际测试代码。
+- **First action:** 先整理缺失依赖下真实函数的最小 import graph，确定哪些原函数能在CPU-only环境中执行；用high的diff_m和low的diff_b建立真实函数RED复现，并扩展到全部权重类别。若需安装，先提交精确版本、wheel/hash、命令和磁盘需求，等待授权。
+- **State evidence:** NOT_STARTED；前项 LVA-07-01 的源码审查判定当前候选停止安装/推理准备，LVA-07-02只允许先做依赖/导入可行性和测试设计；不自动启动安装、CPU执行或GPU实验。
 
 ### LVA-07-03
 
