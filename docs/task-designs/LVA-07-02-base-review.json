@@ -1,0 +1,224 @@
+{
+  "task_id": "LVA-07-02",
+  "review_date": "2026-11-18",
+  "operation_scope": "User continue request authorized read-only official base headers and loading-rule investigation; no semantic policy activation",
+  "conclusion": "Official BF16 headers lack the same290 Low img targets; switching to these files does not create the missing layers. Audited a7439db SetLoRAs explicitly filters exactly this set when base has no img state. Workflow records older998a69 source without explicit img filter, so official recipe alone does not prove complete runtime consumption or acceptance. Propose a disabled exact-set not-applicable policy for current audited profile.",
+  "official_models": [
+    {
+      "role": "high",
+      "filename": "wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+      "url": "https://huggingface.co/lightx2v/Wan2.2-Official-Models/resolve/18634b66f04c2e564e550b2c6bd092c64f2ce5c6/wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+      "revision": "18634b66f04c2e564e550b2c6bd092c64f2ce5c6",
+      "file_metadata": {
+        "rfilename": "wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+        "blobId": "f722b2be4268c0dd3c2844c79ec715bee1661dec",
+        "size": 28577915880,
+        "lfs": {
+          "sha256": "766066ac462ccfc2ffec9bb62721732b42de4a8a68c5f9b39b2c8c46555ad315",
+          "size": 28577915880,
+          "pointerSize": 136
+        }
+      },
+      "header_bytes": 113504,
+      "header_sha256": "f40c5e3943554fa03cf2b873620e0d3293fcbfa89825d7c52b291ef6533cc67c",
+      "tensors": 1095,
+      "img_keys": [],
+      "dtype_counts": {
+        "BF16": 1095
+      },
+      "requests": [
+        {
+          "status": 206,
+          "content_range": "bytes 0-7/28577915880",
+          "bytes": 8
+        },
+        {
+          "status": 206,
+          "content_range": "bytes 8-113511/28577915880",
+          "bytes": 113504
+        }
+      ],
+      "tensor_payload_read": false,
+      "whole_file_downloaded": false
+    },
+    {
+      "role": "low",
+      "filename": "wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+      "url": "https://huggingface.co/lightx2v/Wan2.2-Official-Models/resolve/18634b66f04c2e564e550b2c6bd092c64f2ce5c6/wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+      "revision": "18634b66f04c2e564e550b2c6bd092c64f2ce5c6",
+      "file_metadata": {
+        "rfilename": "wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+        "blobId": "c812a7dfa3d473b2fea60c47b811ce9a70cb269f",
+        "size": 28577915880,
+        "lfs": {
+          "sha256": "515bbb21a2008bf74107878bd748c9a6aafa9a733f1724a49ce7fde3001338f7",
+          "size": 28577915880,
+          "pointerSize": 136
+        }
+      },
+      "header_bytes": 113504,
+      "header_sha256": "f40c5e3943554fa03cf2b873620e0d3293fcbfa89825d7c52b291ef6533cc67c",
+      "tensors": 1095,
+      "img_keys": [],
+      "dtype_counts": {
+        "BF16": 1095
+      },
+      "requests": [
+        {
+          "status": 206,
+          "content_range": "bytes 0-7/28577915880",
+          "bytes": 8
+        },
+        {
+          "status": 206,
+          "content_range": "bytes 8-113511/28577915880",
+          "bytes": 113504
+        }
+      ],
+      "tensor_payload_read": false,
+      "whole_file_downloaded": false
+    }
+  ],
+  "workflow": {
+    "workflow_url": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras/resolve/57adea585d1d21085e2dfc91ce3c7b646cdd9345/wan2.2_i2v_scale_fp8_comfyui_with_lora.json",
+    "workflow_sha256": "aecf199c8451c2272fb53f6a96854c12cd596297326f426a6d7bf4533c7383b8",
+    "workflow_nodes": [
+      {
+        "id": 80,
+        "type": "WanVideoSetLoRAs",
+        "mode": 0,
+        "widgets": []
+      },
+      {
+        "id": 79,
+        "type": "WanVideoSetLoRAs",
+        "mode": 0,
+        "widgets": []
+      },
+      {
+        "id": 56,
+        "type": "WanVideoLoraSelect",
+        "mode": 0,
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 97,
+        "type": "WanVideoLoraSelect",
+        "mode": 0,
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+          1.0000000000000002,
+          false,
+          false
+        ]
+      },
+      {
+        "id": 22,
+        "type": "WanVideoModelLoader",
+        "mode": 0,
+        "widgets": [
+          "wan2.2_i2v_A14b_high_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      },
+      {
+        "id": 71,
+        "type": "WanVideoModelLoader",
+        "mode": 0,
+        "widgets": [
+          "wan2.2_i2v_A14b_low_noise_lightx2v.safetensors",
+          "bf16",
+          "disabled",
+          "offload_device",
+          "sageattn"
+        ]
+      }
+    ],
+    "mapping": [
+      {
+        "role": "high",
+        "input_tensors": 1500,
+        "official_missing": 0,
+        "local_missing": 0,
+        "img_filter_excludes": 0,
+        "remaining": 1500,
+        "same_exact_source_key_set": true
+      },
+      {
+        "role": "low",
+        "input_tensors": 1749,
+        "official_missing": 290,
+        "local_missing": 290,
+        "img_filter_excludes": 290,
+        "remaining": 1459,
+        "same_exact_source_key_set": true
+      }
+    ],
+    "wrapper_commit": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+    "setlora_lines": [
+      742,
+      787
+    ],
+    "source_path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-01-source-audit\\nodes_model_loading.py",
+    "source_sha256": "107320a1bc50242e8468c536b13ed5df5d9aa30af4f4d121cd320c70fff84db0",
+    "filter_expression": "if no model state_dict key contains img: keep only LoRA keys not containing img",
+    "approved_exclusion_policy_enabled": false
+  },
+  "shape_comparison": [
+    {
+      "role": "high",
+      "core_header_target_shape_mismatches": 0
+    },
+    {
+      "role": "low",
+      "core_header_target_shape_mismatches": 0
+    }
+  ],
+  "source_documents": {
+    "distill_readme_url": "https://huggingface.co/lightx2v/Wan2.2-Distill-Loras/resolve/57adea585d1d21085e2dfc91ce3c7b646cdd9345/README.md",
+    "distill_readme_sha256": "45f75d417bcfc24d55a724802db17c12b7fd74ad81214cd1f9d61c0e1f9d000e",
+    "official_base_api_url": "https://huggingface.co/api/models/lightx2v/Wan2.2-Official-Models/revision/18634b66f04c2e564e550b2c6bd092c64f2ce5c6?blobs=true"
+  },
+  "proposed_policy_path": "docs/task-designs/LVA-07-02-img-exclusion-proposal.json",
+  "proposed_policy_sha256": "08b60de9a843da17019b6b9f75f0351fb545c2a399c96695de5f3b376b1f69fa",
+  "proposed_policy_enabled": false,
+  "recommendation": "Keep current base artifacts; do not download official BF16 solely to solve img-target absence. Seek explicit approval to distinguish reviewed290 not-applicable inputs from2959 applicable tensors, then implement/test opt-in exact-set policy before further admission.",
+  "operations": {
+    "remote_model_header_body_bytes": 227024,
+    "whole_model_downloads": 0,
+    "tensor_payload_bytes_read": 0,
+    "gpu_calls": 0,
+    "service_starts": 0,
+    "dependency_installs": 0,
+    "product_or_repair_code_modifications": 0,
+    "exclusion_policy_activations": 0
+  },
+  "limitations": [
+    "Metadata/header/source-only evidence; actual full model and LoRA payload not executed",
+    "Current repair defaults remain strict and reject missing targets; proposed policy is disabled",
+    "Shape equivalence does not prove BF16 and FP8 payload equivalence, numerical identity, video quality or speed",
+    "Workflow records Wrapper998a69, whose source differs from currently audited a7439db and lacks explicit img filtering; historical Comfy/runtime behavior remains unverified"
+  ],
+  "evidence_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-base-review",
+  "verification": "exit0:exact206/header byte hashes,1095+1095/noimg,exact290 unique source set,2959 applicable-count proposal,998/a743 version distinction,policy disabled,unchanged repair artifacts,clean source fork,BLOCKED board/handoff and git diff --check",
+  "historical_reference_wrapper": {
+    "workflow_recorded_wrapper_commit": "998a69cc0acbec503001b8b0ce0a5d5404420e1e",
+    "url": "https://github.com/kijai/ComfyUI-WanVideoWrapper/blob/998a69cc0acbec503001b8b0ce0a5d5404420e1e/nodes_model_loading.py",
+    "local_text_path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-base-review\\historical-nodes_model_loading.py",
+    "source_sha256": "8419b8f87c0453481b97e450f1f225837a70b7e1ab5bfcdfdaa64e407e99a1f1",
+    "setlora_line_range": [
+      658,
+      699
+    ],
+    "explicit_img_filter_in_recorded_source": false,
+    "observation": "Recorded old node delegates to external Comfy LoRA parser; no historical Comfy version/application result pinned. Do not claim official workflow proves complete or exact290 runtime handling."
+  }
+}

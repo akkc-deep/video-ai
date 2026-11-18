@@ -1,0 +1,106 @@
+{
+  "upstream_reference": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+  "partial_audited_snapshot": true,
+  "baseline_files": [
+    {
+      "path": "__init__.py",
+      "bytes": 2662,
+      "sha256": "dec68a31c105559d8d6bfeae88fae8d49610f32bfd02fb343c94160ec7f126ee"
+    },
+    {
+      "path": "cache_methods/nodes_cache.py",
+      "bytes": 6120,
+      "sha256": "9836b48187c60eb55fbc4f61ec1f32196caf7ea531d0f725e291a8be623376db"
+    },
+    {
+      "path": "custom_linear.py",
+      "bytes": 12160,
+      "sha256": "6841721813b89869e7dae8488b9fee7b9dd607aa6d6614c79b19079a8bd8ec59"
+    },
+    {
+      "path": "gguf/gguf.py",
+      "bytes": 1226,
+      "sha256": "2a4ff6cdef36b93e3f81cbfe87b56a5b4d1f6e220d770c417ab89d2f8875ce35"
+    },
+    {
+      "path": "gguf/gguf_utils.py",
+      "bytes": 11714,
+      "sha256": "0299748fef63414ec59fe731c629ab3b5872d293135591fd59d1fc27ad69d9f0"
+    },
+    {
+      "path": "nodes.py",
+      "bytes": 114314,
+      "sha256": "6b3bb6a619e5a928259e6e8400c73ffe7140f17439c5007dd8596b90055f0666"
+    },
+    {
+      "path": "nodes_model_loading.py",
+      "bytes": 108438,
+      "sha256": "107320a1bc50242e8468c536b13ed5df5d9aa30af4f4d121cd320c70fff84db0"
+    },
+    {
+      "path": "nodes_sampler.py",
+      "bytes": 175177,
+      "sha256": "374e552a2f96e10ddfcb37785718be0ea0dfa34a6551a5930e8963e3bc87630b"
+    },
+    {
+      "path": "nodes_utility.py",
+      "bytes": 34629,
+      "sha256": "a92ee11c0427f45f0b6f545c7abd6356aca0304152e200f082511db3021679d9"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 479,
+      "sha256": "841d9a0f46d721c4a238c70add6fce14ad557060ecf4c44df6b695cbc3ada0f3"
+    },
+    {
+      "path": "readme.md",
+      "bytes": 7531,
+      "sha256": "1d1ee75b9933427ff25f38c5012523df4a78e551e05c799a8b6ed602ba71d437"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 134,
+      "sha256": "5aa03215beae843479082acda6a68b07a62151b62d8795255599c6c8377634da"
+    },
+    {
+      "path": "utils.py",
+      "bytes": 33988,
+      "sha256": "059388004c919feecd94de692126c61cc298cf0e43acb0950c1a6f8ae9bdadd6"
+    },
+    {
+      "path": "wanvideo/modules/attention.py",
+      "bytes": 7485,
+      "sha256": "076e773701a08cbd8ce77756e9d2f17a71677c2893b313d067001b40b4471816"
+    },
+    {
+      "path": "wanvideo/modules/model.py",
+      "bytes": 168674,
+      "sha256": "7ebd18d3d749a73cc0f4098488177ef83d7b3d00f663ef4ae1277518dfdc9ee0"
+    },
+    {
+      "path": "wanvideo/modules/t5.py",
+      "bytes": 16994,
+      "sha256": "0507d69afa354cdfe9b7e465592fb30b0f1ac78b17646b5b4786b47837039b9a"
+    },
+    {
+      "path": "wanvideo/schedulers/__init__.py",
+      "bytes": 10444,
+      "sha256": "13123969728f443cca5c68ac28e917039c637d624eb7c682079e23d929373caf"
+    },
+    {
+      "path": "wanvideo/wan_video_vae.py",
+      "bytes": 57539,
+      "sha256": "c77d37a585439ab0a9337acfe8d672139fcf8bdc79475523ed1e4253de40648f"
+    }
+  ],
+  "artifacts": {
+    "mixed-delta.patch": "9a3e8c090fddea78866b6bd516e59891380aa8a34c335e7294568e92dbfc31d2",
+    "lva07_mixed_delta.py": "74da32a3b820a503f00df2e030d8ec3021ab0148b283b9f40139260c50818490",
+    "lva07_applicability.py": "831720448bb64f667bb59af564acb6f47a674fa593e5795a9f49568528ad8dca",
+    "lva07_img_policy.json": "9dbc2f5536bab2057147d0ebebc3af7f8a3db1a3c060f8bc41af6a4185dc2587"
+  },
+  "patched_files": {
+    "custom_linear.py": "31796a5128cde02c3e12381b5d87a0fae09bbd0633b04fcb53d7d6f52572ca1f",
+    "nodes_model_loading.py": "d96bb013593eb0ec4bbcd70bcb68a7018091ac795b3f16e81f5267c153cbf636"
+  }
+}

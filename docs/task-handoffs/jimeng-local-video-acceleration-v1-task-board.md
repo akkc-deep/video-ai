@@ -37,8 +37,8 @@
 | 5 | LVA-05 | P2 / E：超分模型复用、受限流水线与编码实验 | COMPLETED | LVA-01, LVA-02, LVA-03 | docs/task-designs/LVA-05-design.md | docs/task-handoffs/LVA-05-handoff.md |
 | 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |
 | 7 | LVA-07-01 | 环境与 Wrapper 加载路径只读审查 | COMPLETED | LVA-04 | docs/task-designs/LVA-07-01-design.md | None |
-| 8 | LVA-07-02 | 两专家 mixed-delta LoRA CPU 兼容性验证 | NOT_STARTED | LVA-07-01, LVA-04 | None | None |
-| 9 | LVA-07-03 | 是否投入的决策与具体环境/GPU资源清单 | NOT_STARTED | LVA-07-01, LVA-07-02, LVA-01 | None | None |
+| 8 | LVA-07-02 | 两专家 mixed-delta LoRA CPU 兼容性验证 | COMPLETED | LVA-07-01, LVA-04 | docs/task-designs/LVA-07-02-design.md | docs/task-handoffs/LVA-07-02-handoff.md |
+| 9 | LVA-07-03 | 是否投入的决策与具体环境/GPU资源清单 | READY | LVA-07-01, LVA-07-02, LVA-01 | docs/task-designs/LVA-07-03-design.md | docs/task-handoffs/LVA-07-03-handoff.md |
 | 10 | LVA-07-04 | 隔离 worker、workflow 与恢复 harness | NOT_STARTED | LVA-07-03, LVA-07-02, LVA-02 | None | None |
 | 11 | LVA-07-05 | 最小低运动真实 GPU 对照与人工质量门槛 | NOT_STARTED | LVA-07-04, LVA-07-03, LVA-01 | None | None |
 | 12 | LVA-07-06 | 条件扩展冷/热及父子矩阵与实验结论 | NOT_STARTED | LVA-07-05, LVA-07-04, LVA-01 | None | None |
@@ -195,6 +195,27 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **Deliverables:** `docs/task-designs/LVA-07-02-results.json/.md`；若CPU实测支持修复，另交 `docs/task-designs/LVA-07-02-fix-design.md`；获准后才建立隔离CPU测试环境和实际测试代码。
 - **First action:** 先整理缺失依赖下真实函数的最小 import graph，确定哪些原函数能在CPU-only环境中执行；用high的diff_m和low的diff_b建立真实函数RED复现，并扩展到全部权重类别。若需安装，先提交精确版本、wheel/hash、命令和磁盘需求，等待授权。
 - **State evidence:** NOT_STARTED；前项 LVA-07-01 的源码审查判定当前候选停止安装/推理准备，LVA-07-02只允许先做依赖/导入可行性和测试设计；不自动启动安装、CPU执行或GPU实验。
+- **Preparation evidence (2026-11-17):** 用户明确要求“完成任务LVA-07-02”，随后要求“继续当前任务”；完整读取本项既有设计及前项审查后，将 Tasks 表原为 None 的设计单元格回填为本节既有确切引用。用户指定本项开始，按本项事实执行独立 `NOT_STARTED -> READY`；首先只做设计已允许的依赖/导入可行性取证，未将前项停止结论改写为兼容通过，未授权安装或GPU。
+- **Start evidence (2026-11-17):** 以上明确开始请求作为 `READY -> IN_PROGRESS` 证据；无本项前驱交接。实施边界为依赖方案和CPU负向复现；安装、真实函数CPU执行仍受既有专项设计的具体授权门槛约束。
+- **Partial delivery (2026-11-17):** `docs/task-designs/LVA-07-02-results.json/.md`、`docs/task-designs/LVA-07-02-cpu-environment.md`、`docs/task-designs/LVA-07-02-cpu-requirements.lock`。固定Windows AMD64/Python3.13.14、torch2.14.1+cpu、accelerate1.16.0、gguf0.19.0、numpy2.5.4；32-wheel最小负向复现闭包已列URL/hash/tag/约束和安装命令，含Python安装器共183560036 bytes（约175.06MiB），预计预留2GiB磁盘/2GiB RAM（非实测）。最小闭包不冒充完整utils/loader节点环境；缺accelerate/gguf和embedded Python无venv/ensurepip为只读证据。先取得具体授权才执行安装/CPU负向测试。
+- **Verification evidence (2026-11-17):** `.tools/python/python.exe -I E:/VideoAI/scratch/benchmarks/LVA-07-02-dependency-audit/collect_dependencies.py` exit0，37次metadata/HEAD查询、32项活动约束成立；`.tools/python/python.exe -I -`定向文档审计exit0（JSON、32项hash锁/标签/约束、字节合计、4份原始源码小文本SHA、CPU证据null和操作0）；`git diff --check` exit0，仅文档/lock/任务板变化。未跑产品或CPU数值测试，未取wheel/安装器payload、未安装/目标import/启动服务/GPU/视频POST/重哈希大模型。逐tensor消费应用、merged/unmerged、FP8、两专家原子性仍未验证；无CPU依据，未创建fix-design，不将本项标完成，不准备LVA-07-03。
+- **Block evidence (2026-11-17):** 先写 `docs/task-handoffs/LVA-07-02-handoff.md`，再执行 `IN_PROGRESS -> BLOCKED` 并关联确切路径。阻断是既有设计要求的具体安装/CPU执行授权尚未取得；解除条件为用户明确同意本项CPU环境文档所列183560036 bytes下载、隔离安装及CPU负向复现。解除后凭该明确证据单独 `BLOCKED -> READY`，随后另行开始；不重索同一具体授权，不把环境就绪当兼容通过。
+- **Resolution evidence (2026-11-18):** 用户针对上一轮明确提出的175MiB具体下载/安装及CPU负向复现清单回复“同意下載吧”。该答复解除具体授权门槛；完整重读本项设计、CPU环境提案和同项pause交接后，执行 `BLOCKED -> READY`。授权限定既列CPU环境和复现，不包括GPU、Comfy服务、完整节点扩装或生产修改；历史交接保留。
+- **Restart evidence (2026-11-18):** 延续原“完成任务LVA-07-02”请求及本次具体授权，单独执行 `READY -> IN_PROGRESS`。余下范围为隔离安装、固定源码high modulation/low bias RED、根据停止条件保存实际证据和修复设计；按CPU提案命令从新scratch目标开始，不重复索取同一授权。
+- **CPU partial delivery (2026-11-18):** 已下载32个固定wheel共154334412 bytes并离线安装，pip报告32/32版本/hash匹配、pip check exit0。合并安装器命令被自动审批在执行前拒绝（只返回blocked by policy），未取/执行安装器；采用解释器独立副本（31文件20652143 bytes）+scratch/cpu-site，不是venv，无系统登记或生产包路径。Python3.13.14、torch2.14.1+cpu、CUDA None；实际完整import固定custom_linear/gguf_utils，仅namespace定位，不mock依赖或算法，无Comfy import。
+- **CPU result/remaining evidence (2026-11-18):** `scripts/reproduce_lva07_cpu.py`及更新后的`docs/task-designs/LVA-07-02-results.json/.md`保存真实CPU synthetic parsed-diff证据。初批4例exit1：weight diff对照1通过，block/head modulation各误差0.125、bias forward误差0.375共3失败，0运行错误；独立review后修正局部成功标识/参数存储dtype与设计入口描述，只重跑同4例，仍1通过/3失败/0错误（共8次case执行、4个独立用例）。固定源码SHA与前项一致。已交付`docs/task-designs/LVA-07-02-fix-design.md`，仅设计未改上游。按“任何未应用即停止”不扩展；原3249输入完整trace/consumed/applied、norm、merged/FP8、重复/移除、两专家原子性和完整模型仍未验证，不登记COMPLETED、不准备LVA-07-03。0GPU/服务/视频POST/模型下载/原文件重哈希/生产修改；不重索已有授权。
+- **Current block evidence (2026-11-18):** 按实际证据先刷新同路径pause交接，再执行 `IN_PROGRESS -> BLOCKED`。旧授权阻断已解除；新阻断是实际unmerged遗漏及规定停止门槛。解除须有对应遗漏已被固定实现正确处理的真实证据，或用户明确修订停止/验收边界；不把修复设计或安装成功当兼容通过。定向文档审计exit0，精确计数/误差/CPU身份/脚本SHA及零GPU/生产操作一致，`git diff --check` exit0。
+- **Fix authorization/resolution (2026-11-18):** 用户针对已说明方案明确要求“按照这个方案修复吧”，允许按最小修复设计在独立副本实施并验证。按该明确修订的边界解除“禁止继续修复”的停止阻断，执行 `BLOCKED -> READY`；不是声称遗漏已经解决或完整兼容。既有设计追加具体授权范围，原审查快照/生产/模型/旧run仍只读，0GPU/服务/新依赖/模型下载/远程推送。历史交接保留。
+- **Fix start evidence (2026-11-18):** 延续同一明确修复请求，单独 `READY -> IN_PROGRESS`，实施计划为`docs/task-designs/LVA-07-02-fix-plan.md`。独立本地snapshot分支位于`E:/VideoAI/scratch/benchmarks/LVA-07-02-fix/wrapper`，18份审查源码基线本地commit为`ee88e8710e4038a076ed9066da1c1ff80932afd1`，不是上游完整checkout；源审查快照和已有用户改动保留。
+- **Repair delivery/evidence (2026-11-18):** `patches/wanvideo-wrapper/lva07_mixed_delta.py`、`mixed-delta.patch`/`manifest.json`，构建/验证脚本及`tests/experiments/test_lva07_wrapper_fix.py`已交付；当前独立本地commit`769045b22ec7f4602994063915aefd4384e92f41`，重放commit`59ac0e39e9a111d0f5242535b64d7a3fd9c15585`，19个源码文件SHA相同，两处工作区干净。静态bias/norm/modulation一次应用、双侧预检/私有副本/低侧失败回滚、溢出/别名/重复拒绝及移除恢复、真实CustomLinear scalar-scale顺序修正、键名碰撞和整组旧入口提前拒绝均有CPU证据。初始RED15项；边界及review回归分别观察2fail/1error和2fail后修复。最终独立重放`verify_lva07_wrapper_fix.py` exit0，21/21通过，0失败/错误。review一项Important（旧入口先改标记后拒绝）及一项Minor（换行放大patch）已修正；patch6468 bytes。未改原源码快照、生产、模型、工作流或旧run，无GPU/服务/新下载/安装/远程推送。
+- **New input blocker/remaining evidence (2026-11-18):** `docs/task-designs/LVA-07-02-fix-results.json/.md`与`LVA-07-02-tensor-inventory.json`记录原始3249输入的有界header及真实标准化函数映射。High1500缺失0，Low1749缺失290（82down、82up、84bias、42diff，k_img/v_img/norm_k_img/img_emb）；已找到目标的shape不匹配0。只读约0.72MiB headers，无payload/全文件重哈希。当前本地目录只有既有两个base，无另一本地候选。代码层修复已交付，但原始pair完整消费/应用、完整模型、merged/fastFP8/GPU仍未验收；不删290项、不加随机参数、不静默换base，不准备后继。工具拒绝既有目标/来源漂移检查通过，常规收集21项按opt-in跳过（exit0，已有pytest缓存WinError5警告明确披露）；不把skip或CPU小模型当完整兼容。
+- **Final repair provenance (2026-11-18):** 最终source HEAD为`801be04a9b4863502b50dd8a353bda45a824e0d1`，final-replay HEAD为`fc08567927de471be7c8ce90cde5b3f270172a5b`；较上条提交只修正来源元数据的baseline与LF，19份已测试源码无变化。逐项审计验证21项CPU结果、19份修复源码SHA、18份不可变原始SHA、patch/hash、3249条header记录、null runtime证据及0禁止操作均通过；来源分支diff --check在元数据LF修正后exit0，项目diff --check exit0。原失败基线保留。当前实际阻断为Low缺失目标与未完成完整准入，不再是已交付的CPU代码遗漏。
+- **Current structural block (2026-11-18):** 先刷新同路径pause交接，再执行 `IN_PROGRESS -> BLOCKED`。本轮明确请求的独立代码修复已交付；完整任务不标COMPLETED，Low290项缺失目标及原始pair实际消费/应用尚无解除证据。只有对应固定模型/路径与接受证据成立，或用户明确修订全量消费边界并有对应证据，才另行解除；不静默删权重、换base或启动GPU。
+- **Read-only base/rule follow-up (2026-11-18):** 用户“继续吧”明确同意先核对官方header/加载规则。本轮固定官方base revision`18634b66f04c2e564e550b2c6bd092c64f2ce5c6`，4个精确206 Range只读共227024 bytes，两份各1095 BF16 tensors且img key=0；Low仍缺与本机完全相同290项，已匹配目标shape差异0。官方37227-byte参考图SHA保持，节点79/80实际连接sampler，properties记录Wrapper`998a69cc0acbec503001b8b0ce0a5d5404420e1e`；该旧源码无显式img过滤，不能冒认历史runtime全量应用。当前已审查a743源码则明确按无img基模排除img键，排除集合与290项精确相等。交付`LVA-07-02-base-review.json/.md`和`LVA-07-02-img-exclusion-proposal.json`，提案enabled=false；建议只对固定身份精确290项记“不适用”，其余High1500/Low1459仍要求实际完整消费/应用。原全量输入验收尚未获明确调整，保持BLOCKED且Status/Handoff路径不变；0完整模型下载/payload/新安装/GPU/服务/实现改动/策略激活。不为这个缺失直接下载57GB BF16或认定本机基模选错。
+- **Exact-scope approval (2026-11-18):** 用户针对上述精确清单和2959项适用输入方案回复“同意”。已完整重读设计/交接并追加明确验收范围；按用户给出的边界修订证据执行 `BLOCKED -> READY`，不冒认策略已实现或实际权重已应用。仅允许固定profile的290项“不适用”，不泛化过滤/改原文件，不新增GPU/下载/生产授权；保留历史交接。
+- **Applicability start (2026-11-18):** 延续同一“同意”请求，单独 `READY -> IN_PROGRESS`。实施计划`docs/task-designs/LVA-07-02-applicability-plan.md`，复用独立源码/CPU环境；新增精确policy与CPU原始适用输入验证，不要求重复旧授权。
+
+- **Completion evidence (2026-11-18):** 按用户批准的精确290项例外，3249条原始输入均有逐项记录：High1500/Low1459实际payload被真实解析器最终保留并应用到CPU目标fixture；Low290明确不适用，不计应用。新独立21文件副本commit `15ad15c292831865886b4fa9a2316188b0820035`，30/30 CPU测试通过；最终payload exit0、44.81秒、Windows峰值工作集1899302912 bytes。原始merged真实函数复现block/head预期1.125/实际1.0，继续禁用；小模型原子失败、scale/strength/alpha/rank、重复/移除有CPU证据。`docs/task-designs/LVA-07-02-applicability-results.json/.md`含逐项shape/dtype、来源和trace指纹；原始RED保留。任务按CPU验证/修复范围执行 `IN_PROGRESS -> COMPLETED`，不是完整14B、节点注册、low_mem_load、fastFP8或GPU/视频兼容通过。旧pause交接保留为历史入口；精确290审批阻断已解除，不重复索取批准。0新下载/安装/模型下载/GPU/服务/视频POST/生产修改。
 
 ### LVA-07-03
 
@@ -202,10 +223,13 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **Scope:** 汇总继续/停止/证据不足的理由；继续时固定目标runtime/commit、base与LoRA复用或下载身份、字节数/SHA、FP8/offload策略、预计磁盘/RAM/VRAM和命令；列出CPU证据未覆盖的完整模型实际准入，以及先少量后扩展的GPU预算。此项只写清单，不执行安装/下载/GPU。
 - **Acceptance:** 不支持mixed delta或关键依赖无解时明确停止；证据不足列解除条件而不冒充通过。继续决定只能说明值得尝试，不能证明模型已应用或质量通过；具体安装/下载/GPU授权范围可逐项审阅，最小计划原则上1个40步低运动control及通过后的1个4步候选，W3替代模型需单列而不自动投入。
 - **Dependencies:** LVA-07-01 环境/源码审查；LVA-07-02 CPU实际证据与局限；LVA-01 固定素材及原生质量/计时边界。
+- **Design document:** `docs/task-designs/LVA-07-03-design.md`。
 - **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md；② LVA-07-01/02实际交付；③ docs/task-designs/LVA-01-gpu-results.md、LVA-04-results.md；④ 原模型与workflow身份记录。自身详细设计在准备时完成并关联。
 - **Deliverables:** docs/task-designs/LVA-07-environment-manifest.json 和投入决策/命令文档（拟交付）；未核定值显式未验证，不伪造commit或资源数字。
 - **First action:** 按两项实际证据逐条判定混合delta、环境和模型结构是否具备继续条件，再汇总具体资源与剩余风险。
 - **State evidence:** NOT_STARTED；尚无继续决定或具体新安装/GPU授权。原任务拆分不构成这些操作授权。
+
+- **Preparation evidence (2026-11-18):** 在LVA-07-02 CPU完成状态记录之后，按Order选择本项；原NOT_STARTED。已完成并关联 `docs/task-designs/LVA-07-03-design.md`，然后写 `docs/task-handoffs/LVA-07-03-handoff.md`，关联交接并执行 `NOT_STARTED -> READY`。仅准备决定/环境资源清单，不开始实施、安装、下载、服务或GPU。先填条件矩阵再据证据形成manifest；未知允许明确证据不足，不冒认完整模型可用。
 
 ### LVA-07-04
 

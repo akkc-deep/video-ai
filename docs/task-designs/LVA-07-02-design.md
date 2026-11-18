@@ -1,5 +1,15 @@
 # LVA-07-02：Wrapper Mixed Delta CPU 负向复现与最小修复设计
 
+## 2026-11-18 用户同意的精确适用范围
+
+用户针对已提交的 `LVA-07-02-img-exclusion-proposal.json` 明确回复“同意”。允许仅在固定身份、无img目标的当前CPU实验profile下，将Low的精确290个输入登记为 `declared_not_applicable`；原文件不改，排除项不得记为已应用。验收的适用输入改为High1500 + Low1459 = 2959，其余输入、未知/缺失目标、碰撞、shape/dtype、非有限值、重复和两专家原子性仍严格拒绝失败。不是通用img过滤，也不授权GPU、完整模型下载、生产激活或新依赖安装。
+
+## 2026-11-18 用户授权的修复扩展
+
+用户在阅读最小修复方案后明确要求“按照这个方案修复吧”。这将原“仅复现/设计、不修改Wrapper checkout”的边界扩展为：可在新的独立本地Wrapper副本中实施 `LVA-07-02-fix-design.md` 的严格拒绝、静态bias/norm/modulation增量、两专家私有副本原子应用及针对性CPU验证。原审查快照、生产Comfy/custom_nodes、模型、工作流、旧run和媒体仍只读；不启动GPU/服务、不下载新依赖/模型、不创建远程fork或推送。
+
+既有遗漏停止门槛不再禁止该明确授权的修复实施和验证；未知语义/部分应用/原子失败仍必须拒绝可用pair。独立副本只从已有18份审查源码快照建立，明确不是完整上游checkout；维护可重放patch、完整本地提交和文件SHA。现有独立CPU环境复用。原始LoRA全量消费、完整模块注册、merged、完整模型和GPU/质量仍须按实际证据分层报告，不能由小张量通过冒认。
+
 ## Goal
 
 在固定版本 Wrapper 的真实转换、加载和 patch 函数上，用小型 CPU 模型确认 LVA-04 两组 LightX2V LoRA 中 mixed delta 的实际映射、遗漏和数值语义；区分源码静态风险与 CPU 实际行为，为是否维护独立 Wrapper fork 提供证据。

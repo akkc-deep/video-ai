@@ -1,0 +1,129 @@
+diff --git a/custom_linear.py b/custom_linear.py
+index 9fe4762..b8e45fe 100644
+--- a/custom_linear.py
++++ b/custom_linear.py
+@@ -254,7 +254,9 @@ class CustomLinear(nn.Linear):
+ 
+         # Only apply scale_weight for non-GGUF models
+         if not self.is_gguf and self.scale_weight is not None:
+-            if weight.numel() < input.numel():
++            # LoRA deltas are in the dequantized weight domain. Scaling
++            # input would also scale the newly added delta on small batches.
++            if hasattr(self, "lora_diff_0_0") or weight.numel() < input.numel():
+                 weight = weight * self.scale_weight
+             else:
+                 input = input * self.scale_weight
+diff --git a/nodes_model_loading.py b/nodes_model_loading.py
+index 0560ecf..e9c90d9 100644
+--- a/nodes_model_loading.py
++++ b/nodes_model_loading.py
+@@ -11,6 +11,7 @@ from .wanvideo.modules.t5 import T5EncoderModel
+ from .wanvideo.modules.clip import CLIPModel
+ from .wanvideo.wan_video_vae import WanVideoVAE, WanVideoVAE38
+ from .custom_linear import _replace_linear
++from .lva07_mixed_delta import require_dynamic_only, preflight_legacy_lora_inputs
+ 
+ from accelerate import init_empty_weights
+ from .utils import set_module_tensor_to_device, get_module_memory_mb_per_device
+@@ -108,7 +109,9 @@ def filter_state_dict_by_blocks(state_dict, blocks_mapping, layer_filter=[]):
+ 
+ def standardize_lora_key_format(lora_sd):
+     new_sd = {}
++    source_keys = {}
+     for k, v in lora_sd.items():
++        original_key = k
+         # aitoolkit/lycoris format
+         if k.startswith("lycoris_blocks_"):
+             k = k.replace("lycoris_blocks_", "blocks.")
+@@ -267,6 +270,9 @@ def standardize_lora_key_format(lora_sd):
+             k = k.replace("txt_attn.proj", "txt_attn_proj")
+         if "txt_attn.qkv" in k:
+             k = k.replace("txt_attn.qkv", "txt_attn_qkv")
++        if k in new_sd:
++            raise ValueError(f"LoRA normalization collision: {source_keys[k]} and {original_key} -> {k}")
++        source_keys[k] = original_key
+         new_sd[k] = v
+     return new_sd
+ 
+@@ -709,6 +715,8 @@ def load_lora_for_models_mod(model, lora, strength_model):
+         key_map = model_lora_keys_unet(model.model, key_map)
+ 
+     loaded = comfy.lora.load_lora(lora, key_map)
++    candidate = {key: [(strength_model, payload, 1.0, None, None)] for key, payload in loaded.items()}
++    require_dynamic_only(model.model.diffusion_model, candidate)
+ 
+     new_modelpatcher = model.clone()
+     k = add_patches(new_modelpatcher, loaded, strength_model)
+@@ -743,6 +751,11 @@ class WanVideoSetLoRAs:
+         if lora is None:
+             return (model,)
+ 
++        key_map = model_lora_keys_unet(model.model, {})
++        prepared_states = preflight_legacy_lora_inputs(
++            model.model.diffusion_model, lora,
++            lambda path: load_torch_file(path, safe_load=True), standardize_lora_key_format,
++            lambda state: comfy.lora.load_lora(state, key_map))
+         patcher = model.clone()
+ 
+         merge_loras = False
+@@ -752,7 +765,7 @@ class WanVideoSetLoRAs:
+             raise ValueError("Set LoRA node does not use low_mem_load and can't merge LoRAs, disable 'merge_loras' in the LoRA select node.")
+ 
+         patcher.model_options['transformer_options']["lora_scheduling_enabled"] = False
+-        for l in lora:
++        for index, l in enumerate(lora):
+             log.info(f"Loading LoRA: {l['name']} with strength: {l['strength']}")
+             lora_path = l["path"]
+             lora_strength = l["strength"]
+@@ -763,13 +776,12 @@ class WanVideoSetLoRAs:
+             if lora_strength == 0:
+                 log.warning(f"LoRA {lora_path} has strength 0, skipping...")
+                 continue
+-            lora_sd = load_torch_file(lora_path, safe_load=True)
++            lora_sd = prepared_states[index]
+             if "dwpose_embedding.0.weight" in lora_sd: #unianimate
+                 raise NotImplementedError("Unianimate LoRA patching is not implemented in this node.")
+             if "base_model.model.blocks.0.cross_attn.k.lora_A.weight" in lora_sd: # assume rs_lora
+                 lora_sd = compensate_rs_lora_format(lora_sd)
+ 
+-            lora_sd = standardize_lora_key_format(lora_sd)
+             if l["blocks"]:
+                 lora_sd = filter_state_dict_by_blocks(lora_sd, l["blocks"], l.get("layer_filter", []))
+ 
+@@ -964,10 +976,17 @@ def patch_stand_in_lora(transformer, lora_sd, transformer_load_device, base_dtyp
+                 param.data.copy_(lora_sd["diffusion_model." + name].to(param.device, dtype=param.dtype))
+ 
+ def add_lora_weights(patcher, lora, base_dtype, merge_loras=False):
++    prepared_states = None
++    if not merge_loras:
++        key_map = model_lora_keys_unet(patcher.model, {})
++        prepared_states = preflight_legacy_lora_inputs(
++            patcher.model.diffusion_model, lora,
++            lambda path: load_torch_file(path, safe_load=True), standardize_lora_key_format,
++            lambda state: comfy.lora.load_lora(state, key_map))
+     unianimate_sd = None
+     control_lora=False
+     #spacepxl's control LoRA patch
+-    for l in lora:
++    for index, l in enumerate(lora):
+         log.info(f"Loading LoRA: {l['name']} with strength: {l['strength']}")
+         lora_path = l["path"]
+         lora_strength = l["strength"]
+@@ -978,14 +997,15 @@ def add_lora_weights(patcher, lora, base_dtype, merge_loras=False):
+         if lora_strength == 0:
+             log.warning(f"LoRA {lora_path} has strength 0, skipping...")
+             continue
+-        lora_sd = load_torch_file(lora_path, safe_load=True)
++        lora_sd = prepared_states[index] if prepared_states is not None else load_torch_file(lora_path, safe_load=True)
+         if "dwpose_embedding.0.weight" in lora_sd: #unianimate
+             from .unianimate.nodes import update_transformer
+             log.info("Unianimate LoRA detected, patching model...")
+             patcher.model.diffusion_model, unianimate_sd = update_transformer(patcher.model.diffusion_model, lora_sd)
+         if "base_model.model.blocks.0.cross_attn.k.lora_A.weight" in lora_sd: # assume rs_lora
+                 lora_sd = compensate_rs_lora_format(lora_sd)
+-        lora_sd = standardize_lora_key_format(lora_sd)
++        if merge_loras:
++            lora_sd = standardize_lora_key_format(lora_sd)
+ 
+         if l["blocks"]:
+             lora_sd = filter_state_dict_by_blocks(lora_sd, l["blocks"], l.get("layer_filter", []))

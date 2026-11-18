@@ -1,0 +1,3696 @@
+{
+  "schema_version": 1,
+  "status": "PROPOSED_NOT_ENABLED",
+  "enabled": false,
+  "requires_user_acceptance_change": true,
+  "purpose": "Permit only the exact officially filtered inactive img tensor set, while requiring complete runtime consumption/application of every applicable tensor",
+  "profile": {
+    "role": "low",
+    "lora_filename": "wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+    "lora_historical_sha256": "8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1",
+    "lora_bytes": 739472104,
+    "local_base_filename": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+    "local_base_historical_sha256": "5471a457b6ac404202a5fbe6c11595a3d5641fc766b00f38763f72303fffc21e",
+    "local_base_bytes": 14294742832,
+    "local_base_header_sha256": "a904e26816259491a0bc1abf5446a8ba86deae8ff597539619280de3f456fcbb",
+    "historical_full_hashes_not_repeated": true
+  },
+  "counts": {
+    "original_high": 1500,
+    "original_low": 1749,
+    "declared_excluded_low": 290,
+    "applicable_high": 1500,
+    "applicable_low": 1459,
+    "applicable_pair_input_tensors": 2959
+  },
+  "evidence": {
+    "wrapper_commit": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+    "source_path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-01-source-audit\\nodes_model_loading.py",
+    "source_sha256": "107320a1bc50242e8468c536b13ed5df5d9aa30af4f4d121cd320c70fff84db0",
+    "setlora_line_range": [
+      742,
+      787
+    ],
+    "official_workflow_sha256": "aecf199c8451c2272fb53f6a96854c12cd596297326f426a6d7bf4533c7383b8",
+    "official_model_revision": "18634b66f04c2e564e550b2c6bd092c64f2ce5c6",
+    "workflow_recorded_wrapper_commit": "998a69cc0acbec503001b8b0ce0a5d5404420e1e",
+    "historical_source_has_explicit_filter": false,
+    "historical_source_sha256": "8419b8f87c0453481b97e450f1f225837a70b7e1ab5bfcdfdaa64e407e99a1f1",
+    "explicit_filter_source": "currently audited Wrappera7439db, not recorded old998a69"
+  },
+  "conditions": [
+    "Only this frozen low-LoRA identity and exact original-source-key set; never a general substring filter",
+    "Actual base header AND constructed runtime model must both have no img keys/targets",
+    "The exact290 keys must normalize to the reviewed missing img target set; unexpected key, collision, shape or identity change rejects pair",
+    "High1500 and remainingLow1459 inputs still require complete runtime consumed/applied tracing; counts are tensors, not patch count",
+    "Excluded inputs remain in original file and audit manifest; classify declared_not_applicable, never applied=True",
+    "Any additional missing/unconsumed/unsupported tensor rejects pair; retain finite/dtype/scale checks and pair atomicity",
+    "No change to default production, GPU authorization, model files or environment; reuse the existing repaired CPU path"
+  ],
+  "excluded_tensors": [
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.0.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.0.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.0.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.0.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.0.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.0.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.0.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.0.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.0.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.1.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.1.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.1.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.1.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.1.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.1.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.1.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.1.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.1.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.10.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.10.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.10.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.10.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.10.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.10.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.10.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.10.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.10.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.11.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.11.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.11.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.11.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.11.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.11.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.11.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.11.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.11.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.12.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.12.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.12.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.12.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.12.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.12.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.12.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.12.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.12.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.13.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.13.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.13.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.13.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.13.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.13.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.13.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.13.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.13.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.14.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.14.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.14.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.14.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.14.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.14.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.14.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.14.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.14.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.15.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.15.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.15.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.15.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.15.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.15.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.15.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.15.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.15.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.16.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.16.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.16.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.16.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.16.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.16.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.16.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.16.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.16.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.17.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.17.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.17.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.17.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.17.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.17.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.17.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.17.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.17.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.18.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.18.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.18.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.18.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.18.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.18.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.18.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.18.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.18.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.19.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.19.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.19.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.19.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.19.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.19.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.19.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.19.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.19.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.2.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.2.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.2.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.2.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.2.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.2.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.2.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.2.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.2.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.20.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.20.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.20.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.20.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.20.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.20.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.20.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.20.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.20.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.21.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.21.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.21.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.21.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.21.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.21.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.21.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.21.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.21.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.22.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.22.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.22.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.22.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.22.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.22.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.22.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.22.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.22.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.23.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.23.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.23.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.23.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.23.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.23.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.23.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.23.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.23.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.24.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.24.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.24.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.24.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.24.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.24.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.24.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.24.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.24.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.25.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.25.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.25.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.25.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.25.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.25.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.25.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.25.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.25.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.26.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.26.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.26.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.26.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.26.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.26.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.26.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.26.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.26.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.27.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.27.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.27.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.27.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.27.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.27.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.27.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.27.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.27.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.28.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.28.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.28.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.28.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.28.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.28.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.28.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.28.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.28.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.29.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.29.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.29.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.29.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.29.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.29.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.29.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.29.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.29.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.3.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.3.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.3.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.3.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.3.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.3.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.3.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.3.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.3.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.30.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.30.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.30.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.30.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.30.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.30.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.30.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.30.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.30.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.31.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.31.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.31.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.31.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.31.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.31.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.31.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.31.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.31.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.32.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.32.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.32.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.32.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.32.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.32.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.32.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.32.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.32.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.33.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.33.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.33.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.33.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.33.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.33.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.33.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.33.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.33.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.34.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.34.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.34.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.34.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.34.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.34.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.34.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.34.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.34.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.35.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.35.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.35.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.35.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.35.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.35.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.35.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.35.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.35.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.36.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.36.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.36.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.36.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.36.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.36.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.36.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.36.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.36.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.37.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.37.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.37.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.37.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.37.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.37.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.37.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.37.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.37.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.38.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.38.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.38.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.38.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.38.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.38.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.38.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.38.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.38.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.39.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.39.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.39.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.39.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.39.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.39.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.39.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.39.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.39.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.4.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.4.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.4.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.4.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.4.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.4.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.4.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.4.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.4.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.5.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.5.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.5.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.5.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.5.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.5.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.5.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.5.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.5.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.6.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.6.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.6.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.6.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.6.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.6.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.6.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.6.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.6.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.7.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.7.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.7.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.7.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.7.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.7.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.7.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.7.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.7.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.8.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.8.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.8.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.8.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.8.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.8.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.8.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.8.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.8.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.k_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.k_img.diff_b",
+      "target": "diffusion_model.blocks.9.cross_attn.k_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.k_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.k_img.lora_down.weight",
+      "target": "diffusion_model.blocks.9.cross_attn.k_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.k_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.k_img.lora_up.weight",
+      "target": "diffusion_model.blocks.9.cross_attn.k_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.norm_k_img.diff",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.norm_k_img.diff",
+      "target": "diffusion_model.blocks.9.cross_attn.norm_k_img.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.v_img.diff_b",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.v_img.diff_b",
+      "target": "diffusion_model.blocks.9.cross_attn.v_img.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.v_img.lora_down.weight",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.v_img.lora_down.weight",
+      "target": "diffusion_model.blocks.9.cross_attn.v_img.weight",
+      "shape": [
+        64,
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.blocks.9.cross_attn.v_img.lora_up.weight",
+      "normalized_key": "diffusion_model.blocks.9.cross_attn.v_img.lora_up.weight",
+      "target": "diffusion_model.blocks.9.cross_attn.v_img.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.0.diff",
+      "normalized_key": "diffusion_model.img_emb.proj.0.diff",
+      "target": "diffusion_model.img_emb.proj.0.weight",
+      "shape": [
+        1280
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.0.diff_b",
+      "normalized_key": "diffusion_model.img_emb.proj.0.diff_b",
+      "target": "diffusion_model.img_emb.proj.0.bias",
+      "shape": [
+        1280
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.1.diff_b",
+      "normalized_key": "diffusion_model.img_emb.proj.1.diff_b",
+      "target": "diffusion_model.img_emb.proj.1.bias",
+      "shape": [
+        1280
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.1.lora_down.weight",
+      "normalized_key": "diffusion_model.img_emb.proj.1.lora_down.weight",
+      "target": "diffusion_model.img_emb.proj.1.weight",
+      "shape": [
+        64,
+        1280
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.1.lora_up.weight",
+      "normalized_key": "diffusion_model.img_emb.proj.1.lora_up.weight",
+      "target": "diffusion_model.img_emb.proj.1.weight",
+      "shape": [
+        1280,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.3.diff_b",
+      "normalized_key": "diffusion_model.img_emb.proj.3.diff_b",
+      "target": "diffusion_model.img_emb.proj.3.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.3.lora_down.weight",
+      "normalized_key": "diffusion_model.img_emb.proj.3.lora_down.weight",
+      "target": "diffusion_model.img_emb.proj.3.weight",
+      "shape": [
+        64,
+        1280
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.3.lora_up.weight",
+      "normalized_key": "diffusion_model.img_emb.proj.3.lora_up.weight",
+      "target": "diffusion_model.img_emb.proj.3.weight",
+      "shape": [
+        5120,
+        64
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.4.diff",
+      "normalized_key": "diffusion_model.img_emb.proj.4.diff",
+      "target": "diffusion_model.img_emb.proj.4.weight",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    },
+    {
+      "source_key": "diffusion_model.img_emb.proj.4.diff_b",
+      "normalized_key": "diffusion_model.img_emb.proj.4.diff_b",
+      "target": "diffusion_model.img_emb.proj.4.bias",
+      "shape": [
+        5120
+      ],
+      "dtype": "BF16",
+      "reason": "exact frozen img target absent from both current and official base headers; excluded by currently audited a7439db SetLoRAs rule, not asserted for historical998a69 runtime",
+      "proposed_classification": "declared_not_applicable",
+      "runtime_applied": null
+    }
+  ]
+}

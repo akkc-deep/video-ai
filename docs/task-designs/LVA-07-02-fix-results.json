@@ -1,0 +1,324 @@
+{
+  "task_id": "LVA-07-02",
+  "date": "2026-11-18",
+  "repair_scope_completed": true,
+  "original_pair_ready": false,
+  "full_task_status": "COMPLETED",
+  "authorization": "User explicitly requested 按照这个方案修复吧; independent local repair/CPU validation authorized, no GPU/production/model replacement",
+  "changes": [
+    "private two-expert CPU preparation with static bias/norm/modulation deltas applied once",
+    "original CustomLinear dynamic weight LoRA retained",
+    "scalar scale applied before dynamic delta even on small-input forward branch",
+    "both preflights before private copies; ownership/storage checks; finite effective-weight check before publication",
+    "repeat rejection and original-base removal",
+    "normalizer collision rejection",
+    "whole legacy-input-list admission before flags/clones/special-path mutations; unsupported mixed legacy path rejected"
+  ],
+  "source": {
+    "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-fix\\wrapper",
+    "branch": "lva07/mixed-delta-fix",
+    "local_commit": "801be04a9b4863502b50dd8a353bda45a824e0d1",
+    "repair_commit": "dca06d1a288929628c75a0393e67f1e2afdccac9",
+    "upstream_reference": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+    "partial_audited_snapshot": true,
+    "source_files": [
+      {
+        "path": "__init__.py",
+        "sha256": "dec68a31c105559d8d6bfeae88fae8d49610f32bfd02fb343c94160ec7f126ee"
+      },
+      {
+        "path": "cache_methods/nodes_cache.py",
+        "sha256": "9836b48187c60eb55fbc4f61ec1f32196caf7ea531d0f725e291a8be623376db"
+      },
+      {
+        "path": "custom_linear.py",
+        "sha256": "31796a5128cde02c3e12381b5d87a0fae09bbd0633b04fcb53d7d6f52572ca1f"
+      },
+      {
+        "path": "gguf/gguf.py",
+        "sha256": "2a4ff6cdef36b93e3f81cbfe87b56a5b4d1f6e220d770c417ab89d2f8875ce35"
+      },
+      {
+        "path": "gguf/gguf_utils.py",
+        "sha256": "0299748fef63414ec59fe731c629ab3b5872d293135591fd59d1fc27ad69d9f0"
+      },
+      {
+        "path": "nodes.py",
+        "sha256": "6b3bb6a619e5a928259e6e8400c73ffe7140f17439c5007dd8596b90055f0666"
+      },
+      {
+        "path": "nodes_model_loading.py",
+        "sha256": "d96bb013593eb0ec4bbcd70bcb68a7018091ac795b3f16e81f5267c153cbf636"
+      },
+      {
+        "path": "nodes_sampler.py",
+        "sha256": "374e552a2f96e10ddfcb37785718be0ea0dfa34a6551a5930e8963e3bc87630b"
+      },
+      {
+        "path": "nodes_utility.py",
+        "sha256": "a92ee11c0427f45f0b6f545c7abd6356aca0304152e200f082511db3021679d9"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "841d9a0f46d721c4a238c70add6fce14ad557060ecf4c44df6b695cbc3ada0f3"
+      },
+      {
+        "path": "readme.md",
+        "sha256": "1d1ee75b9933427ff25f38c5012523df4a78e551e05c799a8b6ed602ba71d437"
+      },
+      {
+        "path": "requirements.txt",
+        "sha256": "5aa03215beae843479082acda6a68b07a62151b62d8795255599c6c8377634da"
+      },
+      {
+        "path": "utils.py",
+        "sha256": "059388004c919feecd94de692126c61cc298cf0e43acb0950c1a6f8ae9bdadd6"
+      },
+      {
+        "path": "wanvideo/modules/attention.py",
+        "sha256": "076e773701a08cbd8ce77756e9d2f17a71677c2893b313d067001b40b4471816"
+      },
+      {
+        "path": "wanvideo/modules/model.py",
+        "sha256": "7ebd18d3d749a73cc0f4098488177ef83d7b3d00f663ef4ae1277518dfdc9ee0"
+      },
+      {
+        "path": "wanvideo/modules/t5.py",
+        "sha256": "0507d69afa354cdfe9b7e465592fb30b0f1ac78b17646b5b4786b47837039b9a"
+      },
+      {
+        "path": "wanvideo/schedulers/__init__.py",
+        "sha256": "13123969728f443cca5c68ac28e917039c637d624eb7c682079e23d929373caf"
+      },
+      {
+        "path": "wanvideo/wan_video_vae.py",
+        "sha256": "c77d37a585439ab0a9337acfe8d672139fcf8bdc79475523ed1e4253de40648f"
+      },
+      {
+        "path": "lva07_mixed_delta.py",
+        "sha256": "74da32a3b820a503f00df2e030d8ec3021ab0148b283b9f40139260c50818490"
+      }
+    ],
+    "clean": true
+  },
+  "artifacts": {
+    "mixed-delta.patch": "9a3e8c090fddea78866b6bd516e59891380aa8a34c335e7294568e92dbfc31d2",
+    "lva07_mixed_delta.py": "74da32a3b820a503f00df2e030d8ec3021ab0148b283b9f40139260c50818490"
+  },
+  "builder": "scripts/prepare_lva07_wrapper_fix.py",
+  "verifier": "scripts/verify_lva07_wrapper_fix.py",
+  "tests": "tests/experiments/test_lva07_wrapper_fix.py",
+  "verification": {
+    "fixture_tests_passed": true,
+    "full_model_compatibility_verified": false,
+    "tests_run": 21,
+    "failures": [],
+    "errors": [],
+    "source_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-fix\\final-replay",
+    "local_git_commit": "b1151af5af94e1472cb43aed744c20392f8a6546",
+    "local_git_dirty": true,
+    "source_manifest": {
+      "upstream_reference": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+      "partial_audited_snapshot": true,
+      "local_baseline_commit": "b1151af5af94e1472cb43aed744c20392f8a6546",
+      "files": [
+        {
+          "path": "__init__.py",
+          "sha256": "dec68a31c105559d8d6bfeae88fae8d49610f32bfd02fb343c94160ec7f126ee"
+        },
+        {
+          "path": "cache_methods/nodes_cache.py",
+          "sha256": "9836b48187c60eb55fbc4f61ec1f32196caf7ea531d0f725e291a8be623376db"
+        },
+        {
+          "path": "custom_linear.py",
+          "sha256": "31796a5128cde02c3e12381b5d87a0fae09bbd0633b04fcb53d7d6f52572ca1f"
+        },
+        {
+          "path": "gguf/gguf.py",
+          "sha256": "2a4ff6cdef36b93e3f81cbfe87b56a5b4d1f6e220d770c417ab89d2f8875ce35"
+        },
+        {
+          "path": "gguf/gguf_utils.py",
+          "sha256": "0299748fef63414ec59fe731c629ab3b5872d293135591fd59d1fc27ad69d9f0"
+        },
+        {
+          "path": "nodes.py",
+          "sha256": "6b3bb6a619e5a928259e6e8400c73ffe7140f17439c5007dd8596b90055f0666"
+        },
+        {
+          "path": "nodes_model_loading.py",
+          "sha256": "d96bb013593eb0ec4bbcd70bcb68a7018091ac795b3f16e81f5267c153cbf636"
+        },
+        {
+          "path": "nodes_sampler.py",
+          "sha256": "374e552a2f96e10ddfcb37785718be0ea0dfa34a6551a5930e8963e3bc87630b"
+        },
+        {
+          "path": "nodes_utility.py",
+          "sha256": "a92ee11c0427f45f0b6f545c7abd6356aca0304152e200f082511db3021679d9"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "841d9a0f46d721c4a238c70add6fce14ad557060ecf4c44df6b695cbc3ada0f3"
+        },
+        {
+          "path": "readme.md",
+          "sha256": "1d1ee75b9933427ff25f38c5012523df4a78e551e05c799a8b6ed602ba71d437"
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "5aa03215beae843479082acda6a68b07a62151b62d8795255599c6c8377634da"
+        },
+        {
+          "path": "utils.py",
+          "sha256": "059388004c919feecd94de692126c61cc298cf0e43acb0950c1a6f8ae9bdadd6"
+        },
+        {
+          "path": "wanvideo/modules/attention.py",
+          "sha256": "076e773701a08cbd8ce77756e9d2f17a71677c2893b313d067001b40b4471816"
+        },
+        {
+          "path": "wanvideo/modules/model.py",
+          "sha256": "7ebd18d3d749a73cc0f4098488177ef83d7b3d00f663ef4ae1277518dfdc9ee0"
+        },
+        {
+          "path": "wanvideo/modules/t5.py",
+          "sha256": "0507d69afa354cdfe9b7e465592fb30b0f1ac78b17646b5b4786b47837039b9a"
+        },
+        {
+          "path": "wanvideo/schedulers/__init__.py",
+          "sha256": "13123969728f443cca5c68ac28e917039c637d624eb7c682079e23d929373caf"
+        },
+        {
+          "path": "wanvideo/wan_video_vae.py",
+          "sha256": "c77d37a585439ab0a9337acfe8d672139fcf8bdc79475523ed1e4253de40648f"
+        },
+        {
+          "path": "lva07_mixed_delta.py",
+          "sha256": "74da32a3b820a503f00df2e030d8ec3021ab0148b283b9f40139260c50818490"
+        }
+      ],
+      "patch_sha256": "9a3e8c090fddea78866b6bd516e59891380aa8a34c335e7294568e92dbfc31d2"
+    },
+    "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\runtime\\python.exe",
+    "sys_path": [
+      "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\runtime\\python313.zip",
+      "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\runtime",
+      "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\cpu-site"
+    ],
+    "torch": "2.14.1+cpu",
+    "torch_cuda": null,
+    "comfy_imported": false,
+    "node_module_evidence": "complete standardize_lora_key_format function via AST; full node imports not executed",
+    "test_file_sha256": "403712dfa9c97bf3e57b59b31fe321721470b345194c77a174720224721225e4",
+    "limitations": [
+      "parsed synthetic patch inputs; no original LoRA payload consumption",
+      "CPU-bounded pair cloning only; no full 14B loading",
+      "scalar-scale float8_e4m3fn CPU fixture only, no fast FP8/GPU",
+      "no merged, complete node registration, video or quality acceptance"
+    ],
+    "post_test_commit": "59ac0e39e9a111d0f5242535b64d7a3fd9c15585",
+    "post_test_commit_note": "Same19 source file hashes verified before local commit; no source changes after passing21 tests.",
+    "post_test_clean": true,
+    "post_test_metadata_commit": "fc08567927de471be7c8ce90cde5b3f270172a5b",
+    "post_test_metadata_note": "Provenance JSON line endings normalized after tests;19 tested code file hashes unchanged."
+  },
+  "tool_checks": {
+    "existing_destination_rejected": true,
+    "source_drift_rejected_before_destination_create": true,
+    "python_sources_parse": true,
+    "same19_file_hashes_before_commit": true
+  },
+  "red_green": {
+    "initial": "15 failures before pair API/scale/collision repair; red.log",
+    "boundary": "19 tests:2 failures/1 error before clone-isolation, dynamic-overflow and meta-model guard fixes; boundary-red.log",
+    "review": "21 tests:2 failures before whole-list preflight/state guard fix; review-red.log",
+    "final": "21/21 passed, independent replay, final-green.log",
+    "method_runs": "9 repair suite runs with15/19/21 methods:165 method executions; numeric subtests are not separately counted"
+  },
+  "review": {
+    "kind": "fresh-context read-only review",
+    "critical": 0,
+    "important": 1,
+    "important_fixed": "legacy guard was after scheduling/special-path writes; moved whole-list read-only preflight ahead of mutations and added failing-then-passing real-entry state regression",
+    "minor_fixed": "preserved LF; replayable patch6468 bytes rather than whole-file line-ending rewrite",
+    "re_review": false,
+    "full_node_test_scope": "complete AST-extracted entry function with synthetic I/O/parser boundary fixtures; not complete Comfy loader import"
+  },
+  "inventory": {
+    "path": "docs/task-designs/LVA-07-02-tensor-inventory.json",
+    "sha256": "00b6fc7f39657dedca43ef60e2dd45781b841d47af06b1a9bbac4ff359274464",
+    "experts": [
+      {
+        "role": "high",
+        "tensor_count": 1500,
+        "kinds": {
+          "diff_b": 447,
+          "lora_down": 405,
+          "lora_up": 405,
+          "diff": 202,
+          "diff_m": 41
+        },
+        "missing_targets": 0,
+        "shape_mismatches": 0,
+        "header_bytes": 181552,
+        "base_header_bytes": 180728
+      },
+      {
+        "role": "low",
+        "tensor_count": 1749,
+        "kinds": {
+          "diff_b": 531,
+          "lora_down": 487,
+          "lora_up": 487,
+          "diff": 244
+        },
+        "missing_targets": 290,
+        "shape_mismatches": 0,
+        "header_bytes": 214112,
+        "base_header_bytes": 180728
+      }
+    ],
+    "runtime_payload_consumed": false,
+    "full_model_applied": false,
+    "full_file_hash_repeated": false,
+    "missing_examples": [
+      "diffusion_model.blocks.0.cross_attn.k_img.diff_b",
+      "diffusion_model.blocks.0.cross_attn.k_img.lora_down.weight",
+      "diffusion_model.blocks.0.cross_attn.k_img.lora_up.weight",
+      "diffusion_model.blocks.0.cross_attn.norm_k_img.diff",
+      "diffusion_model.blocks.0.cross_attn.v_img.diff_b",
+      "diffusion_model.blocks.0.cross_attn.v_img.lora_down.weight",
+      "diffusion_model.blocks.0.cross_attn.v_img.lora_up.weight"
+    ]
+  },
+  "remaining_blocker": null,
+  "limits": [
+    "Only small CPU model ownership and parsed-patch application verified; no14B clone/residency evidence",
+    "Only scalar-scale float8_e4m3fn CPU arithmetic verified; fastFP8/GPU/merged unsupported/unverified",
+    "No complete node registration or actual original LoRA payload consumption/application",
+    "Two base header hashes matching does not prove identical base payloads",
+    "Original production, models, workflows, runs and immutable source audit untouched"
+  ],
+  "operations": {
+    "new_dependency_downloads": 0,
+    "new_dependency_installs": 0,
+    "model_downloads": 0,
+    "gpu_calls": 0,
+    "service_starts": 0,
+    "video_posts": 0,
+    "production_modifications": 0,
+    "original_source_modifications": 0,
+    "full_model_rehashes": 0
+  },
+  "regular_collection_check": "pytest targeted module:exit0,21 skipped without opt-in env; one pre-existing pytest cache WinError5 warning. Not counted as21 passing tests.",
+  "documentation_verification": "exit0 after LF provenance correction:21-test CPU result/identity agreement,19 repaired source hashes,18 immutable source hashes,artifact hashes,3249 records/High0/Low290 missing; source-branch git diff --check passed with checked return code",
+  "base_rule_review": "docs/task-designs/LVA-07-02-base-review.json",
+  "historical_before_applicability": {
+    "full_task_status": "BLOCKED",
+    "remaining_blocker": "The same290 Low img targets are absent from official and current base headers; model replacement is not established as the remedy. Exact current-source exclusion policy conflicts with original full-input acceptance and remains proposed/not enabled; full runtime application not verified."
+  },
+  "latest_applicability_report": "docs/task-designs/LVA-07-02-applicability-results.json"
+}
