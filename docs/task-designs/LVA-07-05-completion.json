@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-07-05",
+  "status": "COMPLETED",
+  "completed_at_utc": "2026-11-20T04:23:51.588502+00:00",
+  "task_board": "docs\\task-handoffs\\jimeng-local-video-acceleration-v1-task-board.md",
+  "design_document": "docs/task-designs/LVA-07-05-design.md",
+  "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+  "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+  "original_epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+  "acceptance": {
+    "full_original_high_low_admission": {
+      "passed": true,
+      "receipt": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\admission\\pair.json",
+      "high_witness_sha256": "41a31bfdfb82bda762bc7be35042748c6e570ca1ad10ff71975ea36976743873",
+      "low_witness_sha256": "b59fe13a0bf4737c5894075ce9a36552791092eac97ee7a4294f5cabfea44fbe",
+      "reusable_after_exit": false
+    },
+    "control": {
+      "prompt_id": "11ebef23-82f0-40a4-916d-104f026993ea",
+      "technical_complete": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\trials\\control_1\\technical-complete.json",
+      "media": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\control_1.mp4",
+      "media_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50",
+      "quality": "accepted",
+      "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\control_1.json",
+      "actual_forwards": [
+        30,
+        50
+      ]
+    },
+    "actual_control_acceptance_preceded_fast_submit": true,
+    "fast": {
+      "prompt_id": "1dafecde-bd7a-493d-8c39-7bc1bfb4e4ae",
+      "technical_complete": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\trials\\fast_1\\technical-complete.json",
+      "media": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\fast_1.mp4",
+      "media_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5",
+      "quality": "accepted",
+      "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+      "actual_forwards": [
+        2,
+        2
+      ]
+    },
+    "timing_and_resources": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\experiment-assessment.json",
+    "owned_service_exit": {
+      "passed": true,
+      "mode": "gpu",
+      "graph_posts": null,
+      "checkpoint_payload_bytes": null,
+      "gpu_used": null,
+      "peak_rss_observed_bytes": 19630977024,
+      "pid": 46888,
+      "process_started_at": "134396033001130190",
+      "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+      "owned_listener_verified": true,
+      "schemas": 13,
+      "timed_out": false,
+      "exit_code": 0,
+      "forced": false,
+      "graceful": true,
+      "exited": true,
+      "port_closed": true,
+      "seconds": 12145.311999999976
+    },
+    "unknown_requests_not_reposted": true
+  },
+  "verification_at_closure": "Read and compare original durable receipts, media-proof references, review bindings, execution counts, acceptance/submit ordering and service exit. No video re-decode, GPU run, model hash pass or repeated test matrix.",
+  "prior_focused_verification": {
+    "tests_passed": 69,
+    "tests_seconds": 8.6,
+    "native_layout_red_failures": 2,
+    "original_layout_real_ffmpeg_test_passed": true,
+    "review": "docs/task-designs/LVA-07-05-encode-layout-review.json",
+    "scope": "Previously recorded source-fix validation, not rerun at closure"
+  },
+  "execution_seconds": {
+    "control": 1255.786,
+    "fast": 96.539
+  },
+  "limitations": [
+    "One sample each, same epoch caches; 40-step CFG3.5 versus 4-step CFG1+LoRA; not a stable or pure backend speedup.",
+    "Integer timestep and VAE precision boundaries remain as designed.",
+    "No expanded cold/hot, high-motion, parent-child or 1080P matrix; no production resume."
+  ],
+  "rulings": [
+    {
+      "decision": "Cooperative GPU shutdown after both durable technical artifacts, while fast review was pending.",
+      "reason": "No further authorized generation; review uses retained media.",
+      "cost_if_wrong": "Epoch cannot be reused; extra samples and request replay remain forbidden."
+    }
+  ],
+  "next_task": {
+    "id": "LVA-07-06",
+    "status": "NOT_STARTED",
+    "reason": "The completed task design requires user choice before expansion; this quality feedback accepts fast and does not request expanded work."
+  },
+  "remaining_acceptance": []
+}

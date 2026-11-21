@@ -1,0 +1,175 @@
+{
+  "task_id": "LVA-07-04",
+  "status": "COMPLETED",
+  "scope": "isolated CPU/offline implementation, no full-model/GPU execution",
+  "implementation_commit": "7019aa65943f1be7a2581cda384c3c77042fdbef",
+  "source_workspace": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-implementation",
+  "delivered_workspace": "E:/code/py/video-ai",
+  "local_branch": "codex/lva07-04",
+  "user_branch": "v2",
+  "push": false,
+  "merge": false,
+  "verification": {
+    "pytest": {
+      "passed": 77,
+      "failed": 0,
+      "seconds": 7.6,
+      "log": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-final-delivery-pytest.log",
+        "bytes": 182,
+        "sha256": "a2c3c6f1a0094b9f440761afc401d337cc857bccc53fbdcfad4150ce1557acef"
+      },
+      "new_wrapper_cases": 37,
+      "existing_neighbor_cases": 40,
+      "full_repository_suite_run": false
+    },
+    "cpu": {
+      "tests": 10,
+      "passed": true,
+      "evidence": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-runtime-cpu-delivery\\results.json",
+        "bytes": 3831,
+        "sha256": "25856c176e46b0d3721e8acd4cde85933ee801b6bfdb382e3cbf53deac6f4fd9"
+      },
+      "log": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-runtime-cpu-delivery\\unittest.log",
+        "bytes": 1702,
+        "sha256": "2a29bd4cfd2760a67346623163f91e4250542ab4c6fb33cb6559497f127d9617"
+      }
+    },
+    "synthetic_fixture": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-media-fixture\\proof.json",
+      "bytes": 8981,
+      "sha256": "224ce1232d712edf6ecd04ba8c3fb23ff3867e33330ce90d55dbb2b179453ccc"
+    },
+    "media_last_verification": {
+      "passed": 4,
+      "failed": 0,
+      "log": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-media-delivery.log",
+        "bytes": 100,
+        "sha256": "26c466777e7857739586a4b11cba9f4c8fa5d58fe3b2ef789fa3a408810879a9"
+      }
+    },
+    "current_worker": {
+      "result": {
+        "passed": true,
+        "mode": "cpu",
+        "graph_posts": 0,
+        "checkpoint_payload_bytes": 0,
+        "gpu_used": false,
+        "peak_rss_observed_bytes": 1009172480,
+        "pid": 41804,
+        "process_started_at": "134395049390251801",
+        "epoch": "3c9ac4bf-a073-4a58-92df-3d8219a817c6",
+        "owned_listener_verified": true,
+        "schemas": 13,
+        "exit_code": 0,
+        "forced": false,
+        "graceful": true,
+        "exited": true,
+        "port_closed": true,
+        "seconds": 31.875
+      },
+      "evidence": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-worker-cpu-final\\service-result.json",
+        "bytes": 456,
+        "sha256": "d9158cf39c7918db7e784732082ef4ea7c4f9908d1037ea451ce5c051a5d1fa2"
+      },
+      "capabilities": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-worker-cpu-final\\current-http-capabilities.json",
+        "bytes": 35685,
+        "sha256": "7a05b5254d4c64cc8bb3c1dc584d7a020e277fab7718e689e31aee0b866d6e16"
+      }
+    },
+    "path_bound_smoke": {
+      "marker": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-delivered-profile-final\\experiment.json",
+        "bytes": 349,
+        "sha256": "a12ad431d976ca7f91eef206cb65cb29f82134fd257ed0524af9c438cfc73d94"
+      },
+      "source_root": "E:/code/py/video-ai",
+      "operations": [
+        "init",
+        "graph fast"
+      ],
+      "model_payload_bytes_read": 0
+    },
+    "review": {
+      "path": "docs/task-designs/LVA-07-04-review.md",
+      "findings": 9,
+      "author_fixes": 9,
+      "independent_rereview": false,
+      "deferred_minors": []
+    },
+    "diff_check": "git -c core.whitespace=cr-at-eol diff --check 75c45cbf..HEAD: exit0; default check flags frozen CRLF bytes as trailing whitespace, bytes preserved",
+    "delivery": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-delivery.json",
+      "bytes": 5794,
+      "sha256": "60efcc0699e5ba785ee8431848db37a02b4c32d3a3a3ae641c390bcc5e709472"
+    },
+    "final_delivery": "E:/VideoAI/scratch/benchmarks/LVA-07-04-final-delivery.json",
+    "delivery_file_count": 34
+  },
+  "acceptance": [
+    {
+      "id": 1,
+      "passed": true,
+      "evidence": "sealed profiles/CLI/graphs,13 actual CPU HTTP schemas, PID/start/exit/port receipts"
+    },
+    {
+      "id": 2,
+      "passed": true,
+      "evidence": "fixed six model descriptors/native text bridge/recipes, exact policy and before-fast gate implemented;14B result false"
+    },
+    {
+      "id": 3,
+      "passed": true,
+      "evidence": "10 real pinned-body CPU fixtures: static mmap privacy/reload/meta/scale/parser/owner/atomic pair/trace"
+    },
+    {
+      "id": 4,
+      "passed": true,
+      "evidence": "37 Wrapper protocol/media/worker cases plus40 existing neighbors, one RGB decode and original-only archive/parent recovery"
+    },
+    {
+      "id": 5,
+      "passed": true,
+      "evidence": "machine/Markdown evidence, zero real inference and separate GPU authorization/resource gate"
+    }
+  ],
+  "resources": {
+    "cpu_private_commit_limit_bytes": 4294967296,
+    "cpu_rss_stop_bytes": 4294967296,
+    "disk_reserve_bytes": 536870912,
+    "available_ram_observed_bytes": 16747077632,
+    "total_ram_bytes": 33346146304,
+    "future_min_available_ram_bytes": 27917287424,
+    "future_min_free_vram_bytes": 23622320128,
+    "current_free_vram_bytes": null,
+    "full_model_peak_ram_bytes": null,
+    "full_model_peak_vram_bytes": null,
+    "software_inventory": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-implementation\\docs\\task-designs\\LVA-07-04-software.json",
+      "bytes": 13104978,
+      "sha256": "ae3f18849f140771e8a50bf3509c7423e0aa7f701d8276c4ecfc88b3068ede34"
+    },
+    "inventory_scope": "one-time snapshot; startup verifies actual executable/native/core/imported source, not all49797 files"
+  },
+  "boundaries": {
+    "actual_generation_posts": 0,
+    "model_checkpoint_payload_bytes_read": 0,
+    "gpu_sampling": false,
+    "new_download_bytes": 0,
+    "new_installs": 0,
+    "production_resumed": false,
+    "native_workflow_modified": false,
+    "patch_policy_modified": false,
+    "full_model_verified": false,
+    "actual_quality_accepted": false,
+    "throughput_measured": false,
+    "upscaled_1080p": false,
+    "pure_backend_equivalence": false,
+    "LVA_07_05_started": false
+  }
+}

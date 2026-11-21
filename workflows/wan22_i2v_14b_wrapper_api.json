@@ -1,0 +1,92 @@
+{
+  "97": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "start.png"
+    }
+  },
+  "10": {
+    "class_type": "LVA07Prepare",
+    "inputs": {
+      "start_image": [
+        "97",
+        0
+      ],
+      "positive_prompt": "",
+      "negative_prompt": "",
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "vae_name": "wan_2.1_vae.safetensors",
+      "width": 768,
+      "height": 432,
+      "num_frames": 93
+    }
+  },
+  "30": {
+    "class_type": "LVA07Sampler",
+    "inputs": {
+      "role": "high",
+      "mode": "control",
+      "model_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+      "image_embeds": [
+        "10",
+        0
+      ],
+      "text_embeds": [
+        "10",
+        1
+      ],
+      "seed": 264244520398999
+    }
+  },
+  "40": {
+    "class_type": "LVA07Sampler",
+    "inputs": {
+      "role": "low",
+      "mode": "control",
+      "model_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+      "image_embeds": [
+        "10",
+        0
+      ],
+      "text_embeds": [
+        "10",
+        1
+      ],
+      "seed": 0,
+      "samples": [
+        "30",
+        0
+      ]
+    }
+  },
+  "50": {
+    "class_type": "WanVideoDecode",
+    "inputs": {
+      "vae": [
+        "10",
+        2
+      ],
+      "samples": [
+        "40",
+        0
+      ],
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "normalization": "default"
+    }
+  },
+  "108": {
+    "class_type": "LVA07SaveVideo",
+    "inputs": {
+      "images": [
+        "50",
+        0
+      ],
+      "fps": 16,
+      "filename_prefix": "lva07/control_1"
+    }
+  }
+}

@@ -1,0 +1,2358 @@
+{
+  "source_url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/a7439db30bed0c5b5fa437d77ae8a7bb220dfd00?recursive=1",
+  "observed_at": "2026-11-19",
+  "metadata_only": true,
+  "sha": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+  "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+  "tree": [
+    {
+      "path": ".gitattributes",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dfe0770424b2a19faf507a501ebfc23be8f54e7b",
+      "size": 66,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dfe0770424b2a19faf507a501ebfc23be8f54e7b"
+    },
+    {
+      "path": ".github",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1c1dbd8ad39825ec2ec6c7a6305451981b453334",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/1c1dbd8ad39825ec2ec6c7a6305451981b453334"
+    },
+    {
+      "path": ".github/workflows",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0ffe48e4ee8a1ca3862d07fbc152a2aea4d73778",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/0ffe48e4ee8a1ca3862d07fbc152a2aea4d73778"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "181cf4bf1f2a0c88a503d56592574b1f6902b1d2",
+      "size": 643,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/181cf4bf1f2a0c88a503d56592574b1f6902b1d2"
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "758b312c0db5bd21c101ae09a324b38694a39870",
+      "size": 120,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/758b312c0db5bd21c101ae09a324b38694a39870"
+    },
+    {
+      "path": "ATI",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "c62cad3bd49f78d19397cf987d25a9b66cf8b4bb",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/c62cad3bd49f78d19397cf987d25a9b66cf8b4bb"
+    },
+    {
+      "path": "ATI/motion.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3d615e65c63c28c2a11696148e0fd53e3fb5067d",
+      "size": 1654,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/3d615e65c63c28c2a11696148e0fd53e3fb5067d"
+    },
+    {
+      "path": "ATI/motion_patch.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1adf1e5eae11805d1f86e388e53c31b3c1e0973a",
+      "size": 5476,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1adf1e5eae11805d1f86e388e53c31b3c1e0973a"
+    },
+    {
+      "path": "ATI/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cf25eff760c11e2e5a94e49af0b9050da5faba20",
+      "size": 12321,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/cf25eff760c11e2e5a94e49af0b9050da5faba20"
+    },
+    {
+      "path": "FlashVSR",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "24e5945f8175880f75dc66ad6b5716bf3571d423",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/24e5945f8175880f75dc66ad6b5716bf3571d423"
+    },
+    {
+      "path": "FlashVSR/LQ_proj_model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "215fd873a4b785245d58b172c57eb2a5518d318d",
+      "size": 5486,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/215fd873a4b785245d58b172c57eb2a5518d318d"
+    },
+    {
+      "path": "FlashVSR/TCDecoder.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1dbef42367067e69747c292a3de2e5f2743fd881",
+      "size": 10010,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1dbef42367067e69747c292a3de2e5f2743fd881"
+    },
+    {
+      "path": "FlashVSR/flashvsr_nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69302942ba8c06d0046e09859574735d134307a6",
+      "size": 2432,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/69302942ba8c06d0046e09859574735d134307a6"
+    },
+    {
+      "path": "HuMo",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "7f7b17318b96f84903d426fd4b9111ef97298c35",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/7f7b17318b96f84903d426fd4b9111ef97298c35"
+    },
+    {
+      "path": "HuMo/audio_proj.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "915562e4740007b60307e40c120a05a267a3529d",
+      "size": 3084,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/915562e4740007b60307e40c120a05a267a3529d"
+    },
+    {
+      "path": "HuMo/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3a98ba7d15dbc0775053e47172fb616f009e8c53",
+      "size": 12898,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/3a98ba7d15dbc0775053e47172fb616f009e8c53"
+    },
+    {
+      "path": "HuMo/whisper_config.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14c6c8cf48b64ebb1cb8b637e2b0fab3a9774972",
+      "size": 1272,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/14c6c8cf48b64ebb1cb8b637e2b0fab3a9774972"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "size": 11357,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+    },
+    {
+      "path": "LongCat",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "663c6b8f297ddfec9e2beeae4205d6015eb9d42d",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/663c6b8f297ddfec9e2beeae4205d6015eb9d42d"
+    },
+    {
+      "path": "LongCat/layers.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "06b94b1945aed2e79c947ac28dcaa99ec52a95df",
+      "size": 9108,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/06b94b1945aed2e79c947ac28dcaa99ec52a95df"
+    },
+    {
+      "path": "LongCat/longcat_i2v_testing.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20b01ad084581174265a91181d9ae693ba0519a4",
+      "size": 28056,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/20b01ad084581174265a91181d9ae693ba0519a4"
+    },
+    {
+      "path": "LongCat/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d066d5b53fda6b1c90390a58bb1bf2bf8a0df7c6",
+      "size": 16376,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d066d5b53fda6b1c90390a58bb1bf2bf8a0df7c6"
+    },
+    {
+      "path": "LongVie2",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "db2ab37752fb7a6cb68d8a7d7724a6d11d37fe15",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/db2ab37752fb7a6cb68d8a7d7724a6d11d37fe15"
+    },
+    {
+      "path": "LongVie2/modules.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7d897899ea1930e1901d649cecd32376550731d5",
+      "size": 7349,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7d897899ea1930e1901d649cecd32376550731d5"
+    },
+    {
+      "path": "LongVie2/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d6868744faaae07605a5d9b4c1e9603492f634d0",
+      "size": 4969,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d6868744faaae07605a5d9b4c1e9603492f634d0"
+    },
+    {
+      "path": "MTV",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "057ed35f1af072a4f35719b123efa61620e9abff",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/057ed35f1af072a4f35719b123efa61620e9abff"
+    },
+    {
+      "path": "MTV/data",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1d444d5e134e2c0eea5216f7c3afb941fb5acde9",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/1d444d5e134e2c0eea5216f7c3afb941fb5acde9"
+    },
+    {
+      "path": "MTV/data/mean.npy",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "001d7e7a450836a286a261bec91b2e72f8f926d2",
+      "size": 416,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/001d7e7a450836a286a261bec91b2e72f8f926d2"
+    },
+    {
+      "path": "MTV/data/std.npy",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5d1db82923759854dcd53a28beb59abeab80e711",
+      "size": 416,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5d1db82923759854dcd53a28beb59abeab80e711"
+    },
+    {
+      "path": "MTV/draw_pose.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "751596826ba7de749f8a17997ec98562bb9d76a8",
+      "size": 7994,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/751596826ba7de749f8a17997ec98562bb9d76a8"
+    },
+    {
+      "path": "MTV/motion4d",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d6e26a579ef3c4eaaf0257ba78555a9839ac0a30",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/d6e26a579ef3c4eaaf0257ba78555a9839ac0a30"
+    },
+    {
+      "path": "MTV/motion4d/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "87ac3b3320cc21a738716220771f69fdb78fe34e",
+      "size": 64,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/87ac3b3320cc21a738716220771f69fdb78fe34e"
+    },
+    {
+      "path": "MTV/motion4d/vqvae.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30535e007f70214d8bf4287b162c8515ba45453f",
+      "size": 12977,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/30535e007f70214d8bf4287b162c8515ba45453f"
+    },
+    {
+      "path": "MTV/mtv.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "915773d096b43f78aa5b250c0b64a198d0b4dc92",
+      "size": 8894,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/915773d096b43f78aa5b250c0b64a198d0b4dc92"
+    },
+    {
+      "path": "MTV/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b12539d93e57bea32a4e0c08c6964e322b9ffefc",
+      "size": 12567,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b12539d93e57bea32a4e0c08c6964e322b9ffefc"
+    },
+    {
+      "path": "Ovi",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "84d26448990824ad3b0bcc9b349e648a21cfe267",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/84d26448990824ad3b0bcc9b349e648a21cfe267"
+    },
+    {
+      "path": "Ovi/audio_model_layers.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e1988d2d144275059927a050bd2560a3b3977989",
+      "size": 1585,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e1988d2d144275059927a050bd2560a3b3977989"
+    },
+    {
+      "path": "Ovi/bigvgan",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "997bd78fc6e89e85096184415c2ea73798df87ad",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/997bd78fc6e89e85096184415c2ea73798df87ad"
+    },
+    {
+      "path": "Ovi/bigvgan/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e9663595cc28938f88d6299acd3ba791542e4c0c",
+      "size": 1076,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e9663595cc28938f88d6299acd3ba791542e4c0c"
+    },
+    {
+      "path": "Ovi/bigvgan/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "00f13e9bf9ccb0b4ec37e1c70869f9a9a538871f",
+      "size": 29,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/00f13e9bf9ccb0b4ec37e1c70869f9a9a538871f"
+    },
+    {
+      "path": "Ovi/bigvgan/activations.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "61f2808a5466b3cf4d041059700993af5527dd29",
+      "size": 4504,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/61f2808a5466b3cf4d041059700993af5527dd29"
+    },
+    {
+      "path": "Ovi/bigvgan/alias_free_torch",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "40686b4303a3c0c8d5972453b166d412dce01e95",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/40686b4303a3c0c8d5972453b166d412dce01e95"
+    },
+    {
+      "path": "Ovi/bigvgan/alias_free_torch/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a2318b63198250856809c0cb46210a4147b829bc",
+      "size": 199,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a2318b63198250856809c0cb46210a4147b829bc"
+    },
+    {
+      "path": "Ovi/bigvgan/alias_free_torch/act.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "028debd697dd60458aae75010057df038bd3518a",
+      "size": 854,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/028debd697dd60458aae75010057df038bd3518a"
+    },
+    {
+      "path": "Ovi/bigvgan/alias_free_torch/filter.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ad6ea87c1f10ddd94c544037791d7a4634d5ae1",
+      "size": 3456,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7ad6ea87c1f10ddd94c544037791d7a4634d5ae1"
+    },
+    {
+      "path": "Ovi/bigvgan/alias_free_torch/resample.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "750e6c3402cc5ac939c4b9d075246562e0e1d1a7",
+      "size": 1859,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/750e6c3402cc5ac939c4b9d075246562e0e1d1a7"
+    },
+    {
+      "path": "Ovi/bigvgan/bigvgan.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a0be7a7c0c239121ff7ea52cfc334e060338b391",
+      "size": 1707,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a0be7a7c0c239121ff7ea52cfc334e060338b391"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "37474ae2b9ab8d65486a63baef27cc8cb10a1dd2",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/37474ae2b9ab8d65486a63baef27cc8cb10a1dd2"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses/LICENSE_1",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5afae394d6b37da0e12ba6b290d2512687f421ac",
+      "size": 1067,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5afae394d6b37da0e12ba6b290d2512687f421ac"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses/LICENSE_2",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "322b758863c4219be68291ae3826218baa93cb4c",
+      "size": 1068,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/322b758863c4219be68291ae3826218baa93cb4c"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses/LICENSE_3",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "56ee3c8c4cc2b4b32e0975d17258f9ba515fdbcc",
+      "size": 11355,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/56ee3c8c4cc2b4b32e0975d17258f9ba515fdbcc"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses/LICENSE_4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "48fd1a1ba8d81a94b6c7d1c2ff1a1f307cc5371d",
+      "size": 1530,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/48fd1a1ba8d81a94b6c7d1c2ff1a1f307cc5371d"
+    },
+    {
+      "path": "Ovi/bigvgan/incl_licenses/LICENSE_5",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "01ae5538e6b7c787bb4f5d6f2cd9903520d6e465",
+      "size": 1058,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/01ae5538e6b7c787bb4f5d6f2cd9903520d6e465"
+    },
+    {
+      "path": "Ovi/bigvgan/models.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b39e4715586028938058365b70e0b1bd20d98d3c",
+      "size": 9504,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b39e4715586028938058365b70e0b1bd20d98d3c"
+    },
+    {
+      "path": "Ovi/bigvgan/utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d7e505a9038ede0f1d327180cdef8f3663f563fa",
+      "size": 556,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d7e505a9038ede0f1d327180cdef8f3663f563fa"
+    },
+    {
+      "path": "Ovi/mel_converter.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bb42d43f71271ec9cb06610e6c7ffe825b444cbc",
+      "size": 6573,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/bb42d43f71271ec9cb06610e6c7ffe825b444cbc"
+    },
+    {
+      "path": "Ovi/nodes_ovi.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d71308f0cbc3c0d4fc93602d5587df4e26c42958",
+      "size": 9105,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d71308f0cbc3c0d4fc93602d5587df4e26c42958"
+    },
+    {
+      "path": "Ovi/vae",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d0d40ae1ab7e278992226533cdefd5620b5a9eae",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/d0d40ae1ab7e278992226533cdefd5620b5a9eae"
+    },
+    {
+      "path": "Ovi/vae/autoencoder.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f48220adb442ce3ba2f4d424bb9f7fa88a17b205",
+      "size": 1902,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f48220adb442ce3ba2f4d424bb9f7fa88a17b205"
+    },
+    {
+      "path": "Ovi/vae/distributions.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "996f641c90ca9b793446d3a01cf5464516227537",
+      "size": 1615,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/996f641c90ca9b793446d3a01cf5464516227537"
+    },
+    {
+      "path": "Ovi/vae/edm2_utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a18ffba5cc42214fddf1300034be2eff2760025c",
+      "size": 5549,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a18ffba5cc42214fddf1300034be2eff2760025c"
+    },
+    {
+      "path": "Ovi/vae/vae.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e0d207e3b0d217ed3319e2828e19b672f3af2e2",
+      "size": 14840,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0e0d207e3b0d217ed3319e2828e19b672f3af2e2"
+    },
+    {
+      "path": "Ovi/vae/vae_modules.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f083a0efb572f3c0ee595aac28a78fcba08acb40",
+      "size": 3339,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f083a0efb572f3c0ee595aac28a78fcba08acb40"
+    },
+    {
+      "path": "SCAIL",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "bf3a09cd62799ea68ba1f5223d5e73913e863607",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/bf3a09cd62799ea68ba1f5223d5e73913e863607"
+    },
+    {
+      "path": "SCAIL/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eb669aecd547d88fc4822cfffbc7253af28b755e",
+      "size": 4390,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/eb669aecd547d88fc4822cfffbc7253af28b755e"
+    },
+    {
+      "path": "WanMove",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "66dbdea6e0bb72e5234a51ea7e7e6223cc7f31b3",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/66dbdea6e0bb72e5234a51ea7e7e6223cc7f31b3"
+    },
+    {
+      "path": "WanMove/example_tracks.npy",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f9759ebc83b31d5d5b89244a5facc4badfe2a393",
+      "size": 776,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f9759ebc83b31d5d5b89244a5facc4badfe2a393"
+    },
+    {
+      "path": "WanMove/example_visibility.npy",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "70e1137fc7abb1b19f188a96b840a17ea1b75f33",
+      "size": 209,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/70e1137fc7abb1b19f188a96b840a17ea1b75f33"
+    },
+    {
+      "path": "WanMove/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f4fbc4b766903050d9a04e8fe16e5ee60db46d90",
+      "size": 8695,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f4fbc4b766903050d9a04e8fe16e5ee60db46d90"
+    },
+    {
+      "path": "WanMove/trajectory.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69fecc267f5330b5d3752346c5b153e757b21ca4",
+      "size": 12973,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/69fecc267f5330b5d3752346c5b153e757b21ca4"
+    },
+    {
+      "path": "__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f30f0460a340cc59207041aca5f07ec1614a52b9",
+      "size": 2662,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f30f0460a340cc59207041aca5f07ec1614a52b9"
+    },
+    {
+      "path": "cache_methods",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "86013e4304605ca0a106310e69f43cefabf02d3c",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/86013e4304605ca0a106310e69f43cefabf02d3c"
+    },
+    {
+      "path": "cache_methods/cache_methods.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c5d1e6352933a6fc017228cb689aef64d450237",
+      "size": 6078,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1c5d1e6352933a6fc017228cb689aef64d450237"
+    },
+    {
+      "path": "cache_methods/nodes_cache.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9b35ca50127a52be71cc120f641fca1eb54d77db",
+      "size": 6120,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9b35ca50127a52be71cc120f641fca1eb54d77db"
+    },
+    {
+      "path": "configs",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "8d7ab82dcc53a5bd0830d803295e1b1c2db1301d",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/8d7ab82dcc53a5bd0830d803295e1b1c2db1301d"
+    },
+    {
+      "path": "configs/T5_tokenizer",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "f2ecdb72fe9cab0af1b1a991385ec2ff63bce836",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/f2ecdb72fe9cab0af1b1a991385ec2ff63bce836"
+    },
+    {
+      "path": "configs/T5_tokenizer/special_tokens_map.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14855e7052ffbb595057dfd791d293c1c940db2c",
+      "size": 6623,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/14855e7052ffbb595057dfd791d293c1c940db2c"
+    },
+    {
+      "path": "configs/T5_tokenizer/spiece.model",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e54ce172b8a20779bde58bffced7f3b8c23c86b",
+      "size": 4548313,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0e54ce172b8a20779bde58bffced7f3b8c23c86b"
+    },
+    {
+      "path": "configs/T5_tokenizer/tokenizer.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c4df7320b7fe06e1aac47447a19eb936cb9c2905",
+      "size": 16837417,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c4df7320b7fe06e1aac47447a19eb936cb9c2905"
+    },
+    {
+      "path": "configs/T5_tokenizer/tokenizer_config.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4e1cc1cd85599ce0b47fd0a746af188fe4043ff2",
+      "size": 61728,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4e1cc1cd85599ce0b47fd0a746af188fe4043ff2"
+    },
+    {
+      "path": "configs/transformer_config_i2v.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "85b524cd9a820e2dde4ee9a4ed921e708e5919f9",
+      "size": 275,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/85b524cd9a820e2dde4ee9a4ed921e708e5919f9"
+    },
+    {
+      "path": "context_windows",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d3e3e8270881bdcdf1984e37d794581309dd5809",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/d3e3e8270881bdcdf1984e37d794581309dd5809"
+    },
+    {
+      "path": "context_windows/context.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4f64f3f97bb43aea48e5d2765ea79c283b30266f",
+      "size": 10257,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4f64f3f97bb43aea48e5d2765ea79c283b30266f"
+    },
+    {
+      "path": "controlnet",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "e259e21129163bdbad2047577bdefdabd1ac4e66",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/e259e21129163bdbad2047577bdefdabd1ac4e66"
+    },
+    {
+      "path": "controlnet/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "28235f67c06fe82d8d346babe4d5712072d81848",
+      "size": 7297,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/28235f67c06fe82d8d346babe4d5712072d81848"
+    },
+    {
+      "path": "controlnet/wan_controlnet.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "242b64b3baeb28ca66e470b1f862ce9abca1db7d",
+      "size": 10188,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/242b64b3baeb28ca66e470b1f862ce9abca1db7d"
+    },
+    {
+      "path": "custom_linear.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9fe47628c58f684038f6c20d87098e0439c43146",
+      "size": 12160,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9fe47628c58f684038f6c20d87098e0439c43146"
+    },
+    {
+      "path": "diffsynth",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6b9c48e2e2620eb4302d88f1c8ada22955763cf3",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/6b9c48e2e2620eb4302d88f1c8ada22955763cf3"
+    },
+    {
+      "path": "diffsynth/vram_management",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4c63da52a0932051f2a79bae67c32044a2e5be93",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/4c63da52a0932051f2a79bae67c32044a2e5be93"
+    },
+    {
+      "path": "diffsynth/vram_management/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0e5a49f5f70af9e9d37278f72315d1b1afd34895",
+      "size": 11347,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0e5a49f5f70af9e9d37278f72315d1b1afd34895"
+    },
+    {
+      "path": "diffsynth/vram_management/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "09ad170540f5d7901698ae6c9c59608d5f71112c",
+      "size": 21,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/09ad170540f5d7901698ae6c9c59608d5f71112c"
+    },
+    {
+      "path": "diffsynth/vram_management/layers.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9c97ff73706334358d3328c489cce95840418630",
+      "size": 5455,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9c97ff73706334358d3328c489cce95840418630"
+    },
+    {
+      "path": "diffsynth/vram_management/utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "72ed1f780b516d4323eb56addde1b0a41ba63977",
+      "size": 2140,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/72ed1f780b516d4323eb56addde1b0a41ba63977"
+    },
+    {
+      "path": "echoshot",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "07c2ed01c6f7817f5b124edd047628d8386d48d3",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/07c2ed01c6f7817f5b124edd047628d8386d48d3"
+    },
+    {
+      "path": "echoshot/echoshot.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "659387c86a7306caa6114a504c39382dea283e57",
+      "size": 3681,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/659387c86a7306caa6114a504c39382dea283e57"
+    },
+    {
+      "path": "enhance_a_video",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "a18a60e124a747d4bffb7ec2c1ab4b3907ce8c2e",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/a18a60e124a747d4bffb7ec2c1ab4b3907ce8c2e"
+    },
+    {
+      "path": "enhance_a_video/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "971f205c7bf8531345cca0fec4b722fb733cda17",
+      "size": 44442,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/971f205c7bf8531345cca0fec4b722fb733cda17"
+    },
+    {
+      "path": "enhance_a_video/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "enhance_a_video/enhance.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c14a84d138a8d0d5c2b00aaf854f45e0e82d94c",
+      "size": 2141,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1c14a84d138a8d0d5c2b00aaf854f45e0e82d94c"
+    },
+    {
+      "path": "enhance_a_video/globals.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d2bcddd22e6950ff5bbd05ec7b70a09d20873b23",
+      "size": 696,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d2bcddd22e6950ff5bbd05ec7b70a09d20873b23"
+    },
+    {
+      "path": "example_workflows",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0ea7b48e01cf7ccdad643c9e1e934f00456021dd",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/0ea7b48e01cf7ccdad643c9e1e934f00456021dd"
+    },
+    {
+      "path": "example_workflows/LongCatAvatar_audio_image_to_video_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f982637e5f842c687bbaed3db148305dd4bf8d11",
+      "size": 98183,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f982637e5f842c687bbaed3db148305dd4bf8d11"
+    },
+    {
+      "path": "example_workflows/LongCat_TI2V_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ec8776db1556eba97995013592132eb4f5a90b7f",
+      "size": 177349,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/ec8776db1556eba97995013592132eb4f5a90b7f"
+    },
+    {
+      "path": "example_workflows/example_inputs",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "05519b843d07db187c2a611d127da981146cbb23",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/05519b843d07db187c2a611d127da981146cbb23"
+    },
+    {
+      "path": "example_workflows/example_inputs/MTV_crafter_example_pose.mp4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9776fc1a9a0d7bd4ec762e6357433b9f9750a1ee",
+      "size": 318276,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9776fc1a9a0d7bd4ec762e6357433b9f9750a1ee"
+    },
+    {
+      "path": "example_workflows/example_inputs/env.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5fbcaff41ef39c3126c436f565a4ceed0f78088c",
+      "size": 1229032,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5fbcaff41ef39c3126c436f565a4ceed0f78088c"
+    },
+    {
+      "path": "example_workflows/example_inputs/human.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e277930b3f5b6030e19e6c453abb9b6b9b4bc51b",
+      "size": 210018,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e277930b3f5b6030e19e6c453abb9b6b9b4bc51b"
+    },
+    {
+      "path": "example_workflows/example_inputs/jeep.mp4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a6b98e25e2311d2a046acc412a8d2ba6840c45b3",
+      "size": 185636,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a6b98e25e2311d2a046acc412a8d2ba6840c45b3"
+    },
+    {
+      "path": "example_workflows/example_inputs/thing.png",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "493c3a2959f3e4537d3e47915fd8dcea3ff3fdce",
+      "size": 81077,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/493c3a2959f3e4537d3e47915fd8dcea3ff3fdce"
+    },
+    {
+      "path": "example_workflows/example_inputs/wolf_interpolated.mp4",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46e6a3117fe236c207e523f927f757691017585d",
+      "size": 194949,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/46e6a3117fe236c207e523f927f757691017585d"
+    },
+    {
+      "path": "example_workflows/example_inputs/woman.jpg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46a733912521914d528fb4ae82fe42c3e46317a4",
+      "size": 196851,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/46a733912521914d528fb4ae82fe42c3e46317a4"
+    },
+    {
+      "path": "example_workflows/example_inputs/woman.wav",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "773f9e717e7031a6e7fa584beece0533074e9f3d",
+      "size": 1765454,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/773f9e717e7031a6e7fa584beece0533074e9f3d"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_EchoShot_example.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b3c3f9ca29ad779f257be59f46a71749fbe2ef75",
+      "size": 34531,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b3c3f9ca29ad779f257be59f46a71749fbe2ef75"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_FlashVSR_upscale_example.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2ae152df1306115e0ef819f9f028136d990dd23b",
+      "size": 24591,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2ae152df1306115e0ef819f9f028136d990dd23b"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_ReCamMaster_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3baa3f938299c11a542a13ad4071c878e7802835",
+      "size": 48120,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/3baa3f938299c11a542a13ad4071c878e7802835"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_UniLumos_relight_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bf0da46cf876e8674b48d93c13978bbb959a8ba8",
+      "size": 39129,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/bf0da46cf876e8674b48d93c13978bbb959a8ba8"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_VACE_examples_03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "79d925ff354f3e44424994f57bbdf22c40bd10af",
+      "size": 120322,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/79d925ff354f3e44424994f57bbdf22c40bd10af"
+    },
+    {
+      "path": "example_workflows/wanvideo_1_3B_control_lora_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6d8eeb6a9f90c81a311119344e69e3079e83783c",
+      "size": 21782,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/6d8eeb6a9f90c81a311119344e69e3079e83783c"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_FLF2V_720P_example_02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a2fd652b16230544160d33f582809d6631b5c97a",
+      "size": 45269,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a2fd652b16230544160d33f582809d6631b5c97a"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_Fun_control_camera_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "97c72966e2ca6a3e6ad80ac77fdc66a94de9350d",
+      "size": 37849,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/97c72966e2ca6a3e6ad80ac77fdc66a94de9350d"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_Fun_control_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ad8215ab558bfa13be1de5cb249038e03bfb573e",
+      "size": 51885,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/ad8215ab558bfa13be1de5cb249038e03bfb573e"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_HuMo_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "cea099979f7ef743a4dd8d2f57734e5e9862895d",
+      "size": 36507,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/cea099979f7ef743a4dd8d2f57734e5e9862895d"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_ATI_track_testing_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "39f1f95d70a7f128a9b11fe366d04387ef4e20c5",
+      "size": 157534,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/39f1f95d70a7f128a9b11fe366d04387ef4e20c5"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_FantasyPortrait_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dbb7ecd597d3e36335807fa15068ffc4012c4482",
+      "size": 46827,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dbb7ecd597d3e36335807fa15068ffc4012c4482"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_FantasyTalking_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eedf2de9cafb9390a7d0dd2446a23d7810eebb88",
+      "size": 41688,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/eedf2de9cafb9390a7d0dd2446a23d7810eebb88"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_InfiniteTalk_example_03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e1c88adc4e5b5afcc20c89f1c9a1672ef2174e92",
+      "size": 48687,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e1c88adc4e5b5afcc20c89f1c9a1672ef2174e92"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_SkyReelsV3_TalkingAvatar_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1761c336200bd0f62773eb46f3a72e8beedddd36",
+      "size": 107899,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1761c336200bd0f62773eb46f3a72e8beedddd36"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_I2V_example_03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0d931fbac7d203c8cbd3072730706cb3fe6a6a6d",
+      "size": 31346,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0d931fbac7d203c8cbd3072730706cb3fe6a6a6d"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_MTV_Crafter_example_WIP.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "98b8ff2b5ff0e6bfc4d353ef06177901d48b36a2",
+      "size": 44026,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/98b8ff2b5ff0e6bfc4d353ef06177901d48b36a2"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_MoCha_replace_subject_KJ_02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a67f05781bd6c7feb85f91085ea17cfa44575601",
+      "size": 73659,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a67f05781bd6c7feb85f91085ea17cfa44575601"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_OneToAllAnimation_pose_control_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c484de8cb324c049dee6eaf4780daaec9cff5ae7",
+      "size": 198102,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c484de8cb324c049dee6eaf4780daaec9cff5ae7"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_SCAIL_pose_control_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2637c6ea8f7b39f7c7bd6bd7bdb00fc27d0f825c",
+      "size": 111668,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2637c6ea8f7b39f7c7bd6bd7bdb00fc27d0f825c"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_Stand-In_reference_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "caa0473ebbe5a0ce853337b0aaa26ca12987683c",
+      "size": 49974,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/caa0473ebbe5a0ce853337b0aaa26ca12987683c"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_SteadyDancer_pose_control_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5332822a6de67d4919cd25ed2e51d3f73086a489",
+      "size": 98911,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5332822a6de67d4919cd25ed2e51d3f73086a489"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_T2V_14B_lynx_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69c6c621a7cf0e098ea12493b178a615fb2341d2",
+      "size": 34750,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/69c6c621a7cf0e098ea12493b178a615fb2341d2"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_T2V_example_03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "67cbe7316612d250b03b06ec4fd692e5f53c575e",
+      "size": 27951,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/67cbe7316612d250b03b06ec4fd692e5f53c575e"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_V2V_InfiniteTalk_example_02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "48f26f93f205dce92ccdff28869b05f09d00b018",
+      "size": 57087,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/48f26f93f205dce92ccdff28869b05f09d00b018"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_WanMove_I2V_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "88bcdbfa76cdfb11f4a073dd44cf1eb183188201",
+      "size": 120589,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/88bcdbfa76cdfb11f4a073dd44cf1eb183188201"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_phantom_subject2vid_example_02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dc8fdf8bb09f2b8ab950aaa8b56eac320ebac349",
+      "size": 41051,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dc8fdf8bb09f2b8ab950aaa8b56eac320ebac349"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_pusa_I2V_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "514a4237540fe13529dd69eef4dca8f0ccf63359",
+      "size": 27524,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/514a4237540fe13529dd69eef4dca8f0ccf63359"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_skyreels_a2_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "49ab7bb1cfc851a498e4f1220f1e90748ad6ab2d",
+      "size": 87798,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/49ab7bb1cfc851a498e4f1220f1e90748ad6ab2d"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_1_14B_skyreels_diffusion_forcing_extension_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "86c9e870b577942f370b2bdb8ea722b221241cca",
+      "size": 103925,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/86c9e870b577942f370b2bdb8ea722b221241cca"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_14B_Pusa_extension_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0c59d29b5888b6414a4b68a120e50eecc698c11e",
+      "size": 159076,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0c59d29b5888b6414a4b68a120e50eecc698c11e"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_5B_I2V_controlnet_example.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "af5a975b27331d209c92bdd46b6f3764ca333444",
+      "size": 33999,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/af5a975b27331d209c92bdd46b6f3764ca333444"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_5B_I2V_example_WIP.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14785ea8711eb7be8706b90ae70b85284c8f902d",
+      "size": 25544,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/14785ea8711eb7be8706b90ae70b85284c8f902d"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_5B_Ovi_image_to_video_audio_10_seconds_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "505690f589c81ca8b858ffb526871363f46a9a35",
+      "size": 31096,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/505690f589c81ca8b858ffb526871363f46a9a35"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_5B_Ovi_image_to_video_audio_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e5455e48a537549c5f3be7e1302c09436abeb42e",
+      "size": 30639,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e5455e48a537549c5f3be7e1302c09436abeb42e"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_5B_T2V_controlnet_example.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0eb451c9ecdeadb1232e5926f508b94f8ea1a0ed",
+      "size": 31481,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0eb451c9ecdeadb1232e5926f508b94f8ea1a0ed"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_Fun_control_camera_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1c65d3e70a56dfaff10b83d507926c8e89bcdb1b",
+      "size": 60599,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1c65d3e70a56dfaff10b83d507926c8e89bcdb1b"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_Fun_control_example_03.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e7c8760fc2785e211254bf3e22e560787db2f9c5",
+      "size": 146749,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e7c8760fc2785e211254bf3e22e560787db2f9c5"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_I2V_A14B_TimeToMove_example.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "03a85c8e17c1309c9aab3d35dc3fedb0cba205d9",
+      "size": 59403,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/03a85c8e17c1309c9aab3d35dc3fedb0cba205d9"
+    },
+    {
+      "path": "example_workflows/wanvideo_2_2_I2V_A14B_example_WIP.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "166cd1f4e11b9525e1682045999432f6bae7650d",
+      "size": 40832,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/166cd1f4e11b9525e1682045999432f6bae7650d"
+    },
+    {
+      "path": "example_workflows/wanvideo_WanAnimate_example_01.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c16f0bc06dbe963dca1e58027f2e4ad5f08e63d1",
+      "size": 136336,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c16f0bc06dbe963dca1e58027f2e4ad5f08e63d1"
+    },
+    {
+      "path": "example_workflows/wanvideo_WanAnimate_preprocess_example_02.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b4203d3fb2384bdd725efa3fec7c55a6c46f1ba8",
+      "size": 74309,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b4203d3fb2384bdd725efa3fec7c55a6c46f1ba8"
+    },
+    {
+      "path": "fantasyportrait",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b4a58a44060d63799658f090322e3735d6302b96",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/b4a58a44060d63799658f090322e3735d6302b96"
+    },
+    {
+      "path": "fantasyportrait/LICENSE.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "size": 11357,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+    },
+    {
+      "path": "fantasyportrait/model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f61b2d8e0bd8f6afc57369fe7bc2bf8202d80c4b",
+      "size": 8632,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f61b2d8e0bd8f6afc57369fe7bc2bf8202d80c4b"
+    },
+    {
+      "path": "fantasyportrait/models",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "de3c870f0fb7e13655f6704f641eedead66e03f1",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/de3c870f0fb7e13655f6704f641eedead66e03f1"
+    },
+    {
+      "path": "fantasyportrait/models/face_det.onnx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1a718a4b62d62cb78bdfb61dd0bc099418401701",
+      "size": 370619,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1a718a4b62d62cb78bdfb61dd0bc099418401701"
+    },
+    {
+      "path": "fantasyportrait/models/face_landmark.onnx",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "42f49159562dcc831593d7d0b79d415d2c292d80",
+      "size": 2865751,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/42f49159562dcc831593d7d0b79d415d2c292d80"
+    },
+    {
+      "path": "fantasyportrait/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "befdc53cfa9af800fe7793439f4a10040ea84acd",
+      "size": 11742,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/befdc53cfa9af800fe7793439f4a10040ea84acd"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "8530478c9161b4666adc0f7e065493b07319fa4c",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/8530478c9161b4666adc0f7e065493b07319fa4c"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/PF-FGC_LICENSE.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a8b4962699b8c4900d99e461112ad56dc70d7da6",
+      "size": 18103,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a8b4962699b8c4900d99e461112ad56dc70d7da6"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/camer.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9f30388d094a76fd91998ac3535263e27d24c9d7",
+      "size": 19584,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9f30388d094a76fd91998ac3535263e27d24c9d7"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/face_align.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "24ea1914c609dfd5b1777444a13658cd50af30e7",
+      "size": 4406,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/24ea1914c609dfd5b1777444a13658cd50af30e7"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/face_det.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bb0e4936318fa1bc64a32e9fb38773c44a0d78a2",
+      "size": 10571,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/bb0e4936318fa1bc64a32e9fb38773c44a0d78a2"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/face_utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9653d7df0ffdc07e1da5ede64f5682c29249eb7e",
+      "size": 4925,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9653d7df0ffdc07e1da5ede64f5682c29249eb7e"
+    },
+    {
+      "path": "fantasyportrait/pd_fgc/pdf.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d92d074bfbc3b072cd0b7b0298d60f2754a930bf",
+      "size": 13419,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d92d074bfbc3b072cd0b7b0298d60f2754a930bf"
+    },
+    {
+      "path": "fantasyportrait/requirements.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "023cde60d662abc5998713a8082a8498d65db620",
+      "size": 68,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/023cde60d662abc5998713a8082a8498d65db620"
+    },
+    {
+      "path": "fantasytalking",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d66e8c3027d119951b003e3da2a1475d0b73469e",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/d66e8c3027d119951b003e3da2a1475d0b73469e"
+    },
+    {
+      "path": "fantasytalking/model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d7bd24553c6cd11b4d567356d4dd4178238c55d1",
+      "size": 5301,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d7bd24553c6cd11b4d567356d4dd4178238c55d1"
+    },
+    {
+      "path": "fantasytalking/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4b1589b6df9f950d84eaf206d6105924963030ff",
+      "size": 8647,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4b1589b6df9f950d84eaf206d6105924963030ff"
+    },
+    {
+      "path": "fp8_optimization.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "217aa7b01873afd78ec0b914a38645e39fa831d1",
+      "size": 2114,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/217aa7b01873afd78ec0b914a38645e39fa831d1"
+    },
+    {
+      "path": "freeinit",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "7762edaeefa606a6223ffbdc38976db2d5a9e161",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/7762edaeefa606a6223ffbdc38976db2d5a9e161"
+    },
+    {
+      "path": "freeinit/freeinit_utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "de7de148c2fed15d04bbd5c1dd962f69e7a31b37",
+      "size": 4734,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/de7de148c2fed15d04bbd5c1dd962f69e7a31b37"
+    },
+    {
+      "path": "fun_camera",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6eb5796d7123e3916839da4107b7abd211a63d8a",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/6eb5796d7123e3916839da4107b7abd211a63d8a"
+    },
+    {
+      "path": "fun_camera/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d7e94797c45a30f4945506c3dbf2bab35bb2b341",
+      "size": 7687,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d7e94797c45a30f4945506c3dbf2bab35bb2b341"
+    },
+    {
+      "path": "gguf",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1cd6f31837f32e249948361d25e858d433566ed5",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/1cd6f31837f32e249948361d25e858d433566ed5"
+    },
+    {
+      "path": "gguf/gguf.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4b168aabc86065e30b383de3e2a7710def48e17a",
+      "size": 1226,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4b168aabc86065e30b383de3e2a7710def48e17a"
+    },
+    {
+      "path": "gguf/gguf_utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "97436b4bfd30a45e860d3e6783fa6c7128ce3192",
+      "size": 11714,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/97436b4bfd30a45e860d3e6783fa6c7128ce3192"
+    },
+    {
+      "path": "latent_preview.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "11647e9b916a4377ca5578aa2648e15ba9d8496c",
+      "size": 10330,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/11647e9b916a4377ca5578aa2648e15ba9d8496c"
+    },
+    {
+      "path": "lynx",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "4d3f1664ab36c41f2e08a669f373f86589791139",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/4d3f1664ab36c41f2e08a669f373f86589791139"
+    },
+    {
+      "path": "lynx/face",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "90b0a78c67b1662f1ac30b3f82841432354d31aa",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/90b0a78c67b1662f1ac30b3f82841432354d31aa"
+    },
+    {
+      "path": "lynx/face/arcface.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "750f82a2126834686b4b04880a2650094c8acb02",
+      "size": 8949,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/750f82a2126834686b4b04880a2650094c8acb02"
+    },
+    {
+      "path": "lynx/face/face_encoder.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "60ee7369bc074b8b60eeef5d6c17e60e1f03f8e8",
+      "size": 3302,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/60ee7369bc074b8b60eeef5d6c17e60e1f03f8e8"
+    },
+    {
+      "path": "lynx/face/face_utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "948e07943504acaf9bede8424361a71c883d4ffe",
+      "size": 2664,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/948e07943504acaf9bede8424361a71c883d4ffe"
+    },
+    {
+      "path": "lynx/modules.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2a80f9e9bd64c0a0c03bc94697aea87c03c53e63",
+      "size": 4336,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2a80f9e9bd64c0a0c03bc94697aea87c03c53e63"
+    },
+    {
+      "path": "lynx/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "919b8bf2b633745db539ed6ebcce5be8d007cdc0",
+      "size": 10175,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/919b8bf2b633745db539ed6ebcce5be8d007cdc0"
+    },
+    {
+      "path": "lynx/requirements.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7e383ccd6f86df6bd6d4c920a377e8e607695e7a",
+      "size": 11,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7e383ccd6f86df6bd6d4c920a377e8e607695e7a"
+    },
+    {
+      "path": "lynx/resampler.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "59db1137a1dbff6d0f63afb7b2ef7832c1f5a38f",
+      "size": 5284,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/59db1137a1dbff6d0f63afb7b2ef7832c1f5a38f"
+    },
+    {
+      "path": "mocha",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "f9bcfb353c9c544473afff7b5b6a46ab2f7a28a3",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/f9bcfb353c9c544473afff7b5b6a46ab2f7a28a3"
+    },
+    {
+      "path": "mocha/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "92537f4eb790e9e334a7cddb6d86be8829759b74",
+      "size": 6370,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/92537f4eb790e9e334a7cddb6d86be8829759b74"
+    },
+    {
+      "path": "multitalk",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "d91d7fcf8a8b8cea6adf0a6c8c1bd4faa07b4bc1",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/d91d7fcf8a8b8cea6adf0a6c8c1bd4faa07b4bc1"
+    },
+    {
+      "path": "multitalk/encoded_silence.safetensors",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5ab6aa7b27ddb34e77e7f1228c9b26f4642f8533",
+      "size": 1658968,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5ab6aa7b27ddb34e77e7f1228c9b26f4642f8533"
+    },
+    {
+      "path": "multitalk/multitalk.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f785cff4338c0d9dd8c13ad8c47e9e1cce8ecfc0",
+      "size": 16662,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f785cff4338c0d9dd8c13ad8c47e9e1cce8ecfc0"
+    },
+    {
+      "path": "multitalk/multitalk_loop.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c40df11ff631654794056fce46ca57a6b02f9b3d",
+      "size": 30486,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c40df11ff631654794056fce46ca57a6b02f9b3d"
+    },
+    {
+      "path": "multitalk/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "11b9472e3645d3d3d09337fc69b44c3452efbbf8",
+      "size": 27016,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/11b9472e3645d3d3d09337fc69b44c3452efbbf8"
+    },
+    {
+      "path": "multitalk/wav2vec2.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "be5444c38cc6ce6095fb66640fafa22ba37f7d6d",
+      "size": 5044,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/be5444c38cc6ce6095fb66640fafa22ba37f7d6d"
+    },
+    {
+      "path": "multitalk/wav2vec2_config.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "74fe6760e497a3ce7647338c725395d7b2f7e63a",
+      "size": 1951,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/74fe6760e497a3ce7647338c725395d7b2f7e63a"
+    },
+    {
+      "path": "nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f0b0e84dc6ba4685ade9713956e92c4eef8333d5",
+      "size": 114314,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f0b0e84dc6ba4685ade9713956e92c4eef8333d5"
+    },
+    {
+      "path": "nodes_deprecated.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "df8769d830b1d4f2aa4552f19546f7ed58805264",
+      "size": 6386,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/df8769d830b1d4f2aa4552f19546f7ed58805264"
+    },
+    {
+      "path": "nodes_model_loading.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0560ecf0087585d8e6c224a112da578107f9a608",
+      "size": 108438,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0560ecf0087585d8e6c224a112da578107f9a608"
+    },
+    {
+      "path": "nodes_sampler.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "32b51c6aa8e4daea742652f08a4e775b9d28b9b0",
+      "size": 175177,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/32b51c6aa8e4daea742652f08a4e775b9d28b9b0"
+    },
+    {
+      "path": "nodes_utility.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7bead8228ca09e208e879ff5731b018af1aa4176",
+      "size": 34629,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7bead8228ca09e208e879ff5731b018af1aa4176"
+    },
+    {
+      "path": "onetoall",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ff03e8467be57df039137d93b1c03cc6b5453dba",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/ff03e8467be57df039137d93b1c03cc6b5453dba"
+    },
+    {
+      "path": "onetoall/controlnet.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "02725d131be0dc943f78c8d76691023d561deab6",
+      "size": 17678,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/02725d131be0dc943f78c8d76691023d561deab6"
+    },
+    {
+      "path": "onetoall/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41f1de49e21c17aadbd0eec6bbb070a38e1d5dda",
+      "size": 8000,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/41f1de49e21c17aadbd0eec6bbb070a38e1d5dda"
+    },
+    {
+      "path": "onetoall/refextractor_2d.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dcdb9b9d4e6c86d3dafa7b7691fa5bb4e48cb216",
+      "size": 10023,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dcdb9b9d4e6c86d3dafa7b7691fa5bb4e48cb216"
+    },
+    {
+      "path": "onetoall/unet_causal_3d_blocks.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6982e2ca63fc8c5b025647abdafce56b9a6b1ee0",
+      "size": 6296,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/6982e2ca63fc8c5b025647abdafce56b9a6b1ee0"
+    },
+    {
+      "path": "pyproject.toml",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a36a553fd663df3dac2167c8b535d31d0fc310e9",
+      "size": 479,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a36a553fd663df3dac2167c8b535d31d0fc310e9"
+    },
+    {
+      "path": "qwen",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "1127aa0e4601c180c1fb077c4373e05294f30587",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/1127aa0e4601c180c1fb077c4373e05294f30587"
+    },
+    {
+      "path": "qwen/config.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "51b83fbd4e2d363b60235b9c8d494046a83c1cbf",
+      "size": 661,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/51b83fbd4e2d363b60235b9c8d494046a83c1cbf"
+    },
+    {
+      "path": "qwen/qwen.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5a0f70a164b58ffef76824afa00dd4af582dffc5",
+      "size": 9594,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5a0f70a164b58ffef76824afa00dd4af582dffc5"
+    },
+    {
+      "path": "qwen/system_prompt.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1e5a1f715b02e9f5f8b42beeab3a777227d93454",
+      "size": 20916,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/1e5a1f715b02e9f5f8b42beeab3a777227d93454"
+    },
+    {
+      "path": "qwen/tokenizer",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "963e72197bd199e920b5bc5d504c34e249ca1ee4",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/963e72197bd199e920b5bc5d504c34e249ca1ee4"
+    },
+    {
+      "path": "qwen/tokenizer/merges.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+      "size": 1671839,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+    },
+    {
+      "path": "qwen/tokenizer/tokenizer.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "443909a61d429dff23010e5bddd28ff530edda00",
+      "size": 7031645,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/443909a61d429dff23010e5bddd28ff530edda00"
+    },
+    {
+      "path": "qwen/tokenizer/tokenizer_config.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "07bfe0640cb5a0037f9322287fbfc682806cf672",
+      "size": 7305,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/07bfe0640cb5a0037f9322287fbfc682806cf672"
+    },
+    {
+      "path": "qwen/tokenizer/vocab.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4783fe10ac3adce15ac8f358ef5462739852c569",
+      "size": 2776833,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4783fe10ac3adce15ac8f358ef5462739852c569"
+    },
+    {
+      "path": "readme.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "018c294184e0ee6d42d25a8868b9137268fef524",
+      "size": 7531,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/018c294184e0ee6d42d25a8868b9137268fef524"
+    },
+    {
+      "path": "recammaster",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "547af5ea4bb3ef277492b74f7649aac97ba09daf",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/547af5ea4bb3ef277492b74f7649aac97ba09daf"
+    },
+    {
+      "path": "recammaster/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c41f254675d27a5dc7701b6dd6009728d8c737eb",
+      "size": 14408,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c41f254675d27a5dc7701b6dd6009728d8c737eb"
+    },
+    {
+      "path": "recammaster/recam_extrinsics.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2862e1688329e3d0e7c07e3eff4209fe3d160a49",
+      "size": 81121,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2862e1688329e3d0e7c07e3eff4209fe3d160a49"
+    },
+    {
+      "path": "requirements.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6eda6f1eb4f1b39144dce81a6d60128bc309c243",
+      "size": 134,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/6eda6f1eb4f1b39144dce81a6d60128bc309c243"
+    },
+    {
+      "path": "s2v",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "96abe2c91784e37a779162fa1d2155d81fd2b6d7",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/96abe2c91784e37a779162fa1d2155d81fd2b6d7"
+    },
+    {
+      "path": "s2v/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b008c82038a21fe021dd39b2dc87ff6ed1c4f82b",
+      "size": 8052,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b008c82038a21fe021dd39b2dc87ff6ed1c4f82b"
+    },
+    {
+      "path": "s2v/wanvideo2_2_S2V_context_window_testing.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d15e17a836d638891eb1a281e5a1bc34dbabe752",
+      "size": 44536,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/d15e17a836d638891eb1a281e5a1bc34dbabe752"
+    },
+    {
+      "path": "s2v/wanvideo2_2_S2V_framepack_pose_testing.json",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b37e5cb1da2cf9e190542aabdfe2a5a2e15d01f0",
+      "size": 65544,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b37e5cb1da2cf9e190542aabdfe2a5a2e15d01f0"
+    },
+    {
+      "path": "skyreels",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0aa5dd52d6247c828224f96c8efc2604461d4ac1",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/0aa5dd52d6247c828224f96c8efc2604461d4ac1"
+    },
+    {
+      "path": "skyreels/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a188edea6546be3458c9d05113753def07905add",
+      "size": 31610,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a188edea6546be3458c9d05113753def07905add"
+    },
+    {
+      "path": "steadydancer",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ed023de7b764fc42d3b7992bdabbdc678954af90",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/ed023de7b764fc42d3b7992bdabbdc678954af90"
+    },
+    {
+      "path": "steadydancer/mobilenetv2_dcd.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "36691be24626b569d6b3f0b1262c78a2c86d0cf1",
+      "size": 3474,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/36691be24626b569d6b3f0b1262c78a2c86d0cf1"
+    },
+    {
+      "path": "steadydancer/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "618f7c10b5579dcb7b8306f48c73d5dcd1d745f2",
+      "size": 2590,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/618f7c10b5579dcb7b8306f48c73d5dcd1d745f2"
+    },
+    {
+      "path": "steadydancer/small_archs.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ccfaa1084bdcd9c8f145b21d6939d6a5311b9be1",
+      "size": 4545,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/ccfaa1084bdcd9c8f145b21d6939d6a5311b9be1"
+    },
+    {
+      "path": "taehv",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "eaf01090273a25e86146d3e3a85d05cde51d58ca",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/eaf01090273a25e86146d3e3a85d05cde51d58ca"
+    },
+    {
+      "path": "taehv/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c6e076ba2151824cff2432743ff5514574ea1d12",
+      "size": 24,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c6e076ba2151824cff2432743ff5514574ea1d12"
+    },
+    {
+      "path": "taehv/taehv.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "287817c8aca2779baf638f42475b2480fb0aa4f8",
+      "size": 11300,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/287817c8aca2779baf638f42475b2480fb0aa4f8"
+    },
+    {
+      "path": "ultravico",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "ffa9bbf27d924ff87105b2ea0faa2b521bbd961b",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/ffa9bbf27d924ff87105b2ea0faa2b521bbd961b"
+    },
+    {
+      "path": "ultravico/sageattn",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "30b05bca584a6a12b8122bc6501699166dbd8406",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/30b05bca584a6a12b8122bc6501699166dbd8406"
+    },
+    {
+      "path": "ultravico/sageattn/attn_qk_int8_per_block.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "645d5a4fad09cae9379cd738f287906b6aa22177",
+      "size": 10031,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/645d5a4fad09cae9379cd738f287906b6aa22177"
+    },
+    {
+      "path": "ultravico/sageattn/core.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3e3f735eeaa7b514e5f0acb42a0b1eedd97b7ae3",
+      "size": 2010,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/3e3f735eeaa7b514e5f0acb42a0b1eedd97b7ae3"
+    },
+    {
+      "path": "ultravico/sageattn/quant_per_block.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c249ee915efdc9eeb33c3b4f3954c94c792f1c4c",
+      "size": 3599,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c249ee915efdc9eeb33c3b4f3954c94c792f1c4c"
+    },
+    {
+      "path": "uni3c",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "cd02ddc3ab53d77855396b8308a9e05bd5d89e3c",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/cd02ddc3ab53d77855396b8308a9e05bd5d89e3c"
+    },
+    {
+      "path": "uni3c/camera.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "77d55bb8ec20fe5f4930420fab81c81c8f4fcdd1",
+      "size": 3279,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/77d55bb8ec20fe5f4930420fab81c81c8f4fcdd1"
+    },
+    {
+      "path": "uni3c/controlnet.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2c8707d35224e247af795f08e35e468334e0153c",
+      "size": 14427,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2c8707d35224e247af795f08e35e468334e0153c"
+    },
+    {
+      "path": "uni3c/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "844f553fc46d2ab5b6e903143f9f98d481f10d69",
+      "size": 10824,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/844f553fc46d2ab5b6e903143f9f98d481f10d69"
+    },
+    {
+      "path": "uni3c/utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ba7f2c228d69f6ab691e3b08a9b2de614b11eaa",
+      "size": 7098,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7ba7f2c228d69f6ab691e3b08a9b2de614b11eaa"
+    },
+    {
+      "path": "unianimate",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "188a99a18fbdb6e6db62022bbf8fa16d94ccf639",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/188a99a18fbdb6e6db62022bbf8fa16d94ccf639"
+    },
+    {
+      "path": "unianimate/dwpose",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "b2ef879bb39b1cddd255e30a2c2d4131902c1817",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/b2ef879bb39b1cddd255e30a2c2d4131902c1817"
+    },
+    {
+      "path": "unianimate/dwpose/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "unianimate/dwpose/jit_det.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2ae863509df37386365791df8b4a7635c05d9344",
+      "size": 4424,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2ae863509df37386365791df8b4a7635c05d9344"
+    },
+    {
+      "path": "unianimate/dwpose/jit_pose.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7a7b6acee1cd39657cec719aef1aaa09648da4e2",
+      "size": 12130,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7a7b6acee1cd39657cec719aef1aaa09648da4e2"
+    },
+    {
+      "path": "unianimate/dwpose/util.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c8aa25000d1750fbbecd0d84e7f0d404a3ecd45f",
+      "size": 14972,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c8aa25000d1750fbbecd0d84e7f0d404a3ecd45f"
+    },
+    {
+      "path": "unianimate/dwpose/wholebody.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ab2022c6df60dd639db2996d8af4d1b69a9b0695",
+      "size": 1412,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/ab2022c6df60dd639db2996d8af4d1b69a9b0695"
+    },
+    {
+      "path": "unianimate/nodes.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0ae26d30e21fe591a03e5bdd392083ec5b6b0ed1",
+      "size": 41852,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0ae26d30e21fe591a03e5bdd392083ec5b6b0ed1"
+    },
+    {
+      "path": "utils.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e2bf1844f360089aaad41b33a9e4c2af36b77c32",
+      "size": 33988,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e2bf1844f360089aaad41b33a9e4c2af36b77c32"
+    },
+    {
+      "path": "wanvideo",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "be4fa516dbdb038a35fb2294a98b040dbc782d17",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/be4fa516dbdb038a35fb2294a98b040dbc782d17"
+    },
+    {
+      "path": "wanvideo/LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "size": 11357,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64"
+    },
+    {
+      "path": "wanvideo/configs",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "99710c8cfeda2d6611dce32041c93cd3ca168746",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/99710c8cfeda2d6611dce32041c93cd3ca168746"
+    },
+    {
+      "path": "wanvideo/configs/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c72d2d01be834882d659701fc0dc67beb152383f",
+      "size": 1011,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c72d2d01be834882d659701fc0dc67beb152383f"
+    },
+    {
+      "path": "wanvideo/configs/shared_config.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "04a9f454218fc1ce958b628e71ad5738222e2aa4",
+      "size": 915,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/04a9f454218fc1ce958b628e71ad5738222e2aa4"
+    },
+    {
+      "path": "wanvideo/configs/wan_i2v_14B.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "12e8e205bffb343a6e27d2828fb573db1d6349f8",
+      "size": 971,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/12e8e205bffb343a6e27d2828fb573db1d6349f8"
+    },
+    {
+      "path": "wanvideo/configs/wan_t2v_14B.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9d0ee69dea796bfd6eccdedf4ec04835086227a6",
+      "size": 742,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9d0ee69dea796bfd6eccdedf4ec04835086227a6"
+    },
+    {
+      "path": "wanvideo/configs/wan_t2v_1_3B.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ea9502b0df685b5d22f9091cc8cdf5c6a7880c4b",
+      "size": 759,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/ea9502b0df685b5d22f9091cc8cdf5c6a7880c4b"
+    },
+    {
+      "path": "wanvideo/modules",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "c20ff6b0083208ca6d2b3fd2041f974349013af5",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/c20ff6b0083208ca6d2b3fd2041f974349013af5"
+    },
+    {
+      "path": "wanvideo/modules/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2d9adae5fcbf486bba919e1716aaaa179f345128",
+      "size": 265,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/2d9adae5fcbf486bba919e1716aaaa179f345128"
+    },
+    {
+      "path": "wanvideo/modules/attention.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fa8407a39222ebfb3fd2a1584ea256f5c16cc7fe",
+      "size": 7485,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/fa8407a39222ebfb3fd2a1584ea256f5c16cc7fe"
+    },
+    {
+      "path": "wanvideo/modules/attention_flash.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bddeb379863f830b9f456b33cc887e6e0a4b3d93",
+      "size": 3454,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/bddeb379863f830b9f456b33cc887e6e0a4b3d93"
+    },
+    {
+      "path": "wanvideo/modules/clip.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eb39f36a52a23a1f974fc51caee766966e6cc5b3",
+      "size": 14713,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/eb39f36a52a23a1f974fc51caee766966e6cc5b3"
+    },
+    {
+      "path": "wanvideo/modules/model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "78c66656e6576095b59bc1d8c51f161ede3d037a",
+      "size": 168674,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/78c66656e6576095b59bc1d8c51f161ede3d037a"
+    },
+    {
+      "path": "wanvideo/modules/s2v",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "6d287d97c82bf6feb2e082c1058eaae152711be2",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/6d287d97c82bf6feb2e082c1058eaae152711be2"
+    },
+    {
+      "path": "wanvideo/modules/s2v/audio_encoder.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "480d76e85741c3a36eb257f2bf519bede447e0b9",
+      "size": 6436,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/480d76e85741c3a36eb257f2bf519bede447e0b9"
+    },
+    {
+      "path": "wanvideo/modules/s2v/auxi_blocks.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "bef8f33190880fd05881df1e341ca0f0e3b3cae3",
+      "size": 3937,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/bef8f33190880fd05881df1e341ca0f0e3b3cae3"
+    },
+    {
+      "path": "wanvideo/modules/t5.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e8d1d390102b546bdbcbd551926dce3b7596a3ec",
+      "size": 16994,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e8d1d390102b546bdbcbd551926dce3b7596a3ec"
+    },
+    {
+      "path": "wanvideo/modules/tokenizers.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e67a02607bdc9731c49ad958cbaa9a2fbd674d4a",
+      "size": 2453,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e67a02607bdc9731c49ad958cbaa9a2fbd674d4a"
+    },
+    {
+      "path": "wanvideo/modules/vae.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "69f9bad537788e82fc42d7135040570992eb6a62",
+      "size": 23310,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/69f9bad537788e82fc42d7135040570992eb6a62"
+    },
+    {
+      "path": "wanvideo/modules/wan_camera_adapter.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0b9199075f41692d08b1de0d620946722624df4b",
+      "size": 2326,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/0b9199075f41692d08b1de0d620946722624df4b"
+    },
+    {
+      "path": "wanvideo/modules/wananimate",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "108845c39cd208c2dd4f4a6b206666f5f634f9e7",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/108845c39cd208c2dd4f4a6b206666f5f634f9e7"
+    },
+    {
+      "path": "wanvideo/modules/wananimate/config.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "size": 0,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "wanvideo/modules/wananimate/face_blocks.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e5399af0dbb7fc46260f6f24cab581f8a29ec618",
+      "size": 4849,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e5399af0dbb7fc46260f6f24cab581f8a29ec618"
+    },
+    {
+      "path": "wanvideo/modules/wananimate/motion_encoder.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c765597ef0960f8ee7adb2d0e6430d6f49265d3e",
+      "size": 7655,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/c765597ef0960f8ee7adb2d0e6430d6f49265d3e"
+    },
+    {
+      "path": "wanvideo/radial_attention",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "0b8fe7259d049927aa4f5262d90aefac2bb3363a",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/0b8fe7259d049927aa4f5262d90aefac2bb3363a"
+    },
+    {
+      "path": "wanvideo/radial_attention/attn_mask.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dd3ff5f57e1b5ae4942b46a987da74ef2a8b9f46",
+      "size": 8150,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dd3ff5f57e1b5ae4942b46a987da74ef2a8b9f46"
+    },
+    {
+      "path": "wanvideo/radial_attention/sparse_sage",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "fea383be3dbe5b9cf5acdbe7f5b9b84972ffd98f",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/fea383be3dbe5b9cf5acdbe7f5b9b84972ffd98f"
+    },
+    {
+      "path": "wanvideo/radial_attention/sparse_sage/LICENSE.txt",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a2aa60f460cb39c322fbbbf4ead2d39270020100",
+      "size": 11342,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/a2aa60f460cb39c322fbbbf4ead2d39270020100"
+    },
+    {
+      "path": "wanvideo/radial_attention/sparse_sage/core.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f802931c19afcf45d196dced11459c9ff511579e",
+      "size": 1774,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/f802931c19afcf45d196dced11459c9ff511579e"
+    },
+    {
+      "path": "wanvideo/radial_attention/sparse_sage/quant_per_block.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e33a5a63d4e04a610e7177fb51532ebaec9e812c",
+      "size": 4116,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e33a5a63d4e04a610e7177fb51532ebaec9e812c"
+    },
+    {
+      "path": "wanvideo/radial_attention/sparse_sage/sparse_int8_attn.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ac9123c0a8ff3fa34f4474461494d9d55e348e0",
+      "size": 7464,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/7ac9123c0a8ff3fa34f4474461494d9d55e348e0"
+    },
+    {
+      "path": "wanvideo/schedulers",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "923c5c53ed12fda1e04c1a6b8e1cbfa97527326d",
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/trees/923c5c53ed12fda1e04c1a6b8e1cbfa97527326d"
+    },
+    {
+      "path": "wanvideo/schedulers/__init__.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b5d6c62168c2d7345b77a00556464ff166ee0e30",
+      "size": 10444,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b5d6c62168c2d7345b77a00556464ff166ee0e30"
+    },
+    {
+      "path": "wanvideo/schedulers/basic_flowmatch.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4a3715e68be55fa7b46f70a378ff425342e8b6b0",
+      "size": 4005,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/4a3715e68be55fa7b46f70a378ff425342e8b6b0"
+    },
+    {
+      "path": "wanvideo/schedulers/ersde_scheduler.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9574dfb4b5055dcee2dfdf1b964da967df2c9b92",
+      "size": 6479,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/9574dfb4b5055dcee2dfdf1b964da967df2c9b92"
+    },
+    {
+      "path": "wanvideo/schedulers/flowmatch_pusa.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8c708cfc094909e5d19dea54e0286ed6fde6737d",
+      "size": 7949,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/8c708cfc094909e5d19dea54e0286ed6fde6737d"
+    },
+    {
+      "path": "wanvideo/schedulers/flowmatch_res_multistep.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5c6fb9915d1aeecf492cf19698e7304be7d41926",
+      "size": 4467,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/5c6fb9915d1aeecf492cf19698e7304be7d41926"
+    },
+    {
+      "path": "wanvideo/schedulers/fm_rcm.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46ed703e7d1429acc31f9a4743e4f9c17ffc77af",
+      "size": 1476,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/46ed703e7d1429acc31f9a4743e4f9c17ffc77af"
+    },
+    {
+      "path": "wanvideo/schedulers/fm_sa_ode.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dd870ebf3bb553d5aeb60501d697f92969ed1c24",
+      "size": 10163,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/dd870ebf3bb553d5aeb60501d697f92969ed1c24"
+    },
+    {
+      "path": "wanvideo/schedulers/fm_solvers.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e63bdeda2af283f6ab35fadf95d73b58272728f4",
+      "size": 43131,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/e63bdeda2af283f6ab35fadf95d73b58272728f4"
+    },
+    {
+      "path": "wanvideo/schedulers/fm_solvers_unipc.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14e854fe20cde1ad567e7398436283ae7b24add5",
+      "size": 35992,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/14e854fe20cde1ad567e7398436283ae7b24add5"
+    },
+    {
+      "path": "wanvideo/schedulers/scheduling_flow_match_lcm.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b3f33867f13bd2999a0987c9aa41ed3ae97a2b3f",
+      "size": 24944,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/b3f33867f13bd2999a0987c9aa41ed3ae97a2b3f"
+    },
+    {
+      "path": "wanvideo/schedulers/vitb_unipc.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "60a2e2e3fa344f21c41445520a8d987b0b48f4bb",
+      "size": 1346,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/60a2e2e3fa344f21c41445520a8d987b0b48f4bb"
+    },
+    {
+      "path": "wanvideo/wan_video_vae.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "41ed760ac8dd0f7cf3b5f6c680731eac44275f18",
+      "size": 57539,
+      "url": "https://api.github.com/repos/kijai/ComfyUI-WanVideoWrapper/git/blobs/41ed760ac8dd0f7cf3b5f6c680731eac44275f18"
+    }
+  ],
+  "truncated": false
+}

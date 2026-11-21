@@ -1,0 +1,51 @@
+{
+  "task_id": "LVA-07-06",
+  "review": "independent read-only whole-change review by lva0706_code_review",
+  "reviewed_before_gpu": true,
+  "original_findings": 12,
+  "fix_passes": 1,
+  "gpu_started": false,
+  "fixes": [
+    "Restarted media proof preserves ordered PNG metadata; real93-frame recovery test clears in-memory proofs and succeeds; reversed frames rejected.",
+    "Production readiness, complete pair/order and human gates precede fresh intents; preflight refusal leaves no intent.",
+    "Native postprocess metrics/stop/exit paths are epoch scoped; actual two-worker-entry CPU test; original archived frame output collects with no network.",
+    "Global rejection/technical failure gate applies to all new video/upscale production; all32 native reviews required before upscale.",
+    "Matrix manifest pins unique absolute root and8297; copying the same sealed authorization to a second root rejected.",
+    "Ordered retained PNGs equal original decode proof; parent upscale bound to accepted parent native SHA and ordered source SHA list.",
+    "T0 before fixture preparation; original submission timing persisted before POST, recover duration separate; device/CPU/IO/native memory sampler before inference; report separates unknown/accepted/failed/not-run.",
+    "Explicit request-review/review-final with candidate/operation/narration/subtitle/parent provenance; report computes native/final completion and owner exit.",
+    "Shared Windows GPU lock across Wan/upscale; native worker runtime/source verifier, actual node/model-path readiness,20GiB allocator,18GiB Job and24GiB RSS observer.",
+    "Accepted v2 recovery queries original ID history and consumes completed original archive; pending/unknown never replay.",
+    "Old v1 completed archive has explicit read-only no-network/no-producer entry; actual05 control successfully read without source lease bypass for POST.",
+    "Original request/graph/complete prompts and selected-input record digests checked; request.input_sha256 is input-record canonical digest, distinct from PNG SHA; original audio/font bindings frozen."
+  ],
+  "verification": {
+    "focused_tests_passed": 102,
+    "seconds": 10.76,
+    "real_token_counts": {
+      "low": [
+        664,
+        512
+      ],
+      "high": [
+        979,
+        512
+      ],
+      "parent": [
+        512,
+        512
+      ],
+      "child": [
+        512,
+        512
+      ]
+    },
+    "gpu_used": false
+  },
+  "unverified": [
+    "Actual GPU peak/forward counts/native visual quality",
+    "Actual1080P/audio/parent-child continuity",
+    "Long full32-sample matrix"
+  ],
+  "updated_at_utc": "2026-11-20T08:34:25.084263+00:00"
+}

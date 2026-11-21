@@ -89,12 +89,12 @@ def require_native_review(root,trial):
     return result
 
 
-def upscale_trial(work,native,trial,*,port):
+def upscale_trial(work,native,trial,*,port,result_provider=None,fixture_provider=None,source_frames=None,restarted=False):
     from video_ai.config import load_config
     from video_ai.media.scene_upscale import verify_scene_frame_pixels,png_sequence_hashes,_check_png
     work,native=Path(work).resolve(),Path(native).resolve()
-    original=require_native_review(native,trial)
-    fixture=read(native/('child-fixture.json' if trial.endswith('_child') else 'fixture.json'))
+    original=(result_provider or require_native_review)(native,trial)
+    fixture=fixture_provider(native,trial) if fixture_provider else read(native/('child-fixture.json' if trial.endswith('_child') else 'fixture.json'))
     fid=fixture['fixture_id'];count=original['retained_frames'];p=fixture['parameters']
     label=fid+'_'+trial
     folder=work/'postprocess'/label;folder.mkdir(parents=True,exist_ok=True)
@@ -108,6 +108,19 @@ def upscale_trial(work,native,trial,*,port):
     images=work/'input/upscale'/label;images.mkdir(parents=True,exist_ok=True)
     extraction=folder/'extraction.json'
     started=time.perf_counter()
+    if source_frames is not None and not extraction.exists():
+        if len(source_frames)!=count:raise ValueError('explicit reviewed source frame budget differs')
+        copied=[]
+        for index,item in enumerate(source_frames,1):
+            source=Path(item['path']);target=images/f'frame_{index:06d}.png'
+            if file_sha(source)!=item['sha256']:raise ValueError('explicit reviewed PNG source differs')
+            _check_png(source,width=p['width'],height=p['height'])
+            if target.exists():
+                if file_sha(target)!=item['sha256']:raise ValueError('copied reviewed PNG differs')
+            else:shutil.copyfile(source,target)
+            copied.append(dict(path=str(target),sha256=item['sha256']))
+        write_once(extraction,dict(source_sha256=original['retained_sha256'],frames=copied,
+                                  proof_scope='content-bound PNGs from the original necessary RGB decode'))
     if not extraction.exists():
         existing=sorted(images.glob('frame_*.png'))
         if existing!=[images/f'frame_{i:06d}.png' for i in range(1,len(existing)+1)] or len(existing)>count:
@@ -141,7 +154,18 @@ def upscale_trial(work,native,trial,*,port):
         recovering=(work/'trials'/job/'intent.json').exists()
         recovered_intents+=int(recovering)
         inference_started=time.perf_counter()
-        output,pid=client.wait(job,graph,timeout=600,output_node='5',poll_seconds=.15)
+        archive=work/'trials'/job/'history.completed.json'
+        if archive.exists():
+            original_intent=read(work/'trials'/job/'intent.json');pid=read(work/'trials'/job/'accepted.json')['prompt_id']
+            entry=read(archive).get(pid,{});record=entry.get('prompt',[]);outputs=entry.get('outputs',{}).get('5',{}).get('images',[])
+            if (len(record)<4 or record[1]!=pid or record[2]!=graph or record[3].get('client_id')!=original_intent['client_id']
+                or original_intent.get('graph')!=graph or not entry.get('status',{}).get('completed') or len(outputs)!=1 or outputs[0].get('type')!='output'):
+                raise OutcomeUnknown('original archived upscale identity differs; no POST')
+            output=(work/'output'/outputs[0].get('subfolder','')/outputs[0]['filename']).resolve(strict=True)
+            if not output.is_relative_to((work/'output').resolve()):raise ValueError('archived upscale output escapes owned root')
+        else:
+            if restarted and recovering:raise OutcomeUnknown('original upscale request unknown after service exit; no replay')
+            output,pid=client.wait(job,graph,timeout=600,output_node='5',poll_seconds=.15)
         tracked=time.perf_counter()-inference_started;inference+=tracked
         io_started=time.perf_counter();_check_png(output,width=1920,height=1080)
         actual=file_sha(output)
@@ -230,14 +254,14 @@ def compose_chain(work,parent_root,child_root,parent_trial,timeline_file):
     return compose_trial(work,parent_root,parent_trial,timeline_file,folder_override=folder)
 
 
-def compose_trial(work,native,trial,timeline_file,*,folder_override=None):
+def compose_trial(work,native,trial,timeline_file,*,folder_override=None,fixture_provider=None):
     from video_ai.config import load_config
     from video_ai.media.subtitles import ass_text,layout_text,quantize
     from video_ai.media.font_metrics import PrivateFont
     from video_ai.planning.composition import CompositionSettings
     from video_ai.media.composition_video import validate_probe,validate_audio_packets
     work,native=Path(work).resolve(),Path(native).resolve()
-    fixture=read(native/('child-fixture.json' if trial.endswith('_child') else 'fixture.json'))
+    fixture=fixture_provider(native,trial) if fixture_provider else read(native/('child-fixture.json' if trial.endswith('_child') else 'fixture.json'))
     folder=Path(folder_override) if folder_override is not None else work/'postprocess'/(fixture['fixture_id']+'_'+trial)
     upscaled=read(folder/'upscale-complete.json');count=upscaled['frame_count']
     complete=folder/'composition-complete.json'

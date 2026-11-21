@@ -51,12 +51,13 @@ def worker(args):
     original_import = builtins.__import__
     node_hooks = []
     stop=Event()
+    metrics_root=Path(getattr(args,'metrics_root',root));stop_root=Path(getattr(args,'stop_root',root))
     def stop_watcher():
         while not stop.wait(.5):
-            if stop_requested(root,os.getpid()):
+            if stop_requested(stop_root,os.getpid()):
                 _thread.interrupt_main();return
     watcher=Thread(target=stop_watcher,name='lva01-owned-stop',daemon=True)
-    with ComfyNodeMetrics(root/'node-metrics.jsonl', force_sampling=True) as metrics:
+    with ComfyNodeMetrics(metrics_root/'node-metrics.jsonl', force_sampling=True) as metrics:
         def observed_import(name, globals=None, locals=None, fromlist=(), level=0):
             imported = original_import(name, globals, locals, fromlist, level)
             if name in ('comfy', 'comfy.model_management'):
@@ -71,6 +72,8 @@ def worker(args):
                     async def initialize(*a, **kw):
                         result = await original(*a, **kw)
                         metrics.install_nodes(nodes.NODE_CLASS_MAPPINGS)
+                        callback=getattr(args,'on_nodes_ready',None)
+                        if callback is not None:callback(nodes.NODE_CLASS_MAPPINGS)
                         return result
                     node_hooks.append((nodes, original))
                     nodes.init_extra_nodes = initialize

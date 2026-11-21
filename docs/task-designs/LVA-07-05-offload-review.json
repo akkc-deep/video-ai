@@ -1,0 +1,20 @@
+{
+  "reviewer": "/root/text_repair_review",
+  "critical": 0,
+  "important_reported": 1,
+  "important": "native sampler meta-parameter replacement before exceptional scope cleanup",
+  "resolution": "capture/restore original frozen Parameter object and CPUstorage; continue cleanup acrossstates; attach secondary cleanup errors to original failure; native-like RED3 ->GREEN67",
+  "minor": "source-less CUDA LoRA buffer guard extended with regression",
+  "fix_passes": 1,
+  "rereview_after_fix": false,
+  "tests_passed": 67,
+  "tests_seconds": 6.61,
+  "actual_gpu_probe": "E:/VideoAI/scratch/benchmarks/LVA-07-05-transfer-diagnostic-20261120/aimdo-adapter-fixed/result.json",
+  "native_meta_cpu_check": "E:/VideoAI/scratch/benchmarks/LVA-07-05-transfer-diagnostic-20261120/meta-cleanup-fix.json",
+  "operational_unknowns": [
+    "full original control forward/steps",
+    "low expert GPU",
+    "final decode",
+    "quality"
+  ]
+}

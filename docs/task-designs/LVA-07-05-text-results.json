@@ -1,0 +1,53 @@
+{
+  "task_id": "LVA-07-05",
+  "protocol_passed": 53,
+  "protocol_failed": 0,
+  "seconds": 6.47,
+  "old_head_cpu_repeated": false,
+  "gpu_text_preparation_run": true,
+  "private_commit_limit_bytes": 12884901888,
+  "initial_min_ram_bytes": 15032385536,
+  "initial_min_vram_bytes": 22548578304,
+  "phase_min_ram_bytes": 4294967296,
+  "phase_min_vram_bytes": 21474836480,
+  "design": "docs/task-designs/LVA-07-05-text-design.md",
+  "scope": "actual original text prepared and encoder released; pair/sampling/quality pending",
+  "gpu_text_preparation_passed": true,
+  "actual": {
+    "probe_id": "3f13770f-1c2f-4809-bb89-bcf5f87e14c7",
+    "epoch": "d5425839-da87-4be4-9832-b591bd9d580b",
+    "encoder_released": true,
+    "shapes": {
+      "prompt_embeds": [
+        1,
+        664,
+        4096
+      ],
+      "negative_prompt_embeds": [
+        1,
+        512,
+        4096
+      ]
+    },
+    "dtypes": {
+      "prompt_embeds": "torch.float32",
+      "negative_prompt_embeds": "torch.float32"
+    },
+    "embedding_artifact": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02\\text\\embeddings.safetensors",
+      "bytes": 19267776,
+      "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+    },
+    "stage_metrics": [
+      {
+        "stage": "native_t5_prepare",
+        "seconds": 1.6414727999945171,
+        "epoch": "d5425839-da87-4be4-9832-b591bd9d580b"
+      }
+    ],
+    "observed_peak_private_bytes": 11879981056,
+    "observed_peak_rss_bytes": 2099326976,
+    "samples": 7
+  },
+  "delivery_tests_seconds": 6.51
+}

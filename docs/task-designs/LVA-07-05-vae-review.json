@@ -1,0 +1,17 @@
+{
+  "reviewer": "/root/text_repair_review",
+  "critical": 0,
+  "important_reported": 1,
+  "finding": "P2 image bytes must be verified under read protection before native loading",
+  "resolution": "same live InputLeases window now includes original input path/bytes/SHA before encoding; retained through all prepared uses; RED changed input reached encoder ->GREEN rejection before native call",
+  "additional_important_findings": 0,
+  "fix_passes": 1,
+  "rereview_after_fix": false,
+  "verification": "61affected tests PASS6.51s",
+  "operational_unknowns": [
+    "combined warm-worker preparation",
+    "sampling",
+    "decode",
+    "quality"
+  ]
+}

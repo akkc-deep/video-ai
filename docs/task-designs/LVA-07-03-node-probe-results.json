@@ -1,0 +1,228 @@
+{
+  "task_id": "LVA-07-03",
+  "kind": "authorized CPU node-registration evidence follow-up",
+  "started_at": "2026-11-18T18:21:03Z",
+  "authorization": {
+    "request": "同意，继续吧",
+    "scope": "execute reviewed CPU-only node probe; owned 127.0.0.1:8297 service, GET nine schemas, 4GiB private commit, 180s window",
+    "node_import": true,
+    "cpu_service_start": true,
+    "gpu_sampling": false,
+    "video_posts": false,
+    "new_download_or_install": false
+  },
+  "script": "docs/task-designs/LVA-07-03-probe-nodes.ps1",
+  "script_sha256": "e470f7375b62b5307bbdbdf00c5404f04b36f0256f24ace45a8ceb3183e7cf37",
+  "command": "& ./docs/task-designs/LVA-07-03-probe-nodes.ps1 -Run",
+  "probe_root": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe",
+  "status": "requested_nine_and_native_bridge_four_passed",
+  "attempts": [],
+  "task04_completed": false,
+  "observed_at": "2026-11-18T18:36:53Z",
+  "result": {
+    "passed": true,
+    "mode": "cpu-only node registration/object_info",
+    "port": 8297,
+    "graph_posts": 0,
+    "error": null,
+    "pid": 41668,
+    "process_start_utc": "2026-11-18T18:21:04.5738647Z",
+    "exited": true,
+    "port_closed": true,
+    "peak_rss_observed_bytes": 908124160,
+    "owned_pid_listener_verified": true,
+    "exit_code": -1
+  },
+  "schema_count": 9,
+  "actual_cuda_build_torch_imported_in_cpu_mode": true,
+  "gpu_device_use": false,
+  "model_payload_reads": 0,
+  "raw_evidence": [
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/plan.json",
+      "bytes": 1658,
+      "sha256": "d9fac135ca02e567eb074657673bb574e133edda270399d6f1af34711828c79b"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/owner.json",
+      "bytes": 324,
+      "sha256": "78bb6395cbdebd3fefebebbeada511a146d6ef80bc036fff13ea571969ab9f88"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/result.json",
+      "bytes": 348,
+      "sha256": "bd371e09c1f78b847d1a60dcc867eb7068145ff99af92b9903f3f2bd72471ad1"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/stderr.log",
+      "bytes": 6578,
+      "sha256": "becb92f2d290ddf9d851ecc70a12450a0042c855242023217d0706d8f791852f"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/LoadWanVideoT5TextEncoder.json",
+      "bytes": 1007,
+      "sha256": "3b403a16f641d59daaef0cd40a5f986262e4372cc08f217cdb8ca51f407abe64"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoBlockSwap.json",
+      "bytes": 1815,
+      "sha256": "e3374a8e4ac6b7b8b569e9751ac79287ed35dc77f86b69b5bc2563b2f2c3531e"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoDecode.json",
+      "bytes": 1871,
+      "sha256": "172add7aa65637cfd76bc6d4aa099b0e96cfef924d1e96e597bc4bd34cb57a98"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoImageToVideoEncode.json",
+      "bytes": 2970,
+      "sha256": "a17d6fe6abce99cded2f1599597eeec5cc7d87852571b46e99ba47c6c1d9201e"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoLoraSelect.json",
+      "bytes": 1607,
+      "sha256": "24c91688cf38911a3f492da421c8dba03bc3d52deb87267165fcdfcbff938c36"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoModelLoader.json",
+      "bytes": 2990,
+      "sha256": "bf1150d7ca1244e5cd950269f4750fc492b4f401fd91a6433d28830fc412b6e6"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoSampler.json",
+      "bytes": 3648,
+      "sha256": "bb6417fd25cafd04177f8f95bd3e3bd7b5897334220d899c317f1123e4b518ed"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoTextEncode.json",
+      "bytes": 1367,
+      "sha256": "8030e741d1834a4720fda0ae69e5daae946e0b4f54822634724b527d07054da0"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe/WanVideoVAELoader.json",
+      "bytes": 1009,
+      "sha256": "caaf1858d4bea01249aa554c981ff2609341203bb0828901d9bfe6359fcff54f"
+    }
+  ],
+  "optional_warnings": [
+    "sageattention unavailable; not selected SDPA path",
+    "FantasyPortrait optional nodes unavailable: onnx absent"
+  ],
+  "t5_finding": {
+    "model_path": "E:/VideoAI/shared/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+    "header_bytes": 48848,
+    "header_sha256": "50fe9015ebb8094759e108418e179fff9e88c3a558a27472f3718cd021588dc6",
+    "scaled_fp8_marker": true,
+    "wrapper_direct_t5_loader": "rejects this marker before model construction",
+    "candidate_existing_path": "native CLIPLoader(type=wan) -> CLIPTextEncode positive/negative -> WanVideoTextEmbedBridge",
+    "full_t5_load_verified": false
+  },
+  "continuation_ruling": "发现固定T5被Wrapper直接加载器拒绝；在同一CPU探测目的/资源预算/固定环境/端口下显式补取四个现有节点schema，用于已存在的原生T5桥接路径。不安装新依赖、不改原模型、不调用编码或采样；不是重复九个已成功HTTP请求。",
+  "bridge_probe_command": {
+    "script": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/probe-native-bridge.ps1",
+    "sha256": "1dd7a14115bfd8e9c7b081f120d06319426b61250f9e80d3ccf3837d01d48cfd",
+    "scope": "necessary CPU schema follow-up within same approved probe limits",
+    "status": "passed",
+    "expected_nodes": [
+      "CLIPLoader",
+      "CLIPTextEncode",
+      "WanVideoTextEmbedBridge",
+      "LoadImage"
+    ],
+    "result": {
+      "passed": true,
+      "mode": "cpu-only node registration/object_info",
+      "port": 8297,
+      "graph_posts": 0,
+      "error": null,
+      "pid": 42348,
+      "process_start_utc": "2026-11-18T18:36:53.7928275Z",
+      "exited": true,
+      "port_closed": true,
+      "peak_rss_observed_bytes": 908550144,
+      "owned_pid_listener_verified": true,
+      "exit_code": -1
+    },
+    "schemas": 4,
+    "raw_evidence": [
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/CLIPLoader.json",
+        "bytes": 1338,
+        "sha256": "23e187f4bc71cd475c015e4f38ec60363f22d20b09f36b1b48221409048cbdcf"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/CLIPTextEncode.json",
+        "bytes": 972,
+        "sha256": "f008006a8884c423f71b0a12bfea4347ea3295234c791279adf0966401a7033e"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/LoadImage.json",
+        "bytes": 571,
+        "sha256": "2d8c9d420eab7cab2f34a0f0f7bd033e31052b6d75c926839490c9bb87d1f36c"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/owner.json",
+        "bytes": 324,
+        "sha256": "d7bddcedb86a6356d53773494d1ff0500b654cc9d755606f817a57877776a932"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/plan.json",
+        "bytes": 1542,
+        "sha256": "2d1089008a4002c2d7f6f2f0573305290015938bf10740e05006e7999f159b2b"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/result.json",
+        "bytes": 348,
+        "sha256": "0050cac9a4526e321504d74e3695e518116709c79f194e8083bf949bd15783c4"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/WanVideoTextEmbedBridge.json",
+        "bytes": 664,
+        "sha256": "42ba68353fbe4e5bf715613fa2f6a7f1dbc57635b449fe9c3e0286ee14a30c31"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe-bridge/stderr.log",
+        "bytes": 6606,
+        "sha256": "31edaeb029c34a4c7357b5fda3c564eaad5765ee500f7b5d3079e226d8294844"
+      }
+    ]
+  },
+  "registered_schema_evidence_count": 13,
+  "service_processes_started": 2,
+  "active_owned_services": 0,
+  "cpu_contract": {
+    "path": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/wrapper-contract-cpu.json",
+    "sha256": "b5170006ecdf22c3ecd68bc78edc8fd8fbc23501a074e4f2845b0528f58259aa",
+    "scope": "CPU source-body fixture, no full-model or video proof",
+    "control_steps": 40,
+    "control_split": [
+      15,
+      25
+    ],
+    "fast_steps": 4,
+    "fast_timesteps": [
+      1000,
+      937,
+      833,
+      625
+    ],
+    "native_bridge_value_fixture_passed": true,
+    "native_pure_backend_equivalence": false,
+    "full_model_or_video_proof": false
+  },
+  "finished_at": "2026-11-18T18:49:17Z",
+  "full_model_gate_verified": false,
+  "gpu_sampling": 0,
+  "video_posts": 0,
+  "checkpoint_payload_reads": 0
+}

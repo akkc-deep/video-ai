@@ -1,0 +1,154 @@
+{
+  "task_id": "LVA-07-05",
+  "head_design": "docs/task-designs/LVA-07-05-head-design.md",
+  "user_continue": "继续吧",
+  "cpu_red": {
+    "tests": 15,
+    "errors": 2,
+    "failures": 0
+  },
+  "cpu_green": {
+    "tests": 15,
+    "passed": true,
+    "results": "E:/VideoAI/scratch/benchmarks/LVA-07-05-head-green-20261120/results.json"
+  },
+  "protocol": {
+    "passed": 44,
+    "failed": 0,
+    "seconds": 8.85
+  },
+  "source_changes": [
+    "src/video_ai/experiments/wan_wrapper_head.py",
+    "src/video_ai/experiments/wan_wrapper_lora.py",
+    "src/video_ai/experiments/wan_wrapper_nodes.py",
+    "tests/experiments/test_lva07_wrapper_runtime.py"
+  ],
+  "upstream_files_changed": false,
+  "policy_changed": false,
+  "model_math": "unchanged real CustomLinear forward, dynamically installed full head diff",
+  "full_model_verified": true,
+  "gpu_new_posts": 0,
+  "actual_pair": {
+    "schema_version": 1,
+    "profile_sha256": "448cd7fa1162c4c750c77cf809d3356bb3f73de29d2929dad6dc7b56850cf9c3",
+    "comparison_sha256": "7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823",
+    "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+    "full_model_verified": true,
+    "admission_id": "404d7605-d9ea-40f1-9ab7-85a4454e1c01",
+    "high_witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0",
+    "low_witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+  },
+  "experts": {
+    "high": {
+      "static_targets": 689,
+      "dynamic_targets": 406,
+      "head_full_delta_adapter": true,
+      "trace_counts": {
+        "source_count": 1500,
+        "applicable": 1500,
+        "excluded": 0,
+        "retained": 1500
+      },
+      "head_probe": {
+        "target": "diffusion_model.head.head.weight",
+        "coordinates": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            5119
+          ],
+          [
+            63,
+            0
+          ],
+          [
+            63,
+            5119
+          ]
+        ],
+        "observed": [
+          -0.0007991790771484375,
+          -0.00732421875,
+          0.0005159378051757812,
+          0.002185821533203125
+        ],
+        "expected": [
+          -0.0007991790771484375,
+          -0.00732421875,
+          0.0005159378051757812,
+          0.002185821533203125
+        ],
+        "finite": true,
+        "step_reset": 0
+      },
+      "witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0"
+    },
+    "low": {
+      "static_targets": 648,
+      "dynamic_targets": 406,
+      "head_full_delta_adapter": true,
+      "trace_counts": {
+        "source_count": 1749,
+        "applicable": 1459,
+        "excluded": 290,
+        "retained": 1459
+      },
+      "head_probe": {
+        "target": "diffusion_model.head.head.weight",
+        "coordinates": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            5119
+          ],
+          [
+            63,
+            0
+          ],
+          [
+            63,
+            5119
+          ]
+        ],
+        "observed": [
+          -0.0016813278198242188,
+          -0.010009765625,
+          0.0008149147033691406,
+          0.0037593841552734375
+        ],
+        "expected": [
+          -0.0016813278198242188,
+          -0.010009765625,
+          0.0008149147033691406,
+          0.0037593841552734375
+        ],
+        "finite": true,
+        "step_reset": 0
+      },
+      "witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+    }
+  },
+  "control_failed": {
+    "prompt_id": "fd677a68-086e-4fe5-8be2-47c03135c756",
+    "status": "known_execution_error",
+    "node_id": "10",
+    "node_type": "LVA07Prepare",
+    "exception_type": "RuntimeError",
+    "exception_message": "[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 10878976 bytes.\n",
+    "executed_nodes": [
+      "97"
+    ],
+    "diffusion_nodes_executed": false,
+    "technical_complete": false,
+    "media_created": false,
+    "human_quality": null
+  },
+  "current_task_status": "BLOCKED",
+  "task_not_completed": true
+}

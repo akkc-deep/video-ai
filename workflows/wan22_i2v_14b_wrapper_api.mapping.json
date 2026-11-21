@@ -1,0 +1,60 @@
+{
+  "inputs": {
+    "positive": {
+      "node_id": "10",
+      "input": "positive_prompt"
+    },
+    "negative": {
+      "node_id": "10",
+      "input": "negative_prompt"
+    },
+    "first_image": {
+      "node_id": "97",
+      "input": "image"
+    },
+    "width": {
+      "node_id": "10",
+      "input": "width"
+    },
+    "height": {
+      "node_id": "10",
+      "input": "height"
+    },
+    "generated_frames": {
+      "node_id": "10",
+      "input": "num_frames"
+    },
+    "seed_high": {
+      "node_id": "30",
+      "input": "seed"
+    },
+    "seed_low": {
+      "node_id": "40",
+      "input": "seed"
+    },
+    "model_high": {
+      "node_id": "30",
+      "input": "model_name"
+    },
+    "model_low": {
+      "node_id": "40",
+      "input": "model_name"
+    },
+    "t5": {
+      "node_id": "10",
+      "input": "clip_name"
+    },
+    "vae": {
+      "node_id": "10",
+      "input": "vae_name"
+    },
+    "fps": {
+      "node_id": "108",
+      "input": "fps"
+    },
+    "prefix": {
+      "node_id": "108",
+      "input": "filename_prefix"
+    }
+  }
+}

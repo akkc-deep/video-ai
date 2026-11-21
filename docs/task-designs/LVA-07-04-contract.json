@@ -1,0 +1,386 @@
+{
+  "task_id": "LVA-07-04",
+  "kind": "design contract; not implementation/GPU evidence",
+  "recipes": {
+    "control": {
+      "sigmas_float32": [
+        1.0,
+        0.9948979616165161,
+        0.9895833134651184,
+        0.9840425848960876,
+        0.97826087474823,
+        0.9722222089767456,
+        0.9659090638160706,
+        0.9593023061752319,
+        0.9523810148239136,
+        0.9451219439506531,
+        0.9375,
+        0.9294871687889099,
+        0.9210526347160339,
+        0.9121621251106262,
+        0.9027777910232544,
+        0.8928571343421936,
+        0.882352888584137,
+        0.8712121248245239,
+        0.859375,
+        0.8467742204666138,
+        0.8333333134651184,
+        0.818965494632721,
+        0.8035714626312256,
+        0.7870370149612427,
+        0.7692307829856873,
+        0.75,
+        0.7291666269302368,
+        0.70652174949646,
+        0.6818181872367859,
+        0.6547619104385376,
+        0.625,
+        0.5921052694320679,
+        0.5555555820465088,
+        0.5147058963775635,
+        0.46875,
+        0.4166666567325592,
+        0.3571428656578064,
+        0.2884615361690521,
+        0.2083333283662796,
+        0.11363635957241058,
+        0.0
+      ],
+      "sigmas_sha256": "059a4fbda930acccbc4ba1d5041a5966db025b6be5c83eaa78990bb82c6a7ce6",
+      "split": 15,
+      "high": {
+        "start_step": 0,
+        "end_step": 15,
+        "timesteps": [
+          1000,
+          994,
+          989,
+          984,
+          978,
+          972,
+          965,
+          959,
+          952,
+          945,
+          937,
+          929,
+          921,
+          912,
+          902
+        ],
+        "sigmas": [
+          1.0,
+          0.9948979616165161,
+          0.9895833134651184,
+          0.9840425848960876,
+          0.97826087474823,
+          0.9722222089767456,
+          0.9659090638160706,
+          0.9593023061752319,
+          0.9523810148239136,
+          0.9451219439506531,
+          0.9375,
+          0.9294871687889099,
+          0.9210526347160339,
+          0.9121621251106262,
+          0.9027777910232544,
+          0.8928571343421936
+        ]
+      },
+      "low": {
+        "start_step": 15,
+        "end_step": 40,
+        "timesteps": [
+          892,
+          882,
+          871,
+          859,
+          846,
+          833,
+          818,
+          803,
+          787,
+          769,
+          750,
+          729,
+          706,
+          681,
+          654,
+          625,
+          592,
+          555,
+          514,
+          468,
+          416,
+          357,
+          288,
+          208,
+          113
+        ],
+        "sigmas": [
+          0.8928571343421936,
+          0.882352888584137,
+          0.8712121248245239,
+          0.859375,
+          0.8467742204666138,
+          0.8333333134651184,
+          0.818965494632721,
+          0.8035714626312256,
+          0.7870370149612427,
+          0.7692307829856873,
+          0.75,
+          0.7291666269302368,
+          0.70652174949646,
+          0.6818181872367859,
+          0.6547619104385376,
+          0.625,
+          0.5921052694320679,
+          0.5555555820465088,
+          0.5147058963775635,
+          0.46875,
+          0.4166666567325592,
+          0.3571428656578064,
+          0.2884615361690521,
+          0.2083333283662796,
+          0.11363635957241058,
+          0.0
+        ]
+      },
+      "native_time_values_float32": [
+        1000.0,
+        994.89794921875,
+        989.5833129882812,
+        984.0426025390625,
+        978.2608642578125,
+        972.2222290039062,
+        965.9090576171875,
+        959.3023071289062,
+        952.3810424804688,
+        945.1219482421875,
+        937.5,
+        929.4871826171875,
+        921.0526123046875,
+        912.162109375,
+        902.7777709960938,
+        892.8571166992188,
+        882.3529052734375,
+        871.2120971679688,
+        859.375,
+        846.7742309570312,
+        833.3333129882812,
+        818.9655151367188,
+        803.5714721679688,
+        787.0369873046875,
+        769.2307739257812,
+        750.0,
+        729.1666259765625,
+        706.521728515625,
+        681.8181762695312,
+        654.7619018554688,
+        625.0,
+        592.1052856445312,
+        555.5556030273438,
+        514.7058715820312,
+        468.75,
+        416.6666564941406,
+        357.1428527832031,
+        288.4615478515625,
+        208.3333282470703,
+        113.63636016845703
+      ],
+      "wrapper_int64_timestep_max_abs_error": 0.96551513671875,
+      "pure_backend_equivalence": false
+    },
+    "fast": {
+      "sigmas_float32": [
+        1.0,
+        0.9375,
+        0.8333333134651184,
+        0.625,
+        0.0
+      ],
+      "sigmas_sha256": "ea164fc5ce687cf448e1c8a7b8fe01d07e8886a2a9a20c1eb8c6818deff9f636",
+      "split": 2,
+      "high": {
+        "start_step": 0,
+        "end_step": 2,
+        "timesteps": [
+          1000,
+          937
+        ],
+        "sigmas": [
+          1.0,
+          0.9375,
+          0.8333333134651184
+        ]
+      },
+      "low": {
+        "start_step": 2,
+        "end_step": 4,
+        "timesteps": [
+          833,
+          625
+        ],
+        "sigmas": [
+          0.8333333134651184,
+          0.625,
+          0.0
+        ]
+      },
+      "native_time_values_float32": [
+        1000.0,
+        937.5,
+        833.3333129882812,
+        625.0
+      ],
+      "wrapper_int64_timestep_max_abs_error": 0.5,
+      "pure_backend_equivalence": false
+    }
+  },
+  "source_bodies": [
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/comfy/model_sampling.py",
+      "name": "time_snr_shift",
+      "sha256": "72e55437dafa6a172dccf74b270c6a90bddee4d5b8baf0f948a2c88685949599"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/comfy/model_sampling.py",
+      "name": "ModelSamplingDiscreteFlow",
+      "sha256": "1c97385db064e2466bca53075386fc097dd2af5b3a4ec50179373c9467f6d99c"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/comfy/samplers.py",
+      "name": "simple_scheduler",
+      "sha256": "7db1063f7dda7261f84c57ee11f068185ac3d132d82febc8a6ccc2214353566e"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper-LVA07/wanvideo/schedulers/__init__.py",
+      "name": "_apply_custom_sigmas",
+      "sha256": "2aa51a61fe734817a3dc97f70e43a6240d28dd302485a1858b3824754d2aa279"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper-LVA07/wanvideo/schedulers/__init__.py",
+      "name": "get_scheduler",
+      "sha256": "20f27fd77bf8c27dd78c023c057da40fd6eabe7bf47943fa1357beeb5e164981"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper-LVA07/nodes.py",
+      "name": "WanVideoTextEmbedBridge",
+      "sha256": "2463b0556249ad5bcf727801775385f7ff41133a52b662cb1300f99ca38054a3"
+    }
+  ],
+  "native_text_path": [
+    "CLIPLoader(type=wan,device=default)",
+    "CLIPTextEncode positive and negative",
+    "WanVideoTextEmbedBridge"
+  ],
+  "wrapper_t5_direct_allowed": false,
+  "raw_input_count": 3249,
+  "excluded_low_exact": 290,
+  "applicable_high": 1500,
+  "applicable_low": 1459,
+  "source_policy_sha256": "9dbc2f5536bab2057147d0ebebc3af7f8a3db1a3c060f8bc41af6a4185dc2587",
+  "compute_dtype": "float16",
+  "attention": "sdpa; GPU math fallback disabled",
+  "merge": false,
+  "fast_fp8": false,
+  "low_mem_load": false,
+  "compile": false,
+  "blocks_to_swap": 40,
+  "prefetch_blocks": 0,
+  "use_non_blocking": false,
+  "gpu_concurrency": 1,
+  "private_static_overlay": true,
+  "deepcopy_whole_models": false,
+  "lo_ra_source_bounds": {
+    "high": {
+      "static_raw_bytes": 11315328,
+      "dynamic_raw_bytes": 623149056,
+      "static_target_bytes": 11315328,
+      "max_dynamic_fp16_matrix_bytes": 314572800
+    },
+    "low": {
+      "static_raw_bytes": 8837248,
+      "dynamic_raw_bytes": 623149056,
+      "static_target_bytes": 8837248,
+      "max_dynamic_fp16_matrix_bytes": 314572800
+    }
+  },
+  "implementation_cpu_limits": {
+    "private_commit_bytes": 4294967296,
+    "rss_stop_bytes": 4294967296,
+    "fixture_disk_reserve_bytes": 536870912
+  },
+  "future_full_model_limits": {
+    "authorized": false,
+    "min_available_ram_bytes": 15032385536,
+    "min_phase_available_ram_bytes": 4294967296,
+    "min_phase_free_vram_bytes": 21474836480,
+    "process_private_commit_bytes": 19327352832,
+    "rss_stop_bytes": 25769803776,
+    "torch_gpu_allocator_bytes": 21474836480,
+    "min_free_vram_bytes": 22548578304,
+    "max_active_experts": 1,
+    "measured_full_model_peak_ram_bytes": null,
+    "measured_full_model_peak_vram_bytes": null,
+    "min_available_commit_bytes": 27917287424
+  },
+  "profile_claims": {
+    "full_model_verified": false,
+    "quality_accepted": false,
+    "production_ready": false
+  },
+  "node_probe_results": "docs/task-designs/LVA-07-03-node-probe-results.json",
+  "mode_lora": {
+    "control": {
+      "enabled": false,
+      "strengths": {
+        "high": 0.0,
+        "low": 0.0
+      },
+      "static_applied": 0,
+      "dynamic_applied": 0,
+      "requires_certificate_for_build": false
+    },
+    "fast": {
+      "enabled": true,
+      "strengths": {
+        "high": 1.0,
+        "low": 1.0
+      },
+      "requires_certificate_for_build": true
+    }
+  },
+  "identities": {
+    "mode_profiles_differ": true,
+    "profile_contains_fixture": false,
+    "comparison_contains_fixture": true,
+    "comparison_excludes": [
+      "mode",
+      "recipe",
+      "derived_graph",
+      "pid",
+      "port",
+      "review_wait"
+    ],
+    "allowed_mode_differences": [
+      "mode",
+      "steps",
+      "cfg",
+      "split",
+      "sigmas",
+      "timesteps",
+      "expected_forward_counts",
+      "lora_enabled",
+      "lora_strengths"
+    ],
+    "all_mode_differences_must_equal_fixed_contract": true,
+    "control_acceptance_profile": "control",
+    "pair_receipt_profile": "fast",
+    "one_comparison_root": true,
+    "trial_ids": [
+      "control_1",
+      "fast_1"
+    ]
+  }
+}

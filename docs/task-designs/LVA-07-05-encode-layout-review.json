@@ -1,0 +1,8 @@
+{
+  "reviewer": "/root/text_repair_review",
+  "verdict": "clean; no important findings",
+  "critical": 0,
+  "important": 0,
+  "scope": "exactnativeCHWT-to-THWCRGBordering/unchangedquantization/finitecheck/packedhashandFFmpeginput",
+  "gpu_run": false
+}

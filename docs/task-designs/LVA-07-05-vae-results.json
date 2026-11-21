@@ -1,0 +1,86 @@
+{
+  "task_id": "LVA-07-05",
+  "tests_passed": 61,
+  "tests_seconds": 6.51,
+  "review": {
+    "reviewer": "/root/text_repair_review",
+    "critical": 0,
+    "important_reported": 1,
+    "finding": "P2 image bytes must be verified under read protection before native loading",
+    "resolution": "same live InputLeases window now includes original input path/bytes/SHA before encoding; retained through all prepared uses; RED changed input reached encoder ->GREEN rejection before native call",
+    "additional_important_findings": 0,
+    "fix_passes": 1,
+    "rereview_after_fix": false,
+    "verification": "61affected tests PASS6.51s",
+    "operational_unknowns": [
+      "combined warm-worker preparation",
+      "sampling",
+      "decode",
+      "quality"
+    ]
+  },
+  "actual_adapter_probe": "E:/VideoAI/scratch/benchmarks/LVA-07-05-vae-diagnostic-20261120/adapter/result.json",
+  "actual_combined_worker_preparation": true,
+  "private_limit_bytes": 12884901888,
+  "actual_combined_worker_preparation_passed": true,
+  "actual": {
+    "receipt": {
+      "probe_id": "224d47b8-8351-45b9-a7c8-269db85fb8bf",
+      "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84",
+      "comparison_sha256": "b0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14",
+      "control_profile_sha256": "18e76ca0af6a64f1e38670cf24c8017dc2c45ee49f24f8e16ad0cacdfe0490dc",
+      "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+      "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+      "t5_sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+      "embedding_artifact": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-03\\text\\embeddings.safetensors",
+        "bytes": 19267776,
+        "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+      },
+      "dtypes": {
+        "prompt_embeds": "torch.float32",
+        "negative_prompt_embeds": "torch.float32"
+      },
+      "encoder_released": true,
+      "shapes": {
+        "prompt_embeds": [
+          1,
+          664,
+          4096
+        ],
+        "negative_prompt_embeds": [
+          1,
+          512,
+          4096
+        ]
+      },
+      "image_prepared": true,
+      "vae_cpu": true,
+      "vae_precision": "fp32",
+      "image_embeds_finite": true,
+      "image_input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+      "image_embeds_shape": [
+        16,
+        24,
+        54,
+        96
+      ]
+    },
+    "stage_metrics": [
+      {
+        "stage": "native_t5_prepare",
+        "seconds": 1.4849711000570096,
+        "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84"
+      },
+      {
+        "stage": "vae_i2v_prepare",
+        "seconds": 4.662445999972988,
+        "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84"
+      }
+    ],
+    "native_peak_pagefile_bytes": 12871028736,
+    "observed_peak_rss_bytes": 2802888704,
+    "samples": 7,
+    "scope": "same-worker actual combined text/image preparation; CPUVAE retained; no pair/sampling/video yet"
+  }
+}

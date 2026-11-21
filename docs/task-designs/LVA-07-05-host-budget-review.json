@@ -1,0 +1,53 @@
+{
+  "scope": [
+    "scripts/observe_wan_wrapper_comfy.py",
+    "src/video_ai/experiments/wan_wrapper_nodes.py",
+    "docs/task-designs/LVA-07-04-contract.json",
+    "tests/unit/test_wan_wrapper_host_budget.py"
+  ],
+  "baseline_passed": 26,
+  "red_failed": 3,
+  "red_passed": 2,
+  "final_passed": 42,
+  "final_failed": 0,
+  "seconds": 6.67,
+  "reviewer": "/root/host_budget_review",
+  "important_critical": [],
+  "deferred_minors": [
+    "Explicit approved=False and empty user_evidence authorization test cases absent; implementation rejects both."
+  ],
+  "rulings": [
+    "Real source delivery/resealing retained for operational verification below.",
+    "GPU peaks/generation remain unknown until real run.",
+    "Inherited WIP unchanged except scoped delivery; reviewer did not rerun tests."
+  ],
+  "delivered": [
+    {
+      "path": "E:\\code\\py\\video-ai\\scripts\\observe_wan_wrapper_comfy.py",
+      "sha256": "1c54aa47b44e9d910fc32abb046acd3cd6a0d3ebeaefa7a34e0f84c462672b44"
+    },
+    {
+      "path": "E:\\code\\py\\video-ai\\src\\video_ai\\experiments\\wan_wrapper_nodes.py",
+      "sha256": "b9bac38fe764307afd3eea8510514ed2e8e91b86b60f23bdb0217dd736bdfbac"
+    },
+    {
+      "path": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-07-04-contract.json",
+      "sha256": "e1746135397e181d60d6f2501655fccd56e499c82b4af0f91b402c6e790d43fb"
+    },
+    {
+      "path": "E:\\code\\py\\video-ai\\tests\\unit\\test_wan_wrapper_host_budget.py",
+      "sha256": "7c8383d3789c3e942d875c331be33607911e541ea119c36c94526183c940d014"
+    }
+  ],
+  "followup_author_fixes": {
+    "independent_rereview": false,
+    "protocol_passed": 44,
+    "pinned_cpu_passed": 12,
+    "changes": [
+      "pre-prompt progress scope",
+      "two exact same-module aliases",
+      "durable exact failure message"
+    ],
+    "actual_gate_outcome": "head dynamic LoRA unsupported; experiment stopped, not completed"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "backend": "wan_wrapper",
+  "template_only": true,
+  "models": "fixed manifest identities required before use",
+  "contract": "docs/task-designs/LVA-07-04-contract.json",
+  "contract_sha256": "d086eea263b50dfd8aef44231336c02aac00f0fcd23099f2da1156fce6a7a54b",
+  "pure_backend_equivalence": false,
+  "capability_origin": "observed_cpu_http plus declared_experiment_node; current worker attestation required",
+  "control_lora": false,
+  "template_model_names": "fixed original six-model manifest; profile and exact fixture required before use",
+  "node_contract_sha256": "975db990da58abe5a95029c4cc0ae7f6c6c46290c10a1040335d95f7dcac53ac",
+  "software_inventory_sha256": "ae3f18849f140771e8a50bf3509c7423e0aa7f701d8276c4ecfc88b3068ede34",
+  "observed_http_evidence": "E:/VideoAI/scratch/benchmarks/LVA-07-04-worker-cpu-final"
+}

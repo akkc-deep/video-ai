@@ -48,3 +48,19 @@ git diff --check
 ## Risks
 
 完整 checkout/节点依赖、14B 原子准入内存方案、实际 FP8/offload 路径仍缺运行证明，是本项必须评估的输入事实，不是待用户补写的设计要求。历史硬件和资源不能认证新环境；不同基模/精度/调度器的收益不能归因纯后端。原始 merged 已知有缺陷，不能绕开 unmerged 的完整运行未知。判断证据不足是有效交付，不得为推进顺序虚构环境就绪。
+
+## 2026-11-19 授权补充
+
+用户同意先补齐本项环境与资源方案，再推进 LVA-07-04。沿用已完成任务补充证据，不将 COMPLETED 回退为 IN_PROGRESS。允许只读核对完整固定源码 tree、现有 CUDA runtime 文件/包元数据与二进制身份、PyPI/ZIP目录元数据，并形成具体环境准备命令与预算。新增交付为 `LVA-07-wrapper-tree.json`、`LVA-07-03-additional-wheels.lock`、`LVA-07-03-prepare-environment.py`（默认 inspect，只审阅命令）、`LVA-07-03-preparation-plan.md`、`LVA-07-03-preparation-evidence.json`；更新原 manifest/决定/任务板。授权仍不包含执行所拟源码获取、runtime复制、wheel文件落盘/安装、节点导入、服务或GPU；不实现后端或生成视频。执行前呈现固定路径、身份、命令和预算供具体授权。
+
+补充明确独立 runtime 完整副本加固定新增 wheel 是一条环境准备方案，不宣称已有 fresh CUDA wheel 闭包或完整节点通过。完整模型内存/原子性、真实静态增量跨 sampler reload/offload、sigma及Low290重新对账仍需实际门槛，未解除时 LVA-07-04 的状态/Design document/Handoff 保持原值。首版有界ZIP读取的范围失误及修正按真实事实披露，不改写历史零操作记录。
+
+## 2026-11-19 具体环境准备执行授权
+
+用户在完整清单、具体命令、约369MiB下载、约3.87GiB runtime副本及8GiB磁盘预留已经呈现后回复“同意”，现授权执行该清单的sources/runtime/wheels/install四阶段。这是先前只读补充之后的单独明确授权，不重复索取，也不继承旧GPU许可。新增交付为 `LVA-07-03-preparation-execution.json/.md` 及独立根内实际阶段标记；允许修正保持固定blob/补丁身份所必需的本次Git导出/应用换行设置，保留失败证据，不改变来源/版本、全局Git或生产。任务保留COMPLETED，只追加补充事实。
+
+验收为完整固定源码及修复身份、独立文件副本/指定二进制身份、15个固定wheel取得及离线安装、实际102分发版本和pip check、解释器路径隔离、实际空间观察与范围审计。该授权不包含导入Wrapper/GPU torch、启动Comfy服务、完整模型准入或视频采样；安装通过不改变这些未验证事实，也不代替LVA-07-04的实施设计或完整验收。
+
+## 2026-11-19 CPU注册及实施补充
+
+用户具体CPU节点探测授权已执行，9个Wrapper及4个原生/bridge实际HTTP schema通过，两owned服务退出/8297关闭；exit -1为强制退出，CUDA构建torch仅CPU模式导入。当前结果见LVA-07-03-node-probe-results.json/.md。原T5 scaled_fp8直接loader不兼容，使用原生CLIPLoader/CLIPTextEncode及上游既有Bridge，不换模型。后续原完成/继续请求授权有界04实现；04实际结果及审查见LVA-07-04-results.json/.md和review。投入决定更新为worth_isolated_attempt，仅指04有界CPU/离线实现，不是GPU通过或执行授权。原始只读/安装前描述保留为历史；完整模型、质量与GPU容量前置仍未解除。

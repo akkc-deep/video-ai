@@ -1,0 +1,310 @@
+{
+  "CLIPLoader": {
+    "input": {
+      "required": {
+        "clip_name": "ENUM",
+        "type": "ENUM"
+      },
+      "optional": {
+        "device": "ENUM"
+      }
+    },
+    "output": [
+      "CLIP"
+    ],
+    "required_choices": {
+      "type": [
+        "wan"
+      ],
+      "device": [
+        "default"
+      ]
+    }
+  },
+  "CLIPTextEncode": {
+    "input": {
+      "required": {
+        "text": "STRING",
+        "clip": "CLIP"
+      }
+    },
+    "output": [
+      "CONDITIONING"
+    ],
+    "required_choices": {}
+  },
+  "LoadImage": {
+    "input": {
+      "required": {
+        "image": "ENUM"
+      }
+    },
+    "output": [
+      "IMAGE",
+      "MASK"
+    ],
+    "required_choices": {}
+  },
+  "LVA07Prepare": {
+    "input": {
+      "required": {
+        "start_image": "IMAGE",
+        "positive_prompt": "STRING",
+        "negative_prompt": "STRING",
+        "clip_name": "STRING",
+        "vae_name": "STRING",
+        "width": "INT",
+        "height": "INT",
+        "num_frames": "INT",
+        "trial_token": "STRING"
+      }
+    },
+    "output": [
+      "WANVIDIMAGE_EMBEDS",
+      "WANVIDEOTEXTEMBEDS",
+      "WANVAE"
+    ],
+    "required_choices": {}
+  },
+  "LVA07Sampler": {
+    "input": {
+      "required": {
+        "role": "ENUM",
+        "mode": "ENUM",
+        "model_name": "STRING",
+        "image_embeds": "WANVIDIMAGE_EMBEDS",
+        "text_embeds": "WANVIDEOTEXTEMBEDS",
+        "seed": "INT",
+        "trial_token": "STRING"
+      },
+      "optional": {
+        "samples": "LATENT"
+      }
+    },
+    "output": [
+      "LATENT"
+    ],
+    "required_choices": {
+      "role": [
+        "high",
+        "low"
+      ],
+      "mode": [
+        "control",
+        "fast"
+      ]
+    }
+  },
+  "LVA07SaveVideo": {
+    "input": {
+      "required": {
+        "images": "IMAGE",
+        "fps": "INT",
+        "filename_prefix": "STRING"
+      }
+    },
+    "output": [],
+    "required_choices": {}
+  },
+  "WanVideoBlockSwap": {
+    "input": {
+      "required": {
+        "blocks_to_swap": "INT",
+        "offload_img_emb": "BOOLEAN",
+        "offload_txt_emb": "BOOLEAN"
+      },
+      "optional": {
+        "use_non_blocking": "BOOLEAN",
+        "vace_blocks_to_swap": "INT",
+        "prefetch_blocks": "INT",
+        "block_swap_debug": "BOOLEAN"
+      }
+    },
+    "output": [
+      "BLOCKSWAPARGS"
+    ],
+    "required_choices": {}
+  },
+  "WanVideoDecode": {
+    "input": {
+      "required": {
+        "vae": "WANVAE",
+        "samples": "LATENT",
+        "enable_vae_tiling": "BOOLEAN",
+        "tile_x": "INT",
+        "tile_y": "INT",
+        "tile_stride_x": "INT",
+        "tile_stride_y": "INT"
+      },
+      "optional": {
+        "normalization": "ENUM"
+      }
+    },
+    "output": [
+      "IMAGE"
+    ],
+    "required_choices": {
+      "normalization": [
+        "default"
+      ]
+    }
+  },
+  "WanVideoImageToVideoEncode": {
+    "input": {
+      "required": {
+        "width": "INT",
+        "height": "INT",
+        "num_frames": "INT",
+        "noise_aug_strength": "FLOAT",
+        "start_latent_strength": "FLOAT",
+        "end_latent_strength": "FLOAT",
+        "force_offload": "BOOLEAN"
+      },
+      "optional": {
+        "vae": "WANVAE",
+        "clip_embeds": "WANVIDIMAGE_CLIPEMBEDS",
+        "start_image": "IMAGE",
+        "end_image": "IMAGE",
+        "control_embeds": "WANVIDIMAGE_EMBEDS",
+        "fun_or_fl2v_model": "BOOLEAN",
+        "temporal_mask": "MASK",
+        "extra_latents": "LATENT",
+        "tiled_vae": "BOOLEAN",
+        "add_cond_latents": "ADD_COND_LATENTS",
+        "augment_empty_frames": "FLOAT",
+        "empty_frame_pad_image": "IMAGE"
+      }
+    },
+    "output": [
+      "WANVIDIMAGE_EMBEDS"
+    ],
+    "required_choices": {}
+  },
+  "WanVideoModelLoader": {
+    "input": {
+      "required": {
+        "model": "ENUM",
+        "base_precision": "ENUM",
+        "quantization": "ENUM",
+        "load_device": "ENUM"
+      },
+      "optional": {
+        "attention_mode": "ENUM",
+        "compile_args": "WANCOMPILEARGS",
+        "block_swap_args": "BLOCKSWAPARGS",
+        "lora": "WANVIDLORA",
+        "vram_management_args": "VRAM_MANAGEMENTARGS",
+        "extra_model": "VACEPATH",
+        "fantasytalking_model": "FANTASYTALKINGMODEL",
+        "multitalk_model": "MULTITALKMODEL",
+        "fantasyportrait_model": "FANTASYPORTRAITMODEL",
+        "rms_norm_function": "ENUM"
+      }
+    },
+    "output": [
+      "WANVIDEOMODEL"
+    ],
+    "required_choices": {
+      "base_precision": [
+        "fp16"
+      ],
+      "quantization": [
+        "disabled"
+      ],
+      "load_device": [
+        "offload_device"
+      ],
+      "attention_mode": [
+        "sdpa"
+      ],
+      "rms_norm_function": [
+        "default"
+      ]
+    }
+  },
+  "WanVideoSampler": {
+    "input": {
+      "required": {
+        "model": "WANVIDEOMODEL",
+        "image_embeds": "WANVIDIMAGE_EMBEDS",
+        "steps": "INT",
+        "cfg": "FLOAT",
+        "shift": "FLOAT",
+        "seed": "INT",
+        "force_offload": "BOOLEAN",
+        "scheduler": "ENUM",
+        "riflex_freq_index": "INT"
+      },
+      "optional": {
+        "text_embeds": "WANVIDEOTEXTEMBEDS",
+        "samples": "LATENT",
+        "denoise_strength": "FLOAT",
+        "feta_args": "FETAARGS",
+        "context_options": "WANVIDCONTEXT",
+        "cache_args": "CACHEARGS",
+        "flowedit_args": "FLOWEDITARGS",
+        "batched_cfg": "BOOLEAN",
+        "slg_args": "SLGARGS",
+        "rope_function": "ENUM",
+        "loop_args": "LOOPARGS",
+        "experimental_args": "EXPERIMENTALARGS",
+        "sigmas": "SIGMAS",
+        "unianimate_poses": "UNIANIMATE_POSE",
+        "fantasytalking_embeds": "FANTASYTALKING_EMBEDS",
+        "uni3c_embeds": "UNI3C_EMBEDS",
+        "multitalk_embeds": "MULTITALK_EMBEDS",
+        "freeinit_args": "FREEINITARGS",
+        "start_step": "INT",
+        "end_step": "INT",
+        "add_noise_to_samples": "BOOLEAN"
+      }
+    },
+    "output": [
+      "LATENT",
+      "LATENT"
+    ],
+    "required_choices": {
+      "scheduler": [
+        "euler"
+      ],
+      "rope_function": [
+        "comfy"
+      ]
+    }
+  },
+  "WanVideoTextEmbedBridge": {
+    "input": {
+      "required": {
+        "positive": "CONDITIONING"
+      },
+      "optional": {
+        "negative": "CONDITIONING"
+      }
+    },
+    "output": [
+      "WANVIDEOTEXTEMBEDS"
+    ],
+    "required_choices": {}
+  },
+  "WanVideoVAELoader": {
+    "input": {
+      "required": {
+        "model_name": "ENUM"
+      },
+      "optional": {
+        "precision": "ENUM",
+        "compile_args": "WANCOMPILEARGS",
+        "use_cpu_cache": "BOOLEAN",
+        "verbose": "BOOLEAN"
+      }
+    },
+    "output": [
+      "WANVAE"
+    ],
+    "required_choices": {
+      "precision": [
+        "fp32"
+      ]
+    }
+  }
+}

@@ -1,0 +1,2923 @@
+{
+  "schema_version": 2,
+  "task_id": "LVA-07",
+  "current_task_id": "LVA-07-06",
+  "status": "COMPLETED",
+  "updated_at_utc": "2026-11-21T13:36:20.362376+00:00",
+  "completed_at_utc": "2026-11-21T13:36:20.362376+00:00",
+  "outcome": "All6 LVA-07 execution tasks completed; LVA-07-06 full32native matrix and24final1080P accepted with all owned exits; research-only, original native quality default retained.",
+  "task_design": "docs/task-designs/LVA-07-06-design.md",
+  "completion_record": "docs/task-designs/LVA-07-06-completion.json",
+  "latest_results": [
+    "docs/task-designs/LVA-07-06-results.json",
+    "docs/task-designs/LVA-07-06-results.md"
+  ],
+  "matrix_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02",
+  "matrix_sha256": "0c63cbba7bfbd5186f1bdc19b797430df49501aae3eba910353faf9b20f0aa09",
+  "latest_outcome": {
+    "native_accepted": 32,
+    "final1080P_accepted": 24,
+    "upscale_frame_tasks": 2290,
+    "owned_native_exits": 8,
+    "owned_postprocess_exits": 26,
+    "native_warm_recipe_ratio": {
+      "low": 13.319214692033366,
+      "high": 13.635643243243464,
+      "parent": 13.581225054895766,
+      "child": 12.387541162252791
+    },
+    "postprocess_wall_seconds": 3249.54367,
+    "delivery_index": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\final-delivery-index.md"
+  },
+  "history": {
+    "aggregate_through_LVA_07_05": {
+      "schema_version": 1,
+      "task_id": "LVA-07",
+      "current_task_id": "LVA-07-05",
+      "status": "COMPLETED",
+      "updated_at_utc": "2026-11-20T04:23:51.588502+00:00",
+      "outcome": "LVA-07-05 complete: full original pair, both original technical media and separate actual human quality accepted, owned exit0 unforced/port closed",
+      "task_design": "docs/task-designs/LVA-07-05-design.md",
+      "predecessor_results": [
+        "docs/task-designs/LVA-07-04-results.json",
+        "docs/task-designs/LVA-07-04-results.md"
+      ],
+      "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+      "preparation_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-preparation-20261119-01",
+      "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+      "profiles": {
+        "control": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+        "fast": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98"
+      },
+      "graphs": {
+        "control": "1ac7eb835c697d7e12d043f169575475ba73e73740f965f2b3899b7317c29665",
+        "fast": "5321702efe6719baed36e580efba73b68bf47d29f1970b92473a63b770fd4f00"
+      },
+      "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+      "input_verification": {
+        "input_verified": true,
+        "source_request_sha256": "8eded4b28cfb53499a62afb3bafa74c9d4e6fdb5afd8681fd0af97aef1bb8ca6",
+        "source_graph_sha256": "f37ef6e80c92b4f9998f8d073665db8e95d8fcf86a11bdafb3a0c93d058adc25",
+        "source_prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+        "input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+        "source_fixture_file_sha256": "47052372e6007aa030f229a2ba1becb6972f3c783ebd7a26c133d88c395e5365",
+        "seed_high": 264244520398999,
+        "seed_low": 0,
+        "frames": 93,
+        "width": 768,
+        "height": 432,
+        "fps": 16
+      },
+      "resources": {
+        "observed_at_utc": "2026-11-19T17:10:35.648161+00:00",
+        "available_ram_bytes": 18628698112,
+        "total_ram_bytes": 33346146304,
+        "available_commit_bytes": 45626048512,
+        "total_commit_limit_bytes": 69853368320,
+        "free_vram_bytes": 23091740672,
+        "total_vram_bytes": 25642926080,
+        "min_available_ram_bytes": 15032385536,
+        "min_free_vram_bytes": 22548578304,
+        "nvidia_smi_command": [
+          "nvidia-smi",
+          "--query-gpu=index,name,memory.total,memory.free,memory.used",
+          "--format=csv,noheader,nounits"
+        ],
+        "nvidia_smi_stdout": "0, NVIDIA GeForce RTX 5090 D v2, 24455, 22022, 2014\n",
+        "ram_passed": true,
+        "vram_passed": true,
+        "port_available": true
+      },
+      "execution_limits": {
+        "authorized": true,
+        "max_active_experts": 1,
+        "measured_full_model_peak_ram_bytes": null,
+        "measured_full_model_peak_vram_bytes": null,
+        "min_available_ram_bytes": 15032385536,
+        "min_free_vram_bytes": 22548578304,
+        "process_private_commit_bytes": 19327352832,
+        "rss_stop_bytes": 25769803776,
+        "torch_gpu_allocator_bytes": 21474836480,
+        "min_phase_available_ram_bytes": 4294967296,
+        "min_phase_free_vram_bytes": 21474836480,
+        "min_available_commit_bytes": 27917287424
+      },
+      "blockers": [],
+      "proposed_execution": {
+        "max_samples": 2,
+        "control_steps": 40,
+        "fast_steps": 4,
+        "width": 768,
+        "height": 432,
+        "frames": 93,
+        "fps": 16,
+        "max_service_seconds": null,
+        "sequence": [
+          "single owned GPU service after authorization and resource gates",
+          "full sequential high/low admission; stop unless both pass",
+          "control_1",
+          "actual human review of control_1; fast forbidden until accepted",
+          "fast_1",
+          "actual human review of fast_1",
+          "owned service shutdown"
+        ],
+        "no_repost_unknown": true,
+        "stop_on_failure": true,
+        "downloads": 0,
+        "installs": 0,
+        "model_copies": 0
+      },
+      "verification": {
+        "init": {
+          "command": "& E:/VideoAI/shared/envs/video-ai/Scripts/python.exe -X utf8 scripts/benchmark_wan_wrapper.py init --root E:/VideoAI/scratch/benchmarks/LVA-07-05-low-20261119-01 --fixture E:/VideoAI/scratch/benchmarks/LVA-07-04-cli-fixture.json --port 8297",
+          "returncode": 0,
+          "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-01",
+          "comparison_sha256": "d638a6abb9c2d40796fa438107eefcbcb5520f24dd4e1e51365b596065cf605f",
+          "profiles": {
+            "control": "f360961c7aff85e7eeb683ec967405084b0672ee28403cd1daac4a8667e5a1eb",
+            "fast": "0c94105519244ef2d5115022d4b2db8e19be78e5ec64498cd0b0d34e9a72fd57"
+          },
+          "model_payload_bytes_read": 0
+        },
+        "fixture_identity": "original request raw SHA, source fixture fields, prompt/negative canonical digest and exact values, image full SHA, seeds and budget: passed",
+        "sealed_comparison": "prepare(root, control_profile): passed; checks both profiles and graphs",
+        "no_execution_artifacts": "authorization/service-owner/admission/trials/reviews absent",
+        "pytest_run": false,
+        "reason_no_pytest": "operational preparation only; no implementation changed; no repeat of04 tests",
+        "host_budget_protocol": {
+          "passed": 44,
+          "failed": 0,
+          "seconds": 8.1
+        },
+        "pinned_cpu_followup": {
+          "passed": 12,
+          "failed": 0,
+          "results": "E:/VideoAI/scratch/benchmarks/LVA-07-05-host-alias-green/results.json",
+          "scope": "small pinned-function CPU fixtures only"
+        }
+      },
+      "evidence": [
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-preparation-20261119-01\\preflight.json",
+          "sha256": "64fd9c3202ee9b7feb5af9afa8e99d77462e511493d64e92bc614aae420d5fac"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-preparation-20261119-01\\init-result.json",
+          "sha256": "ea753662a1597d6d695ed41231c8654466a99803ca59dcfde9acf8b0322c6a0b"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-preparation-20261119-01\\entry-next-task-handoff.md",
+          "sha256": "300523cc4fc26d10d1c16a3dd623cb76e3735a4d28513271c04bc93a98cdade5"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-01\\authorization.json",
+          "sha256": "37c031b56ba2917321eb693e04d5c5cf0507275b11ba2a7dd1f48c9068901912"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-preparation-20261119-01\\retry-observation-02.json",
+          "sha256": "55aa912603dd4bcb7792f90df4e0c66e4389107478a1d4be91a817dcf698a84f"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04\\admission\\client-intent.json",
+          "sha256": "d8cf20502d5e92d37e4698e682fa040161f8c65bee945ea3fd2c5c8b94485c64"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04\\admission\\failed.json",
+          "sha256": "d71893bb5f96d85a182925507ed3ae6d83822838f823a4383970df22209801d9"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04\\service-result.json",
+          "sha256": "ca24efdf480c0e6e0d2a0709bff36b1e77fa6828e37803067bb019836ec13ba2"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04\\failure-assessment.json",
+          "sha256": "0c8738efcd48ef5ec0883bf24e6f7a02dc32cd4357413f5ce5e44705deecae07"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\admission\\pair.json",
+          "sha256": "81364a16cfe2c123a9c3072f84753cda044f70af6da3a1431c4e25d7b820f9bc"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\admission\\high-witness.json",
+          "sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\admission\\low-witness.json",
+          "sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\trials\\control_1\\history.failed.json",
+          "sha256": "06119b8d56df7fd89e7dbb3c81feb9f08009cdd895fe1bb6fe220a3d07c21b82"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\text-budget-diagnostic.json",
+          "sha256": "b1c444b5ee076760b64bc83ae6d6fbc8967839d0ba6910e62215f080ce489e61"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\resource-summary.json",
+          "sha256": "ccded8ea7a4ced80420eb838c6716c93532d8ad08c4bc865b86237cf9489d683"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\service-result.json",
+          "sha256": "0e8874cb625a4ef0aca45b729b7650a166d1622114308ef28f980b5efec52470"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01\\experiment-assessment.json",
+          "sha256": "e7d17e92f44223ee4fa08c62f30d12dcf0d3eeca00591344a988ae6fb799a20c"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\control_1.json",
+          "sha256": "3db9f19b6ac51b4bfd7d1ebc5d540e6c9179a5ca5cc13ff53427a43bbedddd6a"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\trials\\control_1\\technical-complete.json",
+          "sha256": "65e0377e6a0ca76f0f6ad79f2ffb525e42c143178c1fff858249b27618a775a1"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\trials\\fast_1\\technical-complete.json",
+          "sha256": "590982283c5d0fc61dc992b464cb6f777f8d48343049840dfd050b22ea1a79c6"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\node-evidence\\fast-high.json",
+          "sha256": "2a0dcfcc63056f4b43d43353c7737e486ebedaca0b4df482ccceb7f37054f924"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\node-evidence\\fast-low.json",
+          "sha256": "80b656548e932e2284291610c5a52f31423239f7240e6c87a974165b5ef1c6e7"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\fast_1.generation-binding.json",
+          "sha256": "22c88874c4a5979c5e06431ed06c35580a959c6af93f651f74500f8c684169c9"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\service-result.json",
+          "sha256": "3967d9467c328fc71ee36c8684e896bcd5119b9a5cef47e52e0e3a5aa1049b39"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\experiment-assessment.json",
+          "sha256": "adaab1bbf0781b339293eaf30a210406aca99b2c24d1c63b085f6f6e3674dd2f"
+        },
+        {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+          "sha256": "2d364af0116f47d53161e754cbc1ef2dc639e40175dfdb0bc527d0c9fec70049"
+        },
+        {
+          "path": "docs\\task-designs\\LVA-07-05-completion.json",
+          "sha256": "24da0ab5fd9f1c06164d06335c9ce2276dce9e2cc9b4d0b00afa890e1e6f1dc6"
+        }
+      ],
+      "actual": {
+        "gpu_service_started": true,
+        "gpu_model_loads": true,
+        "admission_posts": 1,
+        "generation_posts": 2,
+        "samples": 2,
+        "model_payload_bytes_read": null,
+        "full_model_verified": true,
+        "control_quality": {
+          "decision": "accepted",
+          "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\control_1.json",
+          "human_evidence": "用户对已展示的本轮 control_1.mp4 质量确认请求明确回复：接受。",
+          "media_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50"
+        },
+        "fast_quality": {
+          "decision": "accepted",
+          "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+          "human_evidence": "用户在已展示本轮 fast_1.mp4 并请求独立确认画面质量后明确回复：视频没有问题。",
+          "media_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5"
+        },
+        "service_exit": {
+          "passed": true,
+          "mode": "gpu",
+          "graph_posts": null,
+          "checkpoint_payload_bytes": null,
+          "gpu_used": null,
+          "peak_rss_observed_bytes": 19630977024,
+          "pid": 46888,
+          "process_started_at": "134396033001130190",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "owned_listener_verified": true,
+          "schemas": 13,
+          "timed_out": false,
+          "exit_code": 0,
+          "forced": false,
+          "graceful": true,
+          "exited": true,
+          "port_closed": true,
+          "seconds": 12145.311999999976
+        },
+        "throughput": {
+          "control_execution_seconds": 1255.786,
+          "fast_execution_seconds": 96.539,
+          "scope": "One sample each, different recipes, shared caches; not stable throughput or pure backend speedup"
+        },
+        "pure_backend_equivalence": false,
+        "production_resumed": false
+      },
+      "remaining_work": [],
+      "initial_resources": {
+        "observed_at_utc": "2026-11-19T02:23:24.401580+00:00",
+        "source": "GlobalMemoryStatusEx and nvidia-smi memory.free",
+        "total_ram_bytes": 33346146304,
+        "available_ram_bytes": 17039007744,
+        "gpu_index": 0,
+        "gpu_name": "NVIDIA GeForce RTX 5090 D v2",
+        "total_vram_bytes": 25642926080,
+        "free_vram_bytes": 22726836224,
+        "used_vram_reported_bytes": 2476736512,
+        "disk_free_bytes": 1416317292544,
+        "nvidia_smi_command": [
+          "nvidia-smi",
+          "--query-gpu=index,name,memory.total,memory.free,memory.used",
+          "--format=csv,noheader,nounits"
+        ],
+        "nvidia_smi_returncode": 0,
+        "nvidia_smi_stdout": "0, NVIDIA GeForce RTX 5090 D v2, 24455, 21674, 2362\n",
+        "required_available_ram_bytes": 27917287424,
+        "required_free_vram_bytes": 23622320128,
+        "required_disk_free_bytes": 536870912,
+        "ram_passed": false,
+        "vram_passed": false,
+        "disk_passed": true,
+        "port_8297_available": true
+      },
+      "execution_authorization": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\authorization.json",
+        "approved": true,
+        "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+        "max_service_seconds": null
+      },
+      "controller_time_policy": {
+        "requested": "unlimited total duration",
+        "implemented": true,
+        "cli_max_seconds": 0,
+        "explicit_unlimited_authorization": true
+      },
+      "historical_preparation_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-01",
+      "host_budget_revision": {
+        "task_id": "LVA-07-05",
+        "authorization": {
+          "task_id": "LVA-07-05",
+          "approved": true,
+          "user_evidence": {
+            "messages": [
+              "完成任务LVA-07-05",
+              "你再试一下，时间可以不限制",
+              "按照本机可以提供的来吧"
+            ],
+            "source": "actual user replies to the proposed concrete experiment and host-capacity amendment",
+            "recorded_at_utc": "2026-11-19T12:20:53.781224+00:00"
+          },
+          "comparison_sha256": "973736939def19675e5fbb92c10afd7304a14528573f99fe2516d09c22278ef2",
+          "max_samples": 2,
+          "max_service_seconds": null,
+          "host_min_available_ram_bytes": 15032385536,
+          "host_min_free_vram_bytes": 22548578304,
+          "control_actual_human_acceptance_required": true,
+          "preceding_unstarted_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-01",
+          "preceding_comparison_sha256": "d638a6abb9c2d40796fa438107eefcbcb5520f24dd4e1e51365b596065cf605f",
+          "reason_for_resealing": "user-approved host resource minima and unlimited controller source change; no old POST or worker exists"
+        },
+        "capacity": {
+          "observed_at_utc": "2026-11-19T12:19:20.465182+00:00",
+          "available_ram_bytes": 16816201728,
+          "total_ram_bytes": 33346146304,
+          "available_commit_bytes": 44772716544,
+          "total_commit_limit_bytes": 69853368320,
+          "free_vram_bytes": 23085449216,
+          "total_vram_bytes": 25642926080,
+          "min_available_ram_bytes": 15032385536,
+          "min_free_vram_bytes": 22548578304,
+          "nvidia_smi_stdout": "0, NVIDIA GeForce RTX 5090 D v2, 24455, 22016, 2020\n",
+          "ram_passed": true,
+          "vram_passed": true
+        },
+        "source_review": "docs/task-designs/LVA-07-05-host-budget-review.json",
+        "previous_root_retained": true,
+        "previous_requests": 0,
+        "model_changes": false,
+        "frame_budget_changes": false,
+        "setup_started_at_utc": "2026-11-19T12:20:53.782226+00:00"
+      },
+      "current_service": {
+        "pid": 46888,
+        "process_started_at": "134396033001130190",
+        "port": 8297,
+        "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "launch_sha256": "23c4291f5127595f127dc95684fc91fc9c1d32e318c94e6878d834095f99e1a7",
+        "exited": true,
+        "exit_evidence": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\service-result.json"
+      },
+      "worker_attestation": {
+        "pid": 46888,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "mode": "gpu",
+        "gpu_authorized": true,
+        "profiles": {
+          "control": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+          "fast": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98"
+        },
+        "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+        "wrapper_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\custom_nodes\\ComfyUI-WanVideoWrapper-LVA07",
+        "source_root": "E:\\code\\py\\video-ai",
+        "origin": "registered_in_current_worker; HTTP observed separately"
+      },
+      "admission": {
+        "client_intent": {
+          "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+          "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+        },
+        "server_intent": {
+          "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98"
+        },
+        "status": "historical accepted; owned epoch exited",
+        "receipt": {
+          "schema_version": 1,
+          "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+          "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "full_model_verified": true,
+          "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+          "high_witness_sha256": "41a31bfdfb82bda762bc7be35042748c6e570ca1ad10ff71975ea36976743873",
+          "low_witness_sha256": "b59fe13a0bf4737c5894075ce9a36552791092eac97ee7a4294f5cabfea44fbe"
+        },
+        "reusable": false
+      },
+      "actual_attempts": [
+        {
+          "task_id": "LVA-07-05",
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-02",
+          "admission": {
+            "admission_id": "7465663b-8e54-4965-8090-422cfe65a53b",
+            "error": "AttributeError"
+          },
+          "service": {
+            "passed": true,
+            "mode": "gpu",
+            "graph_posts": null,
+            "checkpoint_payload_bytes": null,
+            "gpu_used": null,
+            "peak_rss_observed_bytes": 1815326720,
+            "pid": 29400,
+            "process_started_at": "134395644580641831",
+            "epoch": "70fcf4a5-45e2-4aa8-8882-9980f1ff0c4b",
+            "owned_listener_verified": true,
+            "schemas": 13,
+            "timed_out": false,
+            "exit_code": 0,
+            "forced": false,
+            "graceful": true,
+            "exited": true,
+            "port_closed": true,
+            "seconds": 154.0470000000205
+          },
+          "outcome": "infrastructure failure: pre-prompt global progress callback assumes PromptServer.last_prompt_id",
+          "root_cause": "fixed Comfy main.hijack_progress fallback before first queued video",
+          "model_gate_passed": false,
+          "video_posts": 0,
+          "video_samples": 0,
+          "repair": "thread-scoped suppression of prompt-only UI progress during admission with exception-safe restoration; no model mathematics or source policy changed",
+          "verification": {
+            "red_failed": 2,
+            "green_passed": 44,
+            "green_failed": 0,
+            "seconds": 8.12
+          },
+          "decision": "retain stopped failed group and original ID; separately evaluate repaired source in a fresh sealed group, not a repost or replacement video candidate",
+          "recorded_at_utc": "2026-11-19T12:25:41.545158+00:00"
+        },
+        {
+          "task_id": "LVA-07-05",
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-03",
+          "admission": {
+            "admission_id": "cb846254-db30-4aba-9025-623a544d6ad2",
+            "error": "ValueError"
+          },
+          "service": {
+            "passed": true,
+            "mode": "gpu",
+            "graph_posts": null,
+            "checkpoint_payload_bytes": null,
+            "gpu_used": null,
+            "peak_rss_observed_bytes": 1813954560,
+            "pid": 10564,
+            "process_started_at": "134395647742686444",
+            "epoch": "e4f08375-6d52-445e-9bcd-cdc392493098",
+            "owned_listener_verified": true,
+            "schemas": 13,
+            "timed_out": false,
+            "exit_code": 0,
+            "forced": false,
+            "graceful": true,
+            "exited": true,
+            "port_closed": true,
+            "seconds": 284.405999999959
+          },
+          "outcome": "high materialization1095 parameters completed; later ValueError with original message unavailable",
+          "diagnosis": "fixed Wan constructor aliases original_patch_embedding/expanded_patch_embedding to identical patch_embedding module; duplicate=False guard rejects these exact aliases in bounded CPU reproduction",
+          "diagnosis_limit": "original failed receipt retained only type, so no original message is claimed",
+          "repair": "canonicalize only the two pinned same-module aliases, reject arbitrary or distinct aliases; private overlay/source immutability retained; persist future exact error_message",
+          "verification": {
+            "cpu_red_errors": 1,
+            "cpu_green_tests": 12,
+            "cpu_green_passed": true,
+            "protocol_passed": 44,
+            "protocol_failed": 0,
+            "protocol_seconds": 8.1
+          },
+          "generation_posts": 0,
+          "video_samples": 0,
+          "assessed_at_utc": "2026-11-19T12:35:46.680614+00:00"
+        },
+        {
+          "task_id": "LVA-07-05",
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04",
+          "comparison_sha256": "cf59a6b273e8b9e83f58d32a9b47e4c3c9a533f640293f1270276f42f56f05eb",
+          "status": "BLOCKED",
+          "outcome": "fixed full-model fast LoRA admission rejected before video: dynamic head LoRA explicitly skipped by fixed upstream",
+          "original_admission": {
+            "admission_id": "af954a6a-768b-407e-9041-5a261318d210",
+            "error": "UnsupportedPatch",
+            "error_message": "diffusion_model.head.head.weight: upstream explicitly skips dynamic head LoRA"
+          },
+          "service": {
+            "passed": true,
+            "mode": "gpu",
+            "graph_posts": null,
+            "checkpoint_payload_bytes": null,
+            "gpu_used": null,
+            "peak_rss_observed_bytes": 17768230912,
+            "pid": 44436,
+            "process_started_at": "134395653941626524",
+            "epoch": "267d53a3-d3fb-4fee-b76d-304c3cdada2f",
+            "owned_listener_verified": true,
+            "schemas": 13,
+            "timed_out": false,
+            "exit_code": 0,
+            "forced": false,
+            "graceful": true,
+            "exited": true,
+            "port_closed": true,
+            "seconds": 208.09400000004098
+          },
+          "owner": {
+            "pid": 44436,
+            "process_started_at": "134395653941626524",
+            "port": 8297,
+            "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261119-04",
+            "epoch": "267d53a3-d3fb-4fee-b76d-304c3cdada2f",
+            "launch_sha256": "7de8e3986a70189321a475197e7d8ee0ad8c5fe19f6425b56defe19a8656e86c"
+          },
+          "high_cpu_parameters_materialized": 1095,
+          "full_pair_passed": false,
+          "low_evaluated": false,
+          "video_posts": 0,
+          "video_samples": 0,
+          "control_quality": null,
+          "fast_quality": null,
+          "known_resource_limit_triggered": false,
+          "resource_limit_caveat": "sampled RSS below24GiB and service no resource error; allocator/private full peaks not measured",
+          "actual_peak_rss_observed_bytes": 17768230912,
+          "unverified": [
+            "full high installation/forward witness",
+            "low expert admission",
+            "control/fast media and human quality",
+            "generation timing and1080p benefit"
+          ],
+          "next_required": "separately design and validate head-weight application preserving all applicable original deltas and quantization semantics; do not delete head patch or switch model; current fixed-policy experiment stops",
+          "recorded_at_utc": "2026-11-19T12:41:16.083940+00:00"
+        },
+        {
+          "task_id": "LVA-07-05",
+          "status": "BLOCKED",
+          "outcome": "head adapter and full original-model pair admission succeeded; control failed in native T5 CPU output transfer under8GiB job commit cap; original prompt also exceeds512-token Wrapper contract",
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01",
+          "pair": {
+            "schema_version": 1,
+            "profile_sha256": "448cd7fa1162c4c750c77cf809d3356bb3f73de29d2929dad6dc7b56850cf9c3",
+            "comparison_sha256": "7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823",
+            "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+            "full_model_verified": true,
+            "admission_id": "404d7605-d9ea-40f1-9ab7-85a4454e1c01",
+            "high_witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0",
+            "low_witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+          },
+          "experts": {
+            "high": {
+              "static_targets": 689,
+              "dynamic_targets": 406,
+              "head_full_delta_adapter": true,
+              "trace_counts": {
+                "source_count": 1500,
+                "applicable": 1500,
+                "excluded": 0,
+                "retained": 1500
+              },
+              "head_probe": {
+                "target": "diffusion_model.head.head.weight",
+                "coordinates": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5119
+                  ],
+                  [
+                    63,
+                    0
+                  ],
+                  [
+                    63,
+                    5119
+                  ]
+                ],
+                "observed": [
+                  -0.0007991790771484375,
+                  -0.00732421875,
+                  0.0005159378051757812,
+                  0.002185821533203125
+                ],
+                "expected": [
+                  -0.0007991790771484375,
+                  -0.00732421875,
+                  0.0005159378051757812,
+                  0.002185821533203125
+                ],
+                "finite": true,
+                "step_reset": 0
+              },
+              "witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0"
+            },
+            "low": {
+              "static_targets": 648,
+              "dynamic_targets": 406,
+              "head_full_delta_adapter": true,
+              "trace_counts": {
+                "source_count": 1749,
+                "applicable": 1459,
+                "excluded": 290,
+                "retained": 1459
+              },
+              "head_probe": {
+                "target": "diffusion_model.head.head.weight",
+                "coordinates": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5119
+                  ],
+                  [
+                    63,
+                    0
+                  ],
+                  [
+                    63,
+                    5119
+                  ]
+                ],
+                "observed": [
+                  -0.0016813278198242188,
+                  -0.010009765625,
+                  0.0008149147033691406,
+                  0.0037593841552734375
+                ],
+                "expected": [
+                  -0.0016813278198242188,
+                  -0.010009765625,
+                  0.0008149147033691406,
+                  0.0037593841552734375
+                ],
+                "finite": true,
+                "step_reset": 0
+              },
+              "witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+            }
+          },
+          "control": {
+            "prompt_id": "fd677a68-086e-4fe5-8be2-47c03135c756",
+            "status": "known_execution_error",
+            "node_id": "10",
+            "node_type": "LVA07Prepare",
+            "exception_type": "RuntimeError",
+            "exception_message": "[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 10878976 bytes.\n",
+            "executed_nodes": [
+              "97"
+            ],
+            "diffusion_nodes_executed": false,
+            "technical_complete": false,
+            "media_created": false,
+            "human_quality": null
+          },
+          "fast": {
+            "posted": false,
+            "reason": "control failed, no human acceptance"
+          },
+          "resources": {
+            "samples": 266,
+            "peak_rss_observed_bytes": 18737557504,
+            "peak_private_sampled_bytes": 7206871040,
+            "native_peak_pagefile_observed_bytes": 8589914112,
+            "process_private_commit_limit_bytes": 8589934592,
+            "headroom_at_native_peak_bytes": 20480,
+            "available_ram_after_failure_bytes": 17536610304,
+            "peak_whole_device_gpu_used_mib": 2687,
+            "scope": "10s observations; native process peak_pagefile read once while worker alive. Whole-device GPU includes external apps, not exclusive allocator/kernel usage."
+          },
+          "text_budget": {
+            "scope": "native tokenizer only; original4.55MB spiece tensor, no encoder weights or GPU loaded",
+            "tokenizer_bytes": 4548313,
+            "token_lengths": {
+              "positive": {
+                "umt5xxl": [
+                  664
+                ]
+              },
+              "negative": {
+                "umt5xxl": [
+                  512
+                ]
+              }
+            },
+            "current_conditioning_limit": 512,
+            "current_wrapper_default_text_len": 512,
+            "original_prompt_not_changed": true
+          },
+          "service": {
+            "passed": true,
+            "mode": "gpu",
+            "graph_posts": null,
+            "checkpoint_payload_bytes": null,
+            "gpu_used": null,
+            "peak_rss_observed_bytes": 19299463168,
+            "pid": 42320,
+            "process_started_at": "134395820713084004",
+            "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+            "owned_listener_verified": true,
+            "schemas": 13,
+            "timed_out": false,
+            "exit_code": 0,
+            "forced": false,
+            "graceful": true,
+            "exited": true,
+            "port_closed": true,
+            "seconds": 2832.8429999999935
+          },
+          "verification": {
+            "pinned_cpu_passed": 15,
+            "protocol_passed": 44,
+            "review": "docs/task-designs/LVA-07-05-head-review.json",
+            "important_findings": 0
+          },
+          "acceptance": "full pair proved2959 applicable inputs and290 exact exclusions; this is not video/quality/throughput success",
+          "next_required": "joint T5 memory handoff and original664-token context design; validate text path separately before any further full pair repetition; do not truncate prompt or rePOST terminal failed control",
+          "recorded_at_utc": "2026-11-19T18:03:45.413928+00:00"
+        }
+      ],
+      "current_admission": {
+        "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+        "status": "historical accepted; owned epoch exited",
+        "receipt": {
+          "schema_version": 1,
+          "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+          "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "full_model_verified": true,
+          "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+          "high_witness_sha256": "41a31bfdfb82bda762bc7be35042748c6e570ca1ad10ff71975ea36976743873",
+          "low_witness_sha256": "b59fe13a0bf4737c5894075ce9a36552791092eac97ee7a4294f5cabfea44fbe"
+        },
+        "reusable": false
+      },
+      "final_outcome_evidence": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\experiment-assessment.json",
+      "failed_source_snapshots": [
+        {
+          "group": "02",
+          "exact": 5,
+          "total": 5
+        },
+        {
+          "group": "03",
+          "exact": 5,
+          "total": 5
+        },
+        {
+          "group": "04",
+          "exact": 5,
+          "total": 5
+        }
+      ],
+      "head_adapter": {
+        "design": "docs/task-designs/LVA-07-05-head-design.md",
+        "review": "docs/task-designs/LVA-07-05-head-review.json",
+        "cpu_tests": 15,
+        "protocol_tests": 44,
+        "full_model_verified": false,
+        "actual_high_witness": {
+          "role": "high",
+          "static_targets": 689,
+          "dynamic_targets": 406,
+          "canonical_module_aliases": [
+            "original_patch_embedding",
+            "expanded_patch_embedding"
+          ],
+          "head_full_delta_adapter": true,
+          "static_overlay_bytes": 12800128,
+          "full_model_verified": true,
+          "source_parameters_mutated": false,
+          "trace_counts": {
+            "source_count": 1500,
+            "applicable": 1500,
+            "excluded": 0,
+            "retained": 1500
+          },
+          "probes": 406,
+          "head_probe": {
+            "target": "diffusion_model.head.head.weight",
+            "coordinates": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                5119
+              ],
+              [
+                63,
+                0
+              ],
+              [
+                63,
+                5119
+              ]
+            ],
+            "observed": [
+              -0.0007991790771484375,
+              -0.00732421875,
+              0.0005159378051757812,
+              0.002185821533203125
+            ],
+            "expected": [
+              -0.0007991790771484375,
+              -0.00732421875,
+              0.0005159378051757812,
+              0.002185821533203125
+            ],
+            "finite": true,
+            "step_reset": 0
+          }
+        },
+        "actual_full_pair_verified": true,
+        "experts": {
+          "high": {
+            "static_targets": 689,
+            "dynamic_targets": 406,
+            "head_full_delta_adapter": true,
+            "trace_counts": {
+              "source_count": 1500,
+              "applicable": 1500,
+              "excluded": 0,
+              "retained": 1500
+            },
+            "head_probe": {
+              "target": "diffusion_model.head.head.weight",
+              "coordinates": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  5119
+                ],
+                [
+                  63,
+                  0
+                ],
+                [
+                  63,
+                  5119
+                ]
+              ],
+              "observed": [
+                -0.0007991790771484375,
+                -0.00732421875,
+                0.0005159378051757812,
+                0.002185821533203125
+              ],
+              "expected": [
+                -0.0007991790771484375,
+                -0.00732421875,
+                0.0005159378051757812,
+                0.002185821533203125
+              ],
+              "finite": true,
+              "step_reset": 0
+            },
+            "witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0"
+          },
+          "low": {
+            "static_targets": 648,
+            "dynamic_targets": 406,
+            "head_full_delta_adapter": true,
+            "trace_counts": {
+              "source_count": 1749,
+              "applicable": 1459,
+              "excluded": 290,
+              "retained": 1459
+            },
+            "head_probe": {
+              "target": "diffusion_model.head.head.weight",
+              "coordinates": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  5119
+                ],
+                [
+                  63,
+                  0
+                ],
+                [
+                  63,
+                  5119
+                ]
+              ],
+              "observed": [
+                -0.0016813278198242188,
+                -0.010009765625,
+                0.0008149147033691406,
+                0.0037593841552734375
+              ],
+              "expected": [
+                -0.0016813278198242188,
+                -0.010009765625,
+                0.0008149147033691406,
+                0.0037593841552734375
+              ],
+              "finite": true,
+              "step_reset": 0
+            },
+            "witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+          }
+        }
+      },
+      "resource_observation": {
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+        "scope": "read-only10s RSS/private/available RAM and aggregate GPU, no inference/media rechecks",
+        "first_shared_interpreter_attempt": "psutil absent; no install; used existing isolated runtime instead"
+      },
+      "current_resource_summary": {
+        "receipt": {
+          "probe_id": "6c13231a-3904-4860-80e4-e2ae54be355b",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+          "control_profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+          "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+          "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+          "t5_sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+          "embedding_artifact": {
+            "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\text\\embeddings.safetensors",
+            "bytes": 19267776,
+            "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+          },
+          "dtypes": {
+            "prompt_embeds": "torch.float32",
+            "negative_prompt_embeds": "torch.float32"
+          },
+          "encoder_released": true,
+          "shapes": {
+            "prompt_embeds": [
+              1,
+              664,
+              4096
+            ],
+            "negative_prompt_embeds": [
+              1,
+              512,
+              4096
+            ]
+          },
+          "image_prepared": true,
+          "vae_cpu": true,
+          "vae_precision": "fp32",
+          "image_embeds_finite": true,
+          "image_input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+          "image_embeds_shape": [
+            16,
+            24,
+            54,
+            96
+          ]
+        },
+        "stage_metrics": [
+          {
+            "stage": "native_t5_prepare",
+            "seconds": 1.5773361999890767,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_i2v_prepare",
+            "seconds": 4.464211800019257,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "text_cache_bind",
+            "seconds": 0.0002668999950401485,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "image_cache_bind",
+            "seconds": 0.001706700015347451,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_build",
+            "seconds": 0.7238567999447696,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_sample",
+            "seconds": 468.51910530001624,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_release",
+            "seconds": 1.3430269000236876,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_build",
+            "seconds": 0.784940599987749,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_sample",
+            "seconds": 771.9310037000105,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_release",
+            "seconds": 1.3091122999903746,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_decode",
+            "seconds": 7.365493300021626,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "encode_validate",
+            "seconds": 3.7085872999741696,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "text_cache_bind",
+            "seconds": 0.0002316000172868371,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "image_cache_bind",
+            "seconds": 0.002725000027567148,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_build",
+            "seconds": 0.9627132000168785,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_sample",
+            "seconds": 40.86145159997977,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_release",
+            "seconds": 1.3596324999816716,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_build",
+            "seconds": 0.7111975000007078,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_sample",
+            "seconds": 40.56990339996992,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_release",
+            "seconds": 1.280986599973403,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_decode",
+            "seconds": 7.332009200006723,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "encode_validate",
+            "seconds": 3.374431399977766,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          }
+        ],
+        "native_peak_pagefile_bytes": 17489293312,
+        "observed_peak_rss_bytes": 19630977024,
+        "samples": 1203,
+        "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+        "native_peak_working_set_bytes": 20193505280,
+        "all_device_peak_used_observed_mib": 12395,
+        "min_host_available_ram_observed_bytes": 1094725632,
+        "scope": "Whole owned epoch process peaks; 10s host/GPU observations include admission, both trials, human wait and other applications. Not exclusive model GPU peaks."
+      },
+      "current_admission_timing": {
+        "source": "durable file mtime wall envelopes; includes I/O and write overhead",
+        "admission_to_pair_wall_seconds": 2251.490029811859,
+        "high_seconds": 1124.1741781234741,
+        "low_envelope_seconds": 1127.315851688385
+      },
+      "control_attempt": {
+        "task_id": "LVA-07-05",
+        "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+        "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+        "updated_at_utc": "2026-11-20T00:13:07.437827+00:00",
+        "status": "IN_PROGRESS",
+        "stage": "complete",
+        "control_prompt_id": "11ebef23-82f0-40a4-916d-104f026993ea",
+        "control_profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+        "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+        "graph_sha256": "1ac7eb835c697d7e12d043f169575475ba73e73740f965f2b3899b7317c29665",
+        "media": {
+          "retained": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\control_1.mp4",
+          "retained_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50",
+          "last_frame": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\media-checks\\8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50-last.png",
+          "last_frame_sha256": "1b8ef3ba4b663fd39efa960c184bf598de4d04a8ae78208a15061afe053d4c58"
+        },
+        "technical": {
+          "width": 768,
+          "height": 432,
+          "codec": "h264",
+          "pixel_format": "yuv420p",
+          "fps": 16,
+          "frames": 93,
+          "duration": 5.8125
+        },
+        "pts_count": 93,
+        "black": {
+          "frames": 93,
+          "suspect_black": false,
+          "longest_black_run": 0
+        },
+        "encoder_result": {
+          "returncode": 0,
+          "source_rgb_sha256": "fbb7f503133b7594ba5e39a0315d2efb63e08f46d2af4806bfc51be576543bd2"
+        },
+        "node_evidence": {
+          "high": {
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+            "profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+            "role": "high",
+            "actual_forwards": 30,
+            "timesteps": [
+              1000,
+              994,
+              989,
+              984,
+              978,
+              972,
+              965,
+              959,
+              952,
+              945,
+              937,
+              929,
+              921,
+              912,
+              902
+            ],
+            "sigmas": [
+              1.0,
+              0.9948979616165161,
+              0.9895833134651184,
+              0.9840425848960876,
+              0.97826087474823,
+              0.9722222089767456,
+              0.9659090638160706,
+              0.9593023061752319,
+              0.9523810148239136,
+              0.9451219439506531,
+              0.9375,
+              0.9294871687889099,
+              0.9210526347160339,
+              0.9121621251106262,
+              0.9027777910232544,
+              0.8928571343421936
+            ],
+            "text_lengths": [
+              512,
+              664
+            ],
+            "head_full_delta_installations": 0,
+            "control_lora_applied": 0
+          },
+          "low": {
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+            "profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+            "role": "low",
+            "actual_forwards": 50,
+            "timesteps": [
+              892,
+              882,
+              871,
+              859,
+              846,
+              833,
+              818,
+              803,
+              787,
+              769,
+              750,
+              729,
+              706,
+              681,
+              654,
+              625,
+              592,
+              555,
+              514,
+              468,
+              416,
+              357,
+              288,
+              208,
+              113
+            ],
+            "sigmas": [
+              0.8928571343421936,
+              0.882352888584137,
+              0.8712121248245239,
+              0.859375,
+              0.8467742204666138,
+              0.8333333134651184,
+              0.818965494632721,
+              0.8035714626312256,
+              0.7870370149612427,
+              0.7692307829856873,
+              0.75,
+              0.7291666269302368,
+              0.70652174949646,
+              0.6818181872367859,
+              0.6547619104385376,
+              0.625,
+              0.5921052694320679,
+              0.5555555820465088,
+              0.5147058963775635,
+              0.46875,
+              0.4166666567325592,
+              0.3571428656578064,
+              0.2884615361690521,
+              0.2083333283662796,
+              0.11363635957241058,
+              0.0
+            ],
+            "text_lengths": [
+              512,
+              664
+            ],
+            "head_full_delta_installations": 0,
+            "control_lora_applied": 0
+          }
+        },
+        "stage_metrics": [
+          {
+            "stage": "native_t5_prepare",
+            "seconds": 1.5773361999890767,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_i2v_prepare",
+            "seconds": 4.464211800019257,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "text_cache_bind",
+            "seconds": 0.0002668999950401485,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "image_cache_bind",
+            "seconds": 0.001706700015347451,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_build",
+            "seconds": 0.7238567999447696,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_sample",
+            "seconds": 468.51910530001624,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_release",
+            "seconds": 1.3430269000236876,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_build",
+            "seconds": 0.784940599987749,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_sample",
+            "seconds": 771.9310037000105,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_release",
+            "seconds": 1.3091122999903746,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_decode",
+            "seconds": 7.365493300021626,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "encode_validate",
+            "seconds": 3.7085872999741696,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          }
+        ],
+        "execution_start_to_success_seconds": 1255.786,
+        "resources": {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+          "samples": 380,
+          "native_peak_pagefile_bytes": 17489293312,
+          "native_peak_working_set_bytes": 20193505280,
+          "observed_peak_rss_bytes": 19630977024,
+          "all_device_peak_used_observed_mib": 12395,
+          "min_host_available_ram_observed_bytes": 1094725632,
+          "scope": "Native process peaks cover whole current owned epoch; RAM/VRAM observations every 10s; GPU values include other apps. No claim of exclusive kernel or full GPU allocation peak."
+        },
+        "human_quality": {
+          "decision": "accepted",
+          "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\control_1.json",
+          "human_evidence": "用户对已展示的本轮 control_1.mp4 质量确认请求明确回复：接受。",
+          "media_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50"
+        },
+        "fast_posted": true,
+        "service_owner": {
+          "pid": 46888,
+          "process_started_at": "134396033001130190",
+          "port": 8297,
+          "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "launch_sha256": "23c4291f5127595f127dc95684fc91fc9c1d32e318c94e6878d834095f99e1a7"
+        },
+        "service_exit": {
+          "passed": true,
+          "mode": "gpu",
+          "graph_posts": null,
+          "checkpoint_payload_bytes": null,
+          "gpu_used": null,
+          "peak_rss_observed_bytes": 19630977024,
+          "pid": 46888,
+          "process_started_at": "134396033001130190",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "owned_listener_verified": true,
+          "schemas": 13,
+          "timed_out": false,
+          "exit_code": 0,
+          "forced": false,
+          "graceful": true,
+          "exited": true,
+          "port_closed": true,
+          "seconds": 12145.311999999976
+        },
+        "next_required": null
+      },
+      "current_text_repair": {
+        "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02",
+        "comparison_sha256": "e06d44b16e2fe8ffce1fefc647a4a7cbc2e07c4a10dd741d8ca27c926509c4cf",
+        "stage": "text_and_pair_passed_vae_offload_failed",
+        "tests_passed": 53,
+        "review": "docs/task-designs/LVA-07-05-text-review.json",
+        "human_quality": null,
+        "text_assessment": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02\\text\\assessment.json",
+        "probe_id": "3f13770f-1c2f-4809-bb89-bcf5f87e14c7"
+      },
+      "historical_run_snapshots": [
+        {
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01",
+          "comparison_sha256": "7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823",
+          "profiles": {
+            "control": "f27c6b44520739ae61617d5df36a7872835ec8bb5421dd4894aaf9802c0c60e5",
+            "fast": "448cd7fa1162c4c750c77cf809d3356bb3f73de29d2929dad6dc7b56850cf9c3"
+          },
+          "graphs": {
+            "control": "1ac7eb835c697d7e12d043f169575475ba73e73740f965f2b3899b7317c29665",
+            "fast": "5321702efe6719baed36e580efba73b68bf47d29f1970b92473a63b770fd4f00"
+          },
+          "actual": {
+            "gpu_service_started": true,
+            "gpu_model_loads": true,
+            "admission_posts": 1,
+            "generation_posts": 0,
+            "samples": 0,
+            "model_payload_bytes_read": null,
+            "full_model_verified": false,
+            "control_quality": null,
+            "fast_quality": null,
+            "service_exit": null,
+            "throughput": null,
+            "pure_backend_equivalence": false,
+            "production_resumed": false
+          },
+          "current_service": {
+            "pid": 42320,
+            "process_started_at": "134395820713084004",
+            "port": 8297,
+            "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01",
+            "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+            "launch_sha256": "b47448d89cadc801ec6684df28476210d867086065926b1bf43b077ee189a63c"
+          },
+          "worker_attestation": {
+            "pid": 29400,
+            "epoch": "70fcf4a5-45e2-4aa8-8882-9980f1ff0c4b",
+            "mode": "gpu",
+            "gpu_authorized": true,
+            "profiles": {
+              "control": "855f7bcf558d4a0ff9b2bd97a7737179e0d37254dc3de76826b4f446cdd10e60",
+              "fast": "de0bee93c66fdaaa7869e761d4c6ecd3dff7c825f64385addbb0317632e19e3d"
+            },
+            "comparison_sha256": "973736939def19675e5fbb92c10afd7304a14528573f99fe2516d09c22278ef2",
+            "wrapper_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\custom_nodes\\ComfyUI-WanVideoWrapper-LVA07",
+            "source_root": "E:\\code\\py\\video-ai",
+            "origin": "registered_in_current_worker; HTTP observed separately"
+          },
+          "admission": {
+            "client_intent": {
+              "admission_id": "7465663b-8e54-4965-8090-422cfe65a53b",
+              "profile_sha256": "de0bee93c66fdaaa7869e761d4c6ecd3dff7c825f64385addbb0317632e19e3d",
+              "epoch": "70fcf4a5-45e2-4aa8-8882-9980f1ff0c4b"
+            },
+            "server_intent": {
+              "admission_id": "7465663b-8e54-4965-8090-422cfe65a53b",
+              "epoch": "70fcf4a5-45e2-4aa8-8882-9980f1ff0c4b",
+              "profile_sha256": "de0bee93c66fdaaa7869e761d4c6ecd3dff7c825f64385addbb0317632e19e3d"
+            },
+            "status": "running_or_unknown; never repost"
+          },
+          "current_admission": {
+            "schema_version": 1,
+            "profile_sha256": "448cd7fa1162c4c750c77cf809d3356bb3f73de29d2929dad6dc7b56850cf9c3",
+            "comparison_sha256": "7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823",
+            "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+            "full_model_verified": true,
+            "admission_id": "404d7605-d9ea-40f1-9ab7-85a4454e1c01",
+            "high_witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0",
+            "low_witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70",
+            "status": "accepted; historical after owned service stopped, not a reusable live epoch"
+          },
+          "final_outcome_evidence": {
+            "task_id": "LVA-07-05",
+            "status": "BLOCKED",
+            "outcome": "head adapter and full original-model pair admission succeeded; control failed in native T5 CPU output transfer under8GiB job commit cap; original prompt also exceeds512-token Wrapper contract",
+            "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-01",
+            "pair": {
+              "schema_version": 1,
+              "profile_sha256": "448cd7fa1162c4c750c77cf809d3356bb3f73de29d2929dad6dc7b56850cf9c3",
+              "comparison_sha256": "7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823",
+              "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+              "full_model_verified": true,
+              "admission_id": "404d7605-d9ea-40f1-9ab7-85a4454e1c01",
+              "high_witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0",
+              "low_witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+            },
+            "experts": {
+              "high": {
+                "static_targets": 689,
+                "dynamic_targets": 406,
+                "head_full_delta_adapter": true,
+                "trace_counts": {
+                  "source_count": 1500,
+                  "applicable": 1500,
+                  "excluded": 0,
+                  "retained": 1500
+                },
+                "head_probe": {
+                  "target": "diffusion_model.head.head.weight",
+                  "coordinates": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      5119
+                    ],
+                    [
+                      63,
+                      0
+                    ],
+                    [
+                      63,
+                      5119
+                    ]
+                  ],
+                  "observed": [
+                    -0.0007991790771484375,
+                    -0.00732421875,
+                    0.0005159378051757812,
+                    0.002185821533203125
+                  ],
+                  "expected": [
+                    -0.0007991790771484375,
+                    -0.00732421875,
+                    0.0005159378051757812,
+                    0.002185821533203125
+                  ],
+                  "finite": true,
+                  "step_reset": 0
+                },
+                "witness_sha256": "472be4cd42999e4839c154f5672bb6168795fdee9e5f29e41e761dbb78b29fa0"
+              },
+              "low": {
+                "static_targets": 648,
+                "dynamic_targets": 406,
+                "head_full_delta_adapter": true,
+                "trace_counts": {
+                  "source_count": 1749,
+                  "applicable": 1459,
+                  "excluded": 290,
+                  "retained": 1459
+                },
+                "head_probe": {
+                  "target": "diffusion_model.head.head.weight",
+                  "coordinates": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      5119
+                    ],
+                    [
+                      63,
+                      0
+                    ],
+                    [
+                      63,
+                      5119
+                    ]
+                  ],
+                  "observed": [
+                    -0.0016813278198242188,
+                    -0.010009765625,
+                    0.0008149147033691406,
+                    0.0037593841552734375
+                  ],
+                  "expected": [
+                    -0.0016813278198242188,
+                    -0.010009765625,
+                    0.0008149147033691406,
+                    0.0037593841552734375
+                  ],
+                  "finite": true,
+                  "step_reset": 0
+                },
+                "witness_sha256": "8f34ab9128874cf8a1a7c85649f7ec89fa2fadf06456d418fd11c08139825e70"
+              }
+            },
+            "control": {
+              "prompt_id": "fd677a68-086e-4fe5-8be2-47c03135c756",
+              "status": "known_execution_error",
+              "node_id": "10",
+              "node_type": "LVA07Prepare",
+              "exception_type": "RuntimeError",
+              "exception_message": "[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 10878976 bytes.\n",
+              "executed_nodes": [
+                "97"
+              ],
+              "diffusion_nodes_executed": false,
+              "technical_complete": false,
+              "media_created": false,
+              "human_quality": null
+            },
+            "fast": {
+              "posted": false,
+              "reason": "control failed, no human acceptance"
+            },
+            "resources": {
+              "samples": 266,
+              "peak_rss_observed_bytes": 18737557504,
+              "peak_private_sampled_bytes": 7206871040,
+              "native_peak_pagefile_observed_bytes": 8589914112,
+              "process_private_commit_limit_bytes": 8589934592,
+              "headroom_at_native_peak_bytes": 20480,
+              "available_ram_after_failure_bytes": 17536610304,
+              "peak_whole_device_gpu_used_mib": 2687,
+              "scope": "10s observations; native process peak_pagefile read once while worker alive. Whole-device GPU includes external apps, not exclusive allocator/kernel usage."
+            },
+            "text_budget": {
+              "scope": "native tokenizer only; original4.55MB spiece tensor, no encoder weights or GPU loaded",
+              "tokenizer_bytes": 4548313,
+              "token_lengths": {
+                "positive": {
+                  "umt5xxl": [
+                    664
+                  ]
+                },
+                "negative": {
+                  "umt5xxl": [
+                    512
+                  ]
+                }
+              },
+              "current_conditioning_limit": 512,
+              "current_wrapper_default_text_len": 512,
+              "original_prompt_not_changed": true
+            },
+            "service": {
+              "passed": true,
+              "mode": "gpu",
+              "graph_posts": null,
+              "checkpoint_payload_bytes": null,
+              "gpu_used": null,
+              "peak_rss_observed_bytes": 19299463168,
+              "pid": 42320,
+              "process_started_at": "134395820713084004",
+              "epoch": "b3be9116-7e05-4c47-ad4d-26050c81ec73",
+              "owned_listener_verified": true,
+              "schemas": 13,
+              "timed_out": false,
+              "exit_code": 0,
+              "forced": false,
+              "graceful": true,
+              "exited": true,
+              "port_closed": true,
+              "seconds": 2832.8429999999935
+            },
+            "verification": {
+              "pinned_cpu_passed": 15,
+              "protocol_passed": 44,
+              "review": "docs/task-designs/LVA-07-05-head-review.json",
+              "important_findings": 0
+            },
+            "acceptance": "full pair proved2959 applicable inputs and290 exact exclusions; this is not video/quality/throughput success",
+            "next_required": "joint T5 memory handoff and original664-token context design; validate text path separately before any further full pair repetition; do not truncate prompt or rePOST terminal failed control",
+            "recorded_at_utc": "2026-11-19T18:03:45.413928+00:00"
+          },
+          "current_resource_summary": {
+            "samples": 266,
+            "peak_rss_observed_bytes": 18737557504,
+            "peak_private_sampled_bytes": 7206871040,
+            "native_peak_pagefile_observed_bytes": 8589914112,
+            "process_private_commit_limit_bytes": 8589934592,
+            "headroom_at_native_peak_bytes": 20480,
+            "available_ram_after_failure_bytes": 17536610304,
+            "peak_whole_device_gpu_used_mib": 2687,
+            "scope": "10s observations; native process peak_pagefile read once while worker alive. Whole-device GPU includes external apps, not exclusive allocator/kernel usage."
+          },
+          "current_admission_timing": {
+            "admission_to_pair_wall_seconds": 2276.229,
+            "admission_to_high_witness_seconds": 1146.494,
+            "high_to_low_witness_envelope_seconds": 1128.233,
+            "scope": "observed filesystem wall envelopes include identity/setup/CPU probes/release, not exclusive kernel or video generation latency",
+            "high_complete": true,
+            "low_complete": true,
+            "pair_complete": true
+          },
+          "control_attempt": {
+            "prompt_id": "fd677a68-086e-4fe5-8be2-47c03135c756",
+            "status": "known_execution_error",
+            "node_id": "10",
+            "node_type": "LVA07Prepare",
+            "exception_type": "RuntimeError",
+            "exception_message": "[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 10878976 bytes.\n",
+            "executed_nodes": [
+              "97"
+            ],
+            "diffusion_nodes_executed": false,
+            "technical_complete": false,
+            "media_created": false,
+            "human_quality": null
+          }
+        },
+        {
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02",
+          "comparison_sha256": "e06d44b16e2fe8ffce1fefc647a4a7cbc2e07c4a10dd741d8ca27c926509c4cf",
+          "final_outcome_evidence": {
+            "task_id": "LVA-07-05",
+            "status": "BLOCKED",
+            "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02",
+            "comparison_sha256": "e06d44b16e2fe8ffce1fefc647a4a7cbc2e07c4a10dd741d8ca27c926509c4cf",
+            "text": {
+              "probe_id": "3f13770f-1c2f-4809-bb89-bcf5f87e14c7",
+              "epoch": "d5425839-da87-4be4-9832-b591bd9d580b",
+              "encoder_released": true,
+              "shapes": {
+                "prompt_embeds": [
+                  1,
+                  664,
+                  4096
+                ],
+                "negative_prompt_embeds": [
+                  1,
+                  512,
+                  4096
+                ]
+              },
+              "dtypes": {
+                "prompt_embeds": "torch.float32",
+                "negative_prompt_embeds": "torch.float32"
+              },
+              "embedding_artifact": {
+                "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-02\\text\\embeddings.safetensors",
+                "bytes": 19267776,
+                "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+              },
+              "stage_metrics": [
+                {
+                  "stage": "native_t5_prepare",
+                  "seconds": 1.6414727999945171,
+                  "epoch": "d5425839-da87-4be4-9832-b591bd9d580b"
+                }
+              ],
+              "observed_peak_private_bytes": 11879981056,
+              "observed_peak_rss_bytes": 2099326976,
+              "samples": 7
+            },
+            "pair": {
+              "schema_version": 1,
+              "profile_sha256": "09b1ae7d084ebbd360c6ab059ddbef23863ec0ee7e5e2d2b15bea9b5b70f4e66",
+              "comparison_sha256": "e06d44b16e2fe8ffce1fefc647a4a7cbc2e07c4a10dd741d8ca27c926509c4cf",
+              "epoch": "d5425839-da87-4be4-9832-b591bd9d580b",
+              "full_model_verified": true,
+              "admission_id": "dfac5207-c443-4464-b638-f1e1e61d8354",
+              "high_witness_sha256": "0ff9d93e719cd82300153e15bf039018ac057a603c6aa6741c2d8407484ed884",
+              "low_witness_sha256": "3b1734f16d59e74da107be5043aaef5e478e1d733b95a46126c01cfc6ca3ac17"
+            },
+            "control": {
+              "prompt_id": "77da1e64-b42c-4c6d-8b4f-7f83b492faad",
+              "status": "known_execution_error",
+              "error": {
+                "node_id": "10",
+                "node_type": "LVA07Prepare",
+                "exception_type": "RuntimeError",
+                "exception_message": "[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 15925248 bytes.\n",
+                "executed": [
+                  "97"
+                ],
+                "traceback": [
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\execution.py\", line 556, in execute\n    output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)\n                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\execution.py\", line 353, in get_output_data\n    return_values = await _async_map_node_over_list(prompt_id, unique_id, obj, input_data_all, obj.FUNCTION, allow_interrupt=True, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\execution.py\", line 327, in _async_map_node_over_list\n    await process_inputs(input_dict, i)\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\execution.py\", line 315, in process_inputs\n    result = f(**inputs)\n",
+                  "  File \"E:\\code\\py\\video-ai\\src\\video_ai\\experiments\\wan_wrapper_nodes.py\", line 176, in execute\n    return self._execute(**kwargs)\n           ~~~~~~~~~~~~~^^^^^^^^^^\n",
+                  "  File \"E:\\code\\py\\video-ai\\src\\video_ai\\experiments\\wan_wrapper_nodes.py\", line 184, in _execute\n    image=context.invoke('WanVideoImageToVideoEncode',width=width,height=height,num_frames=num_frames,force_offload=True,\n          ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        noise_aug_strength=0.,start_latent_strength=1.,end_latent_strength=1.,start_image=start_image,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        fun_or_fl2v_model=False,tiled_vae=False,vae=vae)[0]\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                  "  File \"E:\\code\\py\\video-ai\\src\\video_ai\\experiments\\wan_wrapper_nodes.py\", line 65, in invoke\n    klass=self.registry[name];return getattr(klass(),klass.FUNCTION)(**kwargs)\n                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI\\custom_nodes\\ComfyUI-WanVideoWrapper-LVA07\\nodes.py\", line 1155, in process\n    vae.model.to(offload_device)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 1388, in to\n    return self._apply(convert)\n           ~~~~~~~~~~~^^^^^^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 933, in _apply\n    module._apply(fn)\n    ~~~~~~~~~~~~~^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 933, in _apply\n    module._apply(fn)\n    ~~~~~~~~~~~~~^^^^\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 933, in _apply\n    module._apply(fn)\n    ~~~~~~~~~~~~~^^^^\n",
+                  "  [Previous line repeated 2 more times]\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 966, in _apply\n    param_applied = fn(param)\n",
+                  "  File \"E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages\\torch\\nn\\modules\\module.py\", line 1374, in convert\n    return t.to(\n           ~~~~^\n        device,\n        ^^^^^^^\n        dtype if t.is_floating_point() or t.is_complex() else None,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        non_blocking,\n        ^^^^^^^^^^^^^\n    )\n    ^\n"
+                ]
+              },
+              "technical_complete": false,
+              "media_created": false,
+              "human_quality": null
+            },
+            "fast": {
+              "posted": false
+            },
+            "resources": {
+              "native_peak_pagefile_bytes": 12884893696,
+              "private_limit_bytes": 12884901888,
+              "headroom_bytes": 8192,
+              "host_available_after_failure_bytes": 17572945920
+            },
+            "service": {
+              "passed": true,
+              "mode": "gpu",
+              "graph_posts": null,
+              "checkpoint_payload_bytes": null,
+              "gpu_used": null,
+              "peak_rss_observed_bytes": 19295608832,
+              "pid": 11824,
+              "process_started_at": "134395872290249481",
+              "epoch": "d5425839-da87-4be4-9832-b591bd9d580b",
+              "owned_listener_verified": true,
+              "schemas": 13,
+              "timed_out": false,
+              "exit_code": 0,
+              "forced": false,
+              "graceful": true,
+              "exited": true,
+              "port_closed": true,
+              "seconds": 2422.25
+            },
+            "next_required": "Isolated original VAE offload budget diagnostic before any further full pair; no repost of terminal failed control"
+          }
+        },
+        {
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-03",
+          "comparison_sha256": "b0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14",
+          "final_outcome_evidence": {
+            "task_id": "LVA-07-05",
+            "status": "IN_PROGRESS; native crash diagnosis",
+            "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-03",
+            "comparison_sha256": "b0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14",
+            "preparation": {
+              "receipt": {
+                "probe_id": "224d47b8-8351-45b9-a7c8-269db85fb8bf",
+                "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84",
+                "comparison_sha256": "b0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14",
+                "control_profile_sha256": "18e76ca0af6a64f1e38670cf24c8017dc2c45ee49f24f8e16ad0cacdfe0490dc",
+                "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+                "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+                "t5_sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+                "embedding_artifact": {
+                  "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-03\\text\\embeddings.safetensors",
+                  "bytes": 19267776,
+                  "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+                },
+                "dtypes": {
+                  "prompt_embeds": "torch.float32",
+                  "negative_prompt_embeds": "torch.float32"
+                },
+                "encoder_released": true,
+                "shapes": {
+                  "prompt_embeds": [
+                    1,
+                    664,
+                    4096
+                  ],
+                  "negative_prompt_embeds": [
+                    1,
+                    512,
+                    4096
+                  ]
+                },
+                "image_prepared": true,
+                "vae_cpu": true,
+                "vae_precision": "fp32",
+                "image_embeds_finite": true,
+                "image_input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+                "image_embeds_shape": [
+                  16,
+                  24,
+                  54,
+                  96
+                ]
+              },
+              "stage_metrics": [
+                {
+                  "stage": "native_t5_prepare",
+                  "seconds": 1.4849711000570096,
+                  "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84"
+                },
+                {
+                  "stage": "vae_i2v_prepare",
+                  "seconds": 4.662445999972988,
+                  "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84"
+                }
+              ],
+              "native_peak_pagefile_bytes": 12871028736,
+              "observed_peak_rss_bytes": 2802888704,
+              "samples": 7,
+              "scope": "same-worker actual combined text/image preparation; CPUVAE retained; no pair/sampling/video yet"
+            },
+            "pair": {
+              "pair": {
+                "schema_version": 1,
+                "profile_sha256": "34c37f2ccc490af1a2dac85ec4473fc01f139d0893076dcfd6e275b166f9a97e",
+                "comparison_sha256": "b0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14",
+                "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84",
+                "full_model_verified": true,
+                "admission_id": "9bf10b94-fbd8-4f2c-9d1d-053467dc2157",
+                "high_witness_sha256": "69add83225491c3ea3e4af0fe749c8afca4cd77e4cef9088abe79a99e8e5c90b",
+                "low_witness_sha256": "5a1d9e7a609975e6ae116d379357def45e6467306fbe557a8e6eb35e20601427"
+              },
+              "experts": {
+                "high": {
+                  "role": "high",
+                  "static_targets": 689,
+                  "dynamic_targets": 406,
+                  "full_model_verified": true,
+                  "head_full_delta_adapter": true,
+                  "source_parameters_mutated": false,
+                  "trace_counts": {
+                    "source_count": 1500,
+                    "applicable": 1500,
+                    "excluded": 0,
+                    "retained": 1500
+                  }
+                },
+                "low": {
+                  "role": "low",
+                  "static_targets": 648,
+                  "dynamic_targets": 406,
+                  "full_model_verified": true,
+                  "head_full_delta_adapter": true,
+                  "source_parameters_mutated": false,
+                  "trace_counts": {
+                    "source_count": 1749,
+                    "applicable": 1459,
+                    "excluded": 290,
+                    "retained": 1459
+                  }
+                }
+              },
+              "timing": {
+                "admission_to_pair_wall_seconds": 2254.014449596405,
+                "high_seconds": 1129.1732578277588,
+                "low_envelope_seconds": 1123.343500137329
+              },
+              "status": "accepted historical after native worker crash, not reusable epoch"
+            },
+            "control": {
+              "prompt_id": "b4d56a51-b8ec-43fd-b9dc-4a891277b7e9",
+              "outcome": "unknown prompt outcome after native process access violation; original accepted ID preserved, no repost",
+              "sampling_entered": true,
+              "completed_steps": 0,
+              "completed_forward_counts": null,
+              "crash_stack_location": "native model.py3298 block.to(offload_device), torch Module.to/_apply/convert",
+              "windows_fault_module": "VCRUNTIME140.dll",
+              "windows_exception_code": "0xc0000005",
+              "technical_complete": false,
+              "media_created": false,
+              "human_quality": null,
+              "final_history_available": false
+            },
+            "fast": {
+              "posted": false
+            },
+            "service": {
+              "passed": false,
+              "mode": "gpu",
+              "graph_posts": null,
+              "checkpoint_payload_bytes": null,
+              "gpu_used": null,
+              "peak_rss_observed_bytes": 18210279424,
+              "pid": 8216,
+              "process_started_at": "134395907150951697",
+              "epoch": "57b904d1-f47c-4474-8db1-4ea0fed17b84",
+              "owned_listener_verified": true,
+              "schemas": 13,
+              "timed_out": false,
+              "exit_code": 3221225477,
+              "forced": false,
+              "graceful": false,
+              "exited": true,
+              "port_closed": true,
+              "seconds": 2396.1720000000205
+            },
+            "resources": {
+              "samples": 232,
+              "observed_native_peak_pagefile_bytes": 12871028736,
+              "observed_peak_rss_bytes": 18677964800,
+              "last_sample": {
+                "at_utc": "2026-11-19T20:18:20.264525+00:00",
+                "pid": 8216,
+                "memory": {
+                  "rss": 2279649280,
+                  "vms": 6957445120,
+                  "num_page_faults": 248409791,
+                  "peak_wset": 18677964800,
+                  "wset": 2279649280,
+                  "peak_paged_pool": 39410912,
+                  "paged_pool": 37970848,
+                  "peak_nonpaged_pool": 194104,
+                  "nonpaged_pool": 169744,
+                  "pagefile": 6957445120,
+                  "peak_pagefile": 12871028736,
+                  "private": 6957445120
+                },
+                "available_ram_bytes": 18424283136,
+                "gpu_mib": "2870, 21166"
+              },
+              "scope": "10s observations; native crash instantaneous memory peak unavailable; do not attribute crash to commit cap without diagnostic"
+            },
+            "next_required": "Single original block CPU/GPU return probe under same native read-only mapping and owned bounds; no full pair before root-cause evidence"
+          }
+        },
+        {
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-04",
+          "comparison_sha256": "a0197ea328d4d7d044d7cbdbe475c07791738ab5f533d97415292789fc7288dd",
+          "final_outcome_evidence": {
+            "task_id": "LVA-07-05",
+            "status": "IN_PROGRESS; decodecommitrepair",
+            "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-04",
+            "comparison_sha256": "a0197ea328d4d7d044d7cbdbe475c07791738ab5f533d97415292789fc7288dd",
+            "preparation": {
+              "receipt": {
+                "probe_id": "03d744af-f705-4b9f-9c1a-9b23fcacb544",
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8",
+                "comparison_sha256": "a0197ea328d4d7d044d7cbdbe475c07791738ab5f533d97415292789fc7288dd",
+                "control_profile_sha256": "280cac642bb719c85f79847a2a3ef344fbe8e7376f2ab57cd48bf27e5ed9fbbc",
+                "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+                "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+                "t5_sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+                "embedding_artifact": {
+                  "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-04\\text\\embeddings.safetensors",
+                  "bytes": 19267776,
+                  "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+                },
+                "dtypes": {
+                  "prompt_embeds": "torch.float32",
+                  "negative_prompt_embeds": "torch.float32"
+                },
+                "encoder_released": true,
+                "shapes": {
+                  "prompt_embeds": [
+                    1,
+                    664,
+                    4096
+                  ],
+                  "negative_prompt_embeds": [
+                    1,
+                    512,
+                    4096
+                  ]
+                },
+                "image_prepared": true,
+                "vae_cpu": true,
+                "vae_precision": "fp32",
+                "image_embeds_finite": true,
+                "image_input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+                "image_embeds_shape": [
+                  16,
+                  24,
+                  54,
+                  96
+                ]
+              },
+              "stage_metrics": [
+                {
+                  "stage": "native_t5_prepare",
+                  "seconds": 1.5190221999655478,
+                  "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+                },
+                {
+                  "stage": "vae_i2v_prepare",
+                  "seconds": 4.663537200016435,
+                  "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+                }
+              ],
+              "native_peak_pagefile_bytes": 12870340608,
+              "observed_peak_rss_bytes": 2804461568,
+              "samples": 9
+            },
+            "pair": {
+              "pair": {
+                "schema_version": 1,
+                "profile_sha256": "7c7ae97540032f100fe3ca5f4c379214c62472ddbb52ea0eba5107e12728587a",
+                "comparison_sha256": "a0197ea328d4d7d044d7cbdbe475c07791738ab5f533d97415292789fc7288dd",
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8",
+                "full_model_verified": true,
+                "admission_id": "1f00cebe-bd67-4b3b-a2cf-ac4797395f38",
+                "high_witness_sha256": "d289d064ea3717f0d6b54a74d7ced527b350a89c98aa38d1b7c02476eafff89c",
+                "low_witness_sha256": "7980e88b9e0cf391b64f32a0d28cdb585cefddc1ba641b15ddefae0a53a2e8ef"
+              },
+              "experts": {
+                "high": {
+                  "role": "high",
+                  "static_targets": 689,
+                  "dynamic_targets": 406,
+                  "head_full_delta_adapter": true,
+                  "full_model_verified": true,
+                  "trace_counts": {
+                    "source_count": 1500,
+                    "applicable": 1500,
+                    "excluded": 0,
+                    "retained": 1500
+                  }
+                },
+                "low": {
+                  "role": "low",
+                  "static_targets": 648,
+                  "dynamic_targets": 406,
+                  "head_full_delta_adapter": true,
+                  "full_model_verified": true,
+                  "trace_counts": {
+                    "source_count": 1749,
+                    "applicable": 1459,
+                    "excluded": 290,
+                    "retained": 1459
+                  }
+                }
+              },
+              "timing": {
+                "admission_to_pair_wall_seconds": 2262.517471075058,
+                "high_seconds": 1131.4546201229095,
+                "low_envelope_seconds": 1129.5378279685974
+              }
+            },
+            "control": {
+              "prompt_id": "875719f4-24f7-4bd8-939f-080d3667686f",
+              "status": "known_execution_error",
+              "node_id": "50",
+              "node_type": "WanVideoDecode",
+              "exception_type": "torch.AcceleratorError",
+              "exception_message": "CUDA error: unknown error\nSearch for `cudaErrorUnknown' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\n\n",
+              "sampling_completed": true,
+              "high": {
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8",
+                "profile_sha256": "280cac642bb719c85f79847a2a3ef344fbe8e7376f2ab57cd48bf27e5ed9fbbc",
+                "role": "high",
+                "actual_forwards": 30,
+                "timesteps": [
+                  1000,
+                  994,
+                  989,
+                  984,
+                  978,
+                  972,
+                  965,
+                  959,
+                  952,
+                  945,
+                  937,
+                  929,
+                  921,
+                  912,
+                  902
+                ],
+                "sigmas": [
+                  1.0,
+                  0.9948979616165161,
+                  0.9895833134651184,
+                  0.9840425848960876,
+                  0.97826087474823,
+                  0.9722222089767456,
+                  0.9659090638160706,
+                  0.9593023061752319,
+                  0.9523810148239136,
+                  0.9451219439506531,
+                  0.9375,
+                  0.9294871687889099,
+                  0.9210526347160339,
+                  0.9121621251106262,
+                  0.9027777910232544,
+                  0.8928571343421936
+                ],
+                "text_lengths": [
+                  512,
+                  664
+                ],
+                "head_full_delta_installations": 0,
+                "control_lora_applied": 0
+              },
+              "low": {
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8",
+                "profile_sha256": "280cac642bb719c85f79847a2a3ef344fbe8e7376f2ab57cd48bf27e5ed9fbbc",
+                "role": "low",
+                "actual_forwards": 50,
+                "timesteps": [
+                  892,
+                  882,
+                  871,
+                  859,
+                  846,
+                  833,
+                  818,
+                  803,
+                  787,
+                  769,
+                  750,
+                  729,
+                  706,
+                  681,
+                  654,
+                  625,
+                  592,
+                  555,
+                  514,
+                  468,
+                  416,
+                  357,
+                  288,
+                  208,
+                  113
+                ],
+                "sigmas": [
+                  0.8928571343421936,
+                  0.882352888584137,
+                  0.8712121248245239,
+                  0.859375,
+                  0.8467742204666138,
+                  0.8333333134651184,
+                  0.818965494632721,
+                  0.8035714626312256,
+                  0.7870370149612427,
+                  0.7692307829856873,
+                  0.75,
+                  0.7291666269302368,
+                  0.70652174949646,
+                  0.6818181872367859,
+                  0.6547619104385376,
+                  0.625,
+                  0.5921052694320679,
+                  0.5555555820465088,
+                  0.5147058963775635,
+                  0.46875,
+                  0.4166666567325592,
+                  0.3571428656578064,
+                  0.2884615361690521,
+                  0.2083333283662796,
+                  0.11363635957241058,
+                  0.0
+                ],
+                "text_lengths": [
+                  512,
+                  664
+                ],
+                "head_full_delta_installations": 0,
+                "control_lora_applied": 0
+              },
+              "technical_complete": false,
+              "media_created": false,
+              "human_quality": null
+            },
+            "fast": {
+              "posted": false
+            },
+            "resources": {
+              "native_peak_pagefile_bytes": 12884738048,
+              "process_private_commit_limit_bytes": 12884901888,
+              "headroom_bytes": 163840,
+              "native_peak_rss_bytes": 19677544448,
+              "available_ram_after_failure_bytes": 18018492416
+            },
+            "service": {
+              "passed": true,
+              "mode": "gpu",
+              "graph_posts": null,
+              "checkpoint_payload_bytes": null,
+              "gpu_used": null,
+              "peak_rss_observed_bytes": 19536318464,
+              "pid": 39592,
+              "process_started_at": "134395946568985429",
+              "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8",
+              "owned_listener_verified": true,
+              "schemas": 13,
+              "timed_out": false,
+              "exit_code": 0,
+              "forced": false,
+              "graceful": true,
+              "exited": true,
+              "port_closed": true,
+              "seconds": 3839.5630000000237
+            },
+            "stage_metrics": [
+              {
+                "stage": "native_t5_prepare",
+                "seconds": 1.5190221999655478,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "vae_i2v_prepare",
+                "seconds": 4.663537200016435,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "text_cache_bind",
+                "seconds": 0.0004414999857544899,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "image_cache_bind",
+                "seconds": 0.00302990002091974,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "high_build",
+                "seconds": 0.7284766999655403,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "high_sample",
+                "seconds": 469.19075519999024,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "high_release",
+                "seconds": 1.3202938999747857,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "low_build",
+                "seconds": 0.6363073000102304,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "low_sample",
+                "seconds": 772.9608274000348,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "low_release",
+                "seconds": 1.3466064999811351,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              },
+              {
+                "stage": "vae_decode",
+                "seconds": 1.357013700006064,
+                "epoch": "ae4f0608-67a4-4b20-a192-e36327530fd8"
+              }
+            ],
+            "next_required": "Selected18GiB originaldecoderprobe passed; sealnewsource and fulloriginalcontrol undermeasuredcommit, realacceptancebeforefast"
+          }
+        },
+        {
+          "comparison_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-05",
+          "comparison_sha256": "04337a20dc43d93758d379eca2b8e92842532aeacc882de1b837efa5dc932e5c",
+          "final_outcome_evidence": {
+            "task_id": "LVA-07-05",
+            "status": "IN_PROGRESS; RGBlayoutrepair",
+            "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-05",
+            "comparison_sha256": "04337a20dc43d93758d379eca2b8e92842532aeacc882de1b837efa5dc932e5c",
+            "preparation": {
+              "receipt": {
+                "probe_id": "95cdb413-a5cd-4bbd-afe7-7bfb1be2224d",
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+                "comparison_sha256": "04337a20dc43d93758d379eca2b8e92842532aeacc882de1b837efa5dc932e5c",
+                "control_profile_sha256": "b61649a0699cabd9e3daa20312fb3e37d123aa06e5c51dc700af3a104b370b30",
+                "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+                "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+                "t5_sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+                "embedding_artifact": {
+                  "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-05\\text\\embeddings.safetensors",
+                  "bytes": 19267776,
+                  "sha256": "7a907a1f90eb47eba899c93dc403f1bfcf48b71082ffcf8ee7317479c1c07893"
+                },
+                "dtypes": {
+                  "prompt_embeds": "torch.float32",
+                  "negative_prompt_embeds": "torch.float32"
+                },
+                "encoder_released": true,
+                "shapes": {
+                  "prompt_embeds": [
+                    1,
+                    664,
+                    4096
+                  ],
+                  "negative_prompt_embeds": [
+                    1,
+                    512,
+                    4096
+                  ]
+                },
+                "image_prepared": true,
+                "vae_cpu": true,
+                "vae_precision": "fp32",
+                "image_embeds_finite": true,
+                "image_input_sha256": "57ca0f059560e5582888e3f7e0080a3d6b04ab5d47df246c572f738c125d7df2",
+                "image_embeds_shape": [
+                  16,
+                  24,
+                  54,
+                  96
+                ]
+              },
+              "stage_metrics": [
+                {
+                  "stage": "native_t5_prepare",
+                  "seconds": 1.5166723000002094,
+                  "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+                },
+                {
+                  "stage": "vae_i2v_prepare",
+                  "seconds": 4.539035900030285,
+                  "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+                }
+              ],
+              "native_peak_pagefile_bytes": 13306888192,
+              "observed_peak_rss_bytes": 2805501952,
+              "samples": 11
+            },
+            "pair": {
+              "pair": {
+                "schema_version": 1,
+                "profile_sha256": "51abf45f17cea33ec22b8885a40acf7e27685f3ae29e2ee6a16f75783f134a80",
+                "comparison_sha256": "04337a20dc43d93758d379eca2b8e92842532aeacc882de1b837efa5dc932e5c",
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+                "full_model_verified": true,
+                "admission_id": "3701664d-94b0-4dcd-b6e3-5beab91fe00e",
+                "high_witness_sha256": "9661a8a467ccb7d08959e3541e3ce6961c74b20a63c321de3154c22a03239cb1",
+                "low_witness_sha256": "1e8718f38844d837aa05ad183a32b7dfaa11020a59652c0059df2dd4db3e8e19"
+              },
+              "experts": {
+                "high": {
+                  "role": "high",
+                  "static_targets": 689,
+                  "dynamic_targets": 406,
+                  "head_full_delta_adapter": true,
+                  "full_model_verified": true,
+                  "trace_counts": {
+                    "source_count": 1500,
+                    "applicable": 1500,
+                    "excluded": 0,
+                    "retained": 1500
+                  }
+                },
+                "low": {
+                  "role": "low",
+                  "static_targets": 648,
+                  "dynamic_targets": 406,
+                  "head_full_delta_adapter": true,
+                  "full_model_verified": true,
+                  "trace_counts": {
+                    "source_count": 1749,
+                    "applicable": 1459,
+                    "excluded": 290,
+                    "retained": 1459
+                  }
+                }
+              },
+              "timing": {
+                "admission_to_pair_wall_seconds": 2258.910795688629,
+                "high_seconds": 1127.1917967796326,
+                "low_envelope_seconds": 1130.2087008953094
+              }
+            },
+            "control": {
+              "prompt_id": "657eeab2-4ac1-413b-a9e4-10bc91be0665",
+              "status": "known_execution_error",
+              "node_id": "108",
+              "node_type": "LVA07SaveVideo",
+              "exception_type": "BufferError",
+              "exception_message": "memoryview: underlying buffer is not C-contiguous\n",
+              "sampling_completed": true,
+              "high": {
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+                "profile_sha256": "b61649a0699cabd9e3daa20312fb3e37d123aa06e5c51dc700af3a104b370b30",
+                "role": "high",
+                "actual_forwards": 30,
+                "timesteps": [
+                  1000,
+                  994,
+                  989,
+                  984,
+                  978,
+                  972,
+                  965,
+                  959,
+                  952,
+                  945,
+                  937,
+                  929,
+                  921,
+                  912,
+                  902
+                ],
+                "sigmas": [
+                  1.0,
+                  0.9948979616165161,
+                  0.9895833134651184,
+                  0.9840425848960876,
+                  0.97826087474823,
+                  0.9722222089767456,
+                  0.9659090638160706,
+                  0.9593023061752319,
+                  0.9523810148239136,
+                  0.9451219439506531,
+                  0.9375,
+                  0.9294871687889099,
+                  0.9210526347160339,
+                  0.9121621251106262,
+                  0.9027777910232544,
+                  0.8928571343421936
+                ],
+                "text_lengths": [
+                  512,
+                  664
+                ],
+                "head_full_delta_installations": 0,
+                "control_lora_applied": 0
+              },
+              "low": {
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+                "profile_sha256": "b61649a0699cabd9e3daa20312fb3e37d123aa06e5c51dc700af3a104b370b30",
+                "role": "low",
+                "actual_forwards": 50,
+                "timesteps": [
+                  892,
+                  882,
+                  871,
+                  859,
+                  846,
+                  833,
+                  818,
+                  803,
+                  787,
+                  769,
+                  750,
+                  729,
+                  706,
+                  681,
+                  654,
+                  625,
+                  592,
+                  555,
+                  514,
+                  468,
+                  416,
+                  357,
+                  288,
+                  208,
+                  113
+                ],
+                "sigmas": [
+                  0.8928571343421936,
+                  0.882352888584137,
+                  0.8712121248245239,
+                  0.859375,
+                  0.8467742204666138,
+                  0.8333333134651184,
+                  0.818965494632721,
+                  0.8035714626312256,
+                  0.7870370149612427,
+                  0.7692307829856873,
+                  0.75,
+                  0.7291666269302368,
+                  0.70652174949646,
+                  0.6818181872367859,
+                  0.6547619104385376,
+                  0.625,
+                  0.5921052694320679,
+                  0.5555555820465088,
+                  0.5147058963775635,
+                  0.46875,
+                  0.4166666567325592,
+                  0.3571428656578064,
+                  0.2884615361690521,
+                  0.2083333283662796,
+                  0.11363635957241058,
+                  0.0
+                ],
+                "text_lengths": [
+                  512,
+                  664
+                ],
+                "head_full_delta_installations": 0,
+                "control_lora_applied": 0
+              },
+              "vae_decode_completed": true,
+              "finite_before_quantization_passed": true,
+              "encoder_intent_written": false,
+              "ffmpeg_started": false,
+              "media_created": false,
+              "technical_complete": false,
+              "human_quality": null
+            },
+            "fast": {
+              "posted": false
+            },
+            "resources": {
+              "native_peak_commit_bytes": 17489768448,
+              "private_limit_bytes": 19327352832,
+              "native_peak_rss_bytes": 20189417472
+            },
+            "stage_metrics": [
+              {
+                "stage": "native_t5_prepare",
+                "seconds": 1.5166723000002094,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "vae_i2v_prepare",
+                "seconds": 4.539035900030285,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "text_cache_bind",
+                "seconds": 0.00022519996855407953,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "image_cache_bind",
+                "seconds": 0.0030544999754056334,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "high_build",
+                "seconds": 0.7162643999909051,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "high_sample",
+                "seconds": 469.05534819996683,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "high_release",
+                "seconds": 1.3261881999787875,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "low_build",
+                "seconds": 0.6388249999727122,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "low_sample",
+                "seconds": 772.9361547000008,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "low_release",
+                "seconds": 1.3047771999845281,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "vae_decode",
+                "seconds": 7.366667700000107,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              },
+              {
+                "stage": "encode_validate",
+                "seconds": 0.2886904999613762,
+                "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304"
+              }
+            ],
+            "service": {
+              "passed": true,
+              "mode": "gpu",
+              "graph_posts": null,
+              "checkpoint_payload_bytes": null,
+              "gpu_used": null,
+              "peak_rss_observed_bytes": 19592581120,
+              "pid": 36488,
+              "process_started_at": "134395990880023336",
+              "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+              "owned_listener_verified": true,
+              "schemas": 13,
+              "timed_out": false,
+              "exit_code": 0,
+              "forced": false,
+              "graceful": true,
+              "exited": true,
+              "port_closed": true,
+              "seconds": 3868.0469999999623
+            },
+            "next_required": "NewsourcecontiguousRGBpacking; oldinmemoryframesnotdurablysaved, do not replay oldfailedID"
+          }
+        }
+      ],
+      "current_vae_repair": {
+        "stage": "combined_preparation_and_pair_passed_native_sampler_crash",
+        "tests_passed": 61,
+        "design": "docs/task-designs/LVA-07-05-vae-design.md",
+        "review": "docs/task-designs/LVA-07-05-vae-review.json",
+        "probe_id": "224d47b8-8351-45b9-a7c8-269db85fb8bf",
+        "assessment": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-03\\text\\assessment.json",
+        "native_diagnostic": "E:/VideoAI/scratch/benchmarks/LVA-07-05-transfer-diagnostic-20261120"
+      },
+      "current_offload_repair": {
+        "stage": "actual_all80controlforwards_passed_decoder_commit_repair",
+        "tests_passed": 67,
+        "actual_block_probe_passed": true,
+        "review": "docs/task-designs/LVA-07-05-offload-review.json"
+      },
+      "current_decode_budget_repair": {
+        "design": "docs/task-designs/LVA-07-05-decode-budget-design.md",
+        "tests_passed": 68,
+        "selected_private_limit_bytes": 19327352832,
+        "min_available_commit_bytes": 27917287424,
+        "actual_selected_decoder_probe_passed": true,
+        "full_real_video_passed": true,
+        "stage": "actual_original_control_fullsampling_decode_and_media_passed",
+        "review": "docs/task-designs/LVA-07-05-decode-budget-review.json"
+      },
+      "current_encode_layout_repair": {
+        "stage": "complete",
+        "tests_passed": 69,
+        "review": "docs/task-designs/LVA-07-05-encode-layout-review.json",
+        "actual_original_video_passed": true,
+        "assessment": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\control-assessment.json",
+        "both_original_videos_human_accepted": true
+      },
+      "fast_attempt": {
+        "prompt_id": "1dafecde-bd7a-493d-8c39-7bc1bfb4e4ae",
+        "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+        "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+        "graph_sha256": "5321702efe6719baed36e580efba73b68bf47d29f1970b92473a63b770fd4f00",
+        "media": {
+          "retained": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\fast_1.mp4",
+          "retained_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5",
+          "last_frame": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\media-checks\\d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5-last.png",
+          "last_frame_sha256": "58306485b1933a30a1f962f8a23d539ed9ff3758261aa32a7c2fb039e326e45a"
+        },
+        "technical": {
+          "width": 768,
+          "height": 432,
+          "codec": "h264",
+          "pixel_format": "yuv420p",
+          "fps": 16,
+          "frames": 93,
+          "duration": 5.8125
+        },
+        "pts_count": 93,
+        "black": {
+          "frames": 93,
+          "suspect_black": false,
+          "longest_black_run": 0
+        },
+        "technical_complete": true,
+        "execution_seconds": 96.539,
+        "client_intent_to_technical_receipt_wall_seconds": 99.33689737319946,
+        "node_evidence": {
+          "high": {
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+            "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+            "role": "high",
+            "actual_forwards": 2,
+            "timesteps": [
+              1000,
+              937
+            ],
+            "sigmas": [
+              1.0,
+              0.9375,
+              0.8333333134651184
+            ],
+            "text_lengths": [
+              664
+            ],
+            "head_full_delta_installations": 1,
+            "control_lora_applied": null
+          },
+          "low": {
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+            "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+            "role": "low",
+            "actual_forwards": 2,
+            "timesteps": [
+              833,
+              625
+            ],
+            "sigmas": [
+              0.8333333134651184,
+              0.625,
+              0.0
+            ],
+            "text_lengths": [
+              664
+            ],
+            "head_full_delta_installations": 1,
+            "control_lora_applied": null
+          }
+        },
+        "human_quality": {
+          "decision": "accepted",
+          "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+          "human_evidence": "用户在已展示本轮 fast_1.mp4 并请求独立确认画面质量后明确回复：视频没有问题。",
+          "media_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5"
+        },
+        "stage": "complete",
+        "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+        "resources": {
+          "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+          "samples": 1203,
+          "native_peak_pagefile_bytes": 17489293312,
+          "native_peak_working_set_bytes": 20193505280,
+          "observed_peak_rss_bytes": 19630977024,
+          "all_device_peak_used_observed_mib": 12395,
+          "min_host_available_ram_observed_bytes": 1094725632,
+          "scope": "Whole owned epoch process peaks; 10s host/GPU observations include admission, both trials, human wait and other applications. Not exclusive model GPU peaks."
+        },
+        "stage_metrics": [
+          {
+            "stage": "text_cache_bind",
+            "seconds": 0.0002316000172868371,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "image_cache_bind",
+            "seconds": 0.002725000027567148,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_build",
+            "seconds": 0.9627132000168785,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_sample",
+            "seconds": 40.86145159997977,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "high_release",
+            "seconds": 1.3596324999816716,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_build",
+            "seconds": 0.7111975000007078,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_sample",
+            "seconds": 40.56990339996992,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "low_release",
+            "seconds": 1.280986599973403,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "vae_decode",
+            "seconds": 7.332009200006723,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          },
+          {
+            "stage": "encode_validate",
+            "seconds": 3.374431399977766,
+            "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+          }
+        ],
+        "service_exit": {
+          "passed": true,
+          "mode": "gpu",
+          "graph_posts": null,
+          "checkpoint_payload_bytes": null,
+          "gpu_used": null,
+          "peak_rss_observed_bytes": 19630977024,
+          "pid": 46888,
+          "process_started_at": "134396033001130190",
+          "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+          "owned_listener_verified": true,
+          "schemas": 13,
+          "timed_out": false,
+          "exit_code": 0,
+          "forced": false,
+          "graceful": true,
+          "exited": true,
+          "port_closed": true,
+          "seconds": 12145.311999999976
+        },
+        "completed_at_utc": "2026-11-20T04:23:51.588502+00:00"
+      },
+      "current_pair_timing": {
+        "execution_source": "Original Comfy execution_start to execution_success timestamps; each mode one sample; fast shares prior text/image cache and same epoch",
+        "control_execution_seconds": 1255.786,
+        "fast_execution_seconds": 96.539,
+        "observed_execution_ratio": 13.00806927770124,
+        "ratio_scope": "Descriptive single pair only; 40-step CFG3.5 control vs 4-step CFG1 LoRA fast. Not stable acceleration or pure backend equivalence. No P50/P95 or 1080P claim.",
+        "epoch_process_start_to_pair_receipt_wall_seconds": 2415.588330745697,
+        "control_technical_receipt_to_human_review_recorded_wall_seconds": 8309.531288385391,
+        "human_interval_scope": "Includes human/idle/reporting time; not GPU execution or human-only latency",
+        "sealed_group_handoff_to_fast_technical_receipt_wall_seconds": 12173.330345153809,
+        "handoff_clock_source": "Immutable sealed experiment.json mtime to fast technical receipt mtime; includes setup and review wait; service duration is separate, not added to nested stages"
+      },
+      "completed_at_utc": "2026-11-20T04:23:51.588502+00:00",
+      "completion_record": "docs/task-designs/LVA-07-05-completion.json",
+      "next_task": {
+        "id": "LVA-07-06",
+        "status": "NOT_STARTED",
+        "reason": "The completed task design requires user choice before expansion; this quality feedback accepts fast and does not request expanded work."
+      }
+    }
+  },
+  "remaining_work": [],
+  "remaining_acceptance": [],
+  "next_task": null,
+  "production_ready": false,
+  "production_resumed": false,
+  "paid_calls": false,
+  "limitations": [
+    "Fixed fixture/seed warm n3; identical outputs are planned repeats, not independent quality draws or stable generalization.",
+    "Cold is first video after full admission prewarming; full controller-start envelope and setup are preserved.",
+    "Control40steps/CFG3.5 vs fast4steps/CFG1/fullLoRA; historic W0 also differs in backend/time stepping/VAE details. Ratios are not pure backend attribution.",
+    "Child modes use different accepted own-mode parent cold images; compare complete recipe chains, not same-image single-factor LoRA.",
+    "Actual1080P handoff-to-ready intervals include serial matrix ordering, all-native-review gate, queue/preparation/human response; do not interpret final wall-clock ordering as causal recipe speed.",
+    "Pair/prepare/trim filesystem receipt spans are audit UTC envelopes, not monotonic exclusive-stage kernel timers. Trim envelope uses immutable trim-binding and initial technical-complete writes, excluding later proof refreshes.",
+    "No deliberately introduced real response-loss or worker-death failure; actual completed archive recovery0HTTP/submit/producer plus prior injected recovery tests are separate evidence.",
+    "No production resume, paid calls, dependency/model changes or automatic promotion."
+  ]
+}

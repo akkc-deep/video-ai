@@ -180,10 +180,14 @@ def _resource_guard(sample,root):
 
 
 def _listener_owned(port, pid):
-    p = subprocess.run(['netstat', '-ano', '-p', 'tcp'], capture_output=True, text=True, timeout=10)
-    matches = [line.split() for line in p.stdout.splitlines()
-               if 'LISTENING' in line and line.split()[1] == f'127.0.0.1:{port}']
-    if p.returncode or len(matches) != 1 or matches[0][-1] != str(pid):
+    # netstat's localized header uses the Windows OEM code page, independently
+    # of Python UTF8 mode. The TCP address/state/PID protocol itself is ASCII.
+    p = subprocess.run(['netstat', '-ano', '-p', 'tcp'], capture_output=True, timeout=10)
+    suffix=(':'+str(port)).encode('ascii')
+    rows=[line.split() for line in (p.stdout or b'').splitlines()]
+    matches=[row for row in rows if len(row)>=5 and row[0]==b'TCP' and row[3]==b'LISTENING' and row[1].endswith(suffix)]
+    if (p.returncode or len(matches)!=1 or matches[0][1]!=f'127.0.0.1:{port}'.encode('ascii')
+            or matches[0][-1]!=str(pid).encode('ascii')):
         raise RuntimeError('service listener ownership differs')
 
 

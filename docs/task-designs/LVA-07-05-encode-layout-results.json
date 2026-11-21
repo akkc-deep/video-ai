@@ -1,0 +1,479 @@
+{
+  "task_id": "LVA-07-05",
+  "tests_passed": 69,
+  "tests_seconds": 8.6,
+  "red_failures": 2,
+  "actual_native_layout_ffmpeg_93_frame_test_passed": true,
+  "review": {
+    "reviewer": "/root/text_repair_review",
+    "verdict": "clean; no important findings",
+    "critical": 0,
+    "important": 0,
+    "scope": "exactnativeCHWT-to-THWCRGBordering/unchangedquantization/finitecheck/packedhashandFFmpeginput",
+    "gpu_run": false
+  },
+  "actual_original_video_passed": true,
+  "current_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+  "current_owner": {
+    "pid": 46888,
+    "process_started_at": "134396033001130190",
+    "port": 8297,
+    "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+    "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+    "launch_sha256": "23c4291f5127595f127dc95684fc91fc9c1d32e318c94e6878d834095f99e1a7"
+  },
+  "combined_preparation_passed": true,
+  "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+  "full_model_verified": true,
+  "admission_receipt": {
+    "schema_version": 1,
+    "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+    "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+    "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+    "full_model_verified": true,
+    "admission_id": "b089219c-455f-4b19-908a-00f896a5e7ac",
+    "high_witness_sha256": "41a31bfdfb82bda762bc7be35042748c6e570ca1ad10ff71975ea36976743873",
+    "low_witness_sha256": "b59fe13a0bf4737c5894075ce9a36552791092eac97ee7a4294f5cabfea44fbe"
+  },
+  "control_prompt_id": "11ebef23-82f0-40a4-916d-104f026993ea",
+  "stage": "complete",
+  "fast_posted": true,
+  "control": {
+    "task_id": "LVA-07-05",
+    "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+    "comparison_sha256": "c7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d",
+    "updated_at_utc": "2026-11-20T00:13:07.437827+00:00",
+    "status": "IN_PROGRESS",
+    "stage": "control_technical_complete_awaiting_actual_human_quality",
+    "control_prompt_id": "11ebef23-82f0-40a4-916d-104f026993ea",
+    "control_profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+    "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+    "graph_sha256": "1ac7eb835c697d7e12d043f169575475ba73e73740f965f2b3899b7317c29665",
+    "media": {
+      "retained": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\control_1.mp4",
+      "retained_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50",
+      "last_frame": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\media-checks\\8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50-last.png",
+      "last_frame_sha256": "1b8ef3ba4b663fd39efa960c184bf598de4d04a8ae78208a15061afe053d4c58"
+    },
+    "technical": {
+      "width": 768,
+      "height": 432,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "fps": 16,
+      "frames": 93,
+      "duration": 5.8125
+    },
+    "pts_count": 93,
+    "black": {
+      "frames": 93,
+      "suspect_black": false,
+      "longest_black_run": 0
+    },
+    "encoder_result": {
+      "returncode": 0,
+      "source_rgb_sha256": "fbb7f503133b7594ba5e39a0315d2efb63e08f46d2af4806bfc51be576543bd2"
+    },
+    "node_evidence": {
+      "high": {
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+        "role": "high",
+        "actual_forwards": 30,
+        "timesteps": [
+          1000,
+          994,
+          989,
+          984,
+          978,
+          972,
+          965,
+          959,
+          952,
+          945,
+          937,
+          929,
+          921,
+          912,
+          902
+        ],
+        "sigmas": [
+          1.0,
+          0.9948979616165161,
+          0.9895833134651184,
+          0.9840425848960876,
+          0.97826087474823,
+          0.9722222089767456,
+          0.9659090638160706,
+          0.9593023061752319,
+          0.9523810148239136,
+          0.9451219439506531,
+          0.9375,
+          0.9294871687889099,
+          0.9210526347160339,
+          0.9121621251106262,
+          0.9027777910232544,
+          0.8928571343421936
+        ],
+        "text_lengths": [
+          512,
+          664
+        ],
+        "head_full_delta_installations": 0,
+        "control_lora_applied": 0
+      },
+      "low": {
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "profile_sha256": "f41a887bf46e6e39b4aa39d137797bebcdfbf26566b755ab4121c8c887e2f464",
+        "role": "low",
+        "actual_forwards": 50,
+        "timesteps": [
+          892,
+          882,
+          871,
+          859,
+          846,
+          833,
+          818,
+          803,
+          787,
+          769,
+          750,
+          729,
+          706,
+          681,
+          654,
+          625,
+          592,
+          555,
+          514,
+          468,
+          416,
+          357,
+          288,
+          208,
+          113
+        ],
+        "sigmas": [
+          0.8928571343421936,
+          0.882352888584137,
+          0.8712121248245239,
+          0.859375,
+          0.8467742204666138,
+          0.8333333134651184,
+          0.818965494632721,
+          0.8035714626312256,
+          0.7870370149612427,
+          0.7692307829856873,
+          0.75,
+          0.7291666269302368,
+          0.70652174949646,
+          0.6818181872367859,
+          0.6547619104385376,
+          0.625,
+          0.5921052694320679,
+          0.5555555820465088,
+          0.5147058963775635,
+          0.46875,
+          0.4166666567325592,
+          0.3571428656578064,
+          0.2884615361690521,
+          0.2083333283662796,
+          0.11363635957241058,
+          0.0
+        ],
+        "text_lengths": [
+          512,
+          664
+        ],
+        "head_full_delta_installations": 0,
+        "control_lora_applied": 0
+      }
+    },
+    "stage_metrics": [
+      {
+        "stage": "native_t5_prepare",
+        "seconds": 1.5773361999890767,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "vae_i2v_prepare",
+        "seconds": 4.464211800019257,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "text_cache_bind",
+        "seconds": 0.0002668999950401485,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "image_cache_bind",
+        "seconds": 0.001706700015347451,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_build",
+        "seconds": 0.7238567999447696,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_sample",
+        "seconds": 468.51910530001624,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_release",
+        "seconds": 1.3430269000236876,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_build",
+        "seconds": 0.784940599987749,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_sample",
+        "seconds": 771.9310037000105,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_release",
+        "seconds": 1.3091122999903746,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "vae_decode",
+        "seconds": 7.365493300021626,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "encode_validate",
+        "seconds": 3.7085872999741696,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      }
+    ],
+    "execution_start_to_success_seconds": 1255.786,
+    "resources": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+      "samples": 380,
+      "native_peak_pagefile_bytes": 17489293312,
+      "native_peak_working_set_bytes": 20193505280,
+      "observed_peak_rss_bytes": 19630977024,
+      "all_device_peak_used_observed_mib": 12395,
+      "min_host_available_ram_observed_bytes": 1094725632,
+      "scope": "Native process peaks cover whole current owned epoch; RAM/VRAM observations every 10s; GPU values include other apps. No claim of exclusive kernel or full GPU allocation peak."
+    },
+    "human_quality": null,
+    "fast_posted": false,
+    "service_owner": {
+      "pid": 46888,
+      "process_started_at": "134396033001130190",
+      "port": 8297,
+      "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+      "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+      "launch_sha256": "23c4291f5127595f127dc95684fc91fc9c1d32e318c94e6878d834095f99e1a7"
+    },
+    "service_exit": null,
+    "next_required": "Actual human acceptance of this control artifact before any fast POST; keep owned service and current pair epoch alive. No LVA-07-06, production resume, extra sample, repeated decode or old ID POST."
+  },
+  "human_quality": {
+    "decision": "accepted",
+    "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\control_1.json",
+    "human_evidence": "用户对已展示的本轮 control_1.mp4 质量确认请求明确回复：接受。",
+    "media_sha256": "8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50"
+  },
+  "fast_prompt_id": "1dafecde-bd7a-493d-8c39-7bc1bfb4e4ae",
+  "fast": {
+    "prompt_id": "1dafecde-bd7a-493d-8c39-7bc1bfb4e4ae",
+    "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+    "fixture_sha256": "4f01a950bbd61bb87510f5cb9bdcd7da7621577f6f8f5fae6e56902dbe16f84d",
+    "graph_sha256": "5321702efe6719baed36e580efba73b68bf47d29f1970b92473a63b770fd4f00",
+    "media": {
+      "retained": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\output\\lva07\\fast_1.mp4",
+      "retained_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5",
+      "last_frame": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\media-checks\\d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5-last.png",
+      "last_frame_sha256": "58306485b1933a30a1f962f8a23d539ed9ff3758261aa32a7c2fb039e326e45a"
+    },
+    "technical": {
+      "width": 768,
+      "height": 432,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "fps": 16,
+      "frames": 93,
+      "duration": 5.8125
+    },
+    "pts_count": 93,
+    "black": {
+      "frames": 93,
+      "suspect_black": false,
+      "longest_black_run": 0
+    },
+    "technical_complete": true,
+    "execution_seconds": 96.539,
+    "client_intent_to_technical_receipt_wall_seconds": 99.33689737319946,
+    "node_evidence": {
+      "high": {
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+        "role": "high",
+        "actual_forwards": 2,
+        "timesteps": [
+          1000,
+          937
+        ],
+        "sigmas": [
+          1.0,
+          0.9375,
+          0.8333333134651184
+        ],
+        "text_lengths": [
+          664
+        ],
+        "head_full_delta_installations": 1,
+        "control_lora_applied": null
+      },
+      "low": {
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+        "profile_sha256": "a38d890f21122bc6a3a6504dce5ec63c889af312ee845ca50cb47693a92aab98",
+        "role": "low",
+        "actual_forwards": 2,
+        "timesteps": [
+          833,
+          625
+        ],
+        "sigmas": [
+          0.8333333134651184,
+          0.625,
+          0.0
+        ],
+        "text_lengths": [
+          664
+        ],
+        "head_full_delta_installations": 1,
+        "control_lora_applied": null
+      }
+    },
+    "human_quality": {
+      "decision": "accepted",
+      "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+      "human_evidence": "用户在已展示本轮 fast_1.mp4 并请求独立确认画面质量后明确回复：视频没有问题。",
+      "media_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5"
+    },
+    "stage": "complete",
+    "root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06",
+    "resources": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\observed-resources.jsonl",
+      "samples": 1203,
+      "native_peak_pagefile_bytes": 17489293312,
+      "native_peak_working_set_bytes": 20193505280,
+      "observed_peak_rss_bytes": 19630977024,
+      "all_device_peak_used_observed_mib": 12395,
+      "min_host_available_ram_observed_bytes": 1094725632,
+      "scope": "Whole owned epoch process peaks; 10s host/GPU observations include admission, both trials, human wait and other applications. Not exclusive model GPU peaks."
+    },
+    "stage_metrics": [
+      {
+        "stage": "text_cache_bind",
+        "seconds": 0.0002316000172868371,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "image_cache_bind",
+        "seconds": 0.002725000027567148,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_build",
+        "seconds": 0.9627132000168785,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_sample",
+        "seconds": 40.86145159997977,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "high_release",
+        "seconds": 1.3596324999816716,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_build",
+        "seconds": 0.7111975000007078,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_sample",
+        "seconds": 40.56990339996992,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "low_release",
+        "seconds": 1.280986599973403,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "vae_decode",
+        "seconds": 7.332009200006723,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      },
+      {
+        "stage": "encode_validate",
+        "seconds": 3.374431399977766,
+        "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d"
+      }
+    ],
+    "service_exit": {
+      "passed": true,
+      "mode": "gpu",
+      "graph_posts": null,
+      "checkpoint_payload_bytes": null,
+      "gpu_used": null,
+      "peak_rss_observed_bytes": 19630977024,
+      "pid": 46888,
+      "process_started_at": "134396033001130190",
+      "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+      "owned_listener_verified": true,
+      "schemas": 13,
+      "timed_out": false,
+      "exit_code": 0,
+      "forced": false,
+      "graceful": true,
+      "exited": true,
+      "port_closed": true,
+      "seconds": 12145.311999999976
+    },
+    "completed_at_utc": "2026-11-20T04:23:51.588502+00:00"
+  },
+  "service": {
+    "passed": true,
+    "mode": "gpu",
+    "graph_posts": null,
+    "checkpoint_payload_bytes": null,
+    "gpu_used": null,
+    "peak_rss_observed_bytes": 19630977024,
+    "pid": 46888,
+    "process_started_at": "134396033001130190",
+    "epoch": "f111b74f-385c-40d9-b394-7ad0a9c9017d",
+    "owned_listener_verified": true,
+    "schemas": 13,
+    "timed_out": false,
+    "exit_code": 0,
+    "forced": false,
+    "graceful": true,
+    "exited": true,
+    "port_closed": true,
+    "seconds": 12145.311999999976
+  },
+  "both_original_videos_technical_passed": true,
+  "fast_human_quality": {
+    "decision": "accepted",
+    "review": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-06\\reviews\\fast_1.json",
+    "human_evidence": "用户在已展示本轮 fast_1.mp4 并请求独立确认画面质量后明确回复：视频没有问题。",
+    "media_sha256": "d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5"
+  },
+  "both_original_videos_human_accepted": true,
+  "completed_at_utc": "2026-11-20T04:23:51.588502+00:00",
+  "completion_record": "docs/task-designs/LVA-07-05-completion.json"
+}

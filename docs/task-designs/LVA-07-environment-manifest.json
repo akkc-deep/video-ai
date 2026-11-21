@@ -1,0 +1,1568 @@
+{
+  "task_id": "LVA-07-03",
+  "decision": "worth_isolated_attempt",
+  "rationale": [
+    "Fixed environment and thirteen actual CPU HTTP schemas passed.",
+    "Bounded single-owner/private-static-overlay design supports isolated CPU/offline implementation only.",
+    "Full-model/GPU/quality remain unverified and unauthorized; actual resource limits must pass before LVA-07-05."
+  ],
+  "evidence": [
+    {
+      "path": "docs/task-designs/LVA-07-03-design.md",
+      "sha256": "418ed80e4d3beb65257b54fc83fc38b882b704d9bad1d67f8a89fe16292732c4",
+      "scope": "current task contract",
+      "historical_sha256_before_2026_11_19_supplement": "a4d0ee0baa73bb1f31dcd77132647180ef36e54e2a3c9deecbcb1f5f06db2b6d",
+      "supplement": "two explicit scoped follow-ups recorded; original completion retained",
+      "pre_environment_execution_sha256": "338b7d30281948d62c27a5c172aa94e93ea1847e7900a257647a9166af95fdd7",
+      "historical_sha256_before_04_delivery": "30d66bfbea1d22d8bc6903eeaaec7b9e9e4e2365031bf1f6152d979456ac9093"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-wrapper-backend-design.md",
+      "sha256": "bfdd18072dc9dd48fb438e9d55af60bc7c6477300bb9646ae87991035a693b91",
+      "scope": "backend and experiment constraints"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-environment-review.json",
+      "sha256": "18f8aa8c07bce911933ca7132d5f4aa9ea1af0385a3e2acc2ade6e9011720a0c",
+      "scope": "2026-11-17 metadata/source observations, not a current runtime test"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-environment-review.md",
+      "sha256": "2a91ba7d4be6bb9966bf75036e739f594d3fda67c08ca9e1dfca0c5825a1996a",
+      "scope": "environment/path analysis"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-02-results.json",
+      "sha256": "a2b2dabd19cc11a655a80d6a3a7a356305b9a222f644b61be9c8ade39f840368",
+      "scope": "final CPU outcome; historical subrecords do not override final state"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-02-applicability-results.json",
+      "sha256": "72665891580612770c405987be8ccd6630fbb73832858980883c19b56fec1135",
+      "scope": "3249 trace entries, original payload CPU arithmetic and limits"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-02-applicability-results.md",
+      "sha256": "78c9a64c4a09085325ed2ed9e336304dc1d7a8625ddc3b6863cd79408877ed62",
+      "scope": "CPU evidence scope"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-02-fix-design.md",
+      "sha256": "8f655b9a739f95e1384c9cad28779aca528f4bd8d1be2149b62fd67b932af9ea",
+      "scope": "repair design with explicit historical sections"
+    },
+    {
+      "path": "docs/task-designs/LVA-01-gpu-results.md",
+      "sha256": "7adc19a1ee2815b8b805391e4e298fa15e324cd1e794a4c518bccc9c9eb90cab",
+      "scope": "historical baseline and timing boundaries"
+    },
+    {
+      "path": "docs/task-designs/LVA-04-results.md",
+      "sha256": "6ede0218b9a54777f5baf4f7befd5603f2c648d8e80fc5ac839b379b36507c3a",
+      "scope": "native fast rejection and historical comparison"
+    },
+    {
+      "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+      "sha256": "54ea929f38a033fb6960bf96857f75d1ee20047a8452a1e7b715ec550979b50d",
+      "scope": "historically admitted model/workflow identities"
+    },
+    {
+      "path": "docs/task-designs/LVA-04-source-research.json",
+      "sha256": "ccce37304b9694e04691dc5849d71543b1d02ceaa5440cfba54db62172d33758",
+      "scope": "fixed official recipe source"
+    },
+    {
+      "path": "docs/task-designs/LVA-01-gpu-experiments.json",
+      "sha256": "7620d15faf76fbb7bbdcf46e24b8fa5b99050091ebac9cae0c83aa54611dc967",
+      "scope": "selected low-motion input/prompt/seed"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-02-cpu-requirements.lock",
+      "sha256": "d76efd059ffd25acacbdd649d1c275a4720f1fc011cc5f43dbdacda178d98b42",
+      "scope": "CPU lock only; not CUDA node closure"
+    },
+    {
+      "path": "patches/wanvideo-wrapper/manifest.json",
+      "sha256": "781d7b708a51c54f7dee66124e73b77bc215ad6fab8bb14313a2fc49cfd1b42f",
+      "scope": "partial source and patch fingerprints"
+    },
+    {
+      "path": "patches/wanvideo-wrapper/lva07_img_policy.json",
+      "sha256": "9dbc2f5536bab2057147d0ebebc3af7f8a3db1a3c060f8bc41af6a4185dc2587",
+      "scope": "exact approved CPU applicability policy"
+    },
+    {
+      "path": "workflows/wan22_i2v_14b_api.json",
+      "sha256": "5f3768f6e83bf6be21287457c7c15e811d8f6949b7b5c5ac5460c267c8f98666",
+      "scope": "unchanged native workflow template"
+    },
+    {
+      "path": "workflows/wan22_i2v_14b_api.mapping.json",
+      "sha256": "a3ea755e0fa5fb5413151ee9a551467b6fc0359e2a56a48312a9830316abb437",
+      "scope": "unchanged native input mapping"
+    },
+    {
+      "path": "workflows/wan22_i2v_14b_fast_api.json",
+      "sha256": "247fc1a6e04c8a4cab0403f5c6a0cec5ecac36595c5553fea3fee4b07b9039bc",
+      "scope": "historical native fast template, not a Wrapper graph"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-03-node-probe-results.json",
+      "sha256": "53b8151787c4f650e6d661739b7d30071a93f7a66776b76e568c0f5f891abe9e",
+      "scope": "actual CPU process/schema evidence"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-04-design.md",
+      "sha256": "6e02f6025cb40e7c99c8b70aa9729fb6ff4fac96f9dd33ce3b942c336dacbb25",
+      "scope": "bounded implementation design, not full-model evidence",
+      "historical_sha256_before_04_delivery": "d3fa2d6f8fc0ff2e9917d9f0d2c1b88e36c6e7d15a0e7dbd1f117391bff7594d"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-04-contract.json",
+      "sha256": "35a2892166c2fe5899b2ba38412d54c6d3e68fef6149bc0fa410fc19124cf782",
+      "scope": "fixed numerical/ownership/resource design"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-04-results.json",
+      "sha256": "49f985561d0245d7e898f1d0bc29577bbafb9215b55c244593461267d165df3f",
+      "scope": "completed CPU/offline implementation; no full-model/GPU evidence"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-04-review.md",
+      "sha256": "4fae746f66053683b1de769c230570e4c971494b34b61931e66934f4a0cdc4cd",
+      "scope": "nine findings and author resolutions; no independent re-review"
+    },
+    {
+      "path": "docs/task-designs/LVA-07-04-software.json",
+      "sha256": "ae3f18849f140771e8a50bf3509c7423e0aa7f701d8276c4ecfc88b3068ede34",
+      "scope": "current independent installed software content snapshot and fixed Comfy blobs"
+    }
+  ],
+  "wrapper": {
+    "repository": "https://github.com/kijai/ComfyUI-WanVideoWrapper",
+    "upstream_sha": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+    "local_repair_sha": "15ad15c292831865886b4fa9a2316188b0820035",
+    "partial_snapshot_path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-applicability\\replay-wrapper",
+    "partial_snapshot_files": 21,
+    "full_checkout_available": false,
+    "full_checkout_scope": "complete repaired source snapshot exists; no Git history/checkout created",
+    "patch_fingerprints": {
+      "mixed-delta.patch": "9a3e8c090fddea78866b6bd516e59891380aa8a34c335e7294568e92dbfc31d2",
+      "lva07_mixed_delta.py": "74da32a3b820a503f00df2e030d8ec3021ab0148b283b9f40139260c50818490",
+      "lva07_applicability.py": "831720448bb64f667bb59af564acb6f47a674fa593e5795a9f49568528ad8dca",
+      "lva07_img_policy.json": "9dbc2f5536bab2057147d0ebebc3af7f8a3db1a3c060f8bc41af6a4185dc2587"
+    },
+    "patched_file_fingerprints": {
+      "custom_linear.py": "31796a5128cde02c3e12381b5d87a0fae09bbd0633b04fcb53d7d6f52572ca1f",
+      "nodes_model_loading.py": "d96bb013593eb0ec4bbcd70bcb68a7018091ac795b3f16e81f5267c153cbf636"
+    },
+    "full_tree_identity": {
+      "kind": "sha256 of canonical repaired file manifest, not Git commit",
+      "sha256": "f498198315ae6acac11f08fd44f6764ef2a9ba32548237308f18edc0b38ec312",
+      "file_count": 244,
+      "source_marker_sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59"
+    },
+    "unresolved": [
+      "U1"
+    ],
+    "upstream_tree_manifest": "docs/task-designs/LVA-07-wrapper-tree.json",
+    "complete_source_plan": {
+      "blobs": 241,
+      "raw_bytes": 47250651,
+      "post_repair_expected_files": 244,
+      "post_repair_expected_bytes": 48125397,
+      "actual_complete_local_source": true,
+      "proposed_path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper-LVA07",
+      "actual_marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json"
+    },
+    "complete_source_snapshot_available": true
+  },
+  "comfy": {
+    "commit": "2c75dc1b379a59e0880619d029607af5169a62ef",
+    "version": "0.44.0",
+    "source_path": "E:\\VideoAI\\shared\\tools\\ComfyUI_windows_portable\\ComfyUI",
+    "observation_date": "2026-11-17",
+    "isolated_copy_path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI",
+    "nodes_registered": false,
+    "scope": "read-only historical source identity; git HEAD alone does not certify working tree",
+    "source_fingerprints": [
+      {
+        "path": "E:\\VideoAI\\shared\\tools\\ComfyUI_windows_portable\\ComfyUI\\comfy\\lora.py",
+        "sha256": "ac46c49b26b6d9f6d81d4ae4dcc444a4662e3b291635e2234f9ed7a1d1b16eeb"
+      },
+      {
+        "path": "E:\\VideoAI\\shared\\tools\\ComfyUI_windows_portable\\ComfyUI\\comfy\\sd.py",
+        "sha256": "927418e56366fa744d30d6d5a847b5c564f740c2f5d9e59dde08bff085802441"
+      },
+      {
+        "path": "E:\\VideoAI\\shared\\tools\\ComfyUI_windows_portable\\ComfyUI\\comfy\\weight_adapter\\lora.py",
+        "sha256": "5e30c8b8a22be6459883cb5d758fa76f725cc4688d4048200145b885567c4cec"
+      },
+      {
+        "path": "E:\\VideoAI\\shared\\tools\\ComfyUI_windows_portable\\ComfyUI\\comfy\\weight_adapter\\base.py",
+        "sha256": "a5083daaae27a0c0146bdbbaa1b5d06376b01b582fa38cb52eba4c8b10214d66"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/lora_convert.py",
+        "sha256": "cc4401759b37e2208fd6dba8497db1748c1d8ee3231151632349bececf0f4776"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/latent_formats.py",
+        "sha256": "198f3ae01189fd7dc8e3cba9e38d8b4ebf6438aa48db72d2000013462176d7ec"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/model_patcher.py",
+        "sha256": "4f8ccf957a7227942c0e167384ed4e128f038245ad09b9bb547102281be13612"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/utils.py",
+        "sha256": "9a37b484d66f03a2f33e7c4bf1d6a38d6944a77cf09b6b8b149a26c179d69abd"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/float.py",
+        "sha256": "165461282f1a7ab40a909fa12aa109538f5458a814504fb7fe6ea5e669d7687c"
+      },
+      {
+        "path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI/comfy/ldm/flux/math.py",
+        "sha256": "dad05aff9260a0eeae06cce83f12359a629e60a9de633fa0e226600098c5e59d"
+      }
+    ],
+    "isolated_committed_blob_export_verified": true
+  },
+  "runtime": {
+    "target": {
+      "python": "3.13.14",
+      "abi": "cp313-cp313-win_amd64",
+      "torch": "2.14.1+cu130",
+      "cuda": "13.0",
+      "platform": "Windows AMD64",
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded",
+      "proposed_reference_path": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/python_embeded/python.exe",
+      "kind": "independent copy/runtime required; existing production interpreter is reference only",
+      "metadata_source_date": "2026-11-17",
+      "actually_measured_for_wrapper": false,
+      "binary_inventory": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/archive-binary-metadata.json",
+        "sha256": "13a4ec3c41b29147887db28785f53859f886941e71610934e682a99c0d5dc690",
+        "binaries": 381,
+        "runtime_copy_created": true
+      },
+      "unresolved": [
+        "U2"
+      ],
+      "proposed_isolated_path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded",
+      "executable": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded/python.exe",
+      "interpreter_and_package_inventory_verified": true,
+      "actual_wrapper_import_verified": false
+    },
+    "cpu_evidence": {
+      "python": "3.13.14",
+      "torch": "2.14.1+cpu",
+      "cuda": null,
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\runtime",
+      "package_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-02-cpu\\cpu-site",
+      "actually_measured": true,
+      "scope": "CPU-only; not reusable as CUDA certification"
+    }
+  },
+  "dependencies": {
+    "cuda_lock": null,
+    "closure_resolved": false,
+    "historical_missing_required": [
+      "accelerate",
+      "diffusers",
+      "peft",
+      "ftfy",
+      "gguf",
+      "pyloudnorm",
+      "protobuf",
+      "opencv-python"
+    ],
+    "metadata_date": "2026-11-17",
+    "metadata_candidates_not_install_locks": [
+      {
+        "name": "accelerate",
+        "url": "https://pypi.org/pypi/accelerate/json",
+        "version": "1.16.0",
+        "requires_python": ">=3.11.0",
+        "requirements": [
+          "numpy>=1.17",
+          "packaging>=20.0",
+          "psutil",
+          "pyyaml",
+          "torch>=2.6.0",
+          "huggingface_hub>=0.21.0",
+          "safetensors>=0.4.3",
+          "ruff==0.13.1; extra == \"quality\"",
+          "pytest>=7.2.0; extra == \"test-prod\"",
+          "pytest-xdist; extra == \"test-prod\"",
+          "pytest-subtests; extra == \"test-prod\"",
+          "parameterized; extra == \"test-prod\"",
+          "pytest-order; extra == \"test-prod\"",
+          "datasets; extra == \"test-dev\"",
+          "diffusers; extra == \"test-dev\"",
+          "evaluate; extra == \"test-dev\"",
+          "peft; extra == \"test-dev\"",
+          "torchdata>=0.8.0; extra == \"test-dev\"",
+          "transformers; extra == \"test-dev\"",
+          "scipy; extra == \"test-dev\"",
+          "scikit-learn; extra == \"test-dev\"",
+          "tqdm; extra == \"test-dev\"",
+          "bitsandbytes; extra == \"test-dev\"",
+          "timm; extra == \"test-dev\"",
+          "pytest>=7.2.0; extra == \"testing\"",
+          "pytest-xdist; extra == \"testing\"",
+          "pytest-subtests; extra == \"testing\"",
+          "parameterized; extra == \"testing\"",
+          "pytest-order; extra == \"testing\"",
+          "datasets; extra == \"testing\"",
+          "diffusers; extra == \"testing\"",
+          "evaluate; extra == \"testing\"",
+          "peft; extra == \"testing\"",
+          "torchdata>=0.8.0; extra == \"testing\"",
+          "transformers; extra == \"testing\"",
+          "scipy; extra == \"testing\"",
+          "scikit-learn; extra == \"testing\"",
+          "tqdm; extra == \"testing\"",
+          "bitsandbytes; extra == \"testing\"",
+          "timm; extra == \"testing\"",
+          "deepspeed; extra == \"deepspeed\"",
+          "rich; extra == \"rich\"",
+          "torchao; extra == \"test-fp8\"",
+          "wandb; extra == \"test-trackers\"",
+          "tensorboard; extra == \"test-trackers\"",
+          "dvclive; extra == \"test-trackers\"",
+          "matplotlib; extra == \"test-trackers\"",
+          "swanlab[dashboard]; extra == \"test-trackers\"",
+          "trackio; extra == \"test-trackers\"",
+          "ruff==0.13.1; extra == \"dev\"",
+          "pytest>=7.2.0; extra == \"dev\"",
+          "pytest-xdist; extra == \"dev\"",
+          "pytest-subtests; extra == \"dev\"",
+          "parameterized; extra == \"dev\"",
+          "pytest-order; extra == \"dev\"",
+          "datasets; extra == \"dev\"",
+          "diffusers; extra == \"dev\"",
+          "evaluate; extra == \"dev\"",
+          "peft; extra == \"dev\"",
+          "torchdata>=0.8.0; extra == \"dev\"",
+          "transformers; extra == \"dev\"",
+          "scipy; extra == \"dev\"",
+          "scikit-learn; extra == \"dev\"",
+          "tqdm; extra == \"dev\"",
+          "bitsandbytes; extra == \"dev\"",
+          "timm; extra == \"dev\"",
+          "rich; extra == \"dev\"",
+          "sagemaker; extra == \"sagemaker\""
+        ],
+        "wheels": [
+          "accelerate-1.16.0-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "diffusers",
+        "url": "https://pypi.org/pypi/diffusers/json",
+        "version": "0.43.0",
+        "requires_python": ">=3.11.0",
+        "requirements": [
+          "importlib_metadata",
+          "filelock",
+          "huggingface-hub<3.0,>=1.32.0",
+          "numpy",
+          "regex!=2019.12.17",
+          "requests",
+          "safetensors>=0.8.0",
+          "Pillow",
+          "urllib3<=2.0.0; extra == \"quality\"",
+          "isort>=5.5.4; extra == \"quality\"",
+          "ruff==0.9.10; extra == \"quality\"",
+          "hf-doc-builder==0.6.0; extra == \"quality\"",
+          "hf-doc-builder==0.6.0; extra == \"docs\"",
+          "accelerate>=0.31.0; extra == \"training\"",
+          "datasets; extra == \"training\"",
+          "protobuf>=3.20.3; extra == \"training\"",
+          "tensorboard; extra == \"training\"",
+          "Jinja2; extra == \"training\"",
+          "peft>=0.17.0; extra == \"training\"",
+          "timm; extra == \"training\"",
+          "ftfy; extra == \"test\"",
+          "GitPython<3.1.19; extra == \"test\"",
+          "datasets; extra == \"test\"",
+          "Jinja2; extra == \"test\"",
+          "invisible-watermark>=0.2.0; extra == \"test\"",
+          "librosa; extra == \"test\"",
+          "llvmlite>=0.40.0; extra == \"test\"",
+          "numba>=0.57.0; extra == \"test\"",
+          "parameterized; extra == \"test\"",
+          "protobuf>=3.20.3; extra == \"test\"",
+          "pytest; extra == \"test\"",
+          "pytest-timeout; extra == \"test\"",
+          "pytest-xdist; extra == \"test\"",
+          "requests-mock==1.10.0; extra == \"test\"",
+          "safetensors>=0.8.0; extra == \"test\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"test\"",
+          "scipy; extra == \"test\"",
+          "tiktoken>=0.7.0; extra == \"test\"",
+          "torchsde; extra == \"test\"",
+          "torchvision; extra == \"test\"",
+          "transformers>=4.41.2; extra == \"test\"",
+          "phonemizer; extra == \"test\"",
+          "torch>=2.6; extra == \"torch\"",
+          "accelerate>=0.31.0; extra == \"torch\"",
+          "bitsandbytes>=0.43.3; extra == \"bitsandbytes\"",
+          "accelerate>=0.31.0; extra == \"bitsandbytes\"",
+          "gguf>=0.10.0; extra == \"gguf\"",
+          "accelerate>=0.31.0; extra == \"gguf\"",
+          "optimum_quanto>=0.2.6; extra == \"optimum-quanto\"",
+          "accelerate>=0.31.0; extra == \"optimum-quanto\"",
+          "torchao>=0.15.0; extra == \"torchao\"",
+          "accelerate>=0.31.0; extra == \"torchao\"",
+          "nvidia_modelopt[hf]>=0.33.1; extra == \"nvidia-modelopt\"",
+          "sdnq>=0.2.2; extra == \"sdnq\"",
+          "flashpack; extra == \"flashpack\"",
+          "urllib3<=2.0.0; extra == \"dev\"",
+          "isort>=5.5.4; extra == \"dev\"",
+          "ruff==0.9.10; extra == \"dev\"",
+          "hf-doc-builder==0.6.0; extra == \"dev\"",
+          "ftfy; extra == \"dev\"",
+          "GitPython<3.1.19; extra == \"dev\"",
+          "datasets; extra == \"dev\"",
+          "Jinja2; extra == \"dev\"",
+          "invisible-watermark>=0.2.0; extra == \"dev\"",
+          "librosa; extra == \"dev\"",
+          "llvmlite>=0.40.0; extra == \"dev\"",
+          "numba>=0.57.0; extra == \"dev\"",
+          "parameterized; extra == \"dev\"",
+          "protobuf>=3.20.3; extra == \"dev\"",
+          "pytest; extra == \"dev\"",
+          "pytest-timeout; extra == \"dev\"",
+          "pytest-xdist; extra == \"dev\"",
+          "requests-mock==1.10.0; extra == \"dev\"",
+          "safetensors>=0.8.0; extra == \"dev\"",
+          "sentencepiece!=0.1.92,>=0.1.91; extra == \"dev\"",
+          "scipy; extra == \"dev\"",
+          "tiktoken>=0.7.0; extra == \"dev\"",
+          "torchsde; extra == \"dev\"",
+          "torchvision; extra == \"dev\"",
+          "transformers>=4.41.2; extra == \"dev\"",
+          "phonemizer; extra == \"dev\"",
+          "accelerate>=0.31.0; extra == \"dev\"",
+          "datasets; extra == \"dev\"",
+          "protobuf>=3.20.3; extra == \"dev\"",
+          "tensorboard; extra == \"dev\"",
+          "Jinja2; extra == \"dev\"",
+          "peft>=0.17.0; extra == \"dev\"",
+          "timm; extra == \"dev\"",
+          "hf-doc-builder==0.6.0; extra == \"dev\"",
+          "torch>=2.6; extra == \"dev\"",
+          "accelerate>=0.31.0; extra == \"dev\""
+        ],
+        "wheels": [
+          "diffusers-0.43.0-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "peft",
+        "url": "https://pypi.org/pypi/peft/json",
+        "version": "0.21.3",
+        "requires_python": ">=3.10.0",
+        "requirements": [
+          "numpy>=1.17",
+          "packaging>=20.0",
+          "psutil",
+          "pyyaml",
+          "torch>=1.13.0",
+          "transformers",
+          "tqdm",
+          "accelerate>=0.21.0",
+          "safetensors",
+          "huggingface_hub>=0.25.0",
+          "black; extra == \"quality\"",
+          "hf-doc-builder; extra == \"quality\"",
+          "ruff==0.16.4; extra == \"quality\"",
+          "griffe; extra == \"quality\"",
+          "black; extra == \"docs-specific\"",
+          "requests; extra == \"docs-specific\"",
+          "hf-doc-builder; extra == \"docs-specific\"",
+          "black; extra == \"dev\"",
+          "hf-doc-builder; extra == \"dev\"",
+          "ruff==0.16.4; extra == \"dev\"",
+          "griffe; extra == \"dev\"",
+          "black; extra == \"dev\"",
+          "requests; extra == \"dev\"",
+          "hf-doc-builder; extra == \"dev\"",
+          "black; extra == \"test\"",
+          "hf-doc-builder; extra == \"test\"",
+          "ruff==0.16.4; extra == \"test\"",
+          "griffe; extra == \"test\"",
+          "black; extra == \"test\"",
+          "requests; extra == \"test\"",
+          "hf-doc-builder; extra == \"test\"",
+          "pytest; extra == \"test\"",
+          "pytest-cov; extra == \"test\"",
+          "pytest-xdist; extra == \"test\"",
+          "parameterized; extra == \"test\"",
+          "datasets; extra == \"test\"",
+          "diffusers; extra == \"test\"",
+          "scipy; extra == \"test\"",
+          "scikit-learn; extra == \"test\"",
+          "protobuf; extra == \"test\"",
+          "sentencepiece; extra == \"test\"",
+          "torchvision; extra == \"test\""
+        ],
+        "wheels": [
+          "peft-0.21.3-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "ftfy",
+        "url": "https://pypi.org/pypi/ftfy/json",
+        "version": "6.3.1",
+        "requires_python": ">=3.9",
+        "requirements": [
+          "wcwidth"
+        ],
+        "wheels": [
+          "ftfy-6.3.1-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "gguf",
+        "url": "https://pypi.org/pypi/gguf/json",
+        "version": "0.19.0",
+        "requires_python": ">=3.10",
+        "requirements": [
+          "PySide6<7.0,>=6.9; (python_version >= \"3.9\" and python_version < \"3.14\") and extra == \"gui\"",
+          "numpy>=1.17",
+          "pyyaml>=5.1",
+          "requests>=2.25",
+          "tqdm>=4.27"
+        ],
+        "wheels": [
+          "gguf-0.19.0-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "pyloudnorm",
+        "url": "https://pypi.org/pypi/pyloudnorm/json",
+        "version": "0.2.0",
+        "requires_python": ">=3.9",
+        "requirements": [
+          "scipy>=1.0.1",
+          "numpy>=1.14.2"
+        ],
+        "wheels": [
+          "pyloudnorm-0.2.0-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "protobuf",
+        "url": "https://pypi.org/pypi/protobuf/json",
+        "version": "7.36.2",
+        "requires_python": ">=3.10",
+        "requirements": null,
+        "wheels": [
+          "protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+          "protobuf-7.36.2-py3-none-any.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      },
+      {
+        "name": "opencv-python",
+        "url": "https://pypi.org/pypi/opencv-python/json",
+        "version": "5.0.0.93",
+        "requires_python": ">=3.6",
+        "requirements": [
+          "numpy<2.0; python_version < \"3.9\"",
+          "numpy>=2; python_version >= \"3.9\""
+        ],
+        "wheels": [
+          "opencv_python-5.0.0.93-cp37-abi3-win_amd64.whl"
+        ],
+        "note": "Index metadata only; no wheel download, installation or resolver run",
+        "install_selected": false
+      }
+    ],
+    "cpu_lock": "docs/task-designs/LVA-07-02-cpu-requirements.lock",
+    "cpu_lock_authorization_extends_to_cuda": false,
+    "optional_not_selected": [
+      "triton",
+      "triton-windows",
+      "sageattention",
+      "xformers"
+    ],
+    "production_upgrade_allowed": false,
+    "dependency_impact": "Complete CUDA/Comfy closure unresolved; CPU resolver cannot establish CUDA wheel compatibility. Pin existing production packages; any incompatible closure requires a separate runtime proposal.",
+    "unresolved": [
+      "U2"
+    ],
+    "copy_plus_additions_plan": {
+      "baseline_distributions": 87,
+      "new_distributions": 15,
+      "target_distributions": 102,
+      "root_closure": 97,
+      "metadata_conflicts": 0,
+      "new_wheel_lock": "docs/task-designs/LVA-07-03-additional-wheels.lock",
+      "fresh_cuda_wheel_closure": false,
+      "reason": "reuse independently copied fixed CUDA binaries; do not redownload/reselect torch",
+      "actual_install_or_import_verified": false,
+      "actual_installation_verified": true,
+      "actual_distribution_count": 102,
+      "pip_check": "No broken requirements found.",
+      "node_or_dll_import_verified": false
+    }
+  },
+  "models": [
+    {
+      "role": "wan_high",
+      "path": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+      "bytes": 14294742832,
+      "sha256": "6122e79d55e0f235698d11d657f3b196c5273c830da00b2b013c5a048d5e6a42",
+      "header_sha256": "a904e26816259491a0bc1abf5446a8ba86deae8ff597539619280de3f456fcbb",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/wan_high",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 14294742832,
+        "expected_size_matches": true,
+        "header_bytes": 180728,
+        "tensor_count": 1908,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false,
+        "matches_07_01_header": true
+      },
+      "storage_tensor_bytes": 14294562096,
+      "bf16_all_parameter_bytes_lower_bound": 28577802368
+    },
+    {
+      "role": "wan_low",
+      "path": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+      "bytes": 14294742832,
+      "sha256": "5471a457b6ac404202a5fbe6c11595a3d5641fc766b00f38763f72303fffc21e",
+      "header_sha256": "a904e26816259491a0bc1abf5446a8ba86deae8ff597539619280de3f456fcbb",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/wan_low",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 14294742832,
+        "expected_size_matches": true,
+        "header_bytes": 180728,
+        "tensor_count": 1908,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false,
+        "matches_07_01_header": true
+      },
+      "storage_tensor_bytes": 14294562096,
+      "bf16_all_parameter_bytes_lower_bound": 28577802368
+    },
+    {
+      "role": "text_encoder",
+      "path": "E:/VideoAI/shared/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "bytes": 6735906897,
+      "sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+      "header_sha256": "50fe9015ebb8094759e108418e179fff9e88c3a558a27472f3718cd021588dc6",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/text_encoder",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 6735906897,
+        "expected_size_matches": true,
+        "header_bytes": 48848,
+        "tensor_count": 412,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false
+      }
+    },
+    {
+      "role": "vae",
+      "path": "E:/VideoAI/shared/models/comfyui/vae/wan_2.1_vae.safetensors",
+      "bytes": 253815318,
+      "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
+      "header_sha256": "a62d32a377907cfc6f2761603b76aed2c8c79fe17b6fa468f5aca1ebcfa1f8ea",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/vae",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 253815318,
+        "expected_size_matches": true,
+        "header_bytes": 30248,
+        "tensor_count": 194,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false
+      }
+    },
+    {
+      "role": "lora_high",
+      "path": "E:/VideoAI/shared/models/comfyui/loras/wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "bytes": 634645944,
+      "sha256": "887c3bdeb74e83859c920438e16ca31f39ab18ce189abc5f0e36f8348c5bbb19",
+      "header_sha256": "3299c288529f3f87686faf1923eef26238737cb88582ef1483ebfd294d524fc2",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/lora_high",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 634645944,
+        "expected_size_matches": true,
+        "header_bytes": 181552,
+        "tensor_count": 1500,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false
+      }
+    },
+    {
+      "role": "lora_low",
+      "path": "E:/VideoAI/shared/models/comfyui/loras/wan2.2_i2v_A14b_low_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+      "bytes": 739472104,
+      "sha256": "8833bd4fd7c8eabebf0bc8ee5cfaf47f4f310ce116928a02c1adf8941dd4b0f1",
+      "header_sha256": "07eaa1f7b0ad23944feadd27db81fdb2475d0b0b8a1cee5cd538c68dbbada9fc",
+      "reuse": true,
+      "source": {
+        "path": "docs/task-designs/LVA-04-gpu-manifest.json",
+        "pointer": "/assets/fast_experimental/lora_low",
+        "full_sha_scope": "historical admission; not recomputed in LVA-07-03"
+      },
+      "observation": {
+        "observed_at": "2026-11-18T12:36:41.228332+00:00",
+        "stat_bytes": 739472104,
+        "expected_size_matches": true,
+        "header_bytes": 214112,
+        "tensor_count": 1749,
+        "header_only": true,
+        "tensor_payload_read": false,
+        "full_sha_revalidated": false
+      }
+    }
+  ],
+  "profile": {
+    "merge": {
+      "value": false,
+      "status": "required proposed unmerged path; original merged unsupported",
+      "evidence": "LVA-07-02-applicability-results.json#/merged_diagnosis"
+    },
+    "weight_dtype": {
+      "value": "existing scaled FP8 E4M3 matrices + F16 static parameters",
+      "status": "bounded headers observed; complete Wrapper load unverified",
+      "unresolved": [
+        "U4"
+      ]
+    },
+    "compute_dtype": {
+      "value": "float16",
+      "status": "fixed experiment design; not GPU admission",
+      "unresolved": [
+        "U4"
+      ]
+    },
+    "scale": {
+      "value": "preserve existing scale_weight/scale_input; dequantize before delta, scale exactly once",
+      "status": "scalar-scale fixture only; actual full-model tensor scales and forward unverified",
+      "unresolved": [
+        "U4"
+      ]
+    },
+    "fast_fp8": {
+      "value": false,
+      "status": "required exclusion with unmerged; not enabled by CPU success"
+    },
+    "attention": {
+      "value": "sdpa",
+      "status": "source-supported proposal; no full node/forward test",
+      "unresolved": [
+        "U2",
+        "U4"
+      ]
+    },
+    "compile": {
+      "value": false,
+      "status": "proposed disabled; no optional Triton/Sage/xformers installation"
+    },
+    "offload": {
+      "value": {
+        "device": "cpu",
+        "gpu_concurrency": 1,
+        "dual_expert_gpu_residency": false,
+        "swap_blocks": 40,
+        "prefetch_blocks": 0
+      },
+      "status": "single owner, fixed block swap40/prefetch0 design; actual GPU migration unverified",
+      "unresolved": [
+        "U3",
+        "U4"
+      ]
+    },
+    "low_mem_load": {
+      "value": false,
+      "status": "proposed disabled because complete low_mem_load chain unverified; does not imply offload is proven",
+      "unresolved": [
+        "U3",
+        "U4"
+      ]
+    },
+    "lora_strength": {
+      "value": {
+        "high": 1.0,
+        "low": 1.0
+      },
+      "status": "fixed recipe, actual GPU application unverified"
+    },
+    "cpu_policy": {
+      "path": "patches/wanvideo-wrapper/lva07_img_policy.json",
+      "sha256": "9dbc2f5536bab2057147d0ebebc3af7f8a3db1a3c060f8bc41af6a4185dc2587",
+      "enabled_for_fixed_cpu_profile": true,
+      "full_model_admission": false,
+      "excluded_low": 290,
+      "applicable_high": 1500,
+      "applicable_low": 1459,
+      "unresolved": [
+        "U6"
+      ]
+    }
+  },
+  "resources": {
+    "observed_at": "2026-11-18T12:36:41.228332+00:00",
+    "units": "bytes unless explicitly MiB; GiB=2**30",
+    "existing_model_reuse_bytes": 36953325927,
+    "existing_base_pair_bytes": 28589485664,
+    "existing_lora_pair_bytes": 1374118048,
+    "incremental_model_download_bytes": 0,
+    "model_download_scope": "current preferred reuse-only plan; full load compatibility unverified",
+    "new_download_bytes": null,
+    "new_copies_bytes": null,
+    "temporary_bytes": null,
+    "disk_reserve_bytes": null,
+    "ram_peak_bytes": null,
+    "vram_peak_bytes": null,
+    "estimate_status": "unbounded runtime/source/temporary/peak components prevent a credible total and block positive investment decision",
+    "host_observation": {
+      "method": "stdlib ctypes GlobalMemoryStatusEx and shutil.disk_usage; no model payloads or GPU context",
+      "ram_total_bytes": 33346146304,
+      "ram_available_bytes": 17494945792,
+      "disk_path": "E:/",
+      "disk_total_bytes": 1610612731904,
+      "disk_free_bytes": 1421776736256,
+      "scope": "point-in-time capacity, not reserved space or a feasibility guarantee"
+    },
+    "historical_gpu": {
+      "observed_at": "2026-11-17T10:12:59.245385+00:00",
+      "name": "NVIDIA GeForce RTX 5090 D v2",
+      "driver": "610.88",
+      "memory_total_mib": 24455,
+      "current_free_bytes": null,
+      "current_query_performed": false,
+      "lva04_cold_device_sampled_peak_mib": 22034,
+      "scope": "historical device-wide samples; not Wrapper peak or two-expert residency"
+    },
+    "analytical_lower_bounds": {
+      "base_pair_file_bytes": 28589485664,
+      "base_pair_tensor_storage_bytes": 28589124192,
+      "cpu_original_plus_private_deepcopy_base_files_bytes": 57178971328,
+      "bf16_pair_all_parameter_bytes_lower_bound": 57155604736,
+      "decoded_rgb_two_93_frame_clips_bytes": 185131008,
+      "method": "sum pinned artifact sizes and bounded header tensor shapes; deepcopy figure is file-size proxy excluding runtime overhead; RGB excludes codec/PNG/latent/1080p; none is a peak or allocation recommendation"
+    },
+    "alternatives": [
+      {
+        "id": "W3_repacked_base",
+        "selected": false,
+        "identity": null,
+        "download_bytes": null,
+        "copy_bytes": null,
+        "reason": "No mandatory repack requirement found; no replacement artifact selected. Separate metadata/identity/cost review and authorization required."
+      },
+      {
+        "id": "BF16_base_pair",
+        "selected": false,
+        "identity_source": "docs/task-designs/LVA-07-02-base-review.json",
+        "selected_artifact_identity": null,
+        "download_bytes": null,
+        "reason": "Header review also lacked the same Low290 targets; BF16 is not a remedy for that set. Header-derived expansion lower bound above is not an actual download size or accepted runtime."
+      }
+    ],
+    "measured_sources": [
+      {
+        "path": "docs/task-designs/LVA-07-02-applicability-results.json",
+        "date": "2026-11-18",
+        "cpu_fixture_peak_working_set_bytes": 1899302912,
+        "extrapolate_to_14b": false
+      },
+      {
+        "path": "docs/task-designs/LVA-04-results.md",
+        "date": "2026-11-15",
+        "scope": "historical native control device samples, not Wrapper"
+      }
+    ],
+    "blocked_by": [
+      "U1",
+      "U2",
+      "U3",
+      "U4"
+    ],
+    "environment_preparation_plan": {
+      "units": "bytes",
+      "source_download_bytes": 47250651,
+      "wheel_download_bytes": 339836898,
+      "download_payload_bytes": 387087549,
+      "runtime_copy_bytes": 4157540147,
+      "comfy_export_bytes": 49602446,
+      "wrapper_post_repair_bytes": 48125397,
+      "wheel_uncompressed_bytes": 455252138,
+      "persistent_payload_bytes": 5050357026,
+      "conservative_disk_budget_bytes": 6214544814,
+      "disk_reserve_bytes": 8589934592,
+      "comfy_tar_bound_bytes": 67108864,
+      "filesystem_allowance_bytes": 268435456,
+      "metadata_logs_allowance_bytes": 33554432,
+      "pip_extra_temporary_bytes": 795089036,
+      "ram_preparation_reserve_bytes": 4294967296,
+      "ram_preparation_reserve_is_measured_peak": false,
+      "preparation_gpu_allocation_bytes": 0,
+      "full_model_ram_peak_bytes": null,
+      "full_model_vram_peak_bytes": null,
+      "existing_six_inference_models_download_bytes": 0,
+      "host_observation": {
+        "ram_total_bytes": 33346146304,
+        "ram_available_bytes": 16994021376,
+        "disk_free_bytes": 1421776560128
+      }
+    },
+    "environment_preparation_actual": {
+      "observed_at": "2026-11-18T16:58:57Z",
+      "download_payload_bytes": 387087549,
+      "runtime_copy_bytes": 4157540147,
+      "target_file_bytes_observed": 5106830024,
+      "target_files_observed": 50063,
+      "disk_reserve_bytes": 8589934592,
+      "ram_peak_bytes": null,
+      "vram_peak_bytes": null,
+      "failed_archive_and_patch_evidence_retained": true,
+      "within_reserved_disk_budget": true
+    },
+    "bounded_wrapper_design": "docs/task-designs/LVA-07-04-contract.json"
+  },
+  "full_model_gate": {
+    "enabled": true,
+    "before_fast_post": true,
+    "verified": false,
+    "run_once_at_admission": true,
+    "cpu_deepcopy_api_for_14b_allowed": false,
+    "ownership_strategy": null,
+    "required": [
+      "Revalidate actual complete source/runtime/node identities and actual model/LoRA identity/schema at admission; store evidence for the protected transaction.",
+      "Require real parser retained payload identities, exact target/shape/dtype, ordinary LoRA and static bias/norm/block/head modulation actual installations on both private actual experts.",
+      "For unmerged linear patches prove installed dynamic ownership and actual forward/scale usage on real modules, not only parsed patch count.",
+      "Revalidate the exact CPU policy against actual model schema: High1500, Low1459 applicable; exact290 separately not applicable, never consumed/applied.",
+      "Reject unknown/missing/overwritten/duplicate/colliding/nonfinite/shape-or-dtype-incompatible items and unsupported scale, alias or configuration.",
+      "Verify staged high and low ownership without a full pair deepcopy; injected low failure must dispose both unpublished candidates and leave original weights/patches unchanged; never return usable one-sided state.",
+      "Verify one-time static installation, repeat/removal behavior and restoration from original immutable weights, not inverse subtraction in quantized weights.",
+      "Write the gate result and pair identity before fast POST; failure prevents graph publication and all fast submissions. Reuse protected evidence instead of per-step/per-frame scans."
+    ],
+    "blocked_by": [
+      "U1",
+      "U2",
+      "U3",
+      "U4",
+      "U6"
+    ]
+  },
+  "gpu_plan": {
+    "authorized": false,
+    "executable": false,
+    "max_samples": 2,
+    "gpu_concurrency": 1,
+    "fixture": {
+      "selected_image_sha256": "0e3305d2d725c874d23c25c3271d027a342751832a2a8e301a0b2c7057ee6001",
+      "prompt_sha256": "c779146f46af38ceabf88349a0e3e5f65334d6e0b785c8fd60f480ce78fad54e",
+      "seed": 264244520398999,
+      "width": 768,
+      "height": 432,
+      "generated_frames": 93,
+      "retained_frames": 93,
+      "fps": 16,
+      "seed_low": 0,
+      "source_request": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\process\\revisions\\09\\production\\scene-clips\\scene_0001_clip_0001\\request.json",
+      "steps": 40,
+      "cfg": 3.5,
+      "id": "low_motion",
+      "negative_prompt_sha256": "ce96e0324e4b54ce4b6e867f669ca520952e1a34cc116543516b1897f0d3c47e",
+      "identity_scope": "historical selected fixture; no old run, image or video scanned"
+    },
+    "sample_order": [
+      {
+        "id": "W1",
+        "count": 1,
+        "backend": "Wrapper",
+        "base": "same existing high/low preferred",
+        "lora": false,
+        "steps": 40,
+        "cfg": 3.5,
+        "sampler": "euler",
+        "scheduler_target": "simple",
+        "shift": 5.0,
+        "high_steps": 15,
+        "low_steps": 25,
+        "actual_wrapper_sigmas": null,
+        "start_condition": "specific GPU authorization, complete source/runtime and bounded full-model gate preparation; reject basic parameter/load mismatch",
+        "stop_condition": "technical or human quality failure: no fast sample"
+      },
+      {
+        "id": "W2",
+        "count": 1,
+        "backend": "Wrapper",
+        "base": "identical to W1",
+        "lora": "complete approved-applicability pair",
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler": "euler",
+        "shift": 5.0,
+        "high_steps": 2,
+        "low_steps": 2,
+        "target_sigma_points": [
+          "1",
+          "15/16",
+          "5/6",
+          "5/8",
+          "0"
+        ],
+        "actual_wrapper_sigmas": null,
+        "start_condition": "W1 technical AND explicit human quality acceptance, full_model_gate.verified=true, specific GPU authorization",
+        "stop_condition": "any identity/application/quality/finite/frame/PTS/OOM failure: stop and preserve original ID, no retries or alternate base"
+      }
+    ],
+    "parameter_equivalence_verified": false,
+    "control_sigma_rule": "Preserve native Euler/simple/shift5 schedule; actual Wrapper sigma array and timestep/split equivalence must be captured; do not infer from widgets.",
+    "input_rule": "Override native template 640x640/81 defaults with frozen fixture 768x432/93. Preserve selected image, positive/negative prompts and both seeds.",
+    "timing": {
+      "end_to_end_start": "selected image handoff complete, before local admission/preparation",
+      "end_to_end_end": "1080p delivery checks complete, only if downstream delivery is actually executed",
+      "native_start": "before submit",
+      "native_end": "output collected and single necessary technical decode complete",
+      "human_wait": "record separately; no subtraction inference of exclusive GPU time",
+      "reporting": "report actual layers executed; no P50/P95 or stable speedup from one sample; do not repeat historical benchmark"
+    },
+    "attribution": "same base preferred; changed base/precision/scheduler is a configuration change and cannot be attributed purely to backend",
+    "expansion": "cold1/warm3, high-motion and parent/child require later LVA-07-06 conditions and authorization; no expansion in this task",
+    "recovery": "intent before POST, persist accepted original ID; unknown submit only queries original client/id queue/history; never resubmit unknown or regenerate completed media",
+    "quality": "human checks identity/structure/motion/texture/flicker/color/tail; technical checks never substitute human acceptance",
+    "blocked_by": [
+      "U1",
+      "U2",
+      "U3",
+      "U4",
+      "U5",
+      "U6"
+    ]
+  },
+  "actions": [
+    {
+      "id": "A0",
+      "purpose": "Read the decision, reuse total and unresolved conditions without any runtime imports",
+      "exact_command": "& .tools/python/python.exe -I -c \"import json,pathlib; m=json.loads(pathlib.Path('docs/task-designs/LVA-07-environment-manifest.json').read_text(encoding='utf-8')); print(m['decision']); print(m['resources']['existing_model_reuse_bytes']); print([(u['id'],u['reason']) for u in m['unresolved']])\"",
+      "read_set": [
+        "docs/task-designs/LVA-07-environment-manifest.json"
+      ],
+      "write_set": [],
+      "download_bytes": 0,
+      "estimated_disk_bytes": 0,
+      "requires_explicit_authorization": false,
+      "executable": true,
+      "blocked_by": [],
+      "status": "available read-only inspection"
+    },
+    {
+      "id": "A1",
+      "purpose": "Acquire complete pinned Wrapper source and integrate audited repair",
+      "exact_command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage sources",
+      "read_set": [
+        "https://raw.githubusercontent.com/kijai/ComfyUI-WanVideoWrapper/a7439db30bed0c5b5fa437d77ae8a7bb220dfd00/* (exact 241 paths in tree manifest)",
+        "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI git objects at 2c75dc1b379a59e0880619d029607af5169a62ef",
+        "patches/wanvideo-wrapper/{manifest.json,mixed-delta.patch,lva07_mixed_delta.py,lva07_applicability.py,lva07_img_policy.json}",
+        "four SHA-bound planning metadata/lock files in command bundle"
+      ],
+      "write_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/ComfyUI",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/comfy.tar",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json"
+      ],
+      "download_bytes": 47250651,
+      "estimated_disk_bytes": 164836707,
+      "requires_explicit_authorization": true,
+      "executable": true,
+      "blocked_by": [],
+      "status": "completed scoped environment preparation; no service/model gate auto-start",
+      "historical_unresolved_action": {
+        "exact_command": null,
+        "download_bytes": null,
+        "estimated_disk_bytes": null,
+        "executable": false,
+        "blocked_by": [
+          "U1",
+          "U2"
+        ],
+        "status": "not an approval-ready command; unresolved parameters are not placeholders to execute"
+      },
+      "authorization_granted": true,
+      "executed": true,
+      "result": {
+        "status": "passed",
+        "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage sources",
+        "attempts": [
+          {
+            "exit_code": 1,
+            "reason": "git archive converted LF blobs to CRLF under Windows config; fixed identity checks rejected before any Wrapper download",
+            "preserved_at": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/source-attempt-1",
+            "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/sources-execution.log"
+          },
+          {
+            "exit_code": 1,
+            "reason": "git apply obeyed global CRLF conversion; both patched files otherwise exactly match reviewed LF bytes",
+            "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/sources-execution-lf.log",
+            "preserved_at": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/source-attempt-2-patched-crlf"
+          }
+        ],
+        "exit_code": 0,
+        "completed_at": "2026-11-18T16:51:13Z",
+        "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json",
+        "marker_sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59",
+        "recovery": "explicit LF correction, no repeated downloads"
+      },
+      "result_marker": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json",
+        "sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59"
+      }
+    },
+    {
+      "id": "A2",
+      "purpose": "Copy inventoried CUDA runtime only; wheel acquisition and offline installation are A2W/A2I",
+      "exact_command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage runtime",
+      "read_set": [
+        "E:/VideoAI/shared/tools/ComfyUI_windows_portable/python_embeded (exact 45784 inventoried files)",
+        "four SHA-bound planning inputs",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json"
+      ],
+      "write_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": 4157540147,
+      "requires_explicit_authorization": true,
+      "executable": true,
+      "blocked_by": [],
+      "status": "completed scoped environment preparation; no service/model gate auto-start",
+      "historical_unresolved_action": {
+        "exact_command": null,
+        "download_bytes": null,
+        "estimated_disk_bytes": null,
+        "executable": false,
+        "blocked_by": [
+          "U2"
+        ],
+        "status": "not an approval-ready command; unresolved parameters are not placeholders to execute"
+      },
+      "authorization_granted": true,
+      "executed": true,
+      "result": {
+        "status": "passed",
+        "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage runtime",
+        "exit_code": 0,
+        "completed_at": "2026-11-18T16:54:56Z",
+        "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json",
+        "marker_sha256": "764f52f6e0e0a715a0c0298f5381527a55936f454372bbc59b8cd1d80785c087",
+        "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/runtime-execution.log"
+      },
+      "result_marker": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json",
+        "sha256": "764f52f6e0e0a715a0c0298f5381527a55936f454372bbc59b8cd1d80785c087"
+      }
+    },
+    {
+      "id": "A3",
+      "purpose": "Implement isolated worker, workflow and bounded atomic admission harness",
+      "exact_command": null,
+      "read_set": [
+        "LVA-07-03 manifest",
+        "LVA-07-02 repair",
+        "LVA-02 recovery contract"
+      ],
+      "write_set": [
+        "future LVA-07-04 scoped implementation and new scratch root"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": 536870912,
+      "requires_explicit_authorization": true,
+      "executable": false,
+      "blocked_by": [],
+      "status": "completed bounded04 CPU/offline implementation;77pytest/10CPU fixtures",
+      "authorization_granted": true,
+      "executed": true,
+      "result": "docs/task-designs/LVA-07-04-results.json"
+    },
+    {
+      "id": "A4",
+      "purpose": "Probe complete node registration and object_info on an owned independent service",
+      "exact_command": null,
+      "read_set": [
+        "future complete checkout/runtime/workflow identities"
+      ],
+      "write_set": [
+        "new owned service evidence and persistent port/PID identity"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": null,
+      "requires_explicit_authorization": true,
+      "executable": false,
+      "blocked_by": [
+        "U1",
+        "U2",
+        "U3",
+        "U5"
+      ],
+      "status": "completed scoped04 owned CPU13schema registration, not GPU",
+      "executed": true,
+      "authorization_granted": true,
+      "result": "E:/VideoAI/scratch/benchmarks/LVA-07-04-worker-cpu-final/service-result.json"
+    },
+    {
+      "id": "A5",
+      "purpose": "Perform full-model gate and one low-motion control, then conditional fast sample",
+      "exact_command": null,
+      "read_set": [
+        "frozen fixture",
+        "actual pair admission",
+        "control human acceptance before fast"
+      ],
+      "write_set": [
+        "new Wrapper-only experiment artifacts, at most two sampled videos"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": null,
+      "requires_explicit_authorization": true,
+      "executable": false,
+      "blocked_by": [
+        "U1",
+        "U2",
+        "U3",
+        "U4",
+        "U5",
+        "U6"
+      ],
+      "status": "not an approval-ready command; unresolved parameters are not placeholders to execute"
+    },
+    {
+      "id": "A2W",
+      "purpose": "wheels of proposed independent environment only",
+      "exact_command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage wheels",
+      "read_set": [
+        "exact 15 URLs from LVA-07-03-additional-wheels.lock",
+        "four SHA-bound planning inputs",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json"
+      ],
+      "write_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheelhouse",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/additional-wheels.lock",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json"
+      ],
+      "download_bytes": 339836898,
+      "estimated_disk_bytes": 339836898,
+      "requires_explicit_authorization": true,
+      "executable": true,
+      "blocked_by": [],
+      "status": "completed scoped environment preparation; no service/model gate auto-start",
+      "authorization_granted": true,
+      "executed": true,
+      "result": {
+        "status": "passed",
+        "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage wheels",
+        "exit_code": 0,
+        "completed_at": "2026-11-18T16:58:35Z",
+        "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+        "marker_sha256": "dba8f85210be7c6e1bb067c94ad57421fd1697e8b1e3987019375a2731142192",
+        "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/wheels-execution.log"
+      },
+      "result_marker": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+        "sha256": "dba8f85210be7c6e1bb067c94ad57421fd1697e8b1e3987019375a2731142192"
+      }
+    },
+    {
+      "id": "A2I",
+      "purpose": "install of proposed independent environment only",
+      "exact_command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage install",
+      "read_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheelhouse",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/additional-wheels.lock",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+        "four SHA-bound planning inputs"
+      ],
+      "write_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded/Lib/site-packages",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/python_embeded/Scripts",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/pip-install.log",
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": 455252138,
+      "requires_explicit_authorization": true,
+      "executable": true,
+      "blocked_by": [],
+      "status": "completed scoped environment preparation; no service/model gate auto-start",
+      "authorization_granted": true,
+      "executed": true,
+      "result": {
+        "status": "passed",
+        "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage install",
+        "exit_code": 0,
+        "completed_at": "2026-11-18T16:58:55Z",
+        "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json",
+        "marker_sha256": "175ca9c249fc6ba7645ca52d027d697512501595eec99d0f5ff7bffb8f5cffa9",
+        "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/install-execution.log"
+      },
+      "result_marker": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json",
+        "sha256": "175ca9c249fc6ba7645ca52d027d697512501595eec99d0f5ff7bffb8f5cffa9"
+      }
+    },
+    {
+      "id": "A2P",
+      "purpose": "CPU-only owned node registration/object_info probe; not full worker/GPU execution",
+      "exact_command": "& ./docs/task-designs/LVA-07-03-probe-nodes.ps1 -Run",
+      "plan": "docs/task-designs/LVA-07-03-node-probe-plan.md",
+      "script_sha256": "e470f7375b62b5307bbdbdf00c5404f04b36f0256f24ace45a8ceb3183e7cf37",
+      "read_set": [
+        "fixed independent environment and source markers",
+        "fixed Wrapper source files",
+        "existing shared model filenames only"
+      ],
+      "write_set": [
+        "E:/VideoAI/scratch/benchmarks/LVA-07-04-node-probe"
+      ],
+      "download_bytes": 0,
+      "estimated_disk_bytes": 536870912,
+      "private_commit_limit_bytes": 4294967296,
+      "probe_seconds": 180,
+      "requires_explicit_authorization": true,
+      "authorization_granted": true,
+      "executable": true,
+      "executed": true,
+      "blocked_by": [],
+      "status": "requested nine plus native bridge four passed; both owned processes ended, port closed",
+      "result": "docs/task-designs/LVA-07-03-node-probe-results.json"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "U1",
+      "reason": "Resolved for selected CPU registration/import path; GPU execution remains unverified.",
+      "resolution": "Review a complete a743 checkout file manifest, reapply the fingerprinted repair without replacing audited function bodies, and record final complete-tree identity before node admission.",
+      "blocks": [
+        "actual GPU integration"
+      ],
+      "historical_reason": "Only an 18-file upstream snapshot plus 3 repair/policy files exists in the audited replay; full fixed-commit checkout and patch integration identity are not established.",
+      "environment_preparation_resolved": true,
+      "historical_reason_before_cpu_probe": "Complete pinned repaired source snapshot now acquired and verified; complete node registration and integration semantics remain unverified.",
+      "selected_cpu_registration_resolved": true
+    },
+    {
+      "id": "U2",
+      "reason": "Resolved for selected CPU registration/import path; GPU execution remains unverified.",
+      "resolution": "Prepare a separate cp313-win_amd64 CUDA runtime inventory and full transitive wheel lock with exact versions, URLs, wheel tags, SHA256, bytes, active dependency impact and immutable production pins; review imports/registration in the later authorized isolated environment.",
+      "blocks": [
+        "actual GPU integration"
+      ],
+      "historical_reason": "The CPU 32-wheel lock uses torch2.14.1+cpu; the full CUDA/Comfy/Wrapper node dependency closure and isolated runtime binary copy budget are not resolved. Historical production metadata lacks eight required distributions.",
+      "environment_installation_resolved": true,
+      "historical_reason_before_cpu_probe": "Independent inventoried CUDA runtime copied; 15 locked wheels installed, 102 versions match and pip check passed. DLL/API/actual Wrapper imports are still unverified; this is not a fresh full-CUDA wheel resolution.",
+      "selected_cpu_registration_resolved": true
+    },
+    {
+      "id": "U3",
+      "reason": "Bounded sequential ownership/private overlay designed in LVA-07-04; full-model peak not measured.",
+      "resolution": "Design sequential private model construction with no shared mutable parameter/patch state and atomic pair publication, bound live weight/LoRA/activation/cast buffers, select swap/prefetch values and resource stop limits, then verify failure disposal in the isolated harness. Do not lift the CPU deepcopy cap.",
+      "blocks": [
+        "full_model_gate",
+        "GPU commands"
+      ],
+      "historical_reason_before_cpu_probe": "No credible full 14B pair atomic ownership/offload peak budget exists. The CPU prepare_lora_pair deepcopy API caps each side at 256 MiB; model storage already exceeds historical device memory if both are resident.",
+      "design": "docs/task-designs/LVA-07-04-design.md"
+    },
+    {
+      "id": "U4",
+      "reason": "Scalar-scale CPU tests do not certify actual scaled-FP8 load/forward/offload. Merged is numerically unsupported; fast FP8 and low_mem_load are not verified.",
+      "resolution": "Use unmerged+static repair, nonfast FP8 and SDPA as the proposed path; fix compute dtype and scale semantics, prove actual full-model parameter installation plus dynamic forward/scale usage and offload migration at one admission boundary. Any unsupported dtype/scale/config rejects the pair.",
+      "blocks": [
+        "final profile",
+        "full_model_gate",
+        "fast POST"
+      ],
+      "historical_reason_before_cpu_probe": "Scalar-scale CPU tests do not certify actual scaled-FP8 load/forward/offload. Merged is numerically unsupported; fast FP8 and low_mem_load are not verified."
+    },
+    {
+      "id": "U5",
+      "reason": "Exact CPU sigma/timestep contract established; integer truncation makes pure backend equivalence false. New nodes/workflow implementation pending.",
+      "resolution": "In LVA-07-04 fix Wrapper mapping/object_info and actual scheduler timesteps to the 768x432/93-frame fixture; hash final control/fast graphs and actual sigma arrays. Report non-equivalence explicitly and stop if basic parameters/quality cannot align.",
+      "blocks": [
+        "workflow execution",
+        "pure backend attribution"
+      ],
+      "historical_reason_before_cpu_probe": "No Wrapper workflow/schema or exact control sigma equivalence has been validated. Native template defaults are 640x640/81 and must be overridden by frozen fixture values.",
+      "contract": "docs/task-designs/LVA-07-04-contract.json"
+    },
+    {
+      "id": "U6",
+      "reason": "The exact Low290 exception is approved for the fixed CPU profile, not an arbitrary actual Wan model.",
+      "resolution": "At full-model admission revalidate the exact base/LoRA identities, schema, normalizer and key set; explicitly account for 290 as not applicable and require all 2959 applicable original inputs retained and installed with no silent filtering. A changed identity needs a new reviewed policy.",
+      "blocks": [
+        "full_model_gate",
+        "fast POST"
+      ],
+      "historical_reason_before_cpu_probe": "The exact Low290 exception is approved for the fixed CPU profile, not an arbitrary actual Wan model."
+    }
+  ],
+  "authorization": {
+    "request": "同意",
+    "scope": "execute reviewed sources/runtime/wheels/install only",
+    "installation": true,
+    "download": true,
+    "runtime_copy": true,
+    "node_import": false,
+    "gpu_torch_import": false,
+    "service_start": false,
+    "gpu": false,
+    "production_resume": false,
+    "prior_cpu_authorization_inherited": false,
+    "prior_lva04_lva06_gpu_authorization_inherited": false,
+    "evidence": "docs/task-designs/LVA-07-03-preparation-execution.json",
+    "new_operations": {
+      "gpu_torch_imports": 0,
+      "gpu_sampling": 0,
+      "generation_posts": 0,
+      "model_payload_reads": 0,
+      "source_download_payload_bytes": 47250651,
+      "wheel_download_payload_bytes": 339836898,
+      "runtime_copies": 1,
+      "pip_installs": 1,
+      "node_imports": 0,
+      "comfy_service_starts": 0,
+      "full_model_admissions": 0,
+      "inference_model_downloads": 0,
+      "bundled_optional_source_onnx_files": 1
+    }
+  },
+  "created_at": "2026-11-18T12:36:41.228332+00:00",
+  "supplement_2026_11_19": {
+    "authorization": "用户同意先补齐LVA-07-03环境与资源方案，再推进LVA-07-04；不执行具体环境准备命令",
+    "evidence": "docs/task-designs/LVA-07-03-preparation-evidence.json",
+    "plan": "docs/task-designs/LVA-07-03-preparation-plan.md",
+    "scope": "approval-ready environment preparation only",
+    "full_task_decision": "insufficient_evidence",
+    "task04_ready": false,
+    "preparation_commands": "docs/task-designs/LVA-07-03-prepare-environment.py",
+    "evidence_sha256": "1c68fc1232a85142494ae4037d6a8d59a3a61834ca8835338632eb3dc190ef60",
+    "record_scope": "historical pre-execution plan; latest executed facts in environment_preparation_execution"
+  },
+  "historical_authorization_before_environment_execution": {
+    "request": "完成任务LVA-07-03",
+    "scope": "read evidence/metadata/bounded headers and write decision+manifest+board only",
+    "installation": false,
+    "download": false,
+    "service_start": false,
+    "gpu": false,
+    "production_resume": false,
+    "prior_cpu_authorization_inherited": false,
+    "prior_lva04_lva06_gpu_authorization_inherited": false,
+    "new_operations": {
+      "dependency_downloads": 0,
+      "model_downloads": 0,
+      "installs": 0,
+      "gpu_torch_imports": 0,
+      "node_imports": 0,
+      "service_starts": 0,
+      "generation_posts": 0,
+      "gpu_sampling": 0,
+      "model_payload_reads": 0,
+      "full_model_rehashes": 0,
+      "cpu_payload_reruns": 0
+    }
+  },
+  "environment_preparation_execution": {
+    "status": "passed",
+    "scope": "environment only, no backend/workflow/harness or model admission completion",
+    "evidence": "docs/task-designs/LVA-07-03-preparation-execution.json",
+    "evidence_sha256": "7d2ec7b569d20104fade10b05bc9d41359e637ab16a435afa92ae5f4d98a4bad",
+    "report": "docs/task-designs/LVA-07-03-preparation-execution.md",
+    "destination": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment",
+    "stages": {
+      "sources": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json",
+        "sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59"
+      },
+      "runtime": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json",
+        "sha256": "764f52f6e0e0a715a0c0298f5381527a55936f454372bbc59b8cd1d80785c087"
+      },
+      "wheels": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+        "sha256": "dba8f85210be7c6e1bb067c94ad57421fd1697e8b1e3987019375a2731142192"
+      },
+      "install": {
+        "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json",
+        "sha256": "175ca9c249fc6ba7645ca52d027d697512501595eec99d0f5ff7bffb8f5cffa9"
+      }
+    },
+    "full_task_decision": "insufficient_evidence",
+    "task04_ready": false
+  },
+  "historical_decision_before_node_probe": "insufficient_evidence",
+  "node_probe": {
+    "result": "docs/task-designs/LVA-07-03-node-probe-results.json",
+    "cuda_build_torch_imported_cpu_mode": true,
+    "gpu_used": false,
+    "selected_http_schemas": 13,
+    "full_model_loaded": false
+  },
+  "implementation_followup": {
+    "task_id": "LVA-07-04",
+    "status": "COMPLETED",
+    "result": "docs/task-designs/LVA-07-04-results.json",
+    "gpu_authorized": false,
+    "full_model_verified": false
+  }
+}

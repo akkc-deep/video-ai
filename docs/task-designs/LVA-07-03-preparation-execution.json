@@ -1,0 +1,196 @@
+{
+  "task_id": "LVA-07-03",
+  "kind": "authorized environment preparation execution supplement",
+  "started_at": "2026-11-18T16:44:15Z",
+  "authorization": {
+    "request": "同意",
+    "scope": "执行已呈现的sources/runtime/wheels/install四阶段；约369.16MiB下载、约3.87GiB runtime副本、8GiB磁盘预留",
+    "source_acquisition": true,
+    "runtime_copy": true,
+    "wheel_download": true,
+    "installation": true,
+    "node_import": false,
+    "service_start": false,
+    "gpu_sampling": false,
+    "production_changes": false
+  },
+  "plan": "docs/task-designs/LVA-07-03-preparation-plan.md",
+  "script": "E:\\code\\py\\video-ai\\docs\\task-designs\\LVA-07-03-prepare-environment.py",
+  "script_sha256": "76f6a905d3b2b959eb6e5aac1a602797d87c6ef8839422c0c6bfd64f53e4cf84",
+  "destination": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment",
+  "stages": {
+    "sources": {
+      "status": "passed",
+      "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage sources",
+      "attempts": [
+        {
+          "exit_code": 1,
+          "reason": "git archive converted LF blobs to CRLF under Windows config; fixed identity checks rejected before any Wrapper download",
+          "preserved_at": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/source-attempt-1",
+          "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/sources-execution.log"
+        },
+        {
+          "exit_code": 1,
+          "reason": "git apply obeyed global CRLF conversion; both patched files otherwise exactly match reviewed LF bytes",
+          "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/sources-execution-lf.log",
+          "preserved_at": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/source-attempt-2-patched-crlf"
+        }
+      ],
+      "exit_code": 0,
+      "completed_at": "2026-11-18T16:51:13Z",
+      "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json",
+      "marker_sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59",
+      "recovery": "explicit LF correction, no repeated downloads"
+    },
+    "runtime": {
+      "status": "passed",
+      "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage runtime",
+      "exit_code": 0,
+      "completed_at": "2026-11-18T16:54:56Z",
+      "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json",
+      "marker_sha256": "764f52f6e0e0a715a0c0298f5381527a55936f454372bbc59b8cd1d80785c087",
+      "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/runtime-execution.log"
+    },
+    "wheels": {
+      "status": "passed",
+      "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage wheels",
+      "exit_code": 0,
+      "completed_at": "2026-11-18T16:58:35Z",
+      "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+      "marker_sha256": "dba8f85210be7c6e1bb067c94ad57421fd1697e8b1e3987019375a2731142192",
+      "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/wheels-execution.log"
+    },
+    "install": {
+      "status": "passed",
+      "command": "& .tools/python/python.exe -I docs/task-designs/LVA-07-03-prepare-environment.py --stage install",
+      "exit_code": 0,
+      "completed_at": "2026-11-18T16:58:55Z",
+      "marker": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json",
+      "marker_sha256": "175ca9c249fc6ba7645ca52d027d697512501595eec99d0f5ff7bffb8f5cffa9",
+      "log": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/install-execution.log"
+    }
+  },
+  "rulings": [
+    "关闭仅本次 git archive 的 core.autocrlf 并指定 LF，维持固定 blob 身份；保留失败现场后显式重启 sources。来源/模型/安装范围不变；保留的约53MB失败tar由8GiB预算余量覆盖。",
+    "Git apply 亦须按命令关闭autocrlf并指定LF。独立两文件验证与既有修复SHA一致后，仅规范化本轮新快照中两文件换行并恢复sources标记；不重下241文件、不改全局Git/生产设置。代价仅保留约125KB失败副本。"
+  ],
+  "full_task_decision": "insufficient_evidence",
+  "task04_started": false,
+  "corrected_script_sha256": "d14223985877726c53ff55ae00785cc6a3b5b4e813e8ba6153f351d86c85f3eb",
+  "four_stage_status": "passed",
+  "finished_at": "2026-11-18T16:58:57Z",
+  "status": "environment_prepared_only",
+  "verification": {
+    "path": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/execution-verification.json",
+    "sha256": "a12b40a5043ddfe9561b1b04bebec5aa6e90c91adddfe5e8bdd2bc676f149e01",
+    "exit_code": 0,
+    "verifier": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/verify_execution.py"
+  },
+  "environment": {
+    "wrapper_files": 244,
+    "wrapper_file_bytes": 48125397,
+    "comfy_commit": "2c75dc1b379a59e0880619d029607af5169a62ef",
+    "wrapper_upstream": "a7439db30bed0c5b5fa437d77ae8a7bb220dfd00",
+    "runtime_copied_files": 45784,
+    "runtime_copy_bytes": 4157540147,
+    "copied_binary_hashes_verified": 381,
+    "downloaded_wheels": 15,
+    "wheel_bytes": 339836898,
+    "installed_distributions": 102,
+    "pip_check": "No broken requirements found.",
+    "runtime": {
+      "version": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\python.exe",
+      "path": [
+        "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\python313.zip",
+        "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded",
+        "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\python_embeded\\Lib\\site-packages",
+        "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-04-environment\\ComfyUI"
+      ]
+    },
+    "target_files_observed": 50063,
+    "target_file_bytes_observed": 5106830024,
+    "disk_reserve_bytes": 8589934592
+  },
+  "stage_markers": {
+    "sources": {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/sources.json",
+      "sha256": "db3dfa493ce6679ebe0a32b32a4cc303f66d2aac60269de151f15fa8ef7c2a59"
+    },
+    "runtime": {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/runtime.json",
+      "sha256": "764f52f6e0e0a715a0c0298f5381527a55936f454372bbc59b8cd1d80785c087"
+    },
+    "wheels": {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/wheels.json",
+      "sha256": "dba8f85210be7c6e1bb067c94ad57421fd1697e8b1e3987019375a2731142192"
+    },
+    "install": {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-04-environment/install.json",
+      "sha256": "175ca9c249fc6ba7645ca52d027d697512501595eec99d0f5ff7bffb8f5cffa9"
+    }
+  },
+  "operations": {
+    "gpu_torch_imports": 0,
+    "gpu_sampling": 0,
+    "generation_posts": 0,
+    "model_payload_reads": 0,
+    "source_download_payload_bytes": 47250651,
+    "wheel_download_payload_bytes": 339836898,
+    "runtime_copies": 1,
+    "pip_installs": 1,
+    "node_imports": 0,
+    "comfy_service_starts": 0,
+    "full_model_admissions": 0,
+    "inference_model_downloads": 0,
+    "bundled_optional_source_onnx_files": 1
+  },
+  "owned_services": [],
+  "remaining": [
+    "DLL/API/torch imports not tested",
+    "complete node registration/object_info not tested",
+    "bounded private model ownership and static deltas across sampler reload/offload still require design/implementation",
+    "no full model admission or video quality/performance result"
+  ],
+  "approval_snapshot": {
+    "evidence": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/pre-execution-evidence.json",
+    "evidence_sha256": "fb9efb0cd442ef160b5eda82f6d35cc6328af05a634af6e53163449e2cbd92f5",
+    "plan": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/pre-execution-plan.md",
+    "plan_sha256": "a50cf2a5e5545e9580d50676df0f7975ca4b33707c3d50aba50b38e5383c742a",
+    "command": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/preparation-command-approved.py",
+    "command_sha256": "76f6a905d3b2b959eb6e5aac1a602797d87c6ef8839422c0c6bfd64f53e4cf84"
+  },
+  "current_artifacts": [
+    {
+      "path": "E:/code/py/video-ai/docs/task-designs/LVA-07-03-prepare-environment.py",
+      "sha256": "d14223985877726c53ff55ae00785cc6a3b5b4e813e8ba6153f351d86c85f3eb"
+    },
+    {
+      "path": "E:/code/py/video-ai/docs/task-designs/LVA-07-03-preparation-execution.md",
+      "sha256": "89fdd4d7bb7e23e7245efbcf1424aec78f4a2df104a4ca111902e3c892b3d768"
+    },
+    {
+      "path": "E:/code/py/video-ai/docs/task-designs/LVA-07-03-preparation-plan.md",
+      "sha256": "fc58b2b3c8cef5ee0e9f32d489528675dd17d93dca46f5011cdda22656e4dfd4"
+    },
+    {
+      "path": "E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/verify_execution.py",
+      "sha256": "c40f9f7af064b0cc608d36a1dbdcc98441cc88c93ed4dc917238022e8076800a"
+    }
+  ],
+  "next_proposed_action": {
+    "plan": "docs/task-designs/LVA-07-03-node-probe-plan.md",
+    "script": "docs/task-designs/LVA-07-03-probe-nodes.ps1",
+    "script_sha256": "e470f7375b62b5307bbdbdf00c5404f04b36f0256f24ace45a8ceb3183e7cf37",
+    "command": "& ./docs/task-designs/LVA-07-03-probe-nodes.ps1 -Run",
+    "authorization_granted": false,
+    "executed": false,
+    "cpu_only": true,
+    "private_commit_limit_bytes": 4294967296,
+    "rss_stop_bytes": 4294967296,
+    "probe_seconds": 180,
+    "disk_reserve_bytes": 536870912,
+    "schema_nodes": 9,
+    "validation": "PS Parser, C# compile, explicit Type overload 144-byte Win64 job layout, default inspect passed; no job/child instantiated"
+  }
+}

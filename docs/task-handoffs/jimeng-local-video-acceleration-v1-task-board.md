@@ -14,6 +14,8 @@
 - **Original six-task state:** `COMPLETED`。Order6 LVA-06于 `2026-11-16T19:23:23.328032+00:00` 完成真实矩阵、全部质量与原ID恢复证据收尾；原六项既定任务均已完成。结果为保持原质量默认并明确不推广未通过候选，不是恢复暂停生产或证明全片加速。
 - **LVA-07 split evidence (2026-11-17):** 用户要求完整读取三份设计/任务文档后拆分，先做环境兼容审查，不急于安装，先确认此前失败的两组 LoRA 能否被 Wrapper 正确处理，再决定 GPU 投入。原 LVA-07 的 NOT_STARTED 聚合行由 LVA-07-01～06 执行行取代，LVA-07 保留为专项总称而非另一个待执行任务；这是范围拆分，不是完成/启动状态迁移。LVA-07-01 初始化 READY，其余 NOT_STARTED，Handoff 均 None。仅拆分与设计已交付，未执行环境审查、安装或新 GPU；原六项状态/历史证据不变。
 
+- **Project closure (2026-11-21):** 本板12项任务均为COMPLETED。最后LVA-07-06的32份原生与24份1080P均取得实际人工接受，所有owned服务退出；完整验收见 `docs/task-designs/LVA-07-06-completion.json`。没有预定义后继任务，不创建新任务或handoff；实验完成不等于生产迁移，原质量默认保留。
+
 ## Workflow
 
 - **Execution:** Order 是默认实施顺序，串行安排由用户负责；建板不启动实现、不派发执行，也不改变其他项目任务状态。
@@ -38,10 +40,10 @@
 | 6 | LVA-06 | P2 / F：端到端复测、收益归因与性能回归 | COMPLETED | LVA-01, LVA-02, LVA-03, LVA-04, LVA-05 | docs/task-designs/LVA-06-design.md | docs/task-handoffs/LVA-06-handoff.md |
 | 7 | LVA-07-01 | 环境与 Wrapper 加载路径只读审查 | COMPLETED | LVA-04 | docs/task-designs/LVA-07-01-design.md | None |
 | 8 | LVA-07-02 | 两专家 mixed-delta LoRA CPU 兼容性验证 | COMPLETED | LVA-07-01, LVA-04 | docs/task-designs/LVA-07-02-design.md | docs/task-handoffs/LVA-07-02-handoff.md |
-| 9 | LVA-07-03 | 是否投入的决策与具体环境/GPU资源清单 | READY | LVA-07-01, LVA-07-02, LVA-01 | docs/task-designs/LVA-07-03-design.md | docs/task-handoffs/LVA-07-03-handoff.md |
-| 10 | LVA-07-04 | 隔离 worker、workflow 与恢复 harness | NOT_STARTED | LVA-07-03, LVA-07-02, LVA-02 | None | None |
-| 11 | LVA-07-05 | 最小低运动真实 GPU 对照与人工质量门槛 | NOT_STARTED | LVA-07-04, LVA-07-03, LVA-01 | None | None |
-| 12 | LVA-07-06 | 条件扩展冷/热及父子矩阵与实验结论 | NOT_STARTED | LVA-07-05, LVA-07-04, LVA-01 | None | None |
+| 9 | LVA-07-03 | 是否投入的决策与具体环境/GPU资源清单 | COMPLETED | LVA-07-01, LVA-07-02, LVA-01 | docs/task-designs/LVA-07-03-design.md | docs/task-handoffs/LVA-07-03-handoff.md |
+| 10 | LVA-07-04 | 隔离 worker、workflow 与恢复 harness | COMPLETED | LVA-07-03, LVA-07-02, LVA-02 | docs/task-designs/LVA-07-04-design.md | docs/task-handoffs/LVA-07-04-handoff.md |
+| 11 | LVA-07-05 | 最小低运动真实 GPU 对照与人工质量门槛 | COMPLETED | LVA-07-04, LVA-07-03, LVA-01 | docs/task-designs/LVA-07-05-design.md | docs/task-handoffs/LVA-07-05-handoff.md |
+| 12 | LVA-07-06 | 条件扩展冷/热及父子矩阵与实验结论 | COMPLETED | LVA-07-05, LVA-07-04, LVA-01 | docs/task-designs/LVA-07-06-design.md | None |
 
 ## Task Details
 
@@ -219,17 +221,27 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 
 ### LVA-07-03
 
+- **Start evidence (2026-11-18):** 用户明确要求“完成任务LVA-07-03”；完整读取本项设计与交接，确认 READY 后执行 `READY -> IN_PROGRESS`，保留原交接为入口上下文。范围为只读证据审阅及决策/环境资源清单；不安装、下载、导入 GPU torch/完整节点、启动服务或生成视频。
+
 - **Goal:** 基于环境与CPU证据，判断是否值得投入隔离环境和真实GPU实验，并使后续投入具体可审阅。
 - **Scope:** 汇总继续/停止/证据不足的理由；继续时固定目标runtime/commit、base与LoRA复用或下载身份、字节数/SHA、FP8/offload策略、预计磁盘/RAM/VRAM和命令；列出CPU证据未覆盖的完整模型实际准入，以及先少量后扩展的GPU预算。此项只写清单，不执行安装/下载/GPU。
 - **Acceptance:** 不支持mixed delta或关键依赖无解时明确停止；证据不足列解除条件而不冒充通过。继续决定只能说明值得尝试，不能证明模型已应用或质量通过；具体安装/下载/GPU授权范围可逐项审阅，最小计划原则上1个40步低运动control及通过后的1个4步候选，W3替代模型需单列而不自动投入。
 - **Dependencies:** LVA-07-01 环境/源码审查；LVA-07-02 CPU实际证据与局限；LVA-01 固定素材及原生质量/计时边界。
 - **Design document:** `docs/task-designs/LVA-07-03-design.md`。
 - **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md；② LVA-07-01/02实际交付；③ docs/task-designs/LVA-01-gpu-results.md、LVA-04-results.md；④ 原模型与workflow身份记录。自身详细设计在准备时完成并关联。
-- **Deliverables:** docs/task-designs/LVA-07-environment-manifest.json 和投入决策/命令文档（拟交付）；未核定值显式未验证，不伪造commit或资源数字。
+- **Deliverables:** `docs/task-designs/LVA-07-environment-manifest.json`、`docs/task-designs/LVA-07-investment-decision.md`；未核定值显式为null并列解除条件，不伪造commit或资源数字。
 - **First action:** 按两项实际证据逐条判定混合delta、环境和模型结构是否具备继续条件，再汇总具体资源与剩余风险。
 - **State evidence:** NOT_STARTED；尚无继续决定或具体新安装/GPU授权。原任务拆分不构成这些操作授权。
 
 - **Preparation evidence (2026-11-18):** 在LVA-07-02 CPU完成状态记录之后，按Order选择本项；原NOT_STARTED。已完成并关联 `docs/task-designs/LVA-07-03-design.md`，然后写 `docs/task-handoffs/LVA-07-03-handoff.md`，关联交接并执行 `NOT_STARTED -> READY`。仅准备决定/环境资源清单，不开始实施、安装、下载、服务或GPU。先填条件矩阵再据证据形成manifest；未知允许明确证据不足，不冒认完整模型可用。
+
+- **Completion evidence (2026-11-18):** 用户“完成任务LVA-07-03”授权范围内的条件矩阵、固定环境/模型身份、资源预算与逐项动作清单已交付，执行 `IN_PROGRESS -> COMPLETED`。决定为 `insufficient_evidence`：保留30项CPU测试与2959适用原始输入的已供证据，同时明确21文件部分源码、完整CUDA依赖闭包、14B原子所有权/内存和实际FP8/offload仍未解决；merged数值遗漏继续禁用，Low290批准仅属固定CPU profile。六模型历史身份复用36953325927 bytes，本次仅stat/有界header均匹配，未重哈希payload；双base28589485664 bytes超过历史24455MiB显存，原模型+deepcopy文件大小代理下界57178971328 bytes超过本次物理RAM33346146304 bytes，不能据CPU fixture或空闲磁盘填写完整峰值。未知下载/副本/临时/预留/RAM/VRAM预算均为null且有U1～U6解除条件；A1～A5命令为null/executable=false，不请求审批未知投入。后续计划固定最多两个93帧/768×432/16fps样本，先40步control技术与人工接受再4步候选，实际完整pair准入在fast POST前一次执行并持久化，当前verified=false。
+- **Verification evidence (2026-11-18):** `.tools/python/python.exe -I -m json.tool docs/task-designs/LVA-07-environment-manifest.json` exit0；stdlib内联契约/文档检查exit0，输出 `manifest contract passed`，19/19证据摘要、6/6模型身份/预算、MD/JSON一致、历史/本次/分析下界区分、动作/未知项/零操作及原生workflow/mapping历史SHA一致全部通过；`git diff --check` exit0。改动仅本任务两交付和本板。0安装/下载/GPU torch或完整节点导入/服务/POST/GPU采样/CPU payload重跑/完整模型payload读取/全量重哈希，无产品或媒体测试。本次主机观察 `2026-11-18T12:36:41.228332+00:00`，不是未来资源预留。
+- **Successor gate (2026-11-18):** 完成本项后按既定Order选择LVA-07-04，观察为NOT_STARTED。其依赖要求继续决定、固定可执行环境/资源清单及具体授权；本次证据不足决定不支持进入实现准备，保留其NOT_STARTED、Design document=None、Handoff=None，未写部分设计/交接，未外推旧CPU或LVA-04/06 GPU授权。本项完成不因该后继门槛回滚。
+
+- **Authorized evidence supplement (2026-11-19):** 用户同意先补齐LVA-07-03环境与资源方案，再推进LVA-07-04。本项保留COMPLETED，不反向迁移。已交付 `docs/task-designs/LVA-07-03-preparation-plan.md`、`LVA-07-03-preparation-evidence.json`、完整Wrapper tree、15 wheel锁及默认只读的具体准备命令；原manifest/决定同步更新。固定完整Wrapper241文件47250651 bytes，Comfy1332文件49602446 bytes；现有CUDA runtime副本45784文件4157540147 bytes，381二进制只读SHA齐备。固定原87分发并补15个，根闭包97及其余已安装活动依赖无元数据约束冲突，预计102分发，不冒充实际导入。下载payload387087549 bytes、wheel解压455252138 bytes、含临时量保守磁盘6214544814 bytes，计划预留8GiB；只建议按此具体清单批准环境准备，实际源码获取/副本/安装/节点/服务/GPU尚未执行。初版ZIP范围脚本对五小wheel有完整HTTP响应读取上限112970 bytes，未保存/安装/执行，精确回执未保留；后续仅EOCD/目录30个206共227053 bytes。CPU helper实际六所有者的base文件代理下界85768456992 bytes，sampler reload可能覆盖静态增量的接口缺口及U3～U6仍保留，完整决定仍insufficient_evidence；LVA-07-04保持NOT_STARTED、Design=None、Handoff=None，不写部分交接。
+- **Supplement verification (2026-11-19):** 补充命令语法与只读inspect、依赖/目标wheel标签/活动Requires-Dist、19份原证据及补充来源摘要、预算和MD/JSON一致性审计exit0；`git diff --check` exit0。实际入口 `E:/VideoAI/scratch/benchmarks/LVA-07-03-planning/verify_supplement.py`，回执 `verification.json`；目标环境目录仍不存在，未执行sources/runtime/wheels/install四个阶段。不运行产品全库、旧CPU payload、视频解码或GPU基准，不以这些文档检查认领完整模型或安装成功。
+- **Authorized environment execution (2026-11-19):** 用户对已呈现的四阶段具体命令、约369MiB下载/约3.87GiB副本/8GiB磁盘预留回复“同意”。四阶段已完成，`docs/task-designs/LVA-07-03-preparation-execution.json/.md`记录实际源码/副本/安装、失败与修正；本项保留COMPLETED，不反向迁移。完整Wrapper244文件48125397 bytes，独立runtime45784文件4157540147 bytes及381指定二进制身份通过；15wheel339836898 bytes，102实际分发与固定版本完全一致，pip check exit0。最终审计/解释器路径隔离exit0，目录初轮实际5106830024 bytes低于8GiB预留。两次Git CRLF转换分别在导出/补丁身份边界被拒绝，固定本次命令LF后恢复审定字节，失败现场保留，不改全局或生产，不重复下载241文件。0节点/GPU torch导入、0Comfy服务、0POST/采样/完整模型准入/推理模型payload；完整源码携带可选ONNX按源码预算取得未加载。U1源码快照和U2实际离线安装已有证据，节点/DLL/API与U3～U6尚未解除，完整决定仍insufficient_evidence，不准备部分后继交接。
 
 ### LVA-07-04
 
@@ -241,6 +253,10 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **Deliverables:** 总体设计已有的 src/video_ai/experiments/wan_wrapper_backend.py、scripts/observe_wan_wrapper_comfy.py、scripts/benchmark_wan_wrapper.py、Wrapper工作流三件套及定向测试；具体接口在本项专项设计完成，不宣称当前已有实现。
 - **First action:** 按已完成专项设计先建立缺失mixed-delta/节点身份与unknown恢复的定向失败用例，再实现隔离profile及adapter；安装只执行已经具体授权的命令。
 - **State evidence:** NOT_STARTED；尚无隔离环境、服务、workflow或实现验证结果。缺少继续决定不得自动准备为READY。
+- **Dependency preparation update (2026-11-19):** 用户明确批准的完整固定源码快照、独立CUDA runtime副本及离线依赖安装已在 `E:/VideoAI/scratch/benchmarks/LVA-07-04-environment` 完成，实际证据见前项执行JSON/Markdown。原State evidence为初始化历史，当前不能据此说环境仍未建立。本项backend/worker/workflow/恢复harness、实际节点能力及受限完整模型方案仍未交付；状态保留NOT_STARTED，Design/Handoff仍None，不将环境安装当本项完成。
+- **Concrete node-probe proposal (2026-11-19):** 为推进实际注册/schema证据，已准备 `docs/task-designs/LVA-07-03-node-probe-plan.md` 和 `LVA-07-03-probe-nodes.ps1`。单个CPU模式owned服务，仅本地GET九个object_info，4GiB私有commit硬限/RSS停止阈值、180秒探测时限及512MiB磁盘预留，退出/PID/端口证据保留；不加载模型或提交生成。只读入口/语法/C#互操作编译及144-byte布局核对通过，probe目录未创建、0实际节点导入/服务。该具体服务清单尚未授权，按本项Scope不自动继承四阶段安装许可；不是本项详细设计，不回填Design cell、不改状态或写部分交接。
+
+- **Completion evidence (2026-11-19):** 用户完成/继续授权下交付隔离profile/workflow/worker/单专家私有覆盖/原ID恢复和媒体契约；77相关pytest（37新+40邻居）及10真实固定函数体CPU fixture通过。实际CPU worker PID41804/start134395049390251801，13HTTP schema，RSS1009172480，31.875s，graceful exit0/8297关闭。九项审查问题由作者修复并回归，未作二次独立复审。JSON/MD见docs/task-designs/LVA-07-04-results.json/.md；30任务文件已同步原工作区，实际source-root绑定init/graph通过。0大模型payload读取/生成POST/GPU/新下载安装，生产及原生workflow/patch/policy未改。完整模型/质量/吞吐及05仍未验证、未执行；本项CPU/离线验收成立后执行IN_PROGRESS -> COMPLETED。
 
 ### LVA-07-05
 
@@ -251,9 +267,65 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **Sources:** ① docs/task-designs/LVA-07-wrapper-backend-design.md 的Model gate/Experiment matrix/Real media；② LVA-07-03/04实际manifest、命令及离线证据；③ docs/task-designs/LVA-01-gpu-results.md。自身详细设计在准备时完成并关联。
 - **Deliverables:** 实际应用准入、原始请求/输出/技术及人工质量/资源证据和最小对照结果；结果追加至 docs/task-designs/LVA-07-results.json / .md（拟交付）。
 - **First action:** 在获授权的独立worker执行完整双专家模型/LoRA应用准入；失败不发fast生成POST，成功后才进入最小control。
-- **State evidence:** NOT_STARTED；没有GPU实际准入、采样、媒体或人工质量结果；不得承接旧LVA-04/06授权自动运行。
+- **Historical block evidence:** BLOCKED；2026-11-20原双专家head/full pair准入已通过（2959适用/290精确排除），唯一control原ID在T5输出转CPU时触及8GiB进程提交额度；原文664 tokens还超过512守卫/默认text_len。无Wan采样/媒体/人工质量，fast未提交，服务与observer已退出；完整对照未完成。
+
+- **Preparation evidence (2026-11-19):** 04已先记录COMPLETED；完整05设计回填，直接04/03/01输入约束一致，写05 next-task交接后执行NOT_STARTED -> READY。READY仅表示设计/固定输入已准备，未开始05；新GPU执行授权未取得、当前RAM低于26GiB、空闲VRAM/完整峰值未测。不得把此迁移当GPU或质量放行。
+
+- **Start evidence (2026-11-19):** 用户明确要求“完成任务LVA-07-05”；完整读取本项设计和既有next-task交接后执行READY -> IN_PROGRESS。首先只读观察容量、核对固定输入并准备新比较组；具体GPU执行许可及资源前置仍按设计执行，不将任务启动记录冒充GPU或人工质量授权。
+
+- **Block evidence (2026-11-19):** 固定source_request/prompt/图片/seeds通过，新root `E:/VideoAI/scratch/benchmarks/LVA-07-05-low-20261119-01` 的init exit0、两profile/graph封存通过，comparison `d638a6abb9c2d40796fa438107eefcbcb5520f24dd4e1e51365b596065cf605f`。只读实测可用RAM17039007744 bytes < 27917287424 bytes、空闲VRAM22726836224 bytes < 23622320128 bytes；尚无该comparison独立GPU许可。0GPU服务/完整模型加载/准入POST/生成POST。先保存pause handoff及原next-task历史副本，再执行IN_PROGRESS -> BLOCKED；证据为 `docs/task-designs/LVA-07-results.json` / `.md`，解阻要求新观察达到26GiB/22GiB并取得具体两样本授权。不登记COMPLETED、不准备06。
+
+- **Retry evidence (2026-11-19):** 用户“你再试一下，时间可以不限制”已批准上述具体comparison，授权记录为实验root/authorization.json，最多2样本、取消总时限；不重复索取同一许可。最新只读观察2026-11-19T06:50:50.957429+00:00：可用RAM17176109056 bytes、空闲VRAM23014146048 bytes，仍未达26GiB/22GiB。BLOCKED保持，无新状态迁移，0GPU服务/模型加载/准入POST/生成POST。最新结果为docs/task-designs/LVA-07-results.json，原始retry-observation-02.json在准备目录。现有controller仍有14400秒上限，资源解除后首次执行前适配并评估封存源身份；不能用增加时限绕过容量门槛。
+
+- **Resolution evidence (2026-11-19):** 用户“按照本机可以提供的来吧”批准本机资源方案；RAM14GiB/显存21GiB准入，原硬上限不变，已有不限制总时长许可。实际容量16816201728/23085449216 bytes达标。42相关测试通过、fresh review无重要/严重问题。旧未执行root保留，新root LVA-07-05-low-20261119-02封存comparison973736939def19675e5fbb92c10afd7304a14528573f99fe2516d09c22278ef2并有真实authorization/provenance，执行BLOCKED -> READY。
+
+- **Resume evidence (2026-11-19):** 用户明确继续指令和容量/授权解除已核对，执行READY -> IN_PROGRESS；按05设计及本机补充，在新-02组首次启动owned GPU服务（--max-seconds0）并执行唯一原ID双专家准入；再control、真实人工接受后才fast。来源顺序为05设计/host-budget计划、04结果/合同、03manifest及低运动fixture。旧root不重启、不新发旧请求。
+
+- **Actual admission/fix evidence (2026-11-19):** -02原准入ID7465663b-8e54-4965-8090-422cfe65a53b明确失败AttributeError(last_prompt_id)，发生在首个prompt前UI进度回调，0视频POST。owned PID29400/epoch70fcf4a5-45e2-4aa8-8882-9980f1ff0c4b合作exit0、未强制、端口关闭，154.047s，RSS观察峰值1815326720 bytes；该passed只表示服务退出而非模型准入通过。保留failure-assessment.json及旧组，不重POST旧ID。独立评估后的线程范围UI适配修复RED2fail -> GREEN44PASS，在新-03组封存comparison a504cfd077b0ab5e19fc65e01ac7ddcf06d8321d20ca76ec39ea72205f4b841b并关联原真实许可继续首次准入。状态仍IN_PROGRESS，无新迁移；模型/视频预算与人工门槛不变。
+
+- **Pinned alias evidence (2026-11-19):** -03 high1095参数物化后原准入IDcb846254-db30-4aba-9025-623a544d6ad2拒绝ValueError，原message缺失。固定Wan构造器两同模块别名被duplicate=False守卫误拒，有界CPU原检查复现；仅精确归一化这两路径，其他别名仍拒绝，12固定函数体CPU/44协议测试通过，未来失败保存error_message。-03 PID10564合作exit0、未强制、端口关闭，RSS观察1813954560 bytes；失败/评估保留。新-04 comparison cf59a6b273e8b9e83f58d32a9b47e4c3c9a533f640293f1270276f42f56f05eb完成封存/授权后继续首次准入；无旧ID重POST、累计视频0，状态IN_PROGRESS。
+
+- **Compatibility block evidence (2026-11-19):** -04原IDaf954a6a-768b-407e-9041-5a261318d210在high1095参数CPU物化后明确UnsupportedPatch: diffusion_model.head.head.weight: upstream explicitly skips dynamic head LoRA。45s响应超时后只GET同ID，无重复POST、无pair或视频。服务PID44436/epoch267d53a3-d3fb-4fee-b76d-304c3cdada2f合作exit0/未强制/端口关闭，208.094s、RSS观察峰值17768230912 bytes，未触发已知资源上限。原ID失败和退出回执、failure-assessment及完整结果已保存，先刷新本项pause handoff再IN_PROGRESS -> BLOCKED。解阻为单独设计/验证完整head应用及量化语义，不能忽略head或换模型继续。44协议/12小CPU测试通过不表示完整模型通过；06保持NOT_STARTED。
+
+- **Head resolution evidence (2026-11-20):** 用户“继续吧”要求继续head兼容。设计LVA-07-05-head-design.md明确隔离动态full-diff安装及采样reload作用域，固定Wrapper/repair/政策未改、原FP8权重/scale保留，HEAD_KEY仍计入适用dynamic及实际forward witness。RED2errors ->15CPU测试通过、44协议测试通过，独立审查无重要/严重问题；当前容量18628698112 RAM/23091740672 VRAM bytes达14/21GiB。源码已交付，新20261120-01 comparison7873d50d7e9a8d594aee0412a6c22aa0de788d13ba8655b0088d7347855ce823封存并绑定原真实许可与继续指令，旧失败组/ID保持已停。实施阻塞解除，BLOCKED -> READY，仅准备实际完整准入，不宣称14B已通过。
+
+- **Head resume evidence (2026-11-20):** 依用户继续指令执行READY -> IN_PROGRESS。按05设计/新head设计及15CPU/44协议证据，在新组首次启动无限时owned worker并做原ID完整pair；成功后control、真实接受后才fast。顺序来源为05设计与head设计、当前结果/旧failed原ID、固定源码与03manifest/低运动fixture。原两样本预算不变，不新发旧ID。
+
+- **T5 block evidence (2026-11-20):** 当前原准入ID404d7605-d9ea-40f1-9ab7-85a4454e1c01成功，high1500/1500与low1459/1459全部保留，290精确排除，两侧head实际前向四坐标完全一致。原control prompt fd677a68-086e-4fe5-8be2-47c03135c756仅执行97，在10/LVA07Prepare原生T5转CPU因10878976-byte分配失败；peak_pagefile8589914112距8GiB上限20480 bytes，主机仍约16GiB空闲。只读原生分词诊断664/512 tokens，现有512条件/模型padding是后续确定不匹配。无视频/fast，原失败不重POST。PID42320/epochb3be9116-7e05-4c47-ad4d-26050c81ec73合作exit0/未强制/端口关闭，2832.843s，RSS观察19299463168 bytes；observer266条已退出。已先写当前pause handoff与experiment-assessment/结果，IN_PROGRESS -> BLOCKED；解阻先联合验证T5内存交接和完整664-token支持，不直接重复完整pair或截断原文。06保持NOT_STARTED。
+
+- **Text repair resolution evidence (2026-11-20):** 用户“继续修复吧”持续授权；text-design/text-plan已实施并交付9任务文件，旧字节归档。53相关测试通过(6.51s)，独立审阅0重要/严重问题；12GiB进程commit、T5先行finally释放及完整664/512上下文已离线验证，实际文本探针仍待运行。新组20261120-02 comparisone06d44b16e2fe8ffce1fefc647a4a7cbc2e07c4a10dd741d8ca27c926509c4cf封存、真实许可绑定；RAM20344733696 bytes/VRAM22040MiB达14/21GiB启动门槛。BLOCKED -> READY仅解除实施准备阻塞，不表示真实文本/视频成功。
+
+- **Text repair start evidence (2026-11-20):** 依用户继续修复指令，READY -> IN_PROGRESS；同owned worker先prepare-text原ID，成功后才新epoch pair/control；真实接受control后才fast。保留原pause交接作历史入口及所有失败ID，最多2实际视频、不限总时长。
+
+- **Actual text evidence (2026-11-20):** 新owned PID11824/epochd5425839-da87-4be4-9832-b591bd9d580b，prepare-text原ID3f13770f-1c2f-4809-bb89-bcf5f87e14c7成功；原正向664/负向512维4096 float32、finite守卫通过，T5 weakref释放证明通过。原文/模型未更换，text/assessment.json记录实际stage/资源；当前IN_PROGRESS，接同lease新epoch pair及control，质量尚未验证。
+
+- **VAE block evidence (2026-11-20):** -02文本准备/新pair完整成功；control原77da1e64-b42c-4c6d-8b4f-7f83b492faad在VAE编码后固定nodes.py:1155回迁CPU分配15925248bytes失败，nativepeak12884893696距12GiB8192bytes、主机仍约16GiB空闲。仅97执行，无Wan采样/媒体/fast。PID11824合作exit0/unforced/port_closed2422.25s，先刷新pause handoff再IN_PROGRESS -> BLOCKED。下一步独立VAE内存诊断，不先重跑pair或旧失败视频。
+
+- **VAE resolution/start evidence (2026-11-20):** 继续修复/本机预算/不限时授权持续。单独原VAE93帧fp32实际探针确认空闲CUDApool重叠CPU回迁，局部边界清理将private11766525952降至4336513024；实际候选适配器准备通过。61测试通过6.51s，独立审查1项原图绑定P2已RED/GREEN修正、无其他重要项。新-03 comparisonb0ccddde4ce395e0d40d820d7f2d199137533b4b44b9b763f41763eb771a6f14封存授权/实际源；容量21442293760 RAM/23126343680 VRAM bytes达14/21GiB。BLOCKED -> READY，再依原继续修复指令READY -> IN_PROGRESS；同worker先联合text+image准备成功，后pair/control/真实接受后fast，禁止旧ID重POST。
+
+- **Actual combined preparation (2026-11-20):** -03 prepare-text原224d47b8-8351-45b9-a7c8-269db85fb8bf在epoch57b904d1-f47c-4474-8db1-4ea0fed17b84成功：原664/512float32、T5释放；原图SHA绑定、image_embeds[16,24,54,96]finite、fp32VAE已CPU回迁。同阶段nativeT5=1.4849711s、VAE准备4.662446s，进程nativepeak12871028736低于12GiB。仅此联合准备成功后，才开始新原ID9bf10b94-fbd8-4f2c-9d1d-053467dc2157完整pair；control输入不再编码。尚无视频/质量，当前IN_PROGRESS。
+
+- **Native sampler failure evidence (2026-11-20):** -03联合输入准备与pair原9bf10b94-fbd8-4f2c-9d1d-053467dc2157完整成功2254.014s；control原b4d56a51-b8ec-43fd-b9dc-4a891277b7e9开始首个forward但在native model.py3298 block.to(CPU)进程访问冲突，WER VCRUNTIME140.dll/0xc0000005，0步完成、无history终态/视频/fast。PID8216自然异常退出3221225477，unforced但非graceful，端口已关闭，2396.172s。原accepted保持unknown不重POST，当前IN_PROGRESS继续短的原生回迁诊断，不以旧pair放行新epoch、不重复完整pair掩盖崩溃。
+
+- **Offload repair evidence (2026-11-20):** 原首块47tensor/351515728bytes在AIMDO只读映射/12GiB相同额度下，private12620242944+空闲CUDApool6006243328时CPU回迁重现0xc0000005；frozenCPU源引用恢复/池清理适配器同压力通过、原CPUstorage pointers完全一致，回迁后private约6.84GB。67测试6.61s，审查meta替换P2及次要GPUbuffer守卫已一次RED3/GREEN修正，nativeCPUmeta清理实测通过。4源/测试文件交付、旧字节归档；新-04 comparisona0197ea328d4d7d044d7cbdbe475c07791738ab5f533d97415292789fc7288dd封存/真实授权/282源快照，容量21681340416RAM/23127392256VRAM bytes达启动门槛。当前IN_PROGRESS继续同scope修复验证，先联合准备再新epoch pair/control/真实接受后fast；旧unknown原ID不重发。
+
+- **Actual40step/decode budget evidence (2026-11-20):** -04原control875719f4-24f7-4bd8-939f-080d3667686f高30/低50前向全部成功，664/512文本保留且controlLoRA0，高469.190755s/低772.960827s；在50/WanVideoDecode conv2d CUDAunknown失败1.357s。nativepeak12884738048距12GiB163840bytes，主机仍18018492416bytes可用，未查到对应Display/nvlddmkm事件。owned39592合作exit0/unforced/portclosed3839.563s，无MP4/fast，原失败不重POST。单独原VAEfp32/93帧/无tiling，12GiB失败、32GiB与选定18GiB都完整finitefloat32CPU输出；测得逻辑commit峰值15282307072(~14.23GiB)、RSS3045511168(~2.84GiB)。68测试通过，正在审查18GiB逻辑额度＋26GiB启动availablecommit门槛；RAM14/GPU21启动、RSS24/allocator20保持。任务IN_PROGRESS修复而非完成，无真实质量/吞吐结论。
+
+- **Decode quota delivery/start (2026-11-20):** 原用户本机资源/不限时/继续修复许可持续；18GiB逻辑提交由原解码峰值14.23GiB和独立18GiB通过证据确定，26GiBavailablecommit启动门槛在Job外执行，RSS24/GPU20/原数学预算保持。68测试8.41s及独立审查无阻塞；4任务文件交付、旧字节归档。新-05 comparison04337a20dc43d93758d379eca2b8e92842532aeacc882de1b837efa5dc932e5c封存原授权/282源快照，当前RAM22051500032/VRAM23149412352/availablecommit45038854144bytes达门槛。继续IN_PROGRESS，同worker先联合准备，后新epoch pair/control/真实接受后fast；旧failedID不重POST，无质量完成认定。
+
+- **Actualdecode/RGBlayout fix (2026-11-20):** -05原657eeab2已完整40步/30+50前向、fp32VAE解码，RGBshape/finite前置通过；108/Save在sha256(memoryview)因非C布局失败，未写encoderintent/未启动ffmpeg/未落盘frames或MP4。nativepeakcommit17489768448<18GiB，owned36488合作exit0/unforced/portclosed3868.047s。np.ascontiguousarray仅在uint8边界整理布局，原nativeCHWT->THWC测试RED2后69相关测试8.60s及真实93帧FFmpeg/单解码proofcase通过，审查无重要项，2文件交付并归档旧字节。新-06 comparisonc7696ad7f8b484b4f84ca874bc12a3fd7c9be3108ed31e2889374d7ca3dff08d封存原持续许可/282源；当前RAM22129790976/VRAM23149412352/availablecommit45016195072bytes达门槛。继续IN_PROGRESS，联合准备后新epoch pair/control/真实接受后fast，旧failedID不重POST，无视频质量完成认定。
+
+- **Control technical evidence (2026-11-20):** -06 原11ebef23-82f0-40a4-916d-104f026993ea已CLI exit0/technical-complete，40步高30低50、完整664/512文本、LoRA0，原fp32解码及RGB/FFmpeg保存通过。实际control_1.mp4为768×432/93帧/16fps/5.8125s，媒体SHA8ec6419f88729213893300402e5a4e1edc556cbf98f05ed7679f677e8370dd50，完整PTS/末帧proof保留且不重复解码。当前epoch原生提交峰值17489293312 bytes低于18GiB。实际control人工接受待用户，fast未POST、owned46888同epoch继续保留；任务保持IN_PROGRESS，06不启动。详情：`E:/VideoAI/scratch/benchmarks/LVA-07-05-low-20261120-06/control-assessment.json` 与 `docs/task-designs/LVA-07-results.json/.md`。
+
+- **Current comparison evidence (2026-11-20):** 用户明确回复“接受”control，真实review绑定原媒体8ec6419f…；同epoch首次fast原1dafecde-bd7a-493d-8c39-7bc1bfb4e4ae技术完成/CLI exit0，高2低2且双head安装1/1，原93帧/768×432/16fps媒体SHA d91f6677739b3fd6672744297e6fa1befd6345a4dfade185d9704c1bd261e8f5，完整媒体proof保留不重复decode。control/fast执行1255.786s/96.539s仅一个样本、不同配方与缓存边界，不声明稳定倍数。owned46888合作exit0/unforced/graceful/portclosed，12145.312s含人工等待；pair不再复用。fast独立人工质量待确认，05保持IN_PROGRESS、06不启动。最终当前证据 `E:/VideoAI/scratch/benchmarks/LVA-07-05-low-20261120-06/experiment-assessment.json`；上方control未接受/服务保留表述为历史快照。
+
+- **Completion evidence (2026-11-20):** 用户此前“接受”control，本次对独立展示的fast明确回复“视频没有问题”。两review绑定原comparison/profile/fixture/graph/prompt/media；原完整双专家准入、control30/50与fast2/2前向、两份93帧/768×432/16fps媒体及PTS/末帧、实际资源/分层计时、owned exit0/unforced/portclosed均齐全。读取原始回执核对通过，不重复生成/解码/测试矩阵；保留旧失败与unknown且不重发。执行IN_PROGRESS -> COMPLETED；完成映射 `docs/task-designs/LVA-07-05-completion.json`，最终结果 `docs/task-designs/LVA-07-results.json` / `.md`。control/fast执行1255.786s/96.539s仅单样本不同配方，不外推稳定加速或生产收益。原Handoff保留历史快照；本项剩余验收None。
+
+- **Expansion boundary after completion:** 最小样本技术与人工质量均通过，可作为后续研究输入；本次用户反馈只接受fast质量，未选择扩展。按本项设计Acceptance“只有成功且用户选择继续扩展才准备06实际矩阵”，06保留NOT_STARTED，不写扩展交接、不恢复生产。
 
 ### LVA-07-06
+
+- **Latest evidence (2026-11-21):** COMPLETED，成功分支。用户最终原文“没问题”确认24份1080P画面/原音轨/字幕/父子衔接及六组同字节重复沿用，24份final-review已绑定。新root `E:/VideoAI/scratch/benchmarks/LVA-07-06-20261120-02` 八组各冷1热3共32份原生技术/实际接受、2880生成/2848保留帧；2290唯一逐帧请求、24份1920×1080/16fps/AAC48k最终技术/实际接受。8个Wan+26个后处理owned均合作exit0/未强制/端口关闭，无活动服务/未知请求；真实原ID档案恢复0HTTP/submit/producer。原2历史+新32=34预算已用完且不再生成。原生热中位配方比12.388～13.636倍，非端到端/纯后端倍数；后处理墙钟3249.544秒，资源/人审/准入/历史失败边界完整披露。完成记录 `docs/task-designs/LVA-07-06-completion.json`，报告 `docs/task-designs/LVA-07-06-results.json` / `.md`，交付新root/final-delivery-index.md。保留原质量默认，不恢复生产/自动推广，无付费调用。
 
 - **Goal:** 在最小候选通过后，完成可复现性能/质量/恢复结论，给出是否值得后续另行设计生产接入的建议。
 - **Scope:** 按已获扩展授权补齐低/高运动和父子链各冷1热3，只有profile、owned服务和计时边界相容时复用最小样本；父片真实人工接受后才生成同profile子片。汇总阶段/端到端、冷/热、GPU/VRAM/offload、失败率及人工等待；验证原ID恢复和完成产物不重做。若前项否决不启动本矩阵，保留未执行事实与专项否决报告。
@@ -263,6 +335,10 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **Deliverables:** docs/task-designs/LVA-07-results.json / .md 的最终兼容、性能、恢复、质量与拒绝/未验证报告，链接实际原始证据。
 - **First action:** 核对最小样本的真实技术/人工质量、扩展授权和可复用计时边界，计算尚缺样本后再运行；不为填表重做已有视频。
 - **State evidence:** NOT_STARTED；没有扩展矩阵、加速或生产推广结论。前置失败时不能按Order自动绕过门槛。
+
+- **Execution checkpoint (2026-11-20):** 已获用户批准并完成显式v2实现、独立审查/一次修复及102定向测试（10.21秒）；实际root `E:/VideoAI/scratch/benchmarks/LVA-07-06-20261120-01`。owned12804/epoch4cecf0fe-2236-4945-a2f5-f962b3a6c03d完整pair已通过；cold1原cb817692技术完成93帧/16fps/5.8125s、高30低50/LoRA0，媒体8ec6419f…与05已接受control逐字节相同，本轮关联人审尚待用户。warm1原04e8091c正在同epoch真实运行；隐藏driver15800（launcher17940）仅完成本组warm2/3并在完成/拒绝/失败后释放owned服务，不启动fast、不自动人审。结果/活动会话/driver状态入口 `docs/task-designs/LVA-07-06-results.json`；其余矩阵和1080P未执行，状态保持IN_PROGRESS。
+
+- **Start evidence (2026-11-20):** 用户“完成任务LVA-07-06”后对已呈现专项设计及32样本/约10–12小时方案回复“同意”。完整读取本项设计，准备NOT_STARTED -> READY，再依明确执行请求READY -> IN_PROGRESS；计划 `docs/task-designs/LVA-07-06-plan.md`。保留05已完成门槛及原服务退出证据；先离线v2实现/定向验证和独立审阅，再封存新组实际运行。真实扩展、质量、1080P尚未执行。
 
 ## Risks
 
@@ -274,3 +350,6 @@ LVA-07 总体设计为 `docs/task-designs/LVA-07-wrapper-backend-design.md`。�
 - **重复工作与归因：** 既有性能结果只作历史输入；实际源码已覆盖的优化不重做，微基准和历史收益不计成本轮整片收益。
 - **工作区保全：** 建板时工作区已有其他源码、测试和报告改动；本板不覆盖它们，不改变既有任务状态或生产锁。
 - **Wrapper证据层次：** 源码支持、CPU验证、完整模型实际应用与真实视频质量分别验收；前置不支持或证据不足时停止后续投入，不因任务顺序自动安装/推理。
+
+- **LVA-07-04 preparation evidence (2026-11-19):** 已完成03补充证据/有界投入决定，完整04设计回填、直接输入无冲突，写04 next-task handoff后执行NOT_STARTED -> READY。13实际CPU schema通过；未验证GPU。
+- **LVA-07-04 start evidence (2026-11-19):** 用户原始“完成任务LVA-07-04”及连续“同意，继续吧”明确启动；完整读取设计及04交接，READY -> IN_PROGRESS。隔离codex/lva07-04，先写profile/graph/unknown失败测试；不加载完整模型/GPU。

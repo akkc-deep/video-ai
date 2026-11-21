@@ -1,0 +1,33 @@
+{
+  "task_id": "LVA-07-05",
+  "tests_passed": 68,
+  "tests_seconds": 8.41,
+  "review": {
+    "reviewer": "/root/host_budget_review",
+    "verdict": "clean; no blocking findings",
+    "critical": 0,
+    "important": 0,
+    "minor": "boundarygate test doesnotexercise controllerordering; sourceinspectionconfirms beforeGPUchild andoutsideJob",
+    "scope": "Windowscommitstruct/controllergate/sealedlimits/CPUmode",
+    "operational_limits": "synthetic18GiBdecodepass doesnotproveoriginalfullvideo/quality",
+    "gpu_rerun": false
+  },
+  "selected_private_commit_bytes": 19327352832,
+  "min_available_commit_bytes": 27917287424,
+  "actual_selected_decode_probe_passed": true,
+  "observed_probe_peak_commit_bytes": 15282307072,
+  "observed_probe_peak_rss_bytes": 3045511168,
+  "full_original_video_passed": false,
+  "probe": "E:/VideoAI/scratch/benchmarks/LVA-07-05-decode-diagnostic-20261120/18/result.json",
+  "current_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-05",
+  "current_owner": {
+    "pid": 36488,
+    "process_started_at": "134395990880023336",
+    "port": 8297,
+    "experiment_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-05-low-20261120-05",
+    "epoch": "b0c9fc40-5a1f-4c30-b3a2-889017195304",
+    "launch_sha256": "5b7d364c6df398065f8047333b080fb250b2545c2dce4e548c31897eacbeda57"
+  },
+  "combined_preparation_passed": true,
+  "admission_id": "3701664d-94b0-4dcd-b6e3-5beab91fe00e"
+}

@@ -1,0 +1,10 @@
+{
+  "reviewer": "/root/host_budget_review",
+  "verdict": "clean; no blocking findings",
+  "critical": 0,
+  "important": 0,
+  "minor": "boundarygate test doesnotexercise controllerordering; sourceinspectionconfirms beforeGPUchild andoutsideJob",
+  "scope": "Windowscommitstruct/controllergate/sealedlimits/CPUmode",
+  "operational_limits": "synthetic18GiBdecodepass doesnotproveoriginalfullvideo/quality",
+  "gpu_rerun": false
+}
