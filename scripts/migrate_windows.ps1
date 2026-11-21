@@ -7,6 +7,8 @@ param(
     [string] $Text = '',
     [string] $Video = '',
     [string] $Title = '',
+    [ValidateSet('fast','control','native')]
+    [string] $WanMode = 'fast',
     [switch] $IncludeHistory,
     [switch] $WithoutSecrets,
     [switch] $AllowExisting,
@@ -195,7 +197,9 @@ function Get-MigrationEvidenceDirectories([string] $RuntimeRoot) {
     # Capability records are shared configuration, never historical work bundles.
     $capabilities = Join-Path $RuntimeRoot 'shared\config\capabilities'
     if (Test-Path -LiteralPath $capabilities -PathType Container) { $capabilities }
-
+    # The repaired Wrapper environment is now a production dependency. Do not include benchmark media.
+    $wrapper = Join-Path $RuntimeRoot 'scratch\benchmarks\LVA-07-04-environment'
+    if (Test-Path -LiteralPath $wrapper -PathType Container) { $wrapper }
 }
 
 function Export-VideoAiMigration {
@@ -351,7 +355,7 @@ function Start-MigratedVideo {
     Import-MigrationSecrets (Join-Path $configRoot 'migration-secrets.local.json')
     if ($Video) {
         if ($Script -or $Text -or $Title) { throw 'Use -Video to continue, or -Script/-Text and -Title for a new video.' }
-        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $MigrationSourceRoot 'scripts\start_windows.ps1') make-video --video $Video
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $MigrationSourceRoot 'scripts\start_windows.ps1') make-video --video $Video --wan-mode $WanMode
         $script:MigrationExitCode = $LASTEXITCODE
         return
     }
@@ -370,7 +374,7 @@ function Start-MigratedVideo {
     # Put original text in a UTF-8 file before crossing another process boundary.
     # Quotes, Chinese text and line breaks then reach make-video unchanged.
     if ($Text) { $Script = Save-MigrationNarration $Text (Join-Path $MigrationRuntimeRoot 'scratch\tmp\narration') }
-    $cliArgs = @('make-video', '--config', $Config)
+    $cliArgs = @('make-video', '--config', $Config, '--wan-mode', $WanMode)
     if ($Title) { $cliArgs += @('--title', $Title) }
     if ($Script) { $cliArgs += @('--script', [IO.Path]::GetFullPath($Script)) }
     # A child process preserves the existing entry point's exit codes and logs.

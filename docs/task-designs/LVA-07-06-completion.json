@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "task_id": "LVA-07-06",
+  "status": "COMPLETED",
+  "branch": "successful_full_matrix_and1080P",
+  "completed_at_utc": "2026-11-21T13:36:20.362376+00:00",
+  "task_board": "docs/task-handoffs/jimeng-local-video-acceleration-v1-task-board.md",
+  "design_document": "docs/task-designs/LVA-07-06-design.md",
+  "matrix_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02",
+  "matrix_sha256": "0c63cbba7bfbd5186f1bdc19b797430df49501aae3eba910353faf9b20f0aa09",
+  "authorization": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\authorization.json",
+  "task_allocation": {
+    "prior_root": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-01",
+    "prior_samples_used": 2,
+    "new_matrix_allocation": 32,
+    "task_total_max_samples": 34,
+    "prior_failure_evidence": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-01\\failure-assessment.json",
+    "prior_quality_evidence": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-01\\user-quality-acceptance.json",
+    "original_authorization_preserved": true
+  },
+  "acceptance": {
+    "fresh_native_groups": 8,
+    "cold_trials": 8,
+    "warm_trials": 24,
+    "native_technical_and_actual_quality_accepted": 32,
+    "generated_frames": 2880,
+    "retained_frames": 2848,
+    "unique_native_prompt_ids": 32,
+    "child_generated_retained_frames": [
+      81,
+      77
+    ],
+    "child_retained_interval": [
+      1,
+      78
+    ],
+    "parent_child_delivery_frames": 170,
+    "accepted_own_mode_cold_parent_before_child": true,
+    "new_upscale_frame_tasks": 2290,
+    "unique_upscale_prompt_ids": 2290,
+    "parent_frames_actually_upscaled": 186,
+    "parent_frame_positions_reused": 558,
+    "final_outputs_technical_and_actual_quality_accepted": 24,
+    "final_resolution": [
+      1920,
+      1080
+    ],
+    "fps": 16,
+    "audio_codec": "aac",
+    "audio_sample_rate": 48000,
+    "subtitle_and_narration_original_sources": true,
+    "final_actual_user_message": "没问题",
+    "final_actual_user_evidence": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\final-quality-acceptance.json",
+    "complete_media_cohorts": 6,
+    "exact_byte_association_explicitly_accepted": true,
+    "independent_viewing_not_asserted_for_warm_associates": true,
+    "owned_native_services_exited0_unforced_portclosed": 8,
+    "owned_postprocess_services_exited0_unforced_portclosed": 26,
+    "actual_original_id_archive_recovery": {
+      "task_id": "LVA-07-06",
+      "scope": "actual completed child-control/cold_1 recovery with real non-injected client source leases and HTTP/submit/media-producer blocked",
+      "original_prompt_id": "a04d74fb-3eae-4809-b264-bba58babab7b",
+      "generated_sha256": "43ee70c9a8c7dd923fa70a8147942a26663aa5c507b588550a9f363f9492d33f",
+      "retained_sha256": "d46510832dab62f5a825bb51074e11a8b471bb4d55cd187a299718ccea085826",
+      "generated_frames": 81,
+      "retained_frames": 77,
+      "original_technical_receipt_unchanged": true,
+      "calls": {
+        "http": 0,
+        "submit": 0,
+        "archive_producer": 0
+      },
+      "seconds": 7.6256776000373065,
+      "owned_original_service_already_exited": true,
+      "no_new_native_sample": true,
+      "recorded_at_utc": "2026-11-21T08:31:39.814288+00:00"
+    }
+  },
+  "verification_at_closure": {
+    "command": "python -X utf8 scripts/benchmark_wan_wrapper_matrix.py report --root E:/VideoAI/scratch/benchmarks/LVA-07-06-20261120-02",
+    "exit_code": 0,
+    "report_complete": true,
+    "native_actual_accepted": 32,
+    "final_actual_accepted": 24,
+    "all_final_owned_exit_ok": true,
+    "receipt_only_no_extra_decode_or_gpu": true
+  },
+  "prior_focused_verification": {
+    "passed": 118,
+    "seconds": 11.09,
+    "log": "E:/VideoAI/scratch/benchmarks/LVA-07-06-implementation-20261120-01/listener-fix/focused-pytest.log",
+    "real_hidden_utf8_cp936_listener_probe_passed": true,
+    "independent_review": "docs/task-designs/LVA-07-06-review.json",
+    "unrelated_baseline_fixture_failures_documented": "docs/task-designs/LVA-07-06-listener-fix-results.md",
+    "not_rerun_at_closure": true
+  },
+  "results": {
+    "json": "docs/task-designs/LVA-07-06-results.json",
+    "markdown": "docs/task-designs/LVA-07-06-results.md",
+    "json_sha256": "8484b2cfb18a2f6045ef63b584067d2e6ebe497d10c7f304d35b5b7468d42e26",
+    "markdown_sha256": "42b3183dc87c1b822938263aa92f144a6f49eeca666a8bde3c4994af5c2038bf",
+    "matrix_report": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\report.json",
+    "evidence_summary": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\evidence-summary.json",
+    "delivery_index": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\final-delivery-index.md",
+    "delivery_index_json": "E:\\VideoAI\\scratch\\benchmarks\\LVA-07-06-20261120-02\\final-delivery-index.json"
+  },
+  "native_warm_recipe_ratio": {
+    "low": 13.319214692033366,
+    "high": 13.635643243243464,
+    "parent": 13.581225054895766,
+    "child": 12.387541162252791
+  },
+  "postprocess_wall_seconds": 3249.54367,
+  "limitations": [
+    "Fixed fixture/seed warm n3; identical outputs are planned repeats, not independent quality draws or stable generalization.",
+    "Cold is first video after full admission prewarming; full controller-start envelope and setup are preserved.",
+    "Control40steps/CFG3.5 vs fast4steps/CFG1/fullLoRA; historic W0 also differs in backend/time stepping/VAE details. Ratios are not pure backend attribution.",
+    "Child modes use different accepted own-mode parent cold images; compare complete recipe chains, not same-image single-factor LoRA.",
+    "Actual1080P handoff-to-ready intervals include serial matrix ordering, all-native-review gate, queue/preparation/human response; do not interpret final wall-clock ordering as causal recipe speed.",
+    "Pair/prepare/trim filesystem receipt spans are audit UTC envelopes, not monotonic exclusive-stage kernel timers. Trim envelope uses immutable trim-binding and initial technical-complete writes, excluding later proof refreshes.",
+    "No deliberately introduced real response-loss or worker-death failure; actual completed archive recovery0HTTP/submit/producer plus prior injected recovery tests are separate evidence.",
+    "No production resume, paid calls, dependency/model changes or automatic promotion."
+  ],
+  "rulings": [
+    "Existing absolute source pins require established v2 workspace; preserve all predecessor WIP, no commit/reset.",
+    "Original interrupted2 samples retained as historical; user explicitly approved fresh32/task34; never stitch epochs or replay old IDs.",
+    "Only approved focused software checks; no repeated tests/model payload/media decode at closure.",
+    "Actual user feedback binds exact original artifacts; repeat associations require full-media equality and do not assert independent viewing."
+  ],
+  "production_ready": false,
+  "production_resumed": false,
+  "paid_calls": false,
+  "remaining_acceptance": [],
+  "remaining_work": [],
+  "next_task": null
+}

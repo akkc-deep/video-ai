@@ -36,7 +36,7 @@ def test_service_cleanup_keeps_primary_error_and_scene_state(runtime_run,monkeyp
     run,_,paths=runtime_run;cid='scene_0001_clip_0001'
     store=SimpleNamespace(run_dir=run,lock=None,assert_owned=lambda:None,clip_dir=lambda _:run/'production/scene-clips'/cid,
         write=lambda *args:None,read=lambda *args:None,capture_guard=lambda *args:lambda:None,verify_global=lambda:None)
-    row={'budget':dict(clip_id=cid,scene_id='scene_0001',generated_frames=1)}
+    row={'budget':dict(clip_id=cid,scene_id='scene_0001',generated_frames=1),'parameters':{}}
     scene=dict(scene_id='scene_0001',status='pending',completed_clip_ids=[],accepted_clip_ids=[],waiting_clip_id=cid,error=None)
     frozen=SimpleNamespace(config=SimpleNamespace(timeouts={'wan':1,'comfy_request':1},services={'comfyui':'http://127.0.0.1:8188'}))
     context=dict(store=store,frozen=frozen,rows=[row],plan={'scenes':[{'scene_id':'scene_0001'}]},inputs={},template=None)

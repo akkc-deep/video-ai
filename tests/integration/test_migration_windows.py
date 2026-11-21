@@ -166,3 +166,14 @@ def test_portable_capabilities_and_dependency_export_paths(tmp_path):
     for category in ('tools', 'models'):
         assert "Copy-MigrationTree (Join-Path $MigrationRuntimeRoot 'shared\\" + category + "') (Join-Path $payload 'runtime\\shared\\" + category + "')" in script
     assert "Copy-MigrationTree (Join-Path $payload 'runtime') $MigrationRuntimeRoot" in script
+
+
+def test_production_wrapper_runtime_is_included_without_experiment_outputs(tmp_path):
+    environment=tmp_path/'runtime/scratch/benchmarks/LVA-07-04-environment'
+    environment.mkdir(parents=True)
+    experiment=tmp_path/'runtime/scratch/benchmarks/LVA-07-06-20261120-02'
+    experiment.mkdir()
+    result=run_ps(tmp_path,"Get-MigrationEvidenceDirectories (Join-Path $env:VAI_FIXTURE 'runtime')")
+    assert result.returncode==0,result.stdout+result.stderr
+    assert str(environment) in result.stdout
+    assert str(experiment) not in result.stdout

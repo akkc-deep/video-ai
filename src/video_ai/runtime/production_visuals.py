@@ -58,6 +58,7 @@ class _Stage:
         self.template=WorkflowTemplate.load(Path(frozen.options['workflow_snapshots'][role]['path']),
             Path(frozen.options['workflow_snapshots'][role+'_mapping']['path']),frozen.config.models)
         validate_fixed_visual_template(self.template,role)
+        self.native_template=self.template;self.wan_backend='native'
         self.client=ComfyClient(HttpClient(frozen.config.services['comfyui'],frozen.config.timeouts['comfy_request'],logger),manifest,logger)
         self.client._production_deadline=frozen.config.timeouts['wan'] if role=='wan' else frozen.config.timeouts['comfy_request']
         for name in ('input','output','temp','user'):run_path(state.run_dir,state.run_dir/'comfy'/name).mkdir(parents=True,exist_ok=True)
@@ -67,9 +68,30 @@ class _Stage:
         url=self.frozen.config.services['comfyui']
         try:
             if port_listening(url,3):raise ProductionRefused(f'external Comfy service listening at {url}')
-            self.handle=self.manager.ensure(build_service_specs(self.frozen.config,self.state.run_dir,production=True,frozen=self.frozen,store=self.manifest)['comfyui'])
+            spec=build_service_specs(self.frozen.config,self.state.run_dir,production=True,frozen=self.frozen,store=self.manifest)['comfyui']
+            if self.wan_backend=='wrapper':
+                from .wan_production import service_spec
+                spec=service_spec(self.frozen.config,self.state.run_dir,spec)
+            self.handle=self.manager.ensure(spec)
         except ServiceConflictError as exc:raise ProductionRefused(str(exc)) from exc
         if not self.handle.owned:raise ProductionRefused(f'external Comfy service at {url}')
+
+    def wan_request(self,uid,p,image,prefix):
+        from .wan_production import select_mode,effective_parameters,wrapper_template,request_graph
+        original=self.manifest.snapshot()['units'].get('shot_attempt',{}).get(uid+':attempt_0001',{}).get('submission')
+        saved=read_json(run_path(self.state.run_dir,original['request_path'])) if original else None
+        mode=select_mode(saved);backend='native' if mode=='native' else 'wrapper'
+        if self.handle is not None and backend!=self.wan_backend:
+            self.manager.stop(self.handle);self.handle=None
+        self.wan_backend=backend
+        template=self.native_template if mode=='native' else wrapper_template(mode)
+        if not same(template.graph,self.template.graph):
+            self.validated=False
+            # Both Wrapper modes share one node-class signature. Retain only
+            # the next remotely validated template when switching recipes.
+            self.client._templates.clear()
+        self.template=template;p=effective_parameters(p,mode)
+        return p,request_graph(template,p,image,prefix)
 
     def model(self,uid,graph,prefix,*,checkpoint=False):
         kind='image' if self.stage=='start_images' else 'shot_attempt'
@@ -191,8 +213,7 @@ def produce_source_clips(frozen,storyboard,timeline,images,*,state,manifest,path
                 copied=_copy(state.run_dir,original.path,input_path)
                 logger.save_json(f'source-clips/{uid}.input-copy.json',dict(source=original.to_dict(),target=copied.to_dict()))
             prefix=f'{state.run_dir.name}/source_clips/{uid}/attempt_0001'
-            graph=task.template.instantiate(dict(positive_prompt=p['positive'],start_image=f'{state.run_dir.name}/source_clips/{uid}/start.png',
-                width=p['width'],height=p['height'],length=p['length'],fps=p['fps'],seed_high=p['seed_high'],seed_low=p['seed_low']),output_prefix=prefix)
+            p,graph=task.wan_request(uid,p,f'{state.run_dir.name}/source_clips/{uid}/start.png',prefix)
             original.verify();copied.verify()
             model_output,saved,sub,req,mid=task.model(uid,graph,prefix,checkpoint=cp is not None)
             if cp:

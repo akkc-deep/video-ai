@@ -124,19 +124,20 @@ def _prepare_comfy_directories(run,guard):
 
 
 class _OwnedService:
-    def __init__(self,frozen,paths,logger,lock):
+    def __init__(self,frozen,paths,logger,lock,*,wan_backend='native'):
         self.frozen,self.paths,self.logger,self.lock=frozen,paths,logger,lock
         self.run=logger.run_dir; self.manager=None; self.handle=None
         self._handle_binding=None
         self.lease=None; self.sampler=None; self.stage='source_clips'
+        self.wan_backend=wan_backend
 
     def _start_resources(self,manifest):
-        if self.frozen.config.raw.get('scene_rendering',{}).get('mode') != 'whole_scene_v1': return
+        if self.wan_backend=='native' and self.frozen.config.raw.get('scene_rendering',{}).get('mode') != 'whole_scene_v1': return
         if self.lease is not None: return
         from .resources import GpuLease, ResourceSampler
         from .gpu_desktop import desktop_policy
         self.lease=GpuLease(self.paths,manifest,self.logger,resource_policy=desktop_policy)
-        self.lease.acquire(self.stage,'whole_scene_v1',batch_size=1)
+        self.lease.acquire(self.stage,'wan_wrapper' if self.wan_backend=='wrapper' else 'whole_scene_v1',batch_size=1)
         self.sampler=ResourceSampler(self.run,lambda: ({os.getpid()} |
             (self.manager.owned_pids if self.manager is not None else set())),interval_seconds=2)
         self.sampler.start()
@@ -191,7 +192,11 @@ class _OwnedService:
         self.manager=ServiceManager(self.paths,manifest,self.logger,http_factory=Health)
         guard()
         self._start_resources(manifest)
-        self.handle=self.manager.ensure(build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui'])
+        spec=build_service_specs(frozen.config,run,production=True,frozen=frozen,store=manifest)['comfyui']
+        if self.wan_backend=='wrapper':
+            from .wan_production import service_spec
+            spec=service_spec(frozen.config,run,spec)
+        self.handle=self.manager.ensure(spec)
         from .production_state import process_started_at
         self.process_identity = process_started_at(self.handle.pid) if self.handle.owned else None
         self._handle_binding=(self.handle.pid,self.handle.started_at,self.handle.url,id(self.handle.process))
@@ -450,16 +455,23 @@ def _produce_phase(context,*,paths,logger,client_factory,service_factory,pool,me
     if load_continuity_policy(context['frozen']) is not None:
         from .production_scene_continuity import ensure_initial_epoch
         ensure_initial_epoch(context['frozen'],context['units'],context['timeline'],paths=paths,logger=logger,lock=store.lock)
-    service=None; errors={}; result=None;capability_cache={}; service_started=False
+    service=None; errors={}; result=None;capability_cache={}; service_started=False; service_backend=None
     queued=None
     def service_identity():
         identify=getattr(service,'capability_identity',None)
         return identify() if callable(identify) else None
     def ensure():
-        nonlocal service,service_started
+        nonlocal service,service_started,service_backend
         review_checkpoint(force=True)
         store.assert_owned()
-        if service is None: service=(service_factory or _OwnedService)(context['frozen'],paths,logger,store.lock)
+        from .wan_production import select_mode
+        backend='native' if select_mode(graph)=='native' else 'wrapper'
+        if service is not None and service_backend!=backend:
+            service.close();service=None;service_started=False;capability_cache.clear()
+        if service is None:
+            service=(service_factory or _OwnedService)(context['frozen'],paths,logger,store.lock,
+                **({'wan_backend':backend} if service_factory is None else {}))
+            service_backend=backend
         metrics.event('ensure_request')
         service.ensure(); store.assert_owned()
         if not service_started:
@@ -509,7 +521,8 @@ def _produce_phase(context,*,paths,logger,client_factory,service_factory,pool,me
                                     if pool.submit(job):
                                         queued=job.clip_id; metrics.event('prepare_queued',clip_id=queued)
                     metrics.event('tracking_enter',clip_id=cid)
-                    submission=recover_or_submit_scene_clip(store,request,graph,client=client,template=context['template'],
+                    from .wan_production import scene_template
+                    submission=recover_or_submit_scene_clip(store,request,graph,client=client,template=scene_template(context,row),
                         ensure_service=ensure,logger=logger,timeout=context['frozen'].config.timeouts['wan'],
                         request_timeout_seconds=context['frozen'].config.timeouts['comfy_request'],
                         capability_cache=capability_cache,service_identity=service_identity)

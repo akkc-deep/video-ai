@@ -37,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     automatic.add_argument('--output', metavar='PATH')
     automatic.add_argument('--cpu-planner', action='store_true', default=None)
     automatic.add_argument('--image-model', metavar='REQ_KEY', help='image model for a new Jimeng run')
+    automatic.add_argument('--wan-mode',choices=('fast','control','native'),default='fast',
+                           help='Wan recipe for unsent clips, including resumed runs (default: fast)')
     action_group=automatic.add_mutually_exclusive_group()
     action_group.add_argument('--image-selection', metavar='PATH', help='consume image choices in a prepared Jimeng run')
     for name in ('clip-observation','continuity-review','final-observation','retry-email','revision'):
@@ -162,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
                                 email_settings=options.email_settings,clip_observation=options.clip_observation,
                                 continuity_review=options.continuity_review,
                                 final_observation=options.final_observation,retry_email=options.retry_email,
-                                revision=options.revision,publish=options.publish)
+                                revision=options.revision,publish=options.publish,wan_mode=options.wan_mode)
             if options.json:
                 print(json.dumps(result.to_dict(), ensure_ascii=False, allow_nan=False))
             else:

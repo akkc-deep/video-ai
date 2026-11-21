@@ -378,6 +378,10 @@ def check_stage_space(config, *, frames=0, audio_bytes=0, encoded_bytes=0, disk_
 def production_preflight(config, run_dir, *, runner=subprocess.run, port_probe=port_listening, disk_usage=shutil.disk_usage):
     run = validate_run_dir(run_dir); checks = []
     validate_supported(config)
+    from .wan_production import current_mode,require_environment
+    if current_mode()!='native' and config.raw.get('scene_rendering',{}).get('mode')!='temporal_extension_v1':
+        try:require_environment(config)
+        except ValueError as exc:return PreflightReport((PreflightCheck('production.wan_wrapper',False,str(exc)),))
     from .production_visual_templates import validate_production_model_paths
     try:
         validate_production_model_paths(config)

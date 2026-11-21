@@ -244,6 +244,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
     rows = build_scene_wan_plan(frozen, bible, plan, timeline, wan,
         prompt_contract=contract,prompt_binding_context=binding,execution=execution,
         positive_overrides=positive_overrides)
+    from .wan_production import route_scene_rows
+    route_scene_rows(frozen,store,rows)
     for selected in wan['scenes']:
         review_checkpoint()
         from ._scene_revision_origin_images import source_image_required
@@ -292,9 +294,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
 def graph_for(context, row):
     store = context['store']; budget = row['budget']; p = row['parameters']; cid = budget['clip_id']
     prefix = store.run_dir.name+'/scene_clips/'+cid+'/attempt_0001'
-    graph = context['template'].instantiate(dict(positive_prompt=p['positive'],
-        start_image=store.run_dir.name+'/scene_clips/'+cid+'/start.png', width=p['width'], height=p['height'],
-        length=p['length'], fps=p['fps'], seed_high=p['seed_high'], seed_low=p['seed_low']), output_prefix=prefix)
+    from .wan_production import scene_template,request_graph
+    graph = request_graph(scene_template(context,row),p,store.run_dir.name+'/scene_clips/'+cid+'/start.png',prefix)
     if len(json.dumps(dict(prompt=graph,client_id=str(uuid4())), ensure_ascii=False).encode()) > 32*1024*1024:
         raise ProductionRefused('Wan POST body exceeds JSON_LIMIT')
     return graph

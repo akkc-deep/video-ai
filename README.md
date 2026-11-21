@@ -1,5 +1,20 @@
 # video-ai
 
+## 默认 fast 视频生成（2026-11-21）
+
+日常 `make-video` 和 `generate_video.cmd` 默认使用已验证的 WanVideoWrapper fast：4 步、CFG 1、配套双 LoRA，768×432 原生 16 fps，再沿用现有 1080P 后处理。启动不需要增加参数。旧任务普通续作时，后续未准备请求的片段也默认使用 fast；已完成片段复用，已有请求保持原图和原 ID 恢复，不会重复提交。
+
+```powershell
+.\generate_video.cmd -Video 0001
+# 可选：恢复原生产后端，或使用 Wrapper control（40 步、不加 LoRA）
+.\generate_video.cmd -Video 0001 -WanMode native
+.\scripts\start_windows.ps1 make-video --video 0001 --wan-mode control
+```
+
+模式选项作用于尚未冻结请求的片段，不会改写旧请求或旧任务的配置。Wrapper 复用运行根目录下 `scratch/benchmarks/LVA-07-04-environment` 中已修复的独立环境，模型仍来自共享模型目录；请保留该环境。新迁移包会携带它，换盘后沿用文件哈希并重定位路径。没有该环境的安装会在预检提示补齐，或显式选 `--wan-mode native`。显式 quality 分辨率或单片超过 93 帧的配置需选 native，否则在提交前提示不兼容。独立 temporal-extension 后端维持其原有协议。
+
+本次生产接入通过 CPU 服务启动、节点注册、请求恢复及合成媒体测试；没有另外运行完整 GPU 视频生成。
+
 ## Portable storage (2026-11-07)
 
 The default runtime root is `E:/VideoAI`. Set the process environment variable `VIDEO_AI_RUNTIME_ROOT` before launching to use another local drive or a path containing spaces. Python and PowerShell share this setting; source paths come from the current checkout.

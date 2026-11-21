@@ -69,6 +69,16 @@ def clip_row(clip,mapping,run,ordinal=None):
     expected=dict(positive=p['positive'],negative=WAN_NEGATIVE,seed_high=264244520398999+int(clip['shot_id'][5:])-1,seed_low=0,
                   width=p['width'],height=p['height'],length=b['wan_frames'],fps=16,batch=1,steps=40,cfg=3.5,sampler='euler',scheduler='simple',
                   split_step=15,shift_high=5.000000000000001,shift_low=5.000000000000001,lora_enabled=False)
+    from .wan_production import parameter_mode,effective_parameters,wrapper_template,request_graph
+    mode=parameter_mode(p)
+    if mode!='native':
+        expected=effective_parameters(expected,mode)
+        # Recipe claims must be backed by the exact original submitted graph.
+        from ..config import read_json
+        original=read_json(run_path(run,clip['submission']['intent_path']))
+        prefix=f'{run.name}/source_clips/{clip["shot_id"]}/attempt_0001'
+        graph=request_graph(wrapper_template(mode),p,f'{run.name}/source_clips/{clip["shot_id"]}/start.png',prefix)
+        if not same(original,graph):raise ProductionRefused('Wrapper parameters differ from original submitted graph')
     if not same(p,expected):raise ProductionRefused('fixed Wan sampling parameters differ')
     for k in ('native_fps','generated_frames','source_frames'):integer(clip[k],k,1)
     if clip['native_fps']!=16 or clip['source_frames']!=b['required_native_frames']:raise ProductionRefused('source frame count/rate differs')
