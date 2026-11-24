@@ -173,13 +173,14 @@ def _owned(path,op,artifact):
 
 
 def _expected_receipt(context,candidate,acceptance,tx):
+    review_status='unverified_user_waived' if acceptance.get('admission')=='user_review_waiver' else 'passed'
     return dict(schema_version=2,production_strategy=STRATEGY,run_id=context['store'].run_dir.name,
         transaction_id=tx['transaction_id'],delivered_at=tx['receipt']['delivered_at'] if tx['receipt'] else now(),
         composition_sha256=canonical_digest(candidate),final_observation_acceptance_sha256=canonical_digest(acceptance),
         scene_clips_sha256=canonical_digest(context['scene_clips']),image_acceptance_sha256=canonical_digest(context['image_acceptance']),
         movie=deepcopy(tx['operations']['movie']['output']),subtitle=deepcopy(tx['operations']['subtitle']['output']),
         media=dict(width=1920,height=1080,fps=16,frames=context['timeline'].total_frames,audio_sample_rate=48000,audio_channels=1),
-        technical_checks=deepcopy(candidate['technical_checks']),actual_final_video_consistency='passed',full_narration='passed',subtitles='passed')
+        technical_checks=deepcopy(candidate['technical_checks']),actual_final_video_consistency=review_status,full_narration=review_status,subtitles=review_status)
 
 
 def validate_transaction(context,candidate,acceptance,tx):

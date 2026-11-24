@@ -408,6 +408,9 @@ def reference_candidates(frozen, scene, manifest_path):
 @revision_read_transaction()
 @_batch_revision_artifacts
 def build_reference_image_acceptance(frozen, units, timeline):
+    from .resume_materials import saved_wan_inputs
+    saved = saved_wan_inputs(frozen)
+    if saved is not None: return saved
     complete = images.require_complete_image_acceptance(frozen, units, timeline)
     bible, plan = images.load_committed_plan(frozen, units, timeline)
     choices = {r['scene_id']: r for r in complete['selections']}; rows = []
@@ -436,6 +439,9 @@ def build_reference_image_acceptance(frozen, units, timeline):
 
 @revision_read_transaction()
 def require_reference_image_acceptance(frozen, units, timeline):
+    from .resume_materials import saved_wan_inputs
+    saved = saved_wan_inputs(frozen)
+    if saved is not None: return saved
     expected = build_reference_image_acceptance(frozen, units, timeline)
     actual = images._read(images._run(frozen)/'production/reference-images/wan-inputs.json')
     images._equal(actual, expected, 'Wan start-image admission')

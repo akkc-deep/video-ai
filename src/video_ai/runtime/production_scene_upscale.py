@@ -103,6 +103,9 @@ def _produce(context,logger,client_factory,service_factory):
     from .production_inputs import check_stage_space
     from ..media.scene_upscale import InvalidScenePng
     store=context['store']; store.assert_write(); logger=_GuardedLogger(logger,store.assert_write)
+    from .scene_review_waiver import trusted_upscale_complete
+    if trusted_upscale_complete(context) is not None:
+        return _result(context,'upscale_ready')
     check_stage_space(context['frozen'].config,frames=len(context['rows']))
     # Full batch read-only scan precedes even local extraction or any service start.
     for row in context['rows']: graph_for(context,row)

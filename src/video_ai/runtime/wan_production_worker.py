@@ -4,6 +4,7 @@ from copy import deepcopy
 import gc
 import importlib
 import json
+import logging
 import os
 from pathlib import Path
 import threading
@@ -152,8 +153,10 @@ class ProductionContext:
         if kwargs['mode']=='fast' and self.pair is None:
             self.preflight_resources(phase=True)
             from ..experiments.wan_wrapper_lora import admit_pair
+            logging.info('Preparing fast LoRA weights; production skips experimental CPU forward probes')
             with self.stage('pair_admission'):
-                self.pair=admit_pair(self.factory,self.profiles['fast'],self.leases)
+                self.pair=admit_pair(self.factory,self.profiles['fast'],self.leases,verify_dynamic=False)
+            logging.info('Fast LoRA weights ready; starting video sampling')
         return self.require_image()[0],self.require_text(),self.vae_cache
 
     def token_counts(self,kwargs):

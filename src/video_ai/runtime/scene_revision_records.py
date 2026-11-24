@@ -380,6 +380,11 @@ def stable_bytes(path, *, root):
 
 def artifact(path, *, root=None, allow_empty=False):
     path = Path(path); root = Path(root) if root is not None else path.parent
+    from .resume_materials import saved_artifact
+    saved = saved_artifact(path)
+    if saved is not None:
+        safe_path(path, root)
+        return saved
     from ._continuity_byte_guard import capture_reads
     batch = _artifact_batch.get()
     if batch is not None and batch['active'] and batch['thread'] == get_ident():
@@ -421,6 +426,12 @@ def verify_artifact(value, *, root, allow_empty=False):
     require_production_repair_origin(value)
     object_fields(value, ('path','bytes','sha256'), 'revision Artifact')
     integer(value['bytes'], 'revision artifact bytes',0 if allow_empty else 1)
+    from .resume_materials import saved_artifact
+    saved = saved_artifact(value['path'])
+    if saved is not None:
+        path = safe_path(value['path'], root)
+        if saved != value: raise ProductionRefused('revision captured bytes changed: '+value['path'])
+        return path
     batch = _artifact_batch.get()
     if batch is not None and batch['active'] and batch['thread'] == get_ident():
         key = (str(root), allow_empty, canonical_digest(value), source_read_scope_identity())
@@ -583,6 +594,9 @@ def path_identity(path):
 
 def validate_revision_structure(options, run):
     """Loader-safe byte/structure binding; no current FrozenInputs recursion."""
+    from .resume_materials import saved_revision
+    saved = saved_revision(options, run)
+    if saved is not None: return saved
     value = options.get('scene_revision')
     if value is None: raise ProductionRefused('scene revision is not frozen')
     active = _context.get()
@@ -746,6 +760,9 @@ def require_scene_revision(frozen):
     """Admit original nodes and compare registered views under one recursion scope."""
     run = Path(frozen.options['script_path']).parent.parent
     if 'scene_revision' not in frozen.options: raise ProductionRefused('scene revision is not frozen')
+    from .resume_materials import saved_revision
+    saved = saved_revision(frozen.options, run)
+    if saved is not None: return saved
     active = _context.get()
     if active is not None and str(run) in active['validated']:
         result = active['validated'][str(run)]

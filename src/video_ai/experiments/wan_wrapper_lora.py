@@ -110,7 +110,7 @@ def probe_dynamic(module,entries):
         module._linear_forward_impl=original;module._step.zero_()
 
 
-def prepare_private(owner,parsed):
+def prepare_private(owner,parsed,*,verify_dynamic=True):
     import torch
     assert_clean(owner)
     parameters=dict(owner.transformer.named_parameters(remove_duplicate=False))
@@ -158,9 +158,10 @@ def prepare_private(owner,parsed):
     owner.components.custom.set_lora_params(owner.transformer,dynamic)
     install_head(owner,dynamic)
     probes=[]
-    for key,entries in dynamic.items():
-        module=owner.transformer.get_submodule(key.removeprefix('diffusion_model.').rpartition('.')[0])
-        probes.append(dict(target=key,**probe_dynamic(module,entries)))
+    if verify_dynamic:
+        for key,entries in dynamic.items():
+            module=owner.transformer.get_submodule(key.removeprefix('diffusion_model.').rpartition('.')[0])
+            probes.append(dict(target=key,**probe_dynamic(module,entries)))
     owner.patcher.model['sd']=overlay;owner.patcher.patches=dynamic
     options=owner.patcher.model_options.setdefault('transformer_options',{})
     options.update(merge_loras=False,lora_scheduling_enabled=False)
@@ -169,7 +170,7 @@ def prepare_private(owner,parsed):
         canonical_module_aliases=module_aliases,
         head_full_delta_adapter=bool(head),
         static_overlay_bytes=sum(v.numel()*v.element_size() for v in cached.values()),
-        full_model_verified=False,source_parameters_mutated=False)
+        full_model_verified=False,dynamic_forward_verified=verify_dynamic,source_parameters_mutated=False)
     return ExpertCertificate(MappingProxyType(cached),MappingProxyType(dynamic),witness)
 
 
@@ -206,7 +207,7 @@ def prepare_expert(factory,role,certificate):
         release_expert(owner);raise
 
 
-def admit_pair(factory,fast_profile,leases):
+def admit_pair(factory,fast_profile,leases,*,verify_dynamic=True):
     if hasattr(fast_profile,'mode') and fast_profile.mode!='fast':raise ValueError('fast profile only')
     if factory.full_model and leases is None:raise ValueError('protected identity leases required')
     if leases is not None:leases.verify()
@@ -217,8 +218,8 @@ def admit_pair(factory,fast_profile,leases):
         try:
             parsed,trace=factory.parse(owner)
             factory.materialize(owner)
-            cert=prepare_private(owner,parsed)
-            cert=ExpertCertificate(cert.static,cert.dynamic,{**cert.witness,'trace':trace,'full_model_verified':factory.full_model})
+            cert=prepare_private(owner,parsed,verify_dynamic=verify_dynamic)
+            cert=ExpertCertificate(cert.static,cert.dynamic,{**cert.witness,'trace':trace,'full_model_verified':factory.full_model and verify_dynamic})
             write_once(factory.root/f'admission/{role}-witness.json',cert.witness)
             return cert
         finally:
@@ -227,7 +228,8 @@ def admit_pair(factory,fast_profile,leases):
     low=one('low');factory.guard.check()
     if leases is not None:leases.verify()
     receipt=dict(schema_version=1,profile_sha256=fast_profile.digest() if hasattr(fast_profile,'digest') else fast_profile,
-        comparison_sha256=factory.comparison_sha256,epoch=factory.epoch,full_model_verified=factory.full_model,
+        comparison_sha256=factory.comparison_sha256,epoch=factory.epoch,full_model_verified=factory.full_model and verify_dynamic,
+        dynamic_forward_verified=verify_dynamic,
         admission_id=getattr(factory,'admission_id',None),
         high_witness_sha256=hashlib.sha256((factory.root/'admission/high-witness.json').read_bytes()).hexdigest(),
         low_witness_sha256=hashlib.sha256((factory.root/'admission/low-witness.json').read_bytes()).hexdigest())

@@ -352,6 +352,9 @@ def _produce(context,logger):
     from .production_scene_delivery import final_observation_state
     state=final_observation_state(context,candidate=candidate)
     status='final_review_ready' if state['accepted'] else 'final_review_failed' if state['rejected'] else 'awaiting_final_review'
+    if not state['accepted'] and not state['rejected']:
+        from .scene_review_waiver import load_review_waiver
+        if load_review_waiver(store.run_dir, 'final_playback') is not None: status='final_review_ready'
     return SceneMediaResult(run_id=store.run_dir.name,run_dir=store.run_dir,status=status,
         active_stage='final_review',upscaled_clips=store.run_dir/'production/scene-upscale/complete.json',
         candidate=Path(candidate['candidate']['path']),final_observation_template=path,log_dir=logger.root)

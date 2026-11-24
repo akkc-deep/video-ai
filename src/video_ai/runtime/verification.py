@@ -274,6 +274,10 @@ def scene_input_protection(frozen, *, review_only=False):
     complete mandatory-shared read. Existing windows retain their exact sealed
     root policy; nested callers cannot widen it. No process/service is started.
     """
+    from .resume_materials import trusting_materials
+    if trusting_materials():
+        yield
+        return
     options = getattr(frozen, 'options', {})
     strategy = getattr(getattr(frozen, 'config', None), 'production_strategy',
                        options.get('production_strategy'))

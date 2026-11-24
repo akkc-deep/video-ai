@@ -290,10 +290,12 @@ def _make_legacy_video(config=None, *, script=None, text=None, run_dir=None, out
 
 
 from .runtime.wan_production import production_mode
+from .runtime.resume_materials import resume_existing_materials
 
 
 @production_mode
 @production_execution
+@resume_existing_materials
 def make_video(config=None, *, script=None, text=None, run_dir=None, output_path=None, cpu_planner=None, image_model=None,
                image_selection=None, reference_settings=None, email_settings=None, clip_observation=None,
                final_observation=None, retry_email=None, revision=None, publish=False, continuity_review=None, wan_mode='fast'):

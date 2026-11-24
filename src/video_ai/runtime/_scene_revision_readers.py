@@ -61,6 +61,12 @@ def inherited_image_group(frozen,units,timeline,bible,plan):
 
 
 def inherited_clip_record(frozen,key,*,context=None,row=None,parent=None):
+    from .resume_materials import trusting_materials, saved_clip
+    if trusting_materials():
+        if 'scene_revision' not in frozen.options: return None
+        run = Path(frozen.options['script_path']).parent.parent
+        proof = proof_for(frozen,'clip',key,context=context)
+        return saved_clip(run,key) if proof is not None else None
     proof = proof_for(frozen,'clip',key,context=context)
     if proof is None:return None
     run = Path(frozen.options['script_path']).parent.parent

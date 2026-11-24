@@ -178,7 +178,9 @@ def test_preparation_replaces_clip_conditioning_and_reuses_owner_pair(runtime_ru
         events.append(('text',fixture['positive'],fixture['seed_high'],fixture['budget']['generated_frames']))
         return {'prompt_embeds':fixture['positive']},{'encoder_released':True}
     def image(context,fixture):return {'image_embeds':fixture['input_sha256']},object(),{'image_prepared':True}
-    def admit(*args):events.append(('admit',));return SimpleNamespace(receipt={'epoch':'test'})
+    def admit(*args,**kwargs):
+        assert kwargs=={'verify_dynamic':False}, 'production must not run experimental CPU matrix forwards'
+        events.append(('admit',));return SimpleNamespace(receipt={'epoch':'test'})
     monkeypatch.setattr('video_ai.experiments.wan_wrapper_text.encode_native_text',encode)
     monkeypatch.setattr('video_ai.experiments.wan_wrapper_vae.prepare_native_image',image)
     monkeypatch.setattr('video_ai.experiments.wan_wrapper_lora.admit_pair',admit)

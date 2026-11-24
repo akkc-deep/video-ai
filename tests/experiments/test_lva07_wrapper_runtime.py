@@ -163,6 +163,19 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(cert.witness['dynamic_probes'][0]['coordinates'],[[0,0],[0,1],[1,0],[1,1]])
         q._step.zero_()
 
+    def test_production_preparation_skips_cpu_probes_but_keeps_actual_lora_math(self):
+        from unittest.mock import patch
+        o=self.head_owner()
+        with patch.object(self.api,'probe_dynamic',side_effect=AssertionError('production CPU probe')):
+            cert=self.api.prepare_private(o,self.head_patches(),verify_dynamic=False)
+        self.assertEqual(cert.witness['dynamic_probes'],[])
+        self.assertFalse(cert.witness['dynamic_forward_verified'])
+        self.assertIn('diffusion_model.head.head.weight',cert.dynamic)
+        self.t.testing.assert_close(o.transformer.blocks[0].q(self.t.tensor([[1.,2.]],dtype=self.t.float16)),
+            self.t.tensor([[6.25,6.25]],dtype=self.t.float16))
+        self.t.testing.assert_close(o.transformer.head.head(self.t.tensor([[1.,2.]],dtype=self.t.float16)),
+            self.t.tensor([[3.875,3.875]],dtype=self.t.float16),rtol=0,atol=0)
+
     def test_nan_unknown_shape_and_colliding_targets_reject_before_write(self):
         t=self.t
         variants=[{'unknown':[(1.,('diff',(t.ones(2),)),1.,None,None)]},
@@ -262,6 +275,28 @@ class RuntimeTests(unittest.TestCase):
                 raw=(Path(td)/f'admission/{role}-witness.json').read_bytes()
                 self.assertEqual(pair.receipt[role+'_witness_sha256'],hashlib.sha256(raw).hexdigest())
                 self.assertEqual(json.loads(raw)['trace']['unique_trace'],'bound-'+role)
+
+    def test_production_pair_does_not_claim_full_forward_verification(self):
+        from unittest.mock import patch
+        outer=self
+        class Factory:
+            epoch='production';comparison_sha256='a'*64;full_model=True
+            def build_unpatched(self,role):o=outer.owner();o.role=role;return o
+            def parse(self,o):return outer.patches(),{'applicable':7,'excluded':0}
+            def materialize(self,o):outer.c.load(o)
+            def release(self,o):pass
+        with tempfile.TemporaryDirectory() as td:
+            factory=Factory();factory.root=Path(td)
+            leases=types.SimpleNamespace(verify=lambda:None)
+            with patch.object(self.api,'probe_dynamic',side_effect=AssertionError('production CPU probe')):
+                pair=self.api.admit_pair(factory,'production-profile',leases,verify_dynamic=False)
+            self.assertFalse(pair.receipt['full_model_verified'])
+            self.assertFalse(pair.receipt['dynamic_forward_verified'])
+            for cert in (pair.high,pair.low):
+                self.assertFalse(cert.witness['full_model_verified'])
+                self.assertEqual(cert.witness['dynamic_probes'],[])
+                self.assertEqual(len(cert.static),6)
+                self.assertEqual(set(cert.dynamic),{'diffusion_model.blocks.0.q.weight'})
 
 
 if __name__=='__main__':unittest.main()

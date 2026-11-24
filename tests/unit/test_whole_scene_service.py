@@ -71,6 +71,33 @@ def test_legacy_service_does_not_start_new_resource_session(monkeypatch):
     service.close()
 
 
+@pytest.mark.parametrize('failure',['acquire','sampler'])
+def test_failed_wrapper_resource_start_remains_retryable(monkeypatch,failure):
+    from video_ai.runtime.production_scene_clips import _OwnedService
+    from video_ai.runtime.resources import GpuBusyError
+    events=[]
+    class Lease:
+        def __init__(self,*args,**kwargs):pass
+        def acquire(self,*args,**kwargs):
+            events.append('acquire')
+            if failure=='acquire':raise GpuBusyError('busy')
+        def release(self):events.append('release')
+    class Sampler:
+        def __init__(self,*args,**kwargs):pass
+        def start(self):raise RuntimeError('sampler unavailable')
+        def stop(self):events.append('stop')
+    monkeypatch.setattr('video_ai.runtime.resources.GpuLease',Lease)
+    monkeypatch.setattr('video_ai.runtime.resources.ResourceSampler',Sampler)
+    service=_OwnedService(SimpleNamespace(config=SimpleNamespace(raw={})),None,
+        SimpleNamespace(run_dir='unused'),None,wan_backend='wrapper')
+    for attempt in range(2):
+        with pytest.raises((GpuBusyError,RuntimeError)):
+            service._start_resources(SimpleNamespace())
+        assert service.lease is None and service.sampler is None
+    assert events.count('acquire')==2
+    assert events.count('release')==(2 if failure=='sampler' else 0)
+
+
 @pytest.mark.parametrize('whole,expected_calls', [(True,1),(False,2)])
 def test_confirmed_inference_failure_stops_whole_batch_only(tmp_path,monkeypatch,whole,expected_calls):
     from video_ai.runtime import production_scene_clips as module

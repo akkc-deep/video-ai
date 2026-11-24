@@ -91,6 +91,9 @@ class SceneClipStore:
         return self.write_bytes(target, (json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2)+'\n').encode())
 
     def artifact(self, path):
+        from .resume_materials import saved_artifact
+        saved = saved_artifact(path)
+        if saved is not None:return saved
         from .temporal_scene_origins import bound_temporal_artifact
         original=bound_temporal_artifact(self,path)
         if original is not None:return original
@@ -107,6 +110,8 @@ class SceneClipStore:
         return validate_artifact_once(self, value, self._validate_artifact_uncached)
 
     def _validate_artifact_uncached(self, value):
+        from .resume_materials import saved_artifact
+        if saved_artifact(value['path']) is not None:return Path(value['path'])
         from .scene_color_repair_records import require_production_repair_origin
         require_production_repair_origin(value)
         object_fields(value, ('path', 'bytes', 'sha256'), 'scene Artifact')
@@ -127,6 +132,8 @@ class SceneClipStore:
     def verify_global(self):
         """Rehash the full already-admitted dependency set without repeating decoding."""
         self.assert_owned()
+        from .resume_materials import trusting_materials
+        if trusting_materials():return
         if self.revision_context is not None: self.revision_context['guard'].verify_captured_bytes()
         for value in self.guard_paths.values(): self.validate_artifact(value)
         for directory,inventory in self.guard_directories.items():
@@ -165,9 +172,17 @@ class SceneClipStore:
             if self.revision_context is not None and 'clip:'+parent['clip_id'] in self.revision_context['imports']:
                 self.revision_context['guard'].verify_captured_bytes()
             else:
-                for name in ('clip.json','last-frame.json','observation-accepted.json'):
+                for name in ('clip.json','last-frame.json'):
                     path = pf/name; paths[str(path)] = self.artifact(path)
-                capture(self.read(pf/'observation-accepted.json'))
+                receipt = self.read(pf/'observation-accepted.json')
+                if receipt is not None:
+                    path = pf/'observation-accepted.json'; paths[str(path)] = self.artifact(path)
+                    capture(receipt)
+                else:
+                    from .scene_review_waiver import load_review_waiver
+                    authorization = load_review_waiver(self.run_dir)
+                    if authorization is None: raise ProductionRefused('parent review or user waiver missing')
+                    capture(authorization)
                 directory=pf/'observations'
                 inventories[directory]={str(path) for path in directory.glob('*.json')}
                 for path in inventories[directory]: paths[path]=self.artifact(path)
@@ -252,6 +267,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         if not source_image_required(frozen,selected['scene_id']):continue
         artifact = {k:selected[k] for k in ('path','bytes','sha256')}
         path = store.validate_artifact(artifact)
+        from .resume_materials import saved_artifact
+        if saved_artifact(path) is not None:continue
         info = images._inspect_original(frozen, path)
         if info['width']*9 != info['height']*16: raise ProductionRefused('selected original must be 16:9')
     profile = frozen.config.media.profile
@@ -278,6 +295,8 @@ def scene_context(frozen, units, timeline, *, paths=None, lock=None):
         if path.exists(): store.guard_paths[str(path)] = store.artifact(path)
     # Bind every source selection/observation/provenance record, including comparison baselines.
     for directory in ('production/image-selection','production/reference-images','production/reference-storage','production/jimeng'):
+        from .resume_materials import trusting_materials
+        if trusting_materials():break
         review_checkpoint()
         inventory={str(path) for path in (run/directory).rglob('*.json')}
         store.guard_directories[str(run/directory)]=inventory
@@ -459,6 +478,19 @@ def _validate_input(context,row,parent,*,media=True):
 
 def validate_clip(context,row,parent=None):
     """Reconstruct one original technical clip and its observation, without mutation."""
+    from .scene_review_waiver import apply_clip_waiver
+    return apply_clip_waiver(context['store'].run_dir, _validate_clip(context,row,parent))
+
+
+def _validate_clip(context,row,parent=None):
+    from .resume_materials import saved_clip
+    saved = saved_clip(context['store'].run_dir, row['budget']['clip_id'])
+    if saved is not None:
+        if saved['template'] is None:
+            from .scene_clip_observations import build_observation_template
+            saved['template'] = build_observation_template(context['frozen'], saved['clip'], saved['request'],
+                saved['mapping'], saved['last_frame'], observation_parent_records(parent))
+        return saved
     if (context.get('execution') or {}).get('mode')=='temporal_extension_v1':
         from .temporal_scene_records import temporal_progress_view
         sid=row['budget']['scene_id']

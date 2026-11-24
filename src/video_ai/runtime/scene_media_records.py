@@ -87,12 +87,18 @@ class SceneMediaStore(SceneClipStore):
         self.continuity_check = None
         self.continuity_read_guard = None
         self._media_check_coverage = None
+        from .resume_materials import trusting_materials
+        from .scene_review_waiver import load_review_waiver
+        mode=frozen.config.raw.get('scene_rendering',{}).get('mode')
+        self._trusted_waived_inputs=(mode is None and trusting_materials()
+                                    and load_review_waiver(self.run_dir) is not None)
 
     @property
     def recheck_inputs(self):
         """Whole media admits once; it does not repeat upstream audits per frame."""
         raw=getattr(getattr(self.frozen,'config',None),'raw',{})
-        return raw.get('scene_rendering',{}).get('mode')!='whole_scene_v1'
+        return (raw.get('scene_rendering',{}).get('mode')!='whole_scene_v1'
+                and not getattr(self,'_trusted_waived_inputs',False))
 
     def assert_owned(self):
         raw=getattr(getattr(self.frozen,'config',None),'raw',{})
@@ -137,6 +143,9 @@ class SceneMediaStore(SceneClipStore):
         return super().path(target)
 
     def artifact(self,path):
+        from .resume_materials import saved_artifact
+        saved=saved_artifact(path)
+        if saved is not None:return saved
         from ._temporal_media_check_coverage import native_external_artifact
         captured=native_external_artifact(self,path)
         if captured is not None:return captured
@@ -147,6 +156,11 @@ class SceneMediaStore(SceneClipStore):
         from .scene_color_repair_records import require_production_repair_origin
         require_production_repair_origin(value)
         object_fields(value,('path','bytes','sha256'),'scene media Artifact')
+        from .resume_materials import saved_artifact
+        saved=saved_artifact(value['path'])
+        if saved is not None:
+            equal(saved,value,'saved media artifact')
+            return Path(value['path'])
         from ._temporal_media_check_coverage import native_external_artifact
         if native_external_artifact(self,value['path'],value) is not None:return Path(value['path'])
         self._lexical(value['path'])
@@ -208,6 +222,11 @@ class SceneMediaStore(SceneClipStore):
 
     def snapshot_json(self,*,files=(),directories=()):
         """Immutable raw JSON bytes and inventories captured before semantic admission."""
+        from .resume_materials import trusting_materials
+        if getattr(self,'_trusted_waived_inputs',False) and trusting_materials():
+            # Committed source/upscale readers retain their input/mapping checks.
+            # A trusted waived resume does not re-open historical HTTP bodies.
+            return dict(directories={},artifacts={},bodies={},capture_paths=frozenset())
         inventories={}; names=set()
         for value in directories:
             folder=self._lexical(self.run_dir/Path(value))
@@ -646,6 +665,10 @@ def _load_scene_media_progress(context):
             observation=rejected.get('observation')
             result['final_review']['error']=dict(kind='SceneFinalObservationFailed',message='Actual final-film observation rejected this candidate',
                 evidence_paths=[observation['path']] if isinstance(observation,dict) and 'path' in observation else [])
+        else:
+            from .scene_review_waiver import load_review_waiver
+            authorization=load_review_waiver(store.run_dir, 'final_playback')
+            if authorization is not None: result['final_review']=row('waived',authorization['path'],1)
     if (store.run_dir/'production/scene-delivery').exists():
         from .production_scene_delivery import require_scene_delivery_record
         from .scene_delivery_files import validate_delivery_state
