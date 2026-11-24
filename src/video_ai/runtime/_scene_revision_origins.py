@@ -374,6 +374,9 @@ def verify_import_view(frozen,sidecar,original,*,origin_frozen=None):
 @verified_read
 def capture_origin(frozen,domain,key):
     """Capture the node's source closure before admitting it; never entire later scenes."""
+    from .scene_review_waiver import capture_waived_origin
+    waived = capture_waived_origin(frozen,domain,key)
+    if waived is not None:return waived
     run = run_of(frozen); guard = RevisionGuard(frozen)
     files = {run/'production/options.json',run/'production/units.json',run/'production/timeline.json'}
     directories = {run/'production/inputs',run/'production/workflows'};declaration_directories=set()
@@ -481,6 +484,8 @@ def capture_origin(frozen,domain,key):
             files.add(Path(frozen.options['execution_policy']['input_identities']['scene_video_prompts']['path']))
         files.add(run/'production/reference-images/wan-inputs.json')
         files.add(run/'production/scene-clips/inputs.json')
+        waiver = run/'production/review-waiver.json'
+        if waiver.is_file(): files.add(waiver)
         if domain=='upscale':
             relevant = source_clips
             directories.update(run/'production/scene-clips/chains'/clip['scene_id']

@@ -66,6 +66,9 @@ def common_inputs(frozen):
             if any((run/f'production/{s}.json').exists() for s in ('units','timeline','speech')):
                 raise ProductionRefused('owned common prefix competes with import')
             return (*load_scene_common_prefix(frozen),'inherited')
+    from .resume_materials import saved_common
+    saved=saved_common(frozen)
+    if saved is not None:return saved
     value=owned_common(frozen)
     from ..planning.production_timeline import ProductionTimeline
     mode='automatic' if (run/'production/production-state.json').exists() else 'prepared'
@@ -98,6 +101,11 @@ def common_value(frozen,units,timeline,mode,inputs,*,created_at):
 def _common_record(frozen,units,timeline,mode,*,construct=False):
     root=run_of(frozen)/'production/scene-pipeline'
     inputs=pipeline_inputs(frozen,mode)
+    from .resume_materials import existing_file, read_saved, remember
+    if existing_file(root/'common-inputs-ready.json') and existing_file(root/'inputs.json'):
+        saved=read_saved(root/'common-inputs-ready.json')
+        remember(saved)
+        return read_saved(root/'inputs.json'),saved
     if (root/'inputs.json').exists():
         saved=read_json(root/'inputs.json');object_fields(saved,INPUT_FIELDS,'scene pipeline inputs')
         if type(saved['schema_version']) is not int or saved!=inputs:raise ProductionRefused('scene pipeline frozen inputs differ')
@@ -119,6 +127,10 @@ def validate_common_record(frozen,units,timeline,mode):
 @contextmanager
 def _common_sources(frozen,timeline,mode):
     """Seal the exact compared sources while coordinator markers are written."""
+    from .resume_materials import trusting_materials
+    if trusting_materials():
+        yield True
+        return
     if os.name!='nt':
         yield False;return
     from .verification import _locked_reader,file_stamp,_NativeInput

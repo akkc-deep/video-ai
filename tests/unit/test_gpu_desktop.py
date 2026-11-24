@@ -10,6 +10,35 @@ def test_only_approved_paths_and_cg_type_can_be_exempted():
     assert not approved_desktop('D:/AI/runtime/python.exe','C+G')
 
 
+@pytest.mark.parametrize('path',[
+    'E:/Program Files/Tencent/QQLive/QQLive.exe',
+    'E:/Program Files/Tencent/QQLive/11.189.7537.0/QQLiveService.exe',
+    'E:/Program Files/Oray/AweSun/agent/AweSun.exe',
+    'E:/Program Files/Oray/AweSun/flutter/AweSun.exe',
+    'E:/Program Files/ShareX/ShareX.exe',
+    'E:/Program Files/JetBrains/PyCharm 2026.3/plugins/jcef-plugin/jcef/cef_server.exe',
+    'E:/Program Files (x86)/Tencent/QQMusic/QQMusic.exe',
+    'C:/Users/qzw19/AppData/Roaming/Tencent/QQMusic/wmpf/2.2.3.465/runtime/WeChatAppEx.exe',
+    'C:/Program Files/WindowsApps/AdvancedMicroDevicesInc-2.AMDRadeonSoftware_10.25.10376.0_x64__0a9344xs7nr4m/radeonsoftware/RadeonSoftware.exe',
+    'C:/Program Files/WindowsApps/AdvancedMicroDevicesInc-2.AMDRadeonSoftware_10.25.10376.0_x64__0a9344xs7nr4m/radeonsoftware/AMDRSSrcExt.exe',
+    'C:/Program Files/WindowsApps/9426MICRO-STARINTERNATION.MSICenter_2.0.75.0_x64__kzh8wxbdkxb8p/DCv2/DCv2.exe',
+])
+def test_observed_desktop_programs_are_not_external_inference(path):
+    from video_ai.runtime.gpu_desktop import approved_desktop
+    assert approved_desktop(path,'C+G')
+    assert not approved_desktop(path,'C')
+
+
+def test_protected_driver_host_is_only_allowed_as_desktop(runtime_run,monkeypatch):
+    import video_ai.runtime.gpu_desktop as module
+    def denied(pid):raise PermissionError('protected driver host')
+    monkeypatch.setattr(module,'process_image',denied)
+    monkeypatch.setattr(module,'process_names',lambda:{42:'wudfhost.exe',43:'wudfhost.exe'})
+    monkeypatch.setattr(module,'process_types',lambda run:{42:'C+G',43:'C'})
+    sample={'status':'verified','external_pids':[42,43],'gpu_total_mib':24455,'gpu_used_mib':3000}
+    assert module.desktop_policy(runtime_run[0],sample)['external_pids']==[43]
+
+
 def test_desktop_filter_preserves_unknown_external_processes(runtime_run,monkeypatch):
     import video_ai.runtime.gpu_desktop as module
     monkeypatch.setattr(module,'process_image',lambda pid:'C:/Windows/explorer.exe' if pid==42 else 'D:/AI/python.exe')

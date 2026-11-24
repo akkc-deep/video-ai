@@ -144,7 +144,13 @@ def final_observation_state(context,*,candidate=None):
 def require_scene_final_acceptance_record(context):
     state=final_observation_state(context)
     if state['rejected']: raise ProductionRefused('explicit failed final-film observation requires a revision')
-    if state['accepted'] is None: raise ProductionRefused('complete passed final-film acceptance missing')
+    if state['accepted'] is None:
+        from .scene_review_waiver import final_waiver_acceptance
+        waived=final_waiver_acceptance(context['store'].run_dir,state['candidate'])
+        if waived is None: raise ProductionRefused('complete passed final-film acceptance missing')
+        _verify_observation_snapshot(context['store'],state)
+        _remember_artifact(context['store'],waived['authorization'])
+        return waived
     store=context['store'];_verify_observation_snapshot(store,state)
     snapshot=state['_snapshot']
     _remember_inventory(store,snapshot['folder'],snapshot['inventory'])

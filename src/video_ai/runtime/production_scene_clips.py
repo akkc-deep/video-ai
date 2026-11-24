@@ -136,11 +136,19 @@ class _OwnedService:
         if self.lease is not None: return
         from .resources import GpuLease, ResourceSampler
         from .gpu_desktop import desktop_policy
-        self.lease=GpuLease(self.paths,manifest,self.logger,resource_policy=desktop_policy)
-        self.lease.acquire(self.stage,'wan_wrapper' if self.wan_backend=='wrapper' else 'whole_scene_v1',batch_size=1)
-        self.sampler=ResourceSampler(self.run,lambda: ({os.getpid()} |
-            (self.manager.owned_pids if self.manager is not None else set())),interval_seconds=2)
-        self.sampler.start()
+        lease=GpuLease(self.paths,manifest,self.logger,resource_policy=desktop_policy)
+        lease.acquire(self.stage,'wan_wrapper' if self.wan_backend=='wrapper' else 'whole_scene_v1',batch_size=1)
+        sampler=None
+        try:
+            sampler=ResourceSampler(self.run,lambda: ({os.getpid()} |
+                (self.manager.owned_pids if self.manager is not None else set())),interval_seconds=2)
+            sampler.start()
+        except BaseException as exc:
+            for cleanup in ((sampler.stop,) if sampler is not None else ())+(lease.release,):
+                try:cleanup()
+                except Exception as failure:exc.add_note('resource cleanup failed: '+str(failure))
+            raise
+        self.lease,self.sampler=lease,sampler
 
     def ensure(self):
         if self.handle is not None:
@@ -540,6 +548,9 @@ def _produce_phase(context,*,paths,logger,client_factory,service_factory,pool,me
                         raise RuntimeError('invalid original model media: '+str(exc)) from exc
                     new=validate_clip(context,row,parent)
                     store.write(folder/'observation-template.json',new['template']); boundary('observation-template')
+                    if new['accepted'] and not new['rejected']:
+                        parent=new
+                        continue
                     break  # No process observation has been authored for this new technical clip.
                 except KeyboardInterrupt: raise
                 except Exception as exc:
@@ -579,10 +590,15 @@ def _restore_outer(context,*,paths,logger):
     store=context['store']
     parents={}
     for row in context['rows']:
-        folder=store.clip_dir(row['budget']['clip_id']); clip=store.read(folder/'clip.json')
-        b=row['budget']; recipes=technical_recipes(row)
+        b=row['budget']
         parent=parents.get(b['scene_id'])
         if b['parent_clip_id'] and (parent is None or not parent['accepted']): continue
+        from .resume_materials import saved_clip
+        if saved_clip(store.run_dir,b['clip_id']) is not None:
+            parents[b['scene_id']]=validate_clip(context,row,parent)
+            continue
+        folder=store.clip_dir(b['clip_id']); clip=store.read(folder/'clip.json')
+        recipes=technical_recipes(row)
         if clip is None:
             # A lost technical marker can be rebuilt using immutable media receipts and
             # a deterministic creation time (the final extraction receipt time).

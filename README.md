@@ -4,6 +4,10 @@
 
 日常 `make-video` 和 `generate_video.cmd` 默认使用已验证的 WanVideoWrapper fast：4 步、CFG 1、配套双 LoRA，768×432 原生 16 fps，再沿用现有 1080P 后处理。启动不需要增加参数。旧任务普通续作时，后续未准备请求的片段也默认使用 fast；已完成片段复用，已有请求保持原图和原 ID 恢复，不会重复提交。
 
+普通 Wan 任务通过 `make-video --video ...` 或 `--run-dir ...` 续作时，默认信任已保存的配音、参考图和已完成片段：直接读取已有记录，跳过旧片段哈希、解码、技术回执重放及祖先来源递归校验。制作期间请保持这些已有文件不变。必要文件缺失会停止恢复；未完成任务仍按原请求身份恢复，失败或待审状态原样保留，新产物仍完成首次技术检查。此策略也用于同一入口提交片段观察；专用 whole/temporal 后端、显式修订、超分产物及最终交付继续使用各自原有流程。
+
+用户明确取消播放审核时，操作者可在对应运行的 `production/review-waiver.json` 保存绑定该运行 `options.json` SHA256 的授权（schema_version=1、run_id、options_sha256、authorized_by="user"、原话 user_request、带时区 authorized_at、scopes=["clip_playback","final_playback"]）。此授权仅放行技术完整的未审片段及成片交付，不生成观看观察或 passed 回执；已有真实失败仍需修订。免审交付的视觉、旁白试听和字幕观看结论均为 `unverified_user_waived`，技术检查继续正常执行。不提供此文件时仍沿用原审核流程。
+
 ```powershell
 .\generate_video.cmd -Video 0001
 # 可选：恢复原生产后端，或使用 Wrapper control（40 步、不加 LoRA）
@@ -14,6 +18,8 @@
 模式选项作用于尚未冻结请求的片段，不会改写旧请求或旧任务的配置。Wrapper 复用运行根目录下 `scratch/benchmarks/LVA-07-04-environment` 中已修复的独立环境，模型仍来自共享模型目录；请保留该环境。新迁移包会携带它，换盘后沿用文件哈希并重定位路径。没有该环境的安装会在预检提示补齐，或显式选 `--wan-mode native`。显式 quality 分辨率或单片超过 93 帧的配置需选 native，否则在提交前提示不兼容。独立 temporal-extension 后端维持其原有协议。
 
 本次生产接入通过 CPU 服务启动、节点注册、请求恢复及合成媒体测试；没有另外运行完整 GPU 视频生成。
+
+生产 fast 启动只准备所需 LoRA 权重，不再逐层执行实验用 CPU 矩阵前向验算；实验入口保留原有完整验算。模型装载、静态修复、动态 LoRA 安装和新视频的首次输出检查保持原流程。启动日志分别报告权重准备和实际采样阶段。
 
 ## Portable storage (2026-11-07)
 

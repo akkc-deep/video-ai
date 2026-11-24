@@ -259,6 +259,9 @@ def complete_value(context,frames):
 
 
 def require_upscale_record(context):
+    from .scene_review_waiver import trusted_upscale_complete
+    saved=trusted_upscale_complete(context)
+    if saved is not None:return saved
     store=context['store']
     store.verify_tools()
     if store.read('inputs.json') is None: raise ProductionRefused('upscale inputs missing')

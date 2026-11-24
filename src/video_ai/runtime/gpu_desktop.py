@@ -39,8 +39,20 @@ APPROVED_PATHS=(
     'c:/users/qzw19/appdata/local/programs/microsoft vs code/code.exe',
     'd:/program files/microsoft vs code/code.exe',
     'c:/program files (x86)/msi/*/ledkeeper2.exe',
+    'c:/windows/system32/wudfhost.exe',
+    'c:/program files/windowsapps/advancedmicrodevicesinc-2.amdradeonsoftware_*/radeonsoftware/radeonsoftware.exe',
+    'c:/program files/windowsapps/advancedmicrodevicesinc-2.amdradeonsoftware_*/radeonsoftware/amdrssrcext.exe',
+    'c:/program files/windowsapps/9426micro-starinternation.msicenter_*/dcv2/dcv2.exe',
+    'c:/users/qzw19/appdata/roaming/tencent/qqmusic/wmpf/*/runtime/wechatappex.exe',
+    'e:/program files/tencent/qqlive/qqlive.exe',
+    'e:/program files/tencent/qqlive/*/qqliveservice.exe',
+    'e:/program files/oray/awesun/agent/awesun.exe',
+    'e:/program files/oray/awesun/flutter/awesun.exe',
+    'e:/program files/sharex/sharex.exe',
+    'e:/program files/jetbrains/pycharm */plugins/jcef-plugin/jcef/cef_server.exe',
+    'e:/program files (x86)/tencent/qqmusic/qqmusic.exe',
 )
-PROTECTED_DESKTOP_NAMES={'dwm.exe','applicationframehost.exe','msedgewebview2.exe','code.exe'}
+PROTECTED_DESKTOP_NAMES={'dwm.exe','applicationframehost.exe','msedgewebview2.exe','code.exe','wudfhost.exe'}
 _desktop_approval=ContextVar('video_ai_desktop_approval',default=None)
 
 

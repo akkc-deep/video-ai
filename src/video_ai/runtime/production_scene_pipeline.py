@@ -34,6 +34,8 @@ def _dependencies(value):
 def _common(frozen,*,paths,logger,lock):
     run=run_of(frozen)
     existing=None
+    from .resume_materials import saved_common
+    existing=saved_common(frozen)
     with revision_read_transaction():
         proof=require_scene_revision(frozen) if 'scene_revision' in frozen.options else None
         inherited=proof is not None and 'common:all' in proof['imports']
@@ -54,7 +56,7 @@ def _common(frozen,*,paths,logger,lock):
                 raise ProductionRefused('automatic revision manifest missing after work began')
             RevisionStore(run,lock).owned()
             create_manifest(run,frozen.config,inputs=frozen.options['execution_policy']['input_identities'],models={},workflows={},verify_integrity=False)
-    if not inherited and automatic:
+    if existing is None and not inherited and automatic:
         from .production_state import ProductionStateStore
         from .manifest import ManifestStore
         from ..production import _finish_prefix
@@ -93,7 +95,7 @@ def _preflight_later(frozen,units,timeline):
             details=load_validated_prefix_details(frozen);candidate=details['candidate']
             template=run/'production/scene-composition/final-observation-template.json'
             if not template.is_file():return None  # Only the original writer may restore this marker.
-            final=progress['final_review'];status={'ready':'final_review_ready','final_review_failed':'final_review_failed'}.get(final['status'],'awaiting_final_review')
+            final=progress['final_review'];status={'ready':'final_review_ready','waived':'final_review_ready','final_review_failed':'final_review_failed'}.get(final['status'],'awaiting_final_review')
             return SceneMediaResult(run_id=run.name,run_dir=run,status=status,active_stage='composition',
                 upscaled_clips=Path(progress['upscale']['record']),candidate=Path(candidate['candidate']['path']),
                 final_observation_template=template,log_dir=run/'logs/production',error=final['error'])
@@ -176,8 +178,10 @@ def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=No
         from .production_reference_images import produce_reference_batch
         from .jimeng_candidates import generate_candidates
         from ._scene_revision_origins import inherited
-        accepted=load_accepted_batches(frozen,units,timeline,bible,plan)
-        for index,ids in enumerate(plan['batches'],1):
+        from .resume_materials import saved_wan_inputs
+        reuse_images=saved_wan_inputs(frozen) is not None
+        accepted=[] if reuse_images else load_accepted_batches(frozen,units,timeline,bible,plan)
+        for index,ids in ([] if reuse_images else enumerate(plan['batches'],1)):
             if any(b['batch_id']==f'image_batch_{index:04d}' for b in accepted):continue
             scenes=[s for s in plan['scenes'] if s['scene_id'] in ids]
             reference=[bool(s['reference_bindings']) for s in scenes]
@@ -202,7 +206,7 @@ def produce_scene_pipeline(frozen,*,paths,logger,lock,reference_settings_path=No
             if result.status not in ('image_batch_accepted','images_ready'):return result
             boundary('image-accepted')
             accepted=load_accepted_batches(frozen,units,timeline,bible,plan)
-        require_complete_image_acceptance(frozen,units,timeline)
+        if not reuse_images:require_complete_image_acceptance(frozen,units,timeline)
         from .reference_image_records import build_reference_image_acceptance,require_reference_image_acceptance
         wan=run/'production/reference-images/wan-inputs.json'
         if not wan.exists():

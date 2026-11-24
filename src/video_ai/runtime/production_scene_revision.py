@@ -265,8 +265,14 @@ def _admitted_snapshot(source,*,target_config=None,reference_sha=None,excluded_f
             from .scene_clip_records import graph_for
             terminal_row=next(r for r in context['rows'] if r['budget']['clip_id']==cid)
             terminal=validate_scene_terminal(context['store'],context['store'].read(folder/'request.json'),graph_for(context,terminal_row))
+        interruption=None
+        if (folder/'local-interruption.json').exists():
+            from .scene_local_interruption import validate_local_interruption
+            from .scene_clip_records import graph_for
+            interruption_row=next(r for r in context['rows'] if r['budget']['clip_id']==cid)
+            interruption=validate_local_interruption(context['store'],context['store'].read(folder/'request.json'),graph_for(context,interruption_row))
         if (not (context is not None and (context.get('execution') or {}).get('mode')=='temporal_extension_v1')
-                and (folder/'intent.json').exists() and record is None and terminal is None):
+                and (folder/'intent.json').exists() and record is None and terminal is None and interruption is None):
             effects.append(dict(node='clips:'+cid,intent_sha256=canonical_digest(read_json(folder/'intent.json')),
                 status='running' if (folder/'accepted.json').exists() else 'unknown'))
         for i in range(budget['retained_frames']):
