@@ -1,0 +1,135 @@
+{
+  "task_id": "TTS-VOX-06",
+  "status": "passed",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06\\20261126-191337-699731",
+  "source": {
+    "emotion_plan": "docs/research/TTS-VOX-05-result.json",
+    "narrative_text": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\long-source.txt",
+    "available_long_chars": 4003,
+    "selected_long_chars": 1029,
+    "selection": "prefix ending at first sentence boundary at or after requested character count",
+    "note": "05 planned emotions followed by an explicit narrative span; no new Ollama claim"
+  },
+  "repair_from": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06\\20261126-190654-077405",
+  "planning": {
+    "source_chars": 1153,
+    "units": 41,
+    "maximum_unit_chars": 59,
+    "emotions": [
+      "awe",
+      "gentle",
+      "narrative",
+      "sad"
+    ],
+    "voice": {
+      "voice_id": "existing-reference",
+      "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+      "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+      "base_style": "保持固定音色，沉稳自然，具有纪录片叙事感",
+      "parameters": {
+        "voice_id": "existing-reference",
+        "emotion": "narrative",
+        "emotion_intensity": 0.3,
+        "instruction": "",
+        "seed": 42,
+        "cfg_value": 2.0,
+        "inference_timesteps": 10
+      },
+      "identity": "438ed2ce07ce51d45b0ca79cba051d46657e2bb1c1594eb8650ff974c3f04ecd"
+    }
+  },
+  "health": {
+    "service": "video-ai-voxcpm2",
+    "status": "ready",
+    "session_id": "bf1a23c9d8b74c3c9c1b834310d9c365",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "error": null,
+    "cancellation": "cooperative_after_current_inference"
+  },
+  "cold_service_ready_seconds": 10.719000000040978,
+  "repair": {
+    "reused_completed_units": 40,
+    "newly_generated_units": 1,
+    "actual_generate_posts": 1
+  },
+  "synthesis_and_assembly_seconds": 10.655999999959022,
+  "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06\\20261126-191337-699731\\audio\\tts-result.json",
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06\\20261126-191337-699731\\audio\\narration.wav",
+  "total_samples": 10473141,
+  "duration_seconds": 218.1904375,
+  "added_pause_samples": 535221,
+  "postprocess": {
+    "mode": "whole-program-rms-gain",
+    "target_rms_db": -20,
+    "input_rms_db": -19.601073076317245,
+    "gain": 0.9551105754588386,
+    "peak_ceiling": 0.95,
+    "fade_ms": 3,
+    "denoise": false,
+    "trimmed_samples": 0
+  },
+  "original_coverage_verified": true,
+  "sample_total_verified": true,
+  "listening": "not performed; no new subjective quality verdict",
+  "wall_rtf": 0.048838070641656885,
+  "wall_rtf_note": "Repair includes cached completed-task queries/downloads; not a fresh-generation performance result",
+  "owned_vox_exit_code": 0,
+  "synthesis_metrics": {
+    "selected_completed_units": 41,
+    "model_generation_seconds": 174.59525250084698,
+    "unit_audio_seconds": 207.04,
+    "model_rtf": 0.8432923710435036,
+    "note": "Sum of persisted generation_time_ms for the 41 selected actual GPU tasks, including reused tasks; excludes discarded initial tiny sample, startup, assembly and download"
+  },
+  "initial_attempt": {
+    "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06\\20261126-190654-077405",
+    "status": "failed_before_publication",
+    "owned_vox_exit_code": 0,
+    "problem": {
+      "unit_id": "speech_0003",
+      "text": "看啊，",
+      "samples": 1835520,
+      "peak_pcm16": 14,
+      "duration_seconds": 38.24
+    },
+    "resolution": "Suppress same-sentence emotion splits yielding fewer than 8 speakable characters; choose dominant style; query/reuse exact unchanged completed requests"
+  },
+  "verification": {
+    "new_tests": "48 passed",
+    "related_regression": "337 passed, 3 skipped in 7.75s",
+    "log": "E:/VideoAI/scratch/logs/vox06-final.txt",
+    "red_green": "18 planning tests and 16 assembly/adapter tests failed before implementation; review reproductions and real-sample tiny-segment regressions failed then passed",
+    "review": {
+      "independent": true,
+      "p1": 0,
+      "p2_found": 7,
+      "p2_fixed": 7,
+      "findings": [
+        "Paragraph pause ownership",
+        "Pause suggestion before attached whitespace",
+        "English internal-period sentence boundaries",
+        "Saved-plan omission and reordering",
+        "Frozen base-style instruction enforcement",
+        "No final audio on result-construction failure",
+        "Incomplete PCM sample rejection"
+      ]
+    },
+    "limitations": [
+      "No new subjective listening verdict or 30-minute timbre verdict",
+      "Not a 10-30 minute fresh-generation test; total audio is 218.19s",
+      "Independent TTS-unit alignment, no word-level forced alignment",
+      "Production persistence/cache/recovery/timeline wiring remain TTS-VOX-07",
+      "No complete video generation or default-backend switch"
+    ]
+  },
+  "documentation": "docs/voxcpm2-longform.md",
+  "voice_correction": {
+    "request": "纪录片旁白，用来助眠，需要男声",
+    "date": "2026-11-27",
+    "status": "generated_pending_listening",
+    "previous_voice": "Rejected by user for intended narration style; prior technical results remain historical",
+    "result": "docs/research/TTS-VOX-06-male-sleep-result.json",
+    "documentation": "docs/voxcpm2-sleep-voice.md",
+    "voice_id": "male-sleep-documentary-v1"
+  }
+}

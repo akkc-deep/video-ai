@@ -145,8 +145,10 @@ class HttpClient:
         self.transport = transport or self._opener.open
 
     def request(self, method, path, *, json_body=None, max_bytes=JSON_LIMIT,
-                timeout=None, stage=None, unit_id=None, unlimited=False):
+                timeout=None, stage=None, unit_id=None, unlimited=False, allow_not_found=False):
         method = method.upper()
+        if type(allow_not_found) is not bool or allow_not_found and method != 'GET':
+            raise ValueError('allow_not_found requires GET')
         parts = urlsplit(path)
         if (method not in {'GET', 'POST'} or not path.startswith('/') or path.startswith('//')
                 or parts.scheme or parts.netloc or parts.fragment or '\\' in path
@@ -234,7 +236,7 @@ class HttpClient:
             evidence.append(self.logger.exception(stage, unit_id, error))
             raise AdapterError(FailureKind.unavailable if method == 'GET' else FailureKind.ambiguous,
                                str(error), evidence) from error
-        if type(status) is not int or not 200 <= status < 300:
+        if type(status) is not int or not (200 <= status < 300 or allow_not_found and status == 404):
             kind = FailureKind.unavailable if method == 'GET' else FailureKind.ambiguous
             if method == 'POST' and type(status) is int and 400 <= status < 500:
                 try:

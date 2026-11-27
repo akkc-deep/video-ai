@@ -1,0 +1,46 @@
+{
+  "task_id": "TTS-VOX-06-tone-adjust",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-tone-adjust\\20261127-020030-943873",
+  "user_feedback": "声音有点太低沉了，其他没问题",
+  "source": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-014528-028691\\narration.wav",
+  "filter": "bass=g=-2.5:f=180:t=q:w=0.707",
+  "generation_reused": true,
+  "gpu_generation_performed": false,
+  "preserved": [
+    "speech rate 0.8",
+    "speaker reference and prompt",
+    "all three original paragraph performances",
+    "fundamental pitch",
+    "paragraph timing and silence",
+    "naturalness accepted by user"
+  ],
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-tone-adjust\\20261127-020030-943873\\narration.wav",
+  "audio": {
+    "sample_rate": 48000,
+    "sample_count": 2348276,
+    "channels": 1,
+    "sample_width": 2
+  },
+  "duration_seconds": 48.92241666666666,
+  "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-tone-adjust\\20261127-020030-943873\\tts-result.json",
+  "candidate_preset": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-tone-adjust\\20261127-020030-943873\\candidate-preset.json",
+  "pitch_shift_semitones": 0,
+  "sample_positions_preserved": true,
+  "listening": "Only reduced bass weight is pending; other dimensions accepted in user feedback",
+  "verification": {
+    "process_exit_code": 0,
+    "format_and_sample_count_equal": true,
+    "source_audio_reused": true,
+    "extra_gpu_or_asr": false,
+    "subjective_tone": "pending user listening"
+  },
+  "listening_feedback": {
+    "user_feedback": "声音还是有点重，并且语速略快了点",
+    "remaining": [
+      "lighter timbre",
+      "slightly slower pace"
+    ],
+    "next_result": "docs/research/TTS-VOX-06-lighter-slower-result.json"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "task_id": "TTS-VOX-02",
+  "listener": "强志伟",
+  "recorded_at": "2026-11-24T18:45:03.877Z",
+  "pairs": [
+    {
+      "pair": "P01",
+      "preference": "A",
+      "emotionA": "excited",
+      "emotionB": "narrative",
+      "notes": "A有情绪 停顿合适\nb声音不合格"
+    },
+    {
+      "pair": "P02",
+      "preference": "B",
+      "emotionA": "narrative",
+      "emotionB": "excited",
+      "notes": "A声音不好，b没问题"
+    },
+    {
+      "pair": "P03",
+      "preference": "A",
+      "emotionA": "narrative",
+      "emotionB": "narrative",
+      "notes": "A没问题  b断断续续"
+    },
+    {
+      "pair": "P04",
+      "preference": "",
+      "emotionA": "narrative",
+      "emotionB": "",
+      "notes": "A 声音没问题\nB 听不出来语气"
+    },
+    {
+      "pair": "P05",
+      "preference": "A",
+      "emotionA": "gentle",
+      "emotionB": "",
+      "notes": "a没问题\nb听不出来语气"
+    },
+    {
+      "pair": "P06",
+      "preference": "A",
+      "emotionA": "excited",
+      "emotionB": "",
+      "notes": "声音A没问题\n声音b听不出来语气"
+    },
+    {
+      "pair": "P07",
+      "preference": "A",
+      "emotionA": "mystery",
+      "emotionB": "",
+      "notes": "A声音没问题\nB听不出来语气"
+    },
+    {
+      "pair": "P08",
+      "preference": "A",
+      "emotionA": "excited",
+      "emotionB": "",
+      "notes": "A语气也不明显\nb听不出来\n\n"
+    },
+    {
+      "pair": "P09",
+      "preference": "A",
+      "emotionA": "narrative",
+      "emotionB": "",
+      "notes": "A声音没问题\nb听不出来语气"
+    }
+  ],
+  "fixed_voice_notes": "目前",
+  "acceptance": "requires_review"
+}

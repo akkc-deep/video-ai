@@ -5,6 +5,27 @@ from ..planning.segments import speakable
 from ..runtime.manifest import validate_unit
 
 
+def create_tts_client(config, http, *, request_scope=None):
+    """Select only the caller's frozen configuration; no live defaults or service start."""
+    from .common import validate_base_url
+    if http is not None and http.base_url != validate_base_url(config.services['tts']):
+        raise ValueError('TTS HTTP origin differs from frozen services.tts')
+    settings = config.tts
+    if settings.engine == 'gpt-sovits':
+        return TtsClient(http, config.voice)
+    from .voxcpm import VoxTtsClient
+    return VoxTtsClient(http, settings, reference_sha256=config.voice.reference_sha256,
+                        request_scope=request_scope)
+
+
+def require_wav(response):
+    media = next((v for k,v in response.headers.items() if k.lower() == 'content-type'), '').split(';')[0].strip().lower()
+    if (media not in {'', 'audio/wav', 'audio/x-wav', 'application/octet-stream'}
+            or len(response.body) < 12 or response.body[:4] != b'RIFF' or response.body[8:12] != b'WAVE'):
+        raise AdapterError(FailureKind.invalid_result, 'TTS response is not a WAV body', (response.evidence_path,))
+    return response
+
+
 class TtsClient:
     def __init__(self, http: HttpClient, voice: VoiceConfig):
         self.http, self.voice = http, voice
@@ -25,8 +46,4 @@ class TtsClient:
         validate_unit('speech', unit_id)
         response = self.http.request('POST', '/tts', json_body=self.payload(text), max_bytes=64*1024*1024,
                                      stage='speech', unit_id=unit_id)
-        media = next((v for k,v in response.headers.items() if k.lower() == 'content-type'), '').split(';')[0].strip().lower()
-        if (media not in {'', 'audio/wav', 'audio/x-wav', 'application/octet-stream'}
-                or len(response.body) < 12 or response.body[:4] != b'RIFF' or response.body[8:12] != b'WAVE'):
-            raise AdapterError(FailureKind.invalid_result, 'TTS response is not a WAV body', (response.evidence_path,))
-        return response
+        return require_wav(response)

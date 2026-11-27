@@ -41,6 +41,8 @@ class FrozenInputs:
 
 
 def validate_supported(config):
+    if config.tts.engine != 'gpt-sovits':
+        raise ProductionRefused('VoxCPM2 automatic production wiring belongs to TTS-VOX-07; use the explicit adapter')
     if 'scene_research_material' in config.raw:
         raise ProductionRefused('research material is not eligible for automatic production')
     for field, expected in dict(fps=16, final_width=1920, final_height=1080, transition='cut',

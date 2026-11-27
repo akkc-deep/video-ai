@@ -1,0 +1,350 @@
+{
+  "source": "C:\\Users\\qzw19\\Downloads\\test.mp4",
+  "source_duration_seconds": 636.83,
+  "reference_sampled_seconds": 90,
+  "output": "E:\\VideoAI\\scratch\\analysis\\reference-voice\\20261127-224428-496662",
+  "source_modified": false,
+  "files": [
+    {
+      "name": "reference_early",
+      "duration_seconds": 30.0,
+      "peak_dbfs": -0.05397704988718033,
+      "overall_rms_dbfs": -17.09100341796875,
+      "kind": "reference",
+      "source_window_start": 30.0,
+      "pitch": {
+        "confident_frames": 243,
+        "speech_frames": 1495,
+        "median_hz": 117.84127594565435,
+        "p10_hz": 81.89486824316675,
+        "p90_hz": 146.76537262479707,
+        "p10_p90_semitones": 10.100000000000001
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 44.8404541015625,
+        "250-1000Hz": 44.81795883178711,
+        "1-4kHz": 5.013303756713867,
+        "4-7.9kHz": 4.834727764129639
+      },
+      "power_centroid_hz": 329.78447808257727,
+      "spectral_flatness": 0.0022919003386050463,
+      "speech_frame_rms_dbfs": {
+        "p10": -34.606135559082034,
+        "median": -19.0961856842041,
+        "p90": -13.13245048522949
+      },
+      "speech_seconds_vad": 29.9,
+      "vad_pause_seconds": [],
+      "pause_median_seconds": null,
+      "chinese_characters": 147,
+      "english_words": 0,
+      "chinese_characters_per_minute_overall": 294.0,
+      "chinese_characters_per_minute_speech": 294.98327759197326,
+      "transcript": "比如每当一颗足够大的小行星撞上地球就有可能把一些藏着微生物的岩石轰进太空你可别小看这些石头科学家算了一下过去几十亿年里从地球飞到金星上的岩石可能已经多达数万亿公斤可金星的地表温度高达四百六十多摄氏度这些微生物就算能活着穿越太空一旦掉到金星地表也基本就完蛋了但石头如果没等落地就炸成粉了呢科学家就",
+      "transcript_source": "local automatic transcription"
+    },
+    {
+      "name": "reference_middle",
+      "duration_seconds": 30.0,
+      "peak_dbfs": -0.13948170840740204,
+      "overall_rms_dbfs": -17.28481101989746,
+      "kind": "reference",
+      "source_window_start": 300.0,
+      "pitch": {
+        "confident_frames": 268,
+        "speech_frames": 1499,
+        "median_hz": 123.05906818609382,
+        "p10_hz": 65.75526361962497,
+        "p90_hz": 172.52972650401387,
+        "p10_p90_semitones": 16.7
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 44.73394775390625,
+        "250-1000Hz": 43.80876922607422,
+        "1-4kHz": 4.921457767486572,
+        "4-7.9kHz": 5.588556289672852
+      },
+      "power_centroid_hz": 321.5097061623198,
+      "spectral_flatness": 0.00204497785307467,
+      "speech_frame_rms_dbfs": {
+        "p10": -35.0551643371582,
+        "median": -19.205184936523438,
+        "p90": -13.288240814208985
+      },
+      "speech_seconds_vad": 29.98,
+      "vad_pause_seconds": [],
+      "pause_median_seconds": null,
+      "chinese_characters": 140,
+      "english_words": 1,
+      "chinese_characters_per_minute_overall": 280.0,
+      "chinese_characters_per_minute_speech": 280.1867911941294,
+      "transcript": "能够产生荧光的有机物探测器就有机会发现它们不过将来如果真的在金星上找到了生命咱们还得搞清楚一件事这些生命究竟是从地球过去的还是金星自己孕育出来的二零一六年nasa的科学家通过模拟发现远古金星可能存在过海洋甚至有可能一直维持到大约七亿年前但二零二四年英国剑桥大学的科学家通过分析金星大气发现",
+      "transcript_source": "local automatic transcription"
+    },
+    {
+      "name": "reference_late",
+      "duration_seconds": 30.0,
+      "peak_dbfs": -0.03506021201610565,
+      "overall_rms_dbfs": -17.583940505981445,
+      "kind": "reference",
+      "source_window_start": 570.0,
+      "pitch": {
+        "confident_frames": 314,
+        "speech_frames": 1499,
+        "median_hz": 113.4993713556306,
+        "p10_hz": 73.80778788960703,
+        "p90_hz": 137.7302022667084,
+        "p10_p90_semitones": 10.8
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 45.756656646728516,
+        "250-1000Hz": 43.21257781982422,
+        "1-4kHz": 5.052670478820801,
+        "4-7.9kHz": 5.831831932067871
+      },
+      "power_centroid_hz": 340.5170789618742,
+      "spectral_flatness": 0.002231669146567583,
+      "speech_frame_rms_dbfs": {
+        "p10": -33.961873626708986,
+        "median": -18.830223083496094,
+        "p90": -13.806292915344239
+      },
+      "speech_seconds_vad": 29.98,
+      "vad_pause_seconds": [],
+      "pause_median_seconds": null,
+      "chinese_characters": 139,
+      "english_words": 2,
+      "chinese_characters_per_minute_overall": 278.0,
+      "chinese_characters_per_minute_speech": 278.1854569713142,
+      "transcript": "寻找金星曾经拥有海洋的证据塔verias则会在金星轨道上利用雷达重新绘制金星的三维地形图寻找仍在喷发的火山看看金星的地壳到底还在不在运动而欧洲航天局计划在二零三一年发射的invasion探测器除了能够观测金星地表之外还携带了一台能够穿透浅层地表的雷达他将寻找埋藏在金星地下的断层和熔岩流让人类有机会进一步了",
+      "transcript_source": "local automatic transcription"
+    },
+    {
+      "name": "latest_casual",
+      "duration_seconds": 32.4124375,
+      "peak_dbfs": -9.576420783996582,
+      "overall_rms_dbfs": -25.0234432220459,
+      "kind": "comparison",
+      "source_window_start": 0.0,
+      "pitch": {
+        "confident_frames": 389,
+        "speech_frames": 1486,
+        "median_hz": 124.12940850835416,
+        "p10_hz": 90.34468428975191,
+        "p90_hz": 150.19585059339548,
+        "p10_p90_semitones": 8.799999999999997
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 32.70722579956055,
+        "250-1000Hz": 38.631404876708984,
+        "1-4kHz": 9.185362815856934,
+        "4-7.9kHz": 5.1437835693359375
+      },
+      "power_centroid_hz": 358.055695618365,
+      "spectral_flatness": 0.0010747937485575676,
+      "speech_frame_rms_dbfs": {
+        "p10": -180.0,
+        "median": -25.376850128173828,
+        "p90": -21.07738208770752
+      },
+      "speech_seconds_vad": 29.72,
+      "vad_pause_seconds": [
+        0.56,
+        0.7,
+        0.28,
+        0.28,
+        0.53,
+        0.28
+      ],
+      "pause_median_seconds": 0.405,
+      "chinese_characters": 105,
+      "english_words": 0,
+      "chinese_characters_per_minute_overall": 194.36983102551295,
+      "chinese_characters_per_minute_speech": 211.978465679677,
+      "transcript": "傍晚的海边，浪花一层一层地推上沙滩，又慢慢退回去。远处的灯塔亮了，几只海鸟沿着海岸飞过，天空还留着一点浅浅的蓝色。\n\n沿着岸边的小路往前走，可以看到石缝里的小草，还有被海水磨圆的石头。这里没有什么特别的事情发生，景色却一直在很轻地变化。",
+      "transcript_source": "known synthesis source"
+    },
+    {
+      "name": "previous_soft",
+      "duration_seconds": 36.311625,
+      "peak_dbfs": -2.5711753368377686,
+      "overall_rms_dbfs": -25.11772346496582,
+      "kind": "comparison",
+      "source_window_start": 0.0,
+      "pitch": {
+        "confident_frames": 589,
+        "speech_frames": 1598,
+        "median_hz": 100.24370365151614,
+        "p10_hz": 94.07250043362458,
+        "p90_hz": 109.9497982220883,
+        "p10_p90_semitones": 2.6999999999999966
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 39.39976501464844,
+        "250-1000Hz": 22.504291534423828,
+        "1-4kHz": 11.968493461608887,
+        "4-7.9kHz": 7.203452110290527
+      },
+      "power_centroid_hz": 276.09268296831584,
+      "spectral_flatness": 0.0017499050591140985,
+      "speech_frame_rms_dbfs": {
+        "p10": -65.47764129638672,
+        "median": -25.414243698120117,
+        "p90": -20.869104385375977
+      },
+      "speech_seconds_vad": 31.95,
+      "vad_pause_seconds": [
+        0.5,
+        0.38,
+        0.67,
+        0.7,
+        0.38,
+        0.28,
+        0.48,
+        0.28,
+        0.28
+      ],
+      "pause_median_seconds": 0.38,
+      "chinese_characters": 100,
+      "english_words": 0,
+      "chinese_characters_per_minute_overall": 165.23633960198697,
+      "chinese_characters_per_minute_speech": 187.79342723004694,
+      "transcript": "夜色慢慢落在山谷里。河水安静地向前流着，月光在水面上，留下一层淡淡的银色。远处的风，穿过树梢，又慢慢停下来。\n\n在这片安静的夜空下，星光经过了很长的旅程，才来到我们的眼前。我们不必急着追赶什么，只是轻轻地听着，让这一刻，慢慢地过去。",
+      "transcript_source": "known synthesis source"
+    },
+    {
+      "name": "reference_voice_estimate",
+      "duration_seconds": 29.9973125,
+      "peak_dbfs": -0.08952407538890839,
+      "overall_rms_dbfs": -17.512691497802734,
+      "kind": "separated_reference",
+      "source_window_start": 300.0,
+      "pitch": {
+        "confident_frames": 275,
+        "speech_frames": 1499,
+        "median_hz": 122.70366064862014,
+        "p10_hz": 88.18069457617369,
+        "p90_hz": 172.52972650401387,
+        "p10_p90_semitones": 11.619722528952542
+      },
+      "spectral_energy_percent": {
+        "65-250Hz": 41.135414123535156,
+        "250-1000Hz": 33.90768814086914,
+        "1-4kHz": 11.803461074829102,
+        "4-7.9kHz": 10.482282638549805
+      },
+      "power_centroid_hz": 383.67670836107357,
+      "spectral_flatness": 0.004184645134955645,
+      "speech_frame_rms_dbfs": {
+        "p10": -64.55491638183594,
+        "median": -19.562644958496094,
+        "p90": -13.447931861877441
+      },
+      "speech_seconds_vad": 29.98,
+      "vad_pause_seconds": [],
+      "pause_median_seconds": null,
+      "chinese_characters": 140,
+      "english_words": 1,
+      "chinese_characters_per_minute_overall": 280.02508558058327,
+      "chinese_characters_per_minute_speech": 280.1867911941294,
+      "transcript": "能够产生荧光的有机物探测器就有机会发现它们不过将来如果真的在金星上找到了生命咱们还得搞清楚一件事这些生命究竟是从地球过去的还是金星自己孕育出来的二零一六年nasa的科学家通过模拟发现远古金星可能存在过海洋甚至有可能一直维持到大约七亿年前但二零二四年英国剑桥大学的科学家通过分析金星大气发现",
+      "transcript_source": "automatic transcript of corresponding mixed excerpt; VAD on separated estimate"
+    }
+  ],
+  "limitations": [
+    "Only three 30-second reference excerpts analyzed",
+    "Automatic transcript/rates and VAD pauses are estimates; recognition is not manually certified",
+    "Spectrum includes retained background sound; no isolated voice/breathiness/identity/gender claim",
+    "Digital levels are not listener sound pressure; different recording/mastering levels can bias perception",
+    "F0 is measured pitch, not a hypnotic frequency or proof of naturalness",
+    "Separated vocal estimate is not ground-truth clean speech",
+    "Only ~18% of reference vocal-estimate frames met the pitch confidence mask; pitch figures are approximate",
+    "VAD did not reliably expose short sentence pauses; do not read null pause median as no pauses",
+    "No identity, age, gender, emotion or sleep-efficacy inference"
+  ],
+  "method_summary": {
+    "reference_excerpts_seconds": [
+      [
+        30,
+        60
+      ],
+      [
+        300,
+        330
+      ],
+      [
+        570,
+        600
+      ]
+    ],
+    "vocal_estimate_seconds": [
+      300,
+      330
+    ],
+    "source_separator": "Existing local UVR5 HP5_only_main_vocal; CPU; diagnostic estimate",
+    "asr": "Existing local Paraformer, CPU, no downloads",
+    "source_unchanged": true
+  },
+  "findings": [
+    {
+      "finding": "Reference is ordinary science narration rather than explicit sleep-induction wording",
+      "evidence": "Automatic excerpts discuss Venus, spacecraft and scientific explanations, with conversational phrases such as 你可别小看 and 咱们还得搞清楚",
+      "limit": "Transcript not manually verified; names and numbers may be incorrect"
+    },
+    {
+      "finding": "Reference is not a markedly higher-pitched voice than the latest candidate",
+      "reference_vocal_median_hz": 122.70366064862014,
+      "latest_candidate_median_hz": 124.12940850835416,
+      "limit": "Coarse pYIN estimates from selected voiced frames; separation artifacts and mixed-track bias remain"
+    },
+    {
+      "finding": "Earlier soft candidate has much narrower measured pitch variation",
+      "reference_vocal_p10_p90_semitones": 11.619722528952542,
+      "earlier_soft_p10_p90_semitones": 2.6999999999999966,
+      "latest_candidate_p10_p90_semitones": 8.799999999999997,
+      "limit": "Different text and sample content; this is not a controlled perceptual quality test"
+    },
+    {
+      "finding": "Reference overall narration density is higher than prior candidates",
+      "reference_estimated_chinese_characters_per_minute": [
+        294.0,
+        280.0,
+        278.0
+      ],
+      "latest_candidate_chinese_characters_per_minute": 194.36983102551295,
+      "earlier_soft_chinese_characters_per_minute": 165.23633960198697,
+      "limit": "Reference counts estimated by ASR; English words not counted as Chinese characters"
+    },
+    {
+      "finding": "Background mixing affects spectral comparisons",
+      "reference_mixed_low_band_percent": {
+        "65-250Hz": 44.73394775390625,
+        "250-1000Hz": 43.80876922607422,
+        "1-4kHz": 4.921457767486572,
+        "4-7.9kHz": 5.588556289672852
+      },
+      "reference_vocal_estimate_band_percent": {
+        "65-250Hz": 41.135414123535156,
+        "250-1000Hz": 33.90768814086914,
+        "1-4kHz": 11.803461074829102,
+        "4-7.9kHz": 10.482282638549805
+      },
+      "limit": "Do not interpret mixed soundtrack spectrum as isolated human voice or infer an ideal EQ from it"
+    },
+    {
+      "finding": "No reliable precise short-pause/breathiness/nasality verdict from this pipeline",
+      "evidence": "FSMN VAD labels the sampled reference as near-continuous speech; no trustworthy short-gap median. Spectral flatness is not a direct breathiness measurement."
+    }
+  ],
+  "recommended_direction": {
+    "delivery": "Natural conversational science narration with clear articulation and ordinary Mandarin pitch contours",
+    "speaker_design": "Do not select voice solely by higher fundamental frequency or soft/lullaby labels",
+    "pacing": "Generate natural articulation first; adjust sentence/paragraph pauses to user preference instead of relying on extreme whole-wave stretching",
+    "speaker_consistency": "Keep one actual frozen reference, transcript and generation settings across segments",
+    "scope": "Analysis only; no new synthesis or voice identity cloning in this task"
+  },
+  "artifacts": {
+    "comparison": "E:\\VideoAI\\scratch\\analysis\\reference-voice\\20261127-224428-496662\\comparison.png",
+    "reference_vocal_estimate": "E:\\VideoAI\\scratch\\analysis\\reference-voice\\20261127-224428-496662\\separated_voice\\vocal_reference_middle_stereo.wav_10.wav"
+  }
+}

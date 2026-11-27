@@ -1,0 +1,131 @@
+{
+  "task_id": "TTS-VOX-04",
+  "status": "passed",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-04\\20261125-200228-960822",
+  "health": {
+    "service": "video-ai-voxcpm2",
+    "status": "ready",
+    "session_id": "be365a552dcc4bcd947c6ab24a0063b7",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "error": null,
+    "cancellation": "cooperative_after_current_inference"
+  },
+  "cold_service_ready_seconds": 23.140999999945052,
+  "adapter_seconds": 7.609000000054948,
+  "audio": {
+    "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-04\\20261125-200228-960822\\adapter.wav",
+    "sha256": "4ae0896fbb234c1e1924e71cc558226473c33b25b0bbaf5ab80d186d13141ad9",
+    "sample_rate": 48000,
+    "sample_count": 168960,
+    "channels": 1,
+    "sample_width": 2
+  },
+  "completed_task": {
+    "request_id": "vox_57cc92360e0c530214e703923c41eecec61a8d19ce7d04432763c1e913f76b68",
+    "engine": "voxcpm2",
+    "fingerprint": "2e54e02308328118c912d685c251910df4377c93340777e3ae2e2ee316f10cba",
+    "request": {
+      "voice_id": "existing-reference",
+      "emotion": "narrative",
+      "emotion_intensity": 0.3,
+      "instruction": "",
+      "seed": 42,
+      "cfg_value": 2.0,
+      "inference_timesteps": 10,
+      "text": "旅行者二号正在遥远的星际空间航行。",
+      "request_id": "vox_57cc92360e0c530214e703923c41eecec61a8d19ce7d04432763c1e913f76b68",
+      "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+      "binding": {
+        "voice_id": "existing-reference",
+        "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+        "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+        "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+        "generation": {
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "seed": 42,
+          "normalize": false,
+          "denoise": false,
+          "retry_badcase": false,
+          "max_len": 1024
+        },
+        "device": "cuda:0",
+        "optimize": false,
+        "load_denoiser": false
+      }
+    },
+    "status": "completed",
+    "result": {
+      "sample_rate": 48000,
+      "sample_count": 168960,
+      "channels": 1,
+      "sample_width": 2,
+      "generation_time_ms": 7425.95520010218,
+      "duration_ms": 3520.0,
+      "audio_path": "tasks/3bc068c57450a5fe1508a2a52aca54303feead740c0b54a8396a8d5ea0099a72/sample.wav"
+    },
+    "error": null,
+    "created_at": "2026-11-25T20:02:52.188183+08:00",
+    "updated_at": "2026-11-25T20:02:59.655261+08:00"
+  },
+  "fresh_client_reused_unchanged_task": true,
+  "owned_process_exit_code": 0,
+  "verification": {
+    "final_related_suite": {
+      "passed": 225,
+      "skipped": 3,
+      "failed": 0,
+      "seconds": 19.7,
+      "log": "E:/VideoAI/scratch/logs/vox04-verified.txt",
+      "tests": [
+        "test_tts_backends.py",
+        "test_tts.py",
+        "test_config.py",
+        "test_voxcpm_service.py",
+        "test_services.py",
+        "test_manifest.py",
+        "test_pipeline.py",
+        "test_production_adapters.py"
+      ],
+      "skip_reason": "Windows symlink creation privilege unavailable"
+    },
+    "expanded_related_suite": {
+      "passed": 225,
+      "skipped": 3,
+      "failed": 8,
+      "log": "E:/VideoAI/scratch/logs/vox04-protocol.txt"
+    },
+    "baseline_reproduction": {
+      "passed": 19,
+      "failed": 8,
+      "same_failed_tests": true,
+      "log": "E:/VideoAI/scratch/logs/vox04-baseline.txt",
+      "runner": "E:/VideoAI/scratch/tests/vox04-baseline-runner.py",
+      "method": "Read-only import hook executes HEAD versions of config.py, adapters/tts.py, adapters/common.py, runtime/production_inputs.py, runtime/service_specs.py; no working tree changes",
+      "tests": [
+        "tests/unit/test_production_inputs.py",
+        "tests/unit/test_production_speech.py"
+      ],
+      "issues": [
+        "invalid font tables from existing fixture",
+        "preflight missing expected tts_yaml check"
+      ]
+    },
+    "independent_review": {
+      "critical": 0,
+      "important": 1,
+      "minor": 1,
+      "fixed": [
+        "Materialize all effective Vox defaults into frozen raw configuration; regression RED to GREEN",
+        "Classify original task query disconnect/invalid JSON as ambiguous even for reconstructed clients; two regressions RED to GREEN"
+      ],
+      "unresolved": 0
+    },
+    "production_default_changed": false,
+    "production_wiring": "TTS-VOX-07; current legacy production route refuses explicit Vox config",
+    "quality_or_performance_reaccepted": false,
+    "video_generated": false,
+    "gpu_sample_count": 1,
+    "git_diff_check": "passed"
+  }
+}

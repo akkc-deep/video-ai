@@ -1,0 +1,128 @@
+{
+  "task_id": "TTS-VOX-06-voice-audition",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702",
+  "user_feedback": "感觉快对了，这个音色不好",
+  "preserve_direction": "Low stimulation, gentle male narration; change only the voice candidate",
+  "listening_status": "voice_selection_pending",
+  "variants": [
+    {
+      "name": "A-clear-gentle",
+      "label": "清润男声方向",
+      "direction": "清澈温润的青年男声，声音柔软干净，轻声放松，语调平稳，像安静的睡前陪伴",
+      "design_seed": 142,
+      "samples": [
+        {
+          "unit_id": "speech_0001",
+          "text": "夜色慢慢落在山谷里。河水安静地向前流着，月光在水面上，留下一层淡淡的银色。远处的风，穿过树梢，又慢慢停下来。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\A-clear-gentle\\raw\\speech_0001.wav",
+          "generation_seconds": 20.375,
+          "sample_count": 637440
+        },
+        {
+          "unit_id": "speech_0002",
+          "text": "在这片安静的夜空下，星光经过了很长的旅程，才来到我们的眼前。我们不必急着追赶什么，只是轻轻地听着，让这一刻，慢慢地过去。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\A-clear-gentle\\raw\\speech_0002.wav",
+          "generation_seconds": 17.32799999997951,
+          "sample_count": 614400
+        }
+      ],
+      "reference": {
+        "generation_seconds": 23.70299999997951,
+        "sample_count": 806400
+      },
+      "status": "generated_pending_listening",
+      "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\A-clear-gentle\\narration.wav",
+      "duration_seconds": 34.71939583333333,
+      "total_samples": 1666531,
+      "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\A-clear-gentle\\tts-result.json",
+      "candidate_preset": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\A-clear-gentle\\candidate-preset.json",
+      "asset_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-soft-audition-a-20261127-104046-815702\\voice.json"
+    },
+    {
+      "name": "B-warm-natural",
+      "label": "温和圆润男声方向",
+      "direction": "温和清爽的成年男声，声线圆润，像自然交谈，轻声柔和，放松平稳",
+      "design_seed": 242,
+      "samples": [
+        {
+          "unit_id": "speech_0001",
+          "text": "夜色慢慢落在山谷里。河水安静地向前流着，月光在水面上，留下一层淡淡的银色。远处的风，穿过树梢，又慢慢停下来。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\B-warm-natural\\raw\\speech_0001.wav",
+          "generation_seconds": 21.265000000130385,
+          "sample_count": 737280
+        },
+        {
+          "unit_id": "speech_0002",
+          "text": "在这片安静的夜空下，星光经过了很长的旅程，才来到我们的眼前。我们不必急着追赶什么，只是轻轻地听着，让这一刻，慢慢地过去。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\B-warm-natural\\raw\\speech_0002.wav",
+          "generation_seconds": 21.0,
+          "sample_count": 760320
+        }
+      ],
+      "reference": {
+        "generation_seconds": 23.655999999959022,
+        "sample_count": 860160
+      },
+      "status": "generated_pending_listening",
+      "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\B-warm-natural\\narration.wav",
+      "duration_seconds": 41.53997916666667,
+      "total_samples": 1993919,
+      "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\B-warm-natural\\tts-result.json",
+      "candidate_preset": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-voice-audition\\20261127-104046-815702\\B-warm-natural\\candidate-preset.json",
+      "asset_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-soft-audition-b-20261127-104046-815702\\voice.json"
+    }
+  ],
+  "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+  "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "production_choices": {
+    "speech_rate": 0.75,
+    "paragraph_pause_ms": 1200,
+    "target_rms_db": -25,
+    "postprocess": "atempo=0.75,treble=g=-2:f=3500:t=q:w=0.707",
+    "pitch_shift": 0,
+    "background_audio": false,
+    "therapeutic_frequency_target": null
+  },
+  "narration_parameters": {
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "seed": 42,
+    "normalize": false,
+    "denoise": false,
+    "retry_badcase": false,
+    "max_len": 1024
+  },
+  "reference_text": "夜色慢慢落下来，周围渐渐安静了。远处的山，像一幅淡淡的画。风从树梢轻轻经过，又慢慢停下来。你可以只是听着，让思绪像云一样，缓缓地飘远。",
+  "paragraphs": [
+    "夜色慢慢落在山谷里。河水安静地向前流着，月光在水面上，留下一层淡淡的银色。远处的风，穿过树梢，又慢慢停下来。",
+    "在这片安静的夜空下，星光经过了很长的旅程，才来到我们的眼前。我们不必急着追赶什么，只是轻轻地听着，让这一刻，慢慢地过去。"
+  ],
+  "background_audio": false,
+  "pitch_shift": 0,
+  "notes": [
+    "Same source, reference transcript, body seed/cfg/steps, postprocessing and global level for A/B",
+    "Only candidate reference design descriptors and design seeds differ",
+    "Exact generated prosody can still differ between reference voices; this is a listening audition",
+    "No background sound, pitch shifting, extra frequency effect, ASR or full-video generation"
+  ],
+  "selected_voice_updated": false,
+  "feedback_record_updated": true,
+  "documentation": "docs/voxcpm2-soft-voice-audition.md",
+  "verification": {
+    "process_exit_code": 0,
+    "candidates": 2,
+    "paragraphs_per_candidate": 2,
+    "sample_total_verified": true,
+    "voice_reference_fixed_within_candidate": true,
+    "same_body_parameters_and_processing": true,
+    "subjective_timbre": "pending user choice",
+    "extra_tests": "No unrelated regression, ASR, video or long-form generation"
+  },
+  "listening_feedback": {
+    "user_feedback": "还是不好，这些声音都太低沉了，声音轻快一些，哄睡生硬",
+    "status": "rejected",
+    "reference_available": false,
+    "next_result": "docs/research/TTS-VOX-06-bright-natural-result.json"
+  }
+}

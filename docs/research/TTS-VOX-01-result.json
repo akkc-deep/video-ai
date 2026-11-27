@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "task_id": "TTS-VOX-01",
+  "status": "completed",
+  "started_at": "2026-11-24T10:35:16.214454+00:00",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "executable": "E:\\VideoAI\\shared\\envs\\voxcpm2\\Scripts\\python.exe",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "runtime_root": "E:\\VideoAI",
+  "specification": {
+    "task_id": "TTS-VOX-01",
+    "source_url": "https://github.com/OpenBMB/VoxCPM.git",
+    "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+    "model_id": "openbmb/VoxCPM2",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "modelscope_id": "OpenBMB/VoxCPM2",
+    "modelscope_revision": "d5f1818d22a8a84a71ad99eed983cb786f33985f",
+    "model_files": {
+      "audiovae.pth": "94b5d51e107e0507d4acc976cfdadb64edd6fd06d1f751dadbf2fd1594274bf1",
+      "model.safetensors": "f7f964cfa9da23653baec6e6f7750719977ad944ed9f95fe52fe3a620506891d",
+      "config.json": "405f0dcd92f7feba6011ed4eac5c8d4f74cba9712f07fd5cfa3063bbdd95402c",
+      "special_tokens_map.json": "068594063e37662c02b21acf42ebb334ef6a74fb810e68a2368f88f08351de76",
+      "tokenization_voxcpm2.py": "84489ea32b6ee0cae22ed5480cacb6df85c46624c3119be9a2021c3649a12729",
+      "tokenizer.json": "f8984687e4a92a3503d521396d454b7d68e9fdaab2a0288eb3536c7c1aa4bc20",
+      "tokenizer_config.json": "e78a3ebb48a0b9437efd1823b6b726c823da89e49dd8bcc90c02419d9baa772b"
+    },
+    "generation": {
+      "cfg_value": 2.0,
+      "inference_timesteps": 10,
+      "seed": 42,
+      "normalize": false,
+      "denoise": false,
+      "retry_badcase": false,
+      "max_len": 1024
+    },
+    "load_denoiser": false,
+    "optimize": false,
+    "device": "cuda:0"
+  },
+  "text": "旅行者一号从地球出发，飞向遥远的星际空间。即使相隔数百亿公里，它仍在向我们传回宇宙的消息。",
+  "instruction": "成年男性，沉稳自然，具有纪录片叙事感",
+  "reference_audio": null,
+  "subjective_listening": "unverified_TTS-VOX-02",
+  "packages": {
+    "voxcpm": "2.0.3.post46+g300e4260b",
+    "torch": "2.9.1+cu128",
+    "torchaudio": "2.9.1+cu128",
+    "transformers": "4.57.3",
+    "numpy": "2.2.6",
+    "librosa": "0.11.0",
+    "soundfile": "0.13.1",
+    "huggingface-hub": "0.36.0",
+    "pydantic": "2.12.5",
+    "einops": "0.8.1",
+    "safetensors": "0.7.0"
+  },
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5090 D v2",
+    "capability": [
+      12,
+      0
+    ],
+    "cuda": "12.8",
+    "bf16_supported": true,
+    "total_memory_bytes": 25642467328,
+    "driver": "610.88"
+  },
+  "source_revision_actual": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "model_load_seconds": 9.441813300014473,
+  "model_device": "cuda:0",
+  "model_dtype": "torch.bfloat16",
+  "synthesis_text": "(成年男性，沉稳自然，具有纪录片叙事感)旅行者一号从地球出发，飞向遥远的星际空间。即使相隔数百亿公里，它仍在向我们传回宇宙的消息。",
+  "generation_seconds": 8.362777000060305,
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-01\\20261124-183516-213454\\sample.wav",
+  "audio": {
+    "sample_rate": 48000,
+    "channels": 1,
+    "sample_count": 430080,
+    "sample_width": 2
+  },
+  "duration_seconds": 8.96,
+  "rtf": 0.933345647328159,
+  "peak_allocated_bytes": 5779015168,
+  "peak_reserved_bytes": 6069157888,
+  "environment_freeze": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-01\\20261124-183516-213454\\environment.freeze.txt",
+  "elapsed_seconds": 30.57640229992103,
+  "finished_at": "2026-11-24T10:35:46.790230+00:00"
+}

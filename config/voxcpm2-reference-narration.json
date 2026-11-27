@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "task_id": "TTS-VOX-06-reference-narration",
+  "voice_id": "provided-reference-narration-v1",
+  "user_feedback": "继续按用户提供视频的声学分析制作新文案样本",
+  "preserve_direction": "Natural conversational science narration, clear articulation and normal Mandarin pitch contours, one fixed reference",
+  "base_style": "自然清楚、松弛连贯的科普讲述，保留正常声调起伏",
+  "max_audition_outputs": 1,
+  "pitch_diagnostic": false,
+  "analysis_basis": "docs/research/reference-test-mp4-voice-analysis.json",
+  "external_reference": {
+    "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-video-reference\\20261127-225915-303241\\reference.wav",
+    "transcript_source": "local automatic transcription of supplied-video vocal estimate",
+    "manually_verified": false,
+    "source_video": "C:/Users/qzw19/Downloads/test.mp4",
+    "source_video_window_seconds": [
+      300,
+      314
+    ],
+    "separation": "Existing local UVR5 HP5 vocal estimate; artifacts may remain",
+    "user_instruction": "继续吧 after reference analysis"
+  },
+  "reference_text": "能够产生荧光的有机物探测器就有机会发现他们不过将来如果真的在金星上找到了生命咱们还得搞清楚一件事这些生命究竟是从地球过去的还是金星自己",
+  "production_choices": {
+    "speech_rate": 0.95,
+    "paragraph_pause_ms": 850,
+    "target_rms_db": -23,
+    "postprocess": "atempo=0.95",
+    "pitch_shift": 0,
+    "background_audio": false
+  },
+  "paragraphs": [
+    "我们抬头看星空时，看到的其实是很久以前出发的光。它们从遥远的恒星一路走来，经过漫长的旅程，才终于抵达地球。你可以把夜空想成一本缓缓翻开的相册，每一颗亮点，都藏着一个不同年代的故事。",
+    "有意思的是，恒星也有自己的颜色。温度更高的恒星往往偏蓝，温度较低的恒星则更偏红。它们看起来只是一些微小的光点，却让科学家能够一点一点地了解，遥远的宇宙是什么样子。"
+  ],
+  "variants": [
+    {
+      "name": "R-reference-narration",
+      "label": "视频人声参考的新文案旁白",
+      "seed": 42,
+      "direction": "Fixed supplied-video vocal reference; natural science narration"
+    }
+  ]
+}

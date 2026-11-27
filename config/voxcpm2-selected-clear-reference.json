@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "user_feedback": "还是太低沉，要清亮轻快、自然说话，不要生硬哄睡腔；没有参考样例",
+  "preserve_direction": "Natural clear young male voice at slow pace, no acted lullaby or breathy delivery",
+  "base_style": "清亮、轻盈、自然说话的青年男声，不刻意哄睡",
+  "pitch_diagnostic": true,
+  "reference_cfg_value": 3.0,
+  "minimum_reference_median_hz": null,
+  "max_audition_outputs": 1,
+  "production_choices": {
+    "speech_rate": 0.75,
+    "paragraph_pause_ms": 1200,
+    "target_rms_db": -25,
+    "postprocess": "atempo=0.75",
+    "pitch_shift": 0,
+    "background_audio": false
+  },
+  "reference_text": "今天的天气不错，海边有一点风。我们慢慢往前走，远处的灯光刚好亮了起来，几只海鸟正沿着海岸飞过去。",
+  "paragraphs": [
+    "傍晚的海边，浪花一层一层地推上沙滩，又慢慢退回去。远处的灯塔亮了，几只海鸟沿着海岸飞过，天空还留着一点浅浅的蓝色。",
+    "沿着岸边的小路往前走，可以看到石缝里的小草，还有被海水磨圆的石头。这里没有什么特别的事情发生，景色却一直在很轻地变化。"
+  ],
+  "variants": [
+    {
+      "name": "E-clear-tenor",
+      "label": "清亮自然聊天男声方向",
+      "seed": 811,
+      "direction": "A clear light male tenor voice in a higher speaking register, youthful, fresh and easy conversational delivery, speaking Mandarin naturally."
+    }
+  ],
+  "reuse_reference": {
+    "result": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-222911-074139\\result.json",
+    "candidate": "E-clear-tenor"
+  },
+  "selection_note": "Highest measured reference in the finite 3-candidate batch (about 149Hz); 150Hz was only a rough audition heuristic, not a perceptual, gender, medical or acceptance threshold. Reuse this reference instead of generating more to chase a 1Hz margin."
+}

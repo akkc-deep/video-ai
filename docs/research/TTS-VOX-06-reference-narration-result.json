@@ -1,0 +1,102 @@
+{
+  "task_id": "TTS-VOX-06-reference-narration",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057",
+  "user_feedback": "继续按用户提供视频的声学分析制作新文案样本",
+  "preserve_direction": "Natural conversational science narration, clear articulation and normal Mandarin pitch contours, one fixed reference",
+  "listening_status": "voice_selection_pending",
+  "variants": [
+    {
+      "name": "R-reference-narration",
+      "label": "视频人声参考的新文案旁白",
+      "direction": "Fixed supplied-video vocal reference; natural science narration",
+      "design_seed": 42,
+      "samples": [
+        {
+          "unit_id": "speech_0001",
+          "text": "我们抬头看星空时，看到的其实是很久以前出发的光。它们从遥远的恒星一路走来，经过漫长的旅程，才终于抵达地球。你可以把夜空想成一本缓缓翻开的相册，每一颗亮点，都藏着一个不同年代的故事。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\raw\\speech_0001.wav",
+          "generation_seconds": 27.32799999997951,
+          "sample_count": 798720
+        },
+        {
+          "unit_id": "speech_0002",
+          "text": "有意思的是，恒星也有自己的颜色。温度更高的恒星往往偏蓝，温度较低的恒星则更偏红。它们看起来只是一些微小的光点，却让科学家能够一点一点地了解，遥远的宇宙是什么样子。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\raw\\speech_0002.wav",
+          "generation_seconds": 22.469000000040978,
+          "sample_count": 775680
+        }
+      ],
+      "reference": {
+        "method": "user-provided-video-vocal-estimate",
+        "source": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-video-reference\\20261127-225915-303241\\reference.wav",
+        "sample_count": 672000,
+        "transcript_source": "local automatic transcription of supplied-video vocal estimate"
+      },
+      "status": "generated_pending_listening",
+      "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\narration.wav",
+      "duration_seconds": 35.15635416666667,
+      "total_samples": 1687505,
+      "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\tts-result.json",
+      "candidate_preset": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\candidate-preset.json",
+      "asset_profile": "E:\\VideoAI\\shared\\assets\\voices\\provided-reference-narration-v1-20261127-230050-146057\\voice.json"
+    }
+  ],
+  "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+  "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "production_choices": {
+    "speech_rate": 0.95,
+    "paragraph_pause_ms": 850,
+    "target_rms_db": -23,
+    "postprocess": "atempo=0.95",
+    "pitch_shift": 0,
+    "background_audio": false,
+    "therapeutic_frequency_target": null
+  },
+  "narration_parameters": {
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "seed": 42,
+    "normalize": false,
+    "denoise": false,
+    "retry_badcase": false,
+    "max_len": 1024
+  },
+  "reference_text": "能够产生荧光的有机物探测器就有机会发现他们不过将来如果真的在金星上找到了生命咱们还得搞清楚一件事这些生命究竟是从地球过去的还是金星自己",
+  "paragraphs": [
+    "我们抬头看星空时，看到的其实是很久以前出发的光。它们从遥远的恒星一路走来，经过漫长的旅程，才终于抵达地球。你可以把夜空想成一本缓缓翻开的相册，每一颗亮点，都藏着一个不同年代的故事。",
+    "有意思的是，恒星也有自己的颜色。温度更高的恒星往往偏蓝，温度较低的恒星则更偏红。它们看起来只是一些微小的光点，却让科学家能够一点一点地了解，遥远的宇宙是什么样子。"
+  ],
+  "background_audio": false,
+  "pitch_shift": 0,
+  "recipe": "config\\voxcpm2-reference-narration.json",
+  "selected_voice_updated": false,
+  "feedback_record_updated": true,
+  "notes": [
+    "Provided video vocal estimate used as one fixed reference and prompt across target paragraphs",
+    "Reference transcript from local ASR; not manually certified and separation artifacts can remain",
+    "Fresh target narration generated with no speaker-identity claim",
+    "Natural articulation with only mild uniform tempo and paragraph pause adjustment; no pitch shifting or background"
+  ],
+  "verification": {
+    "process_exit_code": 0,
+    "target_paragraphs": 2,
+    "fixed_supplied_reference_across_paragraphs": true,
+    "reference_seconds": 14,
+    "sample_total_verified": true,
+    "preset_matches_rendered_processing": true,
+    "extra_tests": "No repeated long-form/video/ASR validation of generated narration",
+    "subjective_quality": "pending user listening"
+  },
+  "source_analysis": "docs/research/reference-test-mp4-voice-analysis.json",
+  "documentation": "docs/voxcpm2-reference-narration.md",
+  "listening_feedback": {
+    "status": "approved",
+    "at": "2026-11-27T23:12:50.520321+08:00",
+    "user_instruction": "用这个音色吧，后面所有视频都按照这个声音生成",
+    "scope": "all future videos",
+    "approved_sample": "shared\\assets\\voices\\provided-reference-narration-v1\\approved-sample.wav",
+    "source_sample": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\narration.wav"
+  },
+  "approved_default_preset": "shared/config/tts/default-narration.json"
+}

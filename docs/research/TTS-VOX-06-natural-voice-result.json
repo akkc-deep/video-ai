@@ -1,0 +1,88 @@
+{
+  "task_id": "TTS-VOX-06-natural-voice",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683",
+  "feedback": "声音不够稳，不够自然",
+  "listening_status": "pending_user",
+  "samples": {
+    "A-simple-continuous": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683\\A-simple-continuous.wav",
+      "generation_seconds": 32.46899999980815,
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1029120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.44,
+      "synthesis_text": "(平静自然的男声旁白)当夜幕落下，白天的喧嚣渐渐远去，森林开始显露出另一种安静的模样。月光越过山脊，落在缓缓流动的河面上，像一层柔和的银色薄纱。在我们看不见的远方，星光已经穿过漫长的岁月，才来到这片夜空。",
+      "conditioning": {
+        "reference_wav_path": "E:\\VideoAI\\shared\\assets\\voices\\male-sleep-documentary-v1-20261127-011350-715610\\reference.wav"
+      }
+    },
+    "reference-v2": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683\\reference-v2.wav",
+      "generation_seconds": 19.29700000002049,
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 675840,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 14.08,
+      "synthesis_text": "(一位成年男性，普通话标准，音色平实温和，像专业纪录片旁白，自然连贯地讲述)入夜之后，山林渐渐安静下来。河水沿着山谷缓缓流淌，远处的灯光映在水面上。我们继续向前，听风吹过树梢，看星光一点一点出现在天空。",
+      "conditioning": {}
+    },
+    "B-natural-continuation": {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683\\B-natural-continuation.wav",
+      "generation_seconds": 27.313000000081956,
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 921600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 19.2,
+      "synthesis_text": "当夜幕落下，白天的喧嚣渐渐远去，森林开始显露出另一种安静的模样。月光越过山脊，落在缓缓流动的河面上，像一层柔和的银色薄纱。在我们看不见的远方，星光已经穿过漫长的岁月，才来到这片夜空。",
+      "conditioning": {
+        "reference_wav_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683\\reference-v2.wav",
+        "prompt_wav_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-natural-voice\\20261127-013858-190683\\reference-v2.wav",
+        "prompt_text": "入夜之后，山林渐渐安静下来。河水沿着山谷缓缓流淌，远处的灯光映在水面上。我们继续向前，听风吹过树梢，看星光一点一点出现在天空。"
+      }
+    }
+  },
+  "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+  "source_text": "当夜幕落下，白天的喧嚣渐渐远去，森林开始显露出另一种安静的模样。月光越过山脊，落在缓缓流动的河面上，像一层柔和的银色薄纱。在我们看不见的远方，星光已经穿过漫长的岁月，才来到这片夜空。",
+  "parameters": {
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "seed": 42,
+    "normalize": false,
+    "denoise": false,
+    "retry_badcase": false,
+    "max_len": 1024
+  },
+  "comparison_type": "Listening alternatives, not a single-variable causal benchmark",
+  "alignment": "whole-paragraph-only; no inferred sentence or word timestamps",
+  "candidate_voice_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-natural-documentary-v2-20261127-013858-190683\\voice.json",
+  "preference_updated": false,
+  "notes": [
+    "A reuses v1 timbre with a short instruction and one continuous paragraph",
+    "B uses a newly designed plain male reference with reference+prompt continuation, no style prefix",
+    "20 diffusion steps are an audition setting, not a new production default",
+    "No subjective stability/naturalness result is inferred; no production alignment changes"
+  ],
+  "verification": {
+    "process_exit_code": 0,
+    "method": "Finite output array and single WAV metadata read per generated clip",
+    "production_code_changed": false,
+    "extra_regression": "Not run: bounded listening experiment only; no production behavior changes",
+    "listening": "Pending user; no automatic perceptual quality assertion"
+  },
+  "listening_feedback": {
+    "user_feedback": "语速快了，多段之间的声音需要保持一致",
+    "status": "needs_revision",
+    "next_result": "docs/research/TTS-VOX-06-consistent-voice-result.json"
+  }
+}

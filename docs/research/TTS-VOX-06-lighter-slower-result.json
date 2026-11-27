@@ -1,0 +1,144 @@
+{
+  "task_id": "TTS-VOX-06-consistent-voice",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764",
+  "requirement": "语速更慢，多段之间保持同一男声",
+  "speed": 0.75,
+  "listening_status": "pending_user",
+  "paragraphs": [
+    {
+      "unit_id": "speech_0001",
+      "text": "当夜幕落下，白天的喧嚣渐渐远去，森林开始显露出另一种安静的模样。月光越过山脊，落在缓缓流动的河面上，像一层柔和的银色薄纱。",
+      "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0001.wav",
+      "processed_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0001.wav",
+      "tempo_command": [
+        "E:\\VideoAI\\shared\\tools\\ffmpeg\\bin\\ffmpeg.exe",
+        "-nostdin",
+        "-v",
+        "error",
+        "-n",
+        "-i",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0001.wav",
+        "-af",
+        "atempo=0.75,rubberband=pitch=1.044273782427:formant=preserved:pitchq=quality,bass=g=-4.0:f=180:t=q:w=0.707",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
+        "-c:a",
+        "pcm_s16le",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0001.wav"
+      ],
+      "generation_seconds": 19.95300000021234,
+      "generation_reused": true
+    },
+    {
+      "unit_id": "speech_0002",
+      "text": "沿着河岸望去，远处的山峦只留下一道淡淡的轮廓。风穿过树梢，又轻轻落下。那些细微的声响，让这片安静的夜晚，显得更加悠长。",
+      "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0002.wav",
+      "processed_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0002.wav",
+      "tempo_command": [
+        "E:\\VideoAI\\shared\\tools\\ffmpeg\\bin\\ffmpeg.exe",
+        "-nostdin",
+        "-v",
+        "error",
+        "-n",
+        "-i",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0002.wav",
+        "-af",
+        "atempo=0.75,rubberband=pitch=1.044273782427:formant=preserved:pitchq=quality,bass=g=-4.0:f=180:t=q:w=0.707",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
+        "-c:a",
+        "pcm_s16le",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0002.wav"
+      ],
+      "generation_seconds": 17.234000000171363,
+      "generation_reused": true
+    },
+    {
+      "unit_id": "speech_0003",
+      "text": "再把目光移向天空，星光已经穿过漫长的岁月，才来到我们的眼前。此刻，不必急着寻找答案。让呼吸慢下来，随着这段平静的旅程，一点一点放松。",
+      "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0003.wav",
+      "processed_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0003.wav",
+      "tempo_command": [
+        "E:\\VideoAI\\shared\\tools\\ffmpeg\\bin\\ffmpeg.exe",
+        "-nostdin",
+        "-v",
+        "error",
+        "-n",
+        "-i",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\raw\\speech_0003.wav",
+        "-af",
+        "atempo=0.75,rubberband=pitch=1.044273782427:formant=preserved:pitchq=quality,bass=g=-4.0:f=180:t=q:w=0.707",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
+        "-c:a",
+        "pcm_s16le",
+        "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\segments\\speech_0003.wav"
+      ],
+      "generation_seconds": 17.70299999997951,
+      "generation_reused": true
+    }
+  ],
+  "reused_raw": true,
+  "frozen_voice": {
+    "voice_id": "male-natural-documentary-v2",
+    "reference_sha256": "4d1b10805474512db51cbcd69bd7222e1892fb32ea07b60a25ea902ffbabfcdd",
+    "voice_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-natural-documentary-v2-20261127-013858-190683\\voice.json",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+    "mode": "reference-prompt",
+    "reference_text": "入夜之后，山林渐渐安静下来。河水沿着山谷缓缓流淌，远处的灯光映在水面上。我们继续向前，听风吹过树梢，看星光一点一点出现在天空。",
+    "parameters": {
+      "cfg_value": 2.0,
+      "inference_timesteps": 20,
+      "seed": 42,
+      "normalize": false,
+      "denoise": false,
+      "retry_badcase": false,
+      "max_len": 1024
+    },
+    "speed": 0.75,
+    "paragraph_pause_ms": 650,
+    "bass_db": -4.0,
+    "pitch_semitones": 0.75
+  },
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\narration.wav",
+  "duration_seconds": 52.17702083333333,
+  "total_samples": 2504497,
+  "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-consistent-voice\\20261127-024911-055764\\tts-result.json",
+  "notes": [
+    "Same fixed reference and prompt transcript for every paragraph; no rolling generated reference",
+    "Same seed/cfg/steps and identical postprocessing controls across paragraphs",
+    "Actual timing measured after tempo processing; no fabricated sentence timestamps",
+    "Reference transcript is intended generated text, not independently transcribed",
+    "No automatic perceptual consistency or naturalness claim"
+  ],
+  "user_feedback": "声音还是有点重，并且语速略快了点",
+  "verification": {
+    "process_exit_code": 0,
+    "gpu_generation_performed": false,
+    "raw_performances_reused": 3,
+    "sample_positions": "Rebuilt from actual PCM after tempo and formant-preserving pitch processing",
+    "subjective_tone_and_pace": "pending user"
+  },
+  "adjustment": {
+    "speech_rate": 0.75,
+    "prior_speech_rate": 0.8,
+    "relative_rate": 0.9375,
+    "bass_db": -4,
+    "pitch_semitones": 0.75,
+    "formants": "preserved"
+  },
+  "listening_feedback": {
+    "user_feedback": "这一版不够催眠，听了闹心；先查资料再生成",
+    "clarification": "男声本身低刺激、平稳柔和，不加嗡鸣",
+    "status": "rejected_for_sleep_style",
+    "next_result": "docs/research/TTS-VOX-06-soft-narration-result.json"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "task_id": "TTS-VOX-06-soft-narration",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105",
+  "user_requirement": "男声本身低刺激、平稳柔和，不加嗡鸣",
+  "research": "docs/voxcpm2-low-stimulation-research.md",
+  "listening_status": "pending_user",
+  "samples": [
+    {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\raw\\speech_0001.wav",
+      "generation_seconds": 20.04700000002049,
+      "sample_count": 652800,
+      "unit_id": "speech_0001",
+      "text": "夜色慢慢落在山谷里。河水安静地向前流着，月光在水面上，留下一层淡淡的银色。远处的风，穿过树梢，又慢慢停下来。",
+      "processed_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\segments\\speech_0001.wav"
+    },
+    {
+      "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\raw\\speech_0002.wav",
+      "generation_seconds": 17.671000000089407,
+      "sample_count": 637440,
+      "unit_id": "speech_0002",
+      "text": "在这片安静的夜空下，星光经过了很长的旅程，才来到我们的眼前。我们不必急着追赶什么，只是轻轻地听着，让这一刻，慢慢地过去。",
+      "processed_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\segments\\speech_0002.wav"
+    }
+  ],
+  "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+  "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "parameters": {
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "seed": 42,
+    "normalize": false,
+    "denoise": false,
+    "retry_badcase": false,
+    "max_len": 1024
+  },
+  "direction": "成年男声，轻声柔和，嗓音放松，语调平缓，像在安静地讲睡前故事",
+  "reference_text": "夜色慢慢落下来，周围渐渐安静了。远处的山，像一幅淡淡的画。风从树梢轻轻经过，又慢慢停下来。你可以只是听着，让思绪像云一样，缓缓地飘远。",
+  "production_choices": {
+    "speech_rate": 0.75,
+    "paragraph_pause_ms": 1200,
+    "target_rms_db": -25,
+    "postprocess": "atempo=0.75,treble=g=-2:f=3500:t=q:w=0.707",
+    "pitch_shift": 0,
+    "background_audio": false,
+    "therapeutic_frequency_target": null
+  },
+  "reference": {
+    "path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\reference.wav",
+    "generation_seconds": 24.608999999938533,
+    "sample_count": 844800
+  },
+  "frozen_voice": {
+    "voice_id": "male-soft-narration-v3",
+    "voice_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-soft-narration-v3-20261127-031709-650105\\voice.json",
+    "reference_sha256": "c427f8b7d96631a1a2ed71d00c488ec04f54c72cca6c0680f84fd404d674d8ee",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "reference_text": "夜色慢慢落下来，周围渐渐安静了。远处的山，像一幅淡淡的画。风从树梢轻轻经过，又慢慢停下来。你可以只是听着，让思绪像云一样，缓缓地飘远。",
+    "conditioning_mode": "reference-prompt",
+    "parameters": {
+      "cfg_value": 2.0,
+      "inference_timesteps": 20,
+      "seed": 42,
+      "normalize": false,
+      "denoise": false,
+      "retry_badcase": false,
+      "max_len": 1024
+    },
+    "speech_rate": 0.75,
+    "pitch_shift_semitones": 0,
+    "paragraph_pause_ms": 1200
+  },
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\narration.wav",
+  "duration_seconds": 36.31160416666667,
+  "total_samples": 1742957,
+  "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-soft-narration\\20261127-031709-650105\\tts-result.json",
+  "asset_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-soft-narration-v3-20261127-031709-650105\\voice.json",
+  "signal_format": {
+    "sample_rate": 48000,
+    "channels": 1,
+    "sample_width": 2
+  },
+  "therapeutic_claim": "None; research-informed artistic audition, not proof of sleep or hypnosis efficacy",
+  "sources": [
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42888125/",
+      "role": "Observational hypnotist voice study; not efficacy proof or a fixed Hz prescription"
+    },
+    {
+      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0286023",
+      "role": "Binaural entrainment findings inconsistent; no guaranteed-frequency claim"
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/34964434/",
+      "role": "Sleep noise evidence uncertain; user declined any background sound"
+    }
+  ],
+  "verification": {
+    "process_exit_code": 0,
+    "voice_reference_fixed_across_paragraphs": true,
+    "background_tones": false,
+    "pitch_shift_semitones": 0,
+    "sample_total_verified": true,
+    "subjective_sleep_effect": "unverified; pending user listening",
+    "extra_tests": "No unrelated regression, ASR, full-video or long-form generation"
+  },
+  "listening_feedback": {
+    "user_feedback": "感觉快对了，这个音色不好",
+    "status": "direction_close_timbre_disliked",
+    "preserve": "low-stimulation gentle delivery and processing settings",
+    "next_result": "docs/research/TTS-VOX-06-voice-audition-result.json"
+  }
+}

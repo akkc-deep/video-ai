@@ -1,0 +1,506 @@
+{
+  "task_id": "TTS-VOX-03",
+  "status": "completed",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-03\\20261125-100042-747664",
+  "started_at": "2026-11-25T02:00:42.748663+00:00",
+  "events": [
+    {
+      "name": "voices",
+      "http_status": 200,
+      "response": {
+        "voices": [
+          {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6"
+          }
+        ]
+      }
+    },
+    {
+      "name": "submitted",
+      "http_status": 202,
+      "response": {
+        "request_id": "api_short",
+        "engine": "voxcpm2",
+        "fingerprint": "597b3ee083a1b2358efb0134686b1e20fb6f1751a8d09f18ce13134e5a27d8ab",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "api_short",
+          "text": "旅行者二号正在遥远的星际空间航行。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "queued",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:00:56.337096+08:00",
+        "updated_at": "2026-11-25T10:00:56.337096+08:00"
+      }
+    },
+    {
+      "name": "duplicate_running",
+      "http_status": 200,
+      "response": {
+        "request_id": "api_short",
+        "engine": "voxcpm2",
+        "fingerprint": "597b3ee083a1b2358efb0134686b1e20fb6f1751a8d09f18ce13134e5a27d8ab",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "api_short",
+          "text": "旅行者二号正在遥远的星际空间航行。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "running",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:00:56.337096+08:00",
+        "updated_at": "2026-11-25T10:00:56.339096+08:00"
+      }
+    },
+    {
+      "name": "conflict",
+      "http_status": 409,
+      "response": {
+        "error": "request_id already exists with different frozen inputs"
+      }
+    },
+    {
+      "name": "queued",
+      "http_status": 202,
+      "response": {
+        "request_id": "cancel_queued",
+        "engine": "voxcpm2",
+        "fingerprint": "89cc777a2734749ed1cee3892ea5b8a9cc20996aabcf724b149da4baff474d31",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "cancel_queued",
+          "text": "旅行者二号正在遥远的星际空间航行。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "queued",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:00:56.400322+08:00",
+        "updated_at": "2026-11-25T10:00:56.400322+08:00"
+      }
+    },
+    {
+      "name": "cancel_queued",
+      "http_status": 200,
+      "response": {
+        "request_id": "cancel_queued",
+        "engine": "voxcpm2",
+        "fingerprint": "89cc777a2734749ed1cee3892ea5b8a9cc20996aabcf724b149da4baff474d31",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "cancel_queued",
+          "text": "旅行者二号正在遥远的星际空间航行。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "cancelled",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:00:56.400322+08:00",
+        "updated_at": "2026-11-25T10:00:56.416322+08:00"
+      }
+    },
+    {
+      "name": "cancel_running_submit",
+      "http_status": 202,
+      "response": {
+        "request_id": "cancel_running",
+        "engine": "voxcpm2",
+        "fingerprint": "1afe0b619b8915644d0799ed07a5ee0eaf6d3c2450648682ca0368f0f9eed834",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "cancel_running",
+          "text": "这段语音用于验证正在运行任务的取消。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)这段语音用于验证正在运行任务的取消。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "queued",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:01:03.375628+08:00",
+        "updated_at": "2026-11-25T10:01:03.375628+08:00"
+      }
+    },
+    {
+      "name": "cancel_requested",
+      "http_status": 200,
+      "response": {
+        "request_id": "cancel_running",
+        "engine": "voxcpm2",
+        "fingerprint": "1afe0b619b8915644d0799ed07a5ee0eaf6d3c2450648682ca0368f0f9eed834",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "cancel_running",
+          "text": "这段语音用于验证正在运行任务的取消。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)这段语音用于验证正在运行任务的取消。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "cancel_requested",
+        "result": null,
+        "error": null,
+        "created_at": "2026-11-25T10:01:03.375628+08:00",
+        "updated_at": "2026-11-25T10:01:03.405627+08:00"
+      }
+    },
+    {
+      "name": "cancelled_audio_unavailable",
+      "http_status": 409,
+      "response": {
+        "error": "audio is available only after completion"
+      }
+    },
+    {
+      "name": "duplicate_after_restart",
+      "http_status": 200,
+      "response": {
+        "request_id": "api_short",
+        "engine": "voxcpm2",
+        "fingerprint": "597b3ee083a1b2358efb0134686b1e20fb6f1751a8d09f18ce13134e5a27d8ab",
+        "request": {
+          "voice_id": "existing-reference",
+          "emotion": "narrative",
+          "emotion_intensity": 0.3,
+          "instruction": "",
+          "seed": 42,
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "request_id": "api_short",
+          "text": "旅行者二号正在遥远的星际空间航行。",
+          "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+          "binding": {
+            "voice_id": "existing-reference",
+            "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+            "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+            "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+            "generation": {
+              "cfg_value": 2.0,
+              "inference_timesteps": 10,
+              "seed": 42,
+              "normalize": false,
+              "denoise": false,
+              "retry_badcase": false,
+              "max_len": 1024
+            },
+            "device": "cuda:0",
+            "optimize": false,
+            "load_denoiser": false
+          }
+        },
+        "status": "completed",
+        "result": {
+          "sample_rate": 48000,
+          "sample_count": 168960,
+          "channels": 1,
+          "sample_width": 2,
+          "generation_time_ms": 6936.558700050227,
+          "duration_ms": 3520.0,
+          "audio_path": "tasks/4731710826cfcb033576385135dee2c9cd278cb173fba53b0b5eff07df3e9470/sample.wav"
+        },
+        "error": null,
+        "created_at": "2026-11-25T10:00:56.337096+08:00",
+        "updated_at": "2026-11-25T10:01:03.298114+08:00"
+      }
+    }
+  ],
+  "process_exit_codes": [
+    0,
+    0
+  ],
+  "health": {
+    "service": "video-ai-voxcpm2",
+    "status": "ready",
+    "session_id": "5d78c9e096b04fe4bbaf4f68e9eb2750",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "error": null,
+    "cancellation": "cooperative_after_current_inference"
+  },
+  "cold_service_ready_seconds": 13.556487899972126,
+  "completed_task": {
+    "request_id": "api_short",
+    "engine": "voxcpm2",
+    "fingerprint": "597b3ee083a1b2358efb0134686b1e20fb6f1751a8d09f18ce13134e5a27d8ab",
+    "request": {
+      "voice_id": "existing-reference",
+      "emotion": "narrative",
+      "emotion_intensity": 0.3,
+      "instruction": "",
+      "seed": 42,
+      "cfg_value": 2.0,
+      "inference_timesteps": 10,
+      "request_id": "api_short",
+      "text": "旅行者二号正在遥远的星际空间航行。",
+      "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)旅行者二号正在遥远的星际空间航行。",
+      "binding": {
+        "voice_id": "existing-reference",
+        "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+        "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+        "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+        "generation": {
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "seed": 42,
+          "normalize": false,
+          "denoise": false,
+          "retry_badcase": false,
+          "max_len": 1024
+        },
+        "device": "cuda:0",
+        "optimize": false,
+        "load_denoiser": false
+      }
+    },
+    "status": "completed",
+    "result": {
+      "sample_rate": 48000,
+      "sample_count": 168960,
+      "channels": 1,
+      "sample_width": 2,
+      "generation_time_ms": 6936.558700050227,
+      "duration_ms": 3520.0,
+      "audio_path": "tasks/4731710826cfcb033576385135dee2c9cd278cb173fba53b0b5eff07df3e9470/sample.wav"
+    },
+    "error": null,
+    "created_at": "2026-11-25T10:00:56.337096+08:00",
+    "updated_at": "2026-11-25T10:01:03.298114+08:00"
+  },
+  "downloaded_audio_bytes": 337964,
+  "cancelled_task": {
+    "request_id": "cancel_running",
+    "engine": "voxcpm2",
+    "fingerprint": "1afe0b619b8915644d0799ed07a5ee0eaf6d3c2450648682ca0368f0f9eed834",
+    "request": {
+      "voice_id": "existing-reference",
+      "emotion": "narrative",
+      "emotion_intensity": 0.3,
+      "instruction": "",
+      "seed": 42,
+      "cfg_value": 2.0,
+      "inference_timesteps": 10,
+      "request_id": "cancel_running",
+      "text": "这段语音用于验证正在运行任务的取消。",
+      "synthesis_text": "(保持参考音色，吐字清晰，轻微沉稳叙述)这段语音用于验证正在运行任务的取消。",
+      "binding": {
+        "voice_id": "existing-reference",
+        "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+        "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+        "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+        "generation": {
+          "cfg_value": 2.0,
+          "inference_timesteps": 10,
+          "seed": 42,
+          "normalize": false,
+          "denoise": false,
+          "retry_badcase": false,
+          "max_len": 1024
+        },
+        "device": "cuda:0",
+        "optimize": false,
+        "load_denoiser": false
+      }
+    },
+    "status": "cancelled",
+    "result": null,
+    "error": null,
+    "created_at": "2026-11-25T10:01:03.375628+08:00",
+    "updated_at": "2026-11-25T10:01:06.977399+08:00"
+  },
+  "restart_health": {
+    "service": "video-ai-voxcpm2",
+    "status": "ready",
+    "session_id": "67e0fd66b25b4853b7d72ec70a73c8d4",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "error": null,
+    "cancellation": "cooperative_after_current_inference"
+  },
+  "completed_reused_after_restart": true,
+  "elapsed_seconds": 38.6581408000784,
+  "verification": {
+    "new_service_tests": {
+      "passed": 26,
+      "skipped": 3,
+      "skip_reason": "Windows lacks file symlink creation privilege"
+    },
+    "related_regression": {
+      "passed": 48,
+      "skipped": 3,
+      "log": "E:/VideoAI/scratch/logs/vox03-final-tests.txt"
+    },
+    "full_suite": {
+      "passed": false,
+      "status": "blocked_by_unrelated_existing_test_failure",
+      "default_collection_issue": "unit/integration test_scene_stage_preparation name collision",
+      "collected_with": "--import-mode=importlib and src/tests/tests-unit/tests-integration helper paths",
+      "first_failed_test": "tests/integration/test_candidate_performance_flow.py::test_two_ordinary_tasks_are_accepted_before_polling[2]",
+      "observed": "submit/query/submit/query instead of submit/submit/query/query",
+      "isolated_reproduction": true,
+      "log": "E:/VideoAI/scratch/logs/vox03-regression-first-real.txt"
+    },
+    "independent_review": {
+      "important_findings": 2,
+      "fixed": [
+        "worker exception updates health/rejects submissions",
+        "actual partial/DB/lock path confinement"
+      ],
+      "file_symlink_scenarios_skipped": true
+    },
+    "prior_attempts": [
+      {
+        "directory": "20261125-095817-268300",
+        "failure": "Windows closed-port TCP timeout",
+        "fixed": "bind availability probe"
+      },
+      {
+        "directory": "20261125-095933-342252",
+        "failure": "read-only fd fsync produced EBADF",
+        "fixed": "open r+b for durable flush"
+      }
+    ],
+    "production_default_changed": false,
+    "generation_revalidated_with_asr": false
+  }
+}

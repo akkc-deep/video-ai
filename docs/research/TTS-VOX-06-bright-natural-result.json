@@ -1,0 +1,98 @@
+{
+  "task_id": "TTS-VOX-06-bright-natural",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118",
+  "user_feedback": "还是太低沉，要清亮轻快、自然说话，不要生硬哄睡腔；没有参考样例",
+  "preserve_direction": "Natural clear young male voice at slow pace, no acted lullaby or breathy delivery",
+  "listening_status": "voice_selection_pending",
+  "variants": [
+    {
+      "name": "E-clear-tenor",
+      "label": "清亮自然聊天男声方向",
+      "direction": "A clear light male tenor voice in a higher speaking register, youthful, fresh and easy conversational delivery, speaking Mandarin naturally.",
+      "design_seed": 811,
+      "samples": [
+        {
+          "unit_id": "speech_0001",
+          "text": "傍晚的海边，浪花一层一层地推上沙滩，又慢慢退回去。远处的灯塔亮了，几只海鸟沿着海岸飞过，天空还留着一点浅浅的蓝色。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\E-clear-tenor\\raw\\speech_0001.wav",
+          "generation_seconds": 17.640999999828637,
+          "sample_count": 460800
+        },
+        {
+          "unit_id": "speech_0002",
+          "text": "沿着岸边的小路往前走，可以看到石缝里的小草，还有被海水磨圆的石头。这里没有什么特别的事情发生，景色却一直在很轻地变化。",
+          "raw_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\E-clear-tenor\\raw\\speech_0002.wav",
+          "generation_seconds": 14.75,
+          "sample_count": 460800
+        }
+      ],
+      "reference": {
+        "generation_seconds": 12.484000000171363,
+        "sample_count": 399360,
+        "pitch_diagnostic": {
+          "confident_frames": 52,
+          "median_hz": 148.75445171914455,
+          "note": "Coarse voiced-pitch diagnostic only; not a quality, gender or sleep-efficacy verdict"
+        },
+        "reused_from": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-222911-074139\\E-clear-tenor\\reference.wav"
+      },
+      "status": "generated_pending_listening",
+      "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\natural-slow-final\\narration.wav",
+      "duration_seconds": 32.412416666666665,
+      "total_samples": 1555796,
+      "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\natural-slow-final\\tts-result.json",
+      "candidate_preset": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\natural-slow-final\\candidate-preset.json",
+      "asset_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-bright-audition-e-20261127-223108-308118\\voice.json",
+      "initial_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-bright-natural\\20261127-223108-308118\\E-clear-tenor\\narration.wav"
+    }
+  ],
+  "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+  "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "production_choices": {
+    "speech_rate": 0.6,
+    "paragraph_pause_ms": 1200,
+    "target_rms_db": -25,
+    "postprocess": "atempo=0.6",
+    "pitch_shift": 0,
+    "background_audio": false,
+    "therapeutic_frequency_target": null
+  },
+  "narration_parameters": {
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "seed": 42,
+    "normalize": false,
+    "denoise": false,
+    "retry_badcase": false,
+    "max_len": 1024
+  },
+  "reference_text": "今天的天气不错，海边有一点风。我们慢慢往前走，远处的灯光刚好亮了起来，几只海鸟正沿着海岸飞过去。",
+  "paragraphs": [
+    "傍晚的海边，浪花一层一层地推上沙滩，又慢慢退回去。远处的灯塔亮了，几只海鸟沿着海岸飞过，天空还留着一点浅浅的蓝色。",
+    "沿着岸边的小路往前走，可以看到石缝里的小草，还有被海水磨圆的石头。这里没有什么特别的事情发生，景色却一直在很轻地变化。"
+  ],
+  "background_audio": false,
+  "pitch_shift": 0,
+  "recipe": "config\\voxcpm2-selected-clear-reference.json",
+  "selected_voice_updated": false,
+  "feedback_record_updated": true,
+  "notes": [
+    "One selected reference candidate; ordinary conversational direction and neutral scenery text",
+    "Raw selected reference reused from the bounded design batch",
+    "Fixed reference/prompt and body parameters across paragraphs; no voice change between paragraphs",
+    "No pitch shifting, treble darkening, background audio, ASR or full-video test"
+  ],
+  "selection_note": "The initial references remained low-register. A finite three-reference screen produced a highest estimate around 149Hz. Reused that reference rather than generate repeatedly to satisfy an arbitrary 150Hz heuristic; this is not perceptual acceptance or a therapeutic-frequency target.",
+  "verification": {
+    "process_exit_code": 0,
+    "source_reference_reused": true,
+    "body_generated": true,
+    "pitch_shift": false,
+    "background_audio": false,
+    "sample_total_verified": true,
+    "subjective_timbre": "pending user listening"
+  },
+  "documentation": "docs/voxcpm2-bright-casual-voice.md",
+  "pace_note": "The new conversational voice spoke faster at the same nominal 0.75 processing setting. Reprocessed existing raw paragraphs with one uniform 0.6 tempo operation before final audition; no extra GPU synthesis, EQ or pitch shift."
+}

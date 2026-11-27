@@ -1,0 +1,54 @@
+{
+  "task_id": "TTS-VOX-06",
+  "status": "voice_approved_and_frozen",
+  "approval": {
+    "status": "approved",
+    "at": "2026-11-27T23:12:50.520321+08:00",
+    "user_instruction": "用这个音色吧，后面所有视频都按照这个声音生成",
+    "scope": "all future videos",
+    "approved_sample": "shared\\assets\\voices\\provided-reference-narration-v1\\approved-sample.wav",
+    "source_sample": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-reference-narration\\20261127-230050-146057\\R-reference-narration\\narration.wav"
+  },
+  "voice_id": "provided-reference-narration-v1",
+  "reference_sha256": "748623f1d8e72cc72da4e064822a127eb64c5e06ee8dd7127a44b65a9afc2d8a",
+  "recipe_sha256": "d5e25e4e343d5ac689f00a8432a45e5864e221db75b9a3a8e8a93fca29dd58a4",
+  "canonical_profile": "E:\\VideoAI\\shared\\assets\\voices\\provided-reference-narration-v1\\voice.json",
+  "default_preset": "E:\\VideoAI\\shared\\config\\tts\\default-narration.json",
+  "approved_sample": "E:\\VideoAI\\shared\\assets\\voices\\provided-reference-narration-v1\\approved-sample.wav",
+  "settings": {
+    "engine": "voxcpm2",
+    "voice_id": "provided-reference-narration-v1",
+    "reference_sha256": "748623f1d8e72cc72da4e064822a127eb64c5e06ee8dd7127a44b65a9afc2d8a",
+    "conditioning_mode": "reference-prompt",
+    "prompt_text": "能够产生荧光的有机物探测器就有机会发现他们不过将来如果真的在金星上找到了生命咱们还得搞清楚一件事这些生命究竟是从地球过去的还是金星自己",
+    "seed": 42,
+    "cfg_value": 2.0,
+    "inference_timesteps": 20,
+    "speech_rate": 0.95,
+    "paragraph_pause_ms": 850,
+    "target_rms_db": -23,
+    "postprocess_filters": "atempo=0.95",
+    "pitch_shift_semitones": 0,
+    "background_audio": false,
+    "emotion_policy": "fixed-reference-delivery",
+    "per_segment_instructions": false,
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b"
+  },
+  "verification": {
+    "reference_identity_matches_approved_sample_recipe": true,
+    "full_recipe_matches_audition": true,
+    "runtime_alias_and_default_written": true,
+    "generated_audio_repeated": false
+  },
+  "production_wiring": {
+    "status": "not_implemented",
+    "task": "TTS-VOX-07",
+    "evidence": [
+      "production_inputs.validate_supported rejects voxcpm2",
+      "production_speech.produce_speech constructs legacy TtsClient",
+      "VoxBackend.generate currently implements reference-only instead of the approved reference+prompt mode"
+    ],
+    "rule": "New video work must wire or explicitly consume the approved recipe; never silently substitute another voice"
+  }
+}

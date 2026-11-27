@@ -1,0 +1,2650 @@
+{
+  "schema_version": 1,
+  "task_id": "TTS-VOX-02",
+  "status": "accepted_by_user_override",
+  "started_at": "2026-11-24T16:05:17.555980+00:00",
+  "runtime_root": "E:\\VideoAI",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747",
+  "configuration": {
+    "schema_version": 1,
+    "runtime_root": "E:\\VideoAI",
+    "project_root": "E:\\VideoAI\\shared",
+    "output_root": "E:\\VideoAI\\output",
+    "cache_root": "E:\\VideoAI\\scratch",
+    "voice_config": "E:\\VideoAI\\shared\\config\\voice.json",
+    "tools": {
+      "ffmpeg": "E:/VideoAI/shared/tools/ffmpeg/bin/ffmpeg.exe",
+      "ffprobe": "E:/VideoAI/shared/tools/ffmpeg/bin/ffprobe.exe",
+      "comfy_python": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/python_embeded/python.exe",
+      "comfy_root": "E:/VideoAI/shared/tools/ComfyUI_windows_portable/ComfyUI",
+      "tts_python": "E:/VideoAI/shared/tools/GPT-SoVITS/runtime/python.exe",
+      "tts_root": "E:/VideoAI/shared/tools/GPT-SoVITS",
+      "ollama_executable": "E:/VideoAI/shared/tools/ollama/ollama.exe"
+    },
+    "services": {
+      "ollama": "http://127.0.0.1:11435",
+      "comfyui": "http://127.0.0.1:8188",
+      "tts": "http://127.0.0.1:9880"
+    },
+    "workflows": {
+      "sdxl": "E:\\code\\py\\video-ai\\workflows\\sdxl_api.json",
+      "wan": "E:\\code\\py\\video-ai\\workflows\\wan22_i2v_14b_api.json",
+      "wan_mapping": "E:\\code\\py\\video-ai\\workflows\\wan22_i2v_14b_api.mapping.json",
+      "upscale": "E:\\code\\py\\video-ai\\workflows\\upscale_api.json"
+    },
+    "models": {
+      "sdxl": "E:/VideoAI/shared/models/comfyui/checkpoints/sd_xl_base_1.0.safetensors",
+      "wan_high": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+      "wan_low": "E:/VideoAI/shared/models/comfyui/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+      "text_encoder": "E:/VideoAI/shared/models/comfyui/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "vae": "E:/VideoAI/shared/models/comfyui/vae/wan_2.1_vae.safetensors",
+      "upscale": "E:/VideoAI/shared/models/comfyui/upscale_models/RealESRGAN_x4plus.pth"
+    },
+    "media": {
+      "profile": "fast",
+      "fps": 16,
+      "final_width": 1920,
+      "final_height": 1080,
+      "transition": "cut",
+      "transition_seconds": 0,
+      "timeline": {
+        "sentence_pause_seconds": 0.8,
+        "paragraph_pause_seconds": 2,
+        "opening_seconds": 2,
+        "closing_seconds": 3
+      },
+      "burn_subtitles": true,
+      "music": null,
+      "font_file": "C:\\WINDOWS\\Fonts\\msyh.ttc"
+    },
+    "timeouts": {
+      "ollama_request": 120,
+      "tts_request": 300,
+      "comfy_request": 600,
+      "service_start": 300,
+      "wan": 7200,
+      "upscale_frame": 180,
+      "upscale_clip": 1200
+    },
+    "production_strategy": "paragraph_jimeng_v1",
+    "reference_generation": null,
+    "reference_capabilities": {},
+    "reference_storage": null,
+    "scene_planning": {
+      "target_scenes_per_paragraph": 3,
+      "max_clip_seconds": 6
+    },
+    "selection_email": {
+      "sender": "318575094@qq.com",
+      "recipient": "318575094@qq.com",
+      "smtp_host": "smtp.qq.com",
+      "smtp_port": 465,
+      "smtp_security": "ssl",
+      "smtp_password_env": "VIDEO_AI_SMTP_AUTH_CODE",
+      "max_mime_bytes": 15728640,
+      "timeout_seconds": 60
+    },
+    "image_generation": {
+      "provider": "volcengine_jimeng",
+      "req_key": "jimeng_t2i_v40",
+      "access_key_env": "VIDEO_AI_VOLC_ACCESS_KEY",
+      "secret_key_env": "VIDEO_AI_VOLC_SECRET_KEY",
+      "model_parameters": {
+        "width": 2560,
+        "height": 1440,
+        "force_single": true
+      },
+      "output_width": 2560,
+      "output_height": 1440,
+      "candidates_per_scene": 2,
+      "request_timeout_seconds": 60,
+      "task_timeout_seconds": 600,
+      "poll_interval_seconds": 2
+    }
+  },
+  "voice": {
+    "schema_version": 1,
+    "gpt_weights": "E:/VideoAI/shared/models/tts/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
+    "sovits_weights": "E:/VideoAI/shared/models/tts/gsv-v2final-pretrained/s2G2333k.pth",
+    "bert_root": "E:/VideoAI/shared/models/tts/chinese-roberta-wwm-ext-large",
+    "hubert_root": "E:/VideoAI/shared/models/tts/chinese-hubert-base",
+    "reference_audio": "E:\\VideoAI\\shared\\assets\\online-reference.wav",
+    "reference_sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+    "reference_text": "希望你以后能够做的比我还好呦。",
+    "text_language": "zh",
+    "prompt_language": "zh",
+    "speed_factor": 1.0,
+    "device": "cpu",
+    "is_half": false,
+    "inference": {
+      "top_k": 15,
+      "top_p": 1,
+      "temperature": 1,
+      "text_split_method": "cut5",
+      "batch_size": 1,
+      "media_type": "wav",
+      "streaming_mode": false,
+      "sample_steps": 32
+    }
+  },
+  "reference": {
+    "path": "reference.wav",
+    "source": "E:\\VideoAI\\shared\\assets\\online-reference.wav",
+    "sha256": "c7b31d6dbe7cc6a716dded00550db5b50940bf209e424e4ad207b12e657c8ff6",
+    "provenance": "Existing configured production reference; no new external voice asset"
+  },
+  "specification": {
+    "task_id": "TTS-VOX-01",
+    "source_url": "https://github.com/OpenBMB/VoxCPM.git",
+    "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+    "model_id": "openbmb/VoxCPM2",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "modelscope_id": "OpenBMB/VoxCPM2",
+    "modelscope_revision": "d5f1818d22a8a84a71ad99eed983cb786f33985f",
+    "model_files": {
+      "audiovae.pth": "94b5d51e107e0507d4acc976cfdadb64edd6fd06d1f751dadbf2fd1594274bf1",
+      "model.safetensors": "f7f964cfa9da23653baec6e6f7750719977ad944ed9f95fe52fe3a620506891d",
+      "config.json": "405f0dcd92f7feba6011ed4eac5c8d4f74cba9712f07fd5cfa3063bbdd95402c",
+      "special_tokens_map.json": "068594063e37662c02b21acf42ebb334ef6a74fb810e68a2368f88f08351de76",
+      "tokenization_voxcpm2.py": "84489ea32b6ee0cae22ed5480cacb6df85c46624c3119be9a2021c3649a12729",
+      "tokenizer.json": "f8984687e4a92a3503d521396d454b7d68e9fdaab2a0288eb3536c7c1aa4bc20",
+      "tokenizer_config.json": "e78a3ebb48a0b9437efd1823b6b726c823da89e49dd8bcc90c02419d9baa772b"
+    },
+    "generation": {
+      "cfg_value": 2.0,
+      "inference_timesteps": 10,
+      "seed": 42,
+      "normalize": false,
+      "denoise": false,
+      "retry_badcase": false,
+      "max_len": 1024
+    },
+    "load_denoiser": false,
+    "optimize": false,
+    "device": "cuda:0"
+  },
+  "long_source": {
+    "path": "E:\\VideoAI\\work\\0002-旅行者2号-即梦版\\input\\script.txt",
+    "sha256": "332d2737a1d8dcd7b0dd54d15a50417e7556e9bda7d5bf22743f4385602fa499",
+    "characters": 3731,
+    "chunks": [
+      {
+        "start": 0,
+        "end": 122,
+        "text": "在距离地球数百亿公里之外的宇宙深处，一艘来自上个世纪的探测器，正独自穿行在无尽的黑暗之中。\n\n它没有宇航员，没有驾驶舱，没有返回地球的计划。\n\n它已经飞行了49年，跨越了数百亿公里的漫长距离，见证了人类从未见过的行星世界。\n\n它就是旅行者2号。"
+      },
+      {
+        "start": 122,
+        "end": 248,
+        "text": "\n\n1977年8月20日，一枚泰坦三号E型运载火箭，从美国卡纳维拉尔角升空。\n\n火箭上搭载的，正是旅行者2号探测器。\n\n那一年，个人电脑才刚刚兴起，互联网还远没有进入普通人的生活，人类甚至还没有发射第一座长期有人驻留的国际空间站。\n\n但科学家已经决定，"
+      },
+      {
+        "start": 248,
+        "end": 369,
+        "text": "让一艘无人探测器飞往数十亿公里之外的太阳系边缘。\n\n这项任务的诞生，源于一次极其罕见的天文机会。\n\n20世纪70年代末，木星、土星、天王星和海王星，将处于一种特殊的相对位置。\n\n这种有利于连续飞掠四颗巨行星的排列，大约每175年才会出现一次。"
+      },
+      {
+        "start": 369,
+        "end": 492,
+        "text": "\n\n如果错过这次机会，人类可能要再等待一个多世纪，才能利用类似的轨道条件。\n\n科学家决定抓住它。\n\n但问题是，太阳系实在太大了。\n\n仅仅从地球飞到木星，就需要跨越数亿公里的距离。而更加遥远的海王星，距离太阳足足有45亿公里。\n\n以当时的火箭技术，"
+      },
+      {
+        "start": 492,
+        "end": 622,
+        "text": "想要携带足够的燃料完成整段旅程，几乎不可能。\n\n于是，科学家利用了一种巧妙的方法。\n\n引力弹弓。\n\n当探测器从一颗正在围绕太阳运动的行星附近掠过时，可以利用行星的引力改变飞行方向，并获得额外的速度。\n\n就像一个原本缓慢前进的物体，借助另一个高速运动的庞然大物，"
+      },
+      {
+        "start": 622,
+        "end": 744,
+        "text": "被甩向更远的地方。\n\n旅行者2号正是依靠这种方式，完成了一场跨越四颗巨行星的宇宙远征。\n\n1979年7月，经过将近两年的飞行，旅行者2号终于抵达了第一站。\n\n木星。\n\n这是太阳系中最大的行星，质量超过地球的300倍。\n\n当旅行者2号逐渐靠近时，"
+      },
+      {
+        "start": 744,
+        "end": 867,
+        "text": "一颗被巨大云带包围的星球，出现在镜头之中。\n\n在木星表面，一场已经持续数百年的超级风暴，正在猛烈旋转。\n\n它就是著名的木星大红斑。\n\n这场风暴的规模，足以容纳一颗地球。\n\n但真正震撼科学家的，并不是木星本身。\n\n而是它周围的卫星。\n\n在木卫一上，"
+      },
+      {
+        "start": 867,
+        "end": 991,
+        "text": "旅行者探测任务发现了地球之外正在活动的火山。\n\n巨大的火山喷发，将物质抛向数百公里的高空。\n\n这项发现改变了人类对其他天体的认识。\n\n原来，在远离地球的冰冷宇宙中，依然存在如此剧烈的地质活动。\n\n而在另一颗卫星木卫二上，科学家发现了覆盖表面的冰层，"
+      },
+      {
+        "start": 991,
+        "end": 1114,
+        "text": "以及大量奇特的裂缝。\n\n这些观测为后来关于地下海洋的研究提供了重要线索。\n\n今天，木卫二已经成为人类寻找地外生命的重要目标之一。\n\n完成木星探测后，旅行者2号利用木星的引力改变轨道，继续飞往更加遥远的土星。\n\n1981年8月，旅行者2号抵达土星。"
+      },
+      {
+        "start": 1114,
+        "end": 1239,
+        "text": "\n\n在它传回的影像中，土星就像一颗悬浮在黑暗宇宙中的巨大宝石。\n\n环绕它的行星环，远比人类此前想象的更加复杂。\n\n这些壮观的光环，并不是完整的固体圆盘。\n\n而是由无数冰粒、岩石碎片和尘埃组成。\n\n它们共同围绕土星旋转，形成了太阳系中最壮丽的景象之一。"
+      },
+      {
+        "start": 1239,
+        "end": 1360,
+        "text": "\n\n旅行者2号拍摄了土星环的精细结构，也进一步观察了土星周围的众多卫星。\n\n到这里，旅行者2号已经完成了最初的主要任务。\n\n按照最早的任务目标，它本可以在探测木星和土星之后结束行星探索。\n\n但工程师发现，这艘探测器仍然能够正常工作。\n\n于是，"
+      },
+      {
+        "start": 1360,
+        "end": 1480,
+        "text": "一个更加大胆的决定诞生了。\n\n继续前进。\n\n前往从未有航天器近距离造访过的天王星和海王星。\n\n这意味着，旅行者2号将深入太阳系最遥远、最寒冷的区域。\n\n在那里，太阳会变成一个微小而明亮的光点，探测器与地球之间的通信，也将变得越来越困难。\n\n"
+      },
+      {
+        "start": 1480,
+        "end": 1616,
+        "text": "1986年1月24日，旅行者2号抵达天王星。\n\n这是人类第一次近距离观察这颗淡蓝绿色的巨行星。\n\n天王星最奇特的地方，是它的自转轴。\n\n它几乎是躺着围绕太阳运行的。\n\n这种特殊的姿态，让它拥有太阳系中极其漫长而奇特的季节变化。\n\n由于天王星绕太阳公转一周需要84个地球年，"
+      },
+      {
+        "start": 1616,
+        "end": 1740,
+        "text": "它的一个季节就可以持续大约21年。\n\n旅行者2号还发现，天王星的磁场与自转轴存在巨大的偏差。\n\n而它的一颗卫星，米兰达，更是让科学家感到不可思议。\n\n在这颗直径不到500公里的小卫星表面，布满了巨大的断崖、沟壑和复杂地形。\n\n仿佛这颗冰冷的小世界，"
+      },
+      {
+        "start": 1740,
+        "end": 1860,
+        "text": "曾经经历过一场难以想象的地质变动。\n\n直到今天，旅行者2号仍然是唯一近距离飞掠过天王星的航天器。\n\n但它的旅程还没有结束。\n\n下一站，是距离太阳更加遥远的海王星。\n\n1989年8月25日，旅行者2号终于抵达海王星。\n\n这时，距离它离开地球，"
+      },
+      {
+        "start": 1860,
+        "end": 1980,
+        "text": "已经过去了整整12年。\n\n在这片遥远的宇宙空间中，阳光已经极其微弱。\n\n太阳光抵达海王星，需要四个多小时。\n\n而在地球上，阳光只需要大约八分钟就能到达。\n\n旅行者2号拍摄到了一颗深蓝色的星球。\n\n在这颗星球的大气层中，存在着极其猛烈的风暴。"
+      },
+      {
+        "start": 1980,
+        "end": 2101,
+        "text": "\n\n其中一个巨大的暗色风暴，被科学家称为大黑斑。\n\n海王星的大气风速可以达到每小时2000公里左右，远远超过地球上最猛烈的飓风。\n\n更令人惊讶的是，这颗距离太阳如此遥远的星球，竟然拥有如此活跃的天气系统。\n\n科学家发现，海王星内部释放的热量，"
+      },
+      {
+        "start": 2101,
+        "end": 2221,
+        "text": "也是驱动这些大气活动的重要能量来源。\n\n随后，旅行者2号又近距离飞掠了海王星最大的卫星，海卫一。\n\n在这颗温度接近零下235摄氏度的冰冷世界上，探测器发现了正在喷发的羽流。\n\n即使在如此遥远而寒冷的地方，天体表面依然可能存在活跃的地质过程。"
+      },
+      {
+        "start": 2221,
+        "end": 2341,
+        "text": "\n\n这是旅行者2号最后一次近距离造访行星及其卫星。\n\n完成海王星探测后，它调转方向，向太阳系外围更加广阔的空间飞去。\n\n从此以后，它再也没有机会近距离拜访另一颗行星。\n\n但真正漫长的旅途，才刚刚开始。\n\n因为太阳系的边界，并不在海王星附近。"
+      },
+      {
+        "start": 2341,
+        "end": 2464,
+        "text": "\n\n太阳会不断向外释放高速带电粒子，这些粒子组成了太阳风。\n\n太阳风向外扩张，在太阳周围形成一个巨大的区域，被称为日球层。\n\n而日球层的外围边界，就是太阳风与星际介质相互作用形成的日球层顶。\n\n2018年11月5日，旅行者2号终于穿越了这一边界。"
+      },
+      {
+        "start": 2464,
+        "end": 2587,
+        "text": "\n\n它进入了星际空间。\n\n此时，距离它从地球出发，已经过去了41年。\n\n它成为继旅行者1号之后，第二艘进入星际空间的人类航天器。\n\n但进入星际空间，并不意味着它已经彻底离开了太阳系。\n\n在更加遥远的区域，还可能存在着由大量冰冻天体组成的奥尔特云。"
+      },
+      {
+        "start": 2587,
+        "end": 2714,
+        "text": "\n\n想要真正穿越这片广阔的空间，旅行者2号还需要漫长得难以想象的时间。\n\n而它的命运，也正在发生变化。\n\n随着距离越来越远，探测器与地球之间的通信，变得极其缓慢。\n\n即使无线电信号以光速传播，从地球发出一条指令，也需要将近20个小时才能抵达它所在的位置。"
+      },
+      {
+        "start": 2714,
+        "end": 2845,
+        "text": "\n\n如果再等待探测器传回回应，整个过程需要接近两天。\n\n更严峻的问题，是能源。\n\n在如此遥远的地方，太阳能已经无法满足探测器的供电需求。\n\n旅行者2号依靠放射性同位素热电发生器，将放射性物质衰变产生的热量转换为电能。\n\n但随着时间流逝，它的发电能力正在逐渐下降。"
+      },
+      {
+        "start": 2845,
+        "end": 2972,
+        "text": "\n\n为了延长探测器的工作寿命，科学家不得不陆续关闭部分科学仪器。\n\n它的相机早在1989年就已经停止工作。\n\n如今，它不再拍摄那些令人震撼的行星照片，而是继续测量宇宙深处的磁场、粒子和等离子体环境。\n\n总有一天，旅行者2号的电力会不足以维持与地球的通信。"
+      },
+      {
+        "start": 2972,
+        "end": 3096,
+        "text": "\n\n到了那个时候，它将永远沉默。\n\n但是，它不会停止飞行。\n\n在没有明显阻碍的情况下，它会依靠惯性，继续沿着自己的轨道，穿行在银河系之中。\n\n几十年，几百年，几千年。\n\n甚至数百万年之后，这艘来自地球的探测器，仍然可能在宇宙中漂泊。\n\n而在它身上，"
+      },
+      {
+        "start": 3096,
+        "end": 3227,
+        "text": "还携带着一件极其特殊的物品。\n\n一张金色的唱片。\n\n1977年，科学家卡尔·萨根带领团队，为旅行者探测器制作了一份送给宇宙的礼物。\n\n这张被称为旅行者金唱片的物品，记录着地球上的各种声音。\n\n海浪、风声、雷鸣、鸟鸣，以及人类的音乐。\n\n它还包含55种语言的问候，"
+      },
+      {
+        "start": 3227,
+        "end": 3347,
+        "text": "以及115幅关于地球和人类文明的图像。\n\n科学家希望，如果在遥远的未来，某个未知文明发现了这艘探测器，能够通过这些信息，了解它来自怎样一个世界。\n\n那个世界有海洋，有森林，有动物。\n\n也有一个刚刚学会离开母星、探索宇宙的年轻文明。\n\n也许，"
+      },
+      {
+        "start": 3347,
+        "end": 3468,
+        "text": "旅行者2号永远不会被任何外星文明发现。\n\n也许，它会在银河系中漂泊数亿年，直到人类文明发生无法想象的变化。\n\n但这并不影响这场远征的意义。\n\n因为在人类历史上，曾经有这样一群科学家，用上个世纪的技术，制造出了一艘能够飞向星际空间的探测器。\n\n"
+      },
+      {
+        "start": 3468,
+        "end": 3591,
+        "text": "它曾亲眼见过木星的风暴，土星的光环，天王星奇特的卫星，以及海王星猛烈的风。\n\n它走过的距离，远远超过了它最初设计时的目标。\n\n49年前，它从地球出发。\n\n49年后，它仍然在向着未知的宇宙前进。\n\n或许有一天，人类会忘记1977年发生过的许多事情。"
+      },
+      {
+        "start": 3591,
+        "end": 3716,
+        "text": "\n\n但在银河系的某个角落，依然会有一艘古老的探测器，带着来自地球的声音，静静地穿行在群星之间。\n\n它不会回头。\n\n也无法回家。\n\n因为对于旅行者2号来说，它的使命从来不是返回地球。\n\n而是替人类，去看看那些我们还无法亲自抵达的远方。\n\n宇宙如此浩瀚。"
+      },
+      {
+        "start": 3716,
+        "end": 3731,
+        "text": "\n\n而人类的探索，才刚刚开始。"
+      }
+    ],
+    "target_seconds": 1800.0
+  },
+  "cases": [
+    {
+      "id": "short",
+      "text": "1977年8月20日，旅行者2号升空。NASA记录的速度约为每秒15.4公里。银行的行长重新核对数据，确认这艘满载仪器的飞船仍在运行。",
+      "emotion": "narrative"
+    },
+    {
+      "id": "emotion-narrative",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "narrative"
+    },
+    {
+      "id": "emotion-gentle",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "gentle"
+    },
+    {
+      "id": "emotion-mystery",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "mystery"
+    },
+    {
+      "id": "emotion-excited",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "excited"
+    },
+    {
+      "id": "emotion-sad",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "sad"
+    },
+    {
+      "id": "emotion-angry",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "angry"
+    },
+    {
+      "id": "emotion-whisper",
+      "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "emotion": "whisper"
+    },
+    {
+      "id": "long-paragraph",
+      "text": "旅行者二号正在穿越遥远的星际空间。它携带着来自地球的问候，也保存着人类探索未知的勇气。当我们仰望夜空时，看到的是很久以前出发的光；当科学家等待探测器的信号时，等待的则是一段跨越漫长距离的回答。信号十分微弱，却能告诉我们那里还有怎样的粒子、磁场和变化。探测器的能源正在减少，部分仪器已经关闭，但每一份传回的数据仍然珍贵。我们无法亲自走到它的身旁，只能通过这些细小的变化，理解太阳影响之外的世界。这场旅程没有预先写好的结局。无论下一次消息何时到来，地球上的人们都会继续倾听。",
+      "emotion": "narrative"
+    }
+  ],
+  "baseline": [
+    {
+      "audio_path": "gpt-sovits/short.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 529280,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 16.54,
+      "generation_seconds": 44.603008799953386,
+      "rtf": 2.696675259972998,
+      "id": "short",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "1977年8月20日，旅行者2号升空。NASA记录的速度约为每秒15.4公里。银行的行长重新核对数据，确认这艘满载仪器的飞船仍在运行。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": false,
+      "cold_generation": true
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-narrative",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": false,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-gentle",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-mystery",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-excited",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-sad",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-angry",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 254080,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.94,
+      "generation_seconds": 3.4203036000253633,
+      "rtf": 0.43076871536843364,
+      "id": "emotion-whisper",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": true,
+      "cold_generation": false
+    },
+    {
+      "audio_path": "gpt-sovits/long-paragraph.wav",
+      "audio": {
+        "sample_rate": 32000,
+        "sample_count": 1820160,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 56.88,
+      "generation_seconds": 22.5545240000356,
+      "rtf": 0.3965281997193319,
+      "id": "long-paragraph",
+      "payload": {
+        "top_k": 15,
+        "top_p": 1,
+        "temperature": 1,
+        "text_split_method": "cut5",
+        "batch_size": 1,
+        "media_type": "wav",
+        "streaming_mode": false,
+        "sample_steps": 32,
+        "text": "旅行者二号正在穿越遥远的星际空间。它携带着来自地球的问候，也保存着人类探索未知的勇气。当我们仰望夜空时，看到的是很久以前出发的光；当科学家等待探测器的信号时，等待的则是一段跨越漫长距离的回答。信号十分微弱，却能告诉我们那里还有怎样的粒子、磁场和变化。探测器的能源正在减少，部分仪器已经关闭，但每一份传回的数据仍然珍贵。我们无法亲自走到它的身旁，只能通过这些细小的变化，理解太阳影响之外的世界。这场旅程没有预先写好的结局。无论下一次消息何时到来，地球上的人们都会继续倾听。",
+        "text_lang": "zh",
+        "ref_audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\reference.wav",
+        "prompt_text": "希望你以后能够做的比我还好呦。",
+        "prompt_lang": "zh",
+        "speed_factor": 1.0,
+        "seed": 42
+      },
+      "reused": false,
+      "cold_generation": false
+    }
+  ],
+  "voxcpm": [
+    {
+      "audio_path": "voxcpm2/short.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 583680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 12.16,
+      "generation_seconds": 9.442679699975997,
+      "rtf": 0.7765361595374998,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)1977年8月20日，旅行者2号升空。NASA记录的速度约为每秒15.4公里。银行的行长重新核对数据，确认这艘满载仪器的飞船仍在运行。",
+      "id": "short"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-narrative.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 345600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.2,
+      "generation_seconds": 5.196805600076914,
+      "rtf": 0.721778555566238,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-narrative"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-gentle.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 384000,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 8.0,
+      "generation_seconds": 5.9793797000311315,
+      "rtf": 0.7474224625038914,
+      "instruction": "保持参考音色，吐字清晰，温柔舒缓，带着安慰和关怀，放慢语速",
+      "synthesis_text": "(保持参考音色，吐字清晰，温柔舒缓，带着安慰和关怀，放慢语速)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-gentle"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-mystery.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 384000,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 8.0,
+      "generation_seconds": 6.621855499921367,
+      "rtf": 0.8277319374901708,
+      "instruction": "保持参考音色，吐字清晰，神秘好奇，带着悬念，吸引听众继续探索",
+      "synthesis_text": "(保持参考音色，吐字清晰，神秘好奇，带着悬念，吸引听众继续探索)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-mystery"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-excited.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 330240,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 6.88,
+      "generation_seconds": 4.985262600006536,
+      "rtf": 0.7246021220939732,
+      "instruction": "保持参考音色，吐字清晰，明显兴奋喜悦，充满活力和惊喜",
+      "synthesis_text": "(保持参考音色，吐字清晰，明显兴奋喜悦，充满活力和惊喜)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-excited"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-sad.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 407040,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 8.48,
+      "generation_seconds": 7.2110031000338495,
+      "rtf": 0.8503541391549351,
+      "instruction": "保持参考音色，吐字清晰，明显悲伤低落，带着失落和惋惜",
+      "synthesis_text": "(保持参考音色，吐字清晰，明显悲伤低落，带着失落和惋惜)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-sad"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-angry.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 360960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 7.52,
+      "generation_seconds": 5.526369100087322,
+      "rtf": 0.7348895079903355,
+      "instruction": "保持参考音色，吐字清晰，明显愤怒，语气坚定有力，但不要尖叫",
+      "synthesis_text": "(保持参考音色，吐字清晰，明显愤怒，语气坚定有力，但不要尖叫)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-angry"
+    },
+    {
+      "audio_path": "voxcpm2/emotion-whisper.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 407040,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 8.48,
+      "generation_seconds": 6.062926899990998,
+      "rtf": 0.7149677948102592,
+      "instruction": "保持参考音色，吐字清晰，轻声耳语，贴近听众，保持吐字清楚",
+      "synthesis_text": "(保持参考音色，吐字清晰，轻声耳语，贴近听众，保持吐字清楚)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。",
+      "id": "emotion-whisper"
+    },
+    {
+      "audio_path": "voxcpm2/long-paragraph.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 2081280,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 43.36,
+      "generation_seconds": 33.343248400022276,
+      "rtf": 0.7689863560890746,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者二号正在穿越遥远的星际空间。它携带着来自地球的问候，也保存着人类探索未知的勇气。当我们仰望夜空时，看到的是很久以前出发的光；当科学家等待探测器的信号时，等待的则是一段跨越漫长距离的回答。信号十分微弱，却能告诉我们那里还有怎样的粒子、磁场和变化。探测器的能源正在减少，部分仪器已经关闭，但每一份传回的数据仍然珍贵。我们无法亲自走到它的身旁，只能通过这些细小的变化，理解太阳影响之外的世界。这场旅程没有预先写好的结局。无论下一次消息何时到来，地球上的人们都会继续倾听。",
+      "id": "long-paragraph"
+    }
+  ],
+  "long_segments": [
+    {
+      "audio_path": "long/0001.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.34310319996439,
+      "rtf": 0.7444441233751781,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)在距离地球数百亿公里之外的宇宙深处，一艘来自上个世纪的探测器，正独自穿行在无尽的黑暗之中。\n\n它没有宇航员，没有驾驶舱，没有返回地球的计划。\n\n它已经飞行了49年，跨越了数百亿公里的漫长距离，见证了人类从未见过的行星世界。\n\n它就是旅行者2号。",
+      "id": "long-0001",
+      "source_start": 0,
+      "source_end": 122,
+      "source_cycle": 1,
+      "start_sample": 0,
+      "end_sample": 1182720
+    },
+    {
+      "audio_path": "long/0002.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1167360,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.32,
+      "generation_seconds": 19.05758969997987,
+      "rtf": 0.7836179975320671,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n1977年8月20日，一枚泰坦三号E型运载火箭，从美国卡纳维拉尔角升空。\n\n火箭上搭载的，正是旅行者2号探测器。\n\n那一年，个人电脑才刚刚兴起，互联网还远没有进入普通人的生活，人类甚至还没有发射第一座长期有人驻留的国际空间站。\n\n但科学家已经决定，",
+      "id": "long-0002",
+      "source_start": 122,
+      "source_end": 248,
+      "source_cycle": 1,
+      "start_sample": 1182720,
+      "end_sample": 2350080
+    },
+    {
+      "audio_path": "long/0003.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1236480,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.76,
+      "generation_seconds": 19.166952700004913,
+      "rtf": 0.7440587228262776,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)让一艘无人探测器飞往数十亿公里之外的太阳系边缘。\n\n这项任务的诞生，源于一次极其罕见的天文机会。\n\n20世纪70年代末，木星、土星、天王星和海王星，将处于一种特殊的相对位置。\n\n这种有利于连续飞掠四颗巨行星的排列，大约每175年才会出现一次。",
+      "id": "long-0003",
+      "source_start": 248,
+      "source_end": 369,
+      "source_cycle": 1,
+      "start_sample": 2350080,
+      "end_sample": 3586560
+    },
+    {
+      "audio_path": "long/0004.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1221120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.44,
+      "generation_seconds": 18.584324899944477,
+      "rtf": 0.7305159158783205,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n如果错过这次机会，人类可能要再等待一个多世纪，才能利用类似的轨道条件。\n\n科学家决定抓住它。\n\n但问题是，太阳系实在太大了。\n\n仅仅从地球飞到木星，就需要跨越数亿公里的距离。而更加遥远的海王星，距离太阳足足有45亿公里。\n\n以当时的火箭技术，",
+      "id": "long-0004",
+      "source_start": 369,
+      "source_end": 492,
+      "source_cycle": 1,
+      "start_sample": 3586560,
+      "end_sample": 4807680
+    },
+    {
+      "audio_path": "long/0005.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 19.604835800011642,
+      "rtf": 0.8114584354309454,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)想要携带足够的燃料完成整段旅程，几乎不可能。\n\n于是，科学家利用了一种巧妙的方法。\n\n引力弹弓。\n\n当探测器从一颗正在围绕太阳运动的行星附近掠过时，可以利用行星的引力改变飞行方向，并获得额外的速度。\n\n就像一个原本缓慢前进的物体，借助另一个高速运动的庞然大物，",
+      "id": "long-0005",
+      "source_start": 492,
+      "source_end": 622,
+      "source_cycle": 1,
+      "start_sample": 4807680,
+      "end_sample": 5967360
+    },
+    {
+      "audio_path": "long/0006.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 17.936543100047857,
+      "rtf": 0.7574553674006697,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)被甩向更远的地方。\n\n旅行者2号正是依靠这种方式，完成了一场跨越四颗巨行星的宇宙远征。\n\n1979年7月，经过将近两年的飞行，旅行者2号终于抵达了第一站。\n\n木星。\n\n这是太阳系中最大的行星，质量超过地球的300倍。\n\n当旅行者2号逐渐靠近时，",
+      "id": "long-0006",
+      "source_start": 622,
+      "source_end": 744,
+      "source_cycle": 1,
+      "start_sample": 5967360,
+      "end_sample": 7104000
+    },
+    {
+      "audio_path": "long/0007.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1036800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.6,
+      "generation_seconds": 16.852884499938227,
+      "rtf": 0.7802261342563993,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一颗被巨大云带包围的星球，出现在镜头之中。\n\n在木星表面，一场已经持续数百年的超级风暴，正在猛烈旋转。\n\n它就是著名的木星大红斑。\n\n这场风暴的规模，足以容纳一颗地球。\n\n但真正震撼科学家的，并不是木星本身。\n\n而是它周围的卫星。\n\n在木卫一上，",
+      "id": "long-0007",
+      "source_start": 744,
+      "source_end": 867,
+      "source_cycle": 1,
+      "start_sample": 7104000,
+      "end_sample": 8140800
+    },
+    {
+      "audio_path": "long/0008.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.778365300036967,
+      "rtf": 0.7558828784029322,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者探测任务发现了地球之外正在活动的火山。\n\n巨大的火山喷发，将物质抛向数百公里的高空。\n\n这项发现改变了人类对其他天体的认识。\n\n原来，在远离地球的冰冷宇宙中，依然存在如此剧烈的地质活动。\n\n而在另一颗卫星木卫二上，科学家发现了覆盖表面的冰层，",
+      "id": "long-0008",
+      "source_start": 867,
+      "source_end": 991,
+      "source_cycle": 1,
+      "start_sample": 8140800,
+      "end_sample": 9269760
+    },
+    {
+      "audio_path": "long/0009.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 18.32737830001861,
+      "rtf": 0.758583538908055,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)以及大量奇特的裂缝。\n\n这些观测为后来关于地下海洋的研究提供了重要线索。\n\n今天，木卫二已经成为人类寻找地外生命的重要目标之一。\n\n完成木星探测后，旅行者2号利用木星的引力改变轨道，继续飞往更加遥远的土星。\n\n1981年8月，旅行者2号抵达土星。",
+      "id": "long-0009",
+      "source_start": 991,
+      "source_end": 1114,
+      "source_cycle": 1,
+      "start_sample": 9269760,
+      "end_sample": 10429440
+    },
+    {
+      "audio_path": "long/0010.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 16.554823599988595,
+      "rtf": 0.7390546249994909,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n在它传回的影像中，土星就像一颗悬浮在黑暗宇宙中的巨大宝石。\n\n环绕它的行星环，远比人类此前想象的更加复杂。\n\n这些壮观的光环，并不是完整的固体圆盘。\n\n而是由无数冰粒、岩石碎片和尘埃组成。\n\n它们共同围绕土星旋转，形成了太阳系中最壮丽的景象之一。",
+      "id": "long-0010",
+      "source_start": 1114,
+      "source_end": 1239,
+      "source_cycle": 1,
+      "start_sample": 10429440,
+      "end_sample": 11504640
+    },
+    {
+      "audio_path": "long/0011.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 17.20575890003238,
+      "rtf": 0.7681142366085884,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n旅行者2号拍摄了土星环的精细结构，也进一步观察了土星周围的众多卫星。\n\n到这里，旅行者2号已经完成了最初的主要任务。\n\n按照最早的任务目标，它本可以在探测木星和土星之后结束行星探索。\n\n但工程师发现，这艘探测器仍然能够正常工作。\n\n于是，",
+      "id": "long-0011",
+      "source_start": 1239,
+      "source_end": 1360,
+      "source_cycle": 1,
+      "start_sample": 11504640,
+      "end_sample": 12579840
+    },
+    {
+      "audio_path": "long/0012.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1090560,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.72,
+      "generation_seconds": 17.03841439995449,
+      "rtf": 0.7499302112656026,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一个更加大胆的决定诞生了。\n\n继续前进。\n\n前往从未有航天器近距离造访过的天王星和海王星。\n\n这意味着，旅行者2号将深入太阳系最遥远、最寒冷的区域。\n\n在那里，太阳会变成一个微小而明亮的光点，探测器与地球之间的通信，也将变得越来越困难。\n\n",
+      "id": "long-0012",
+      "source_start": 1360,
+      "source_end": 1480,
+      "source_cycle": 1,
+      "start_sample": 12579840,
+      "end_sample": 13670400
+    },
+    {
+      "audio_path": "long/0013.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1267200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 26.4,
+      "generation_seconds": 20.546661800006405,
+      "rtf": 0.7782826439396365,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)1986年1月24日，旅行者2号抵达天王星。\n\n这是人类第一次近距离观察这颗淡蓝绿色的巨行星。\n\n天王星最奇特的地方，是它的自转轴。\n\n它几乎是躺着围绕太阳运行的。\n\n这种特殊的姿态，让它拥有太阳系中极其漫长而奇特的季节变化。\n\n由于天王星绕太阳公转一周需要84个地球年，",
+      "id": "long-0013",
+      "source_start": 1480,
+      "source_end": 1616,
+      "source_cycle": 1,
+      "start_sample": 13670400,
+      "end_sample": 14937600
+    },
+    {
+      "audio_path": "long/0014.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.88287410000339,
+      "rtf": 0.7663504099027351,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)它的一个季节就可以持续大约21年。\n\n旅行者2号还发现，天王星的磁场与自转轴存在巨大的偏差。\n\n而它的一颗卫星，米兰达，更是让科学家感到不可思议。\n\n在这颗直径不到500公里的小卫星表面，布满了巨大的断崖、沟壑和复杂地形。\n\n仿佛这颗冰冷的小世界，",
+      "id": "long-0014",
+      "source_start": 1616,
+      "source_end": 1740,
+      "source_cycle": 1,
+      "start_sample": 14937600,
+      "end_sample": 16120320
+    },
+    {
+      "audio_path": "long/0015.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1082880,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.56,
+      "generation_seconds": 17.31680749997031,
+      "rtf": 0.767588984927762,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)曾经经历过一场难以想象的地质变动。\n\n直到今天，旅行者2号仍然是唯一近距离飞掠过天王星的航天器。\n\n但它的旅程还没有结束。\n\n下一站，是距离太阳更加遥远的海王星。\n\n1989年8月25日，旅行者2号终于抵达海王星。\n\n这时，距离它离开地球，",
+      "id": "long-0015",
+      "source_start": 1740,
+      "source_end": 1860,
+      "source_cycle": 1,
+      "start_sample": 16120320,
+      "end_sample": 17203200
+    },
+    {
+      "audio_path": "long/0016.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 990720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 20.64,
+      "generation_seconds": 15.657857900019735,
+      "rtf": 0.7586171463187856,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)已经过去了整整12年。\n\n在这片遥远的宇宙空间中，阳光已经极其微弱。\n\n太阳光抵达海王星，需要四个多小时。\n\n而在地球上，阳光只需要大约八分钟就能到达。\n\n旅行者2号拍摄到了一颗深蓝色的星球。\n\n在这颗星球的大气层中，存在着极其猛烈的风暴。",
+      "id": "long-0016",
+      "source_start": 1860,
+      "source_end": 1980,
+      "source_cycle": 1,
+      "start_sample": 17203200,
+      "end_sample": 18193920
+    },
+    {
+      "audio_path": "long/0017.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.4943726999918,
+      "rtf": 0.7438083630948895,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n其中一个巨大的暗色风暴，被科学家称为大黑斑。\n\n海王星的大气风速可以达到每小时2000公里左右，远远超过地球上最猛烈的飓风。\n\n更令人惊讶的是，这颗距离太阳如此遥远的星球，竟然拥有如此活跃的天气系统。\n\n科学家发现，海王星内部释放的热量，",
+      "id": "long-0017",
+      "source_start": 1980,
+      "source_end": 2101,
+      "source_cycle": 1,
+      "start_sample": 18193920,
+      "end_sample": 19322880
+    },
+    {
+      "audio_path": "long/0018.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1036800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.6,
+      "generation_seconds": 15.639190100017004,
+      "rtf": 0.7240365787044909,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)也是驱动这些大气活动的重要能量来源。\n\n随后，旅行者2号又近距离飞掠了海王星最大的卫星，海卫一。\n\n在这颗温度接近零下235摄氏度的冰冷世界上，探测器发现了正在喷发的羽流。\n\n即使在如此遥远而寒冷的地方，天体表面依然可能存在活跃的地质过程。",
+      "id": "long-0018",
+      "source_start": 2101,
+      "source_end": 2221,
+      "source_cycle": 1,
+      "start_sample": 19322880,
+      "end_sample": 20359680
+    },
+    {
+      "audio_path": "long/0019.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 17.69704959995579,
+      "rtf": 0.7473416216197546,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n这是旅行者2号最后一次近距离造访行星及其卫星。\n\n完成海王星探测后，它调转方向，向太阳系外围更加广阔的空间飞去。\n\n从此以后，它再也没有机会近距离拜访另一颗行星。\n\n但真正漫长的旅途，才刚刚开始。\n\n因为太阳系的边界，并不在海王星附近。",
+      "id": "long-0019",
+      "source_start": 2221,
+      "source_end": 2341,
+      "source_cycle": 1,
+      "start_sample": 20359680,
+      "end_sample": 21496320
+    },
+    {
+      "audio_path": "long/0020.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 17.48744090006221,
+      "rtf": 0.7384899028742488,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n太阳会不断向外释放高速带电粒子，这些粒子组成了太阳风。\n\n太阳风向外扩张，在太阳周围形成一个巨大的区域，被称为日球层。\n\n而日球层的外围边界，就是太阳风与星际介质相互作用形成的日球层顶。\n\n2018年11月5日，旅行者2号终于穿越了这一边界。",
+      "id": "long-0020",
+      "source_start": 2341,
+      "source_end": 2464,
+      "source_cycle": 1,
+      "start_sample": 21496320,
+      "end_sample": 22632960
+    },
+    {
+      "audio_path": "long/0021.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1105920,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.04,
+      "generation_seconds": 17.33431790000759,
+      "rtf": 0.752357547743385,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n它进入了星际空间。\n\n此时，距离它从地球出发，已经过去了41年。\n\n它成为继旅行者1号之后，第二艘进入星际空间的人类航天器。\n\n但进入星际空间，并不意味着它已经彻底离开了太阳系。\n\n在更加遥远的区域，还可能存在着由大量冰冻天体组成的奥尔特云。",
+      "id": "long-0021",
+      "source_start": 2464,
+      "source_end": 2587,
+      "source_cycle": 1,
+      "start_sample": 22632960,
+      "end_sample": 23738880
+    },
+    {
+      "audio_path": "long/0022.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1090560,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.72,
+      "generation_seconds": 17.440608800039627,
+      "rtf": 0.767632429579209,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n想要真正穿越这片广阔的空间，旅行者2号还需要漫长得难以想象的时间。\n\n而它的命运，也正在发生变化。\n\n随着距离越来越远，探测器与地球之间的通信，变得极其缓慢。\n\n即使无线电信号以光速传播，从地球发出一条指令，也需要将近20个小时才能抵达它所在的位置。",
+      "id": "long-0022",
+      "source_start": 2587,
+      "source_end": 2714,
+      "source_cycle": 1,
+      "start_sample": 23738880,
+      "end_sample": 24829440
+    },
+    {
+      "audio_path": "long/0023.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1228800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.6,
+      "generation_seconds": 19.773740399978124,
+      "rtf": 0.7724117343741455,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n如果再等待探测器传回回应，整个过程需要接近两天。\n\n更严峻的问题，是能源。\n\n在如此遥远的地方，太阳能已经无法满足探测器的供电需求。\n\n旅行者2号依靠放射性同位素热电发生器，将放射性物质衰变产生的热量转换为电能。\n\n但随着时间流逝，它的发电能力正在逐渐下降。",
+      "id": "long-0023",
+      "source_start": 2714,
+      "source_end": 2845,
+      "source_cycle": 1,
+      "start_sample": 24829440,
+      "end_sample": 26058240
+    },
+    {
+      "audio_path": "long/0024.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 18.232145299902186,
+      "rtf": 0.754641775658203,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n为了延长探测器的工作寿命，科学家不得不陆续关闭部分科学仪器。\n\n它的相机早在1989年就已经停止工作。\n\n如今，它不再拍摄那些令人震撼的行星照片，而是继续测量宇宙深处的磁场、粒子和等离子体环境。\n\n总有一天，旅行者2号的电力会不足以维持与地球的通信。",
+      "id": "long-0024",
+      "source_start": 2845,
+      "source_end": 2972,
+      "source_cycle": 1,
+      "start_sample": 26058240,
+      "end_sample": 27217920
+    },
+    {
+      "audio_path": "long/0025.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1144320,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.84,
+      "generation_seconds": 17.746488399920054,
+      "rtf": 0.7443996812047002,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n到了那个时候，它将永远沉默。\n\n但是，它不会停止飞行。\n\n在没有明显阻碍的情况下，它会依靠惯性，继续沿着自己的轨道，穿行在银河系之中。\n\n几十年，几百年，几千年。\n\n甚至数百万年之后，这艘来自地球的探测器，仍然可能在宇宙中漂泊。\n\n而在它身上，",
+      "id": "long-0025",
+      "source_start": 2972,
+      "source_end": 3096,
+      "source_cycle": 1,
+      "start_sample": 27217920,
+      "end_sample": 28362240
+    },
+    {
+      "audio_path": "long/0026.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1221120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.44,
+      "generation_seconds": 18.38929029996507,
+      "rtf": 0.7228494614766143,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)还携带着一件极其特殊的物品。\n\n一张金色的唱片。\n\n1977年，科学家卡尔·萨根带领团队，为旅行者探测器制作了一份送给宇宙的礼物。\n\n这张被称为旅行者金唱片的物品，记录着地球上的各种声音。\n\n海浪、风声、雷鸣、鸟鸣，以及人类的音乐。\n\n它还包含55种语言的问候，",
+      "id": "long-0026",
+      "source_start": 3096,
+      "source_end": 3227,
+      "source_cycle": 1,
+      "start_sample": 28362240,
+      "end_sample": 29583360
+    },
+    {
+      "audio_path": "long/0027.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1205760,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.12,
+      "generation_seconds": 18.72732539998833,
+      "rtf": 0.7455145461778794,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)以及115幅关于地球和人类文明的图像。\n\n科学家希望，如果在遥远的未来，某个未知文明发现了这艘探测器，能够通过这些信息，了解它来自怎样一个世界。\n\n那个世界有海洋，有森林，有动物。\n\n也有一个刚刚学会离开母星、探索宇宙的年轻文明。\n\n也许，",
+      "id": "long-0027",
+      "source_start": 3227,
+      "source_end": 3347,
+      "source_cycle": 1,
+      "start_sample": 29583360,
+      "end_sample": 30789120
+    },
+    {
+      "audio_path": "long/0028.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1029120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.44,
+      "generation_seconds": 16.452442500041798,
+      "rtf": 0.7673713852631435,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者2号永远不会被任何外星文明发现。\n\n也许，它会在银河系中漂泊数亿年，直到人类文明发生无法想象的变化。\n\n但这并不影响这场远征的意义。\n\n因为在人类历史上，曾经有这样一群科学家，用上个世纪的技术，制造出了一艘能够飞向星际空间的探测器。\n\n",
+      "id": "long-0028",
+      "source_start": 3347,
+      "source_end": 3468,
+      "source_cycle": 1,
+      "start_sample": 30789120,
+      "end_sample": 31818240
+    },
+    {
+      "audio_path": "long/0029.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1113600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.2,
+      "generation_seconds": 17.176078099990264,
+      "rtf": 0.7403481939650975,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)它曾亲眼见过木星的风暴，土星的光环，天王星奇特的卫星，以及海王星猛烈的风。\n\n它走过的距离，远远超过了它最初设计时的目标。\n\n49年前，它从地球出发。\n\n49年后，它仍然在向着未知的宇宙前进。\n\n或许有一天，人类会忘记1977年发生过的许多事情。",
+      "id": "long-0029",
+      "source_start": 3468,
+      "source_end": 3591,
+      "source_cycle": 1,
+      "start_sample": 31818240,
+      "end_sample": 32931840
+    },
+    {
+      "audio_path": "long/0030.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 967680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 20.16,
+      "generation_seconds": 15.225037300027907,
+      "rtf": 0.7552101835331303,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n但在银河系的某个角落，依然会有一艘古老的探测器，带着来自地球的声音，静静地穿行在群星之间。\n\n它不会回头。\n\n也无法回家。\n\n因为对于旅行者2号来说，它的使命从来不是返回地球。\n\n而是替人类，去看看那些我们还无法亲自抵达的远方。\n\n宇宙如此浩瀚。",
+      "id": "long-0030",
+      "source_start": 3591,
+      "source_end": 3716,
+      "source_cycle": 1,
+      "start_sample": 32931840,
+      "end_sample": 33899520
+    },
+    {
+      "audio_path": "long/0031.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 153600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 3.2,
+      "generation_seconds": 2.3747659999644384,
+      "rtf": 0.742114374988887,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n而人类的探索，才刚刚开始。",
+      "id": "long-0031",
+      "source_start": 3716,
+      "source_end": 3731,
+      "source_cycle": 1,
+      "start_sample": 33899520,
+      "end_sample": 34053120
+    },
+    {
+      "audio_path": "long/0032.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.04764070000965,
+      "rtf": 0.7324529504874047,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)在距离地球数百亿公里之外的宇宙深处，一艘来自上个世纪的探测器，正独自穿行在无尽的黑暗之中。\n\n它没有宇航员，没有驾驶舱，没有返回地球的计划。\n\n它已经飞行了49年，跨越了数百亿公里的漫长距离，见证了人类从未见过的行星世界。\n\n它就是旅行者2号。",
+      "id": "long-0032",
+      "source_start": 0,
+      "source_end": 122,
+      "source_cycle": 2,
+      "start_sample": 34053120,
+      "end_sample": 35235840
+    },
+    {
+      "audio_path": "long/0033.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1167360,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.32,
+      "generation_seconds": 18.05088200001046,
+      "rtf": 0.7422237664477985,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n1977年8月20日，一枚泰坦三号E型运载火箭，从美国卡纳维拉尔角升空。\n\n火箭上搭载的，正是旅行者2号探测器。\n\n那一年，个人电脑才刚刚兴起，互联网还远没有进入普通人的生活，人类甚至还没有发射第一座长期有人驻留的国际空间站。\n\n但科学家已经决定，",
+      "id": "long-0033",
+      "source_start": 122,
+      "source_end": 248,
+      "source_cycle": 2,
+      "start_sample": 35235840,
+      "end_sample": 36403200
+    },
+    {
+      "audio_path": "long/0034.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1236480,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.76,
+      "generation_seconds": 18.78571430000011,
+      "rtf": 0.7292590954968986,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)让一艘无人探测器飞往数十亿公里之外的太阳系边缘。\n\n这项任务的诞生，源于一次极其罕见的天文机会。\n\n20世纪70年代末，木星、土星、天王星和海王星，将处于一种特殊的相对位置。\n\n这种有利于连续飞掠四颗巨行星的排列，大约每175年才会出现一次。",
+      "id": "long-0034",
+      "source_start": 248,
+      "source_end": 369,
+      "source_cycle": 2,
+      "start_sample": 36403200,
+      "end_sample": 37639680
+    },
+    {
+      "audio_path": "long/0035.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1221120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.44,
+      "generation_seconds": 18.96861830004491,
+      "rtf": 0.7456217885237778,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n如果错过这次机会，人类可能要再等待一个多世纪，才能利用类似的轨道条件。\n\n科学家决定抓住它。\n\n但问题是，太阳系实在太大了。\n\n仅仅从地球飞到木星，就需要跨越数亿公里的距离。而更加遥远的海王星，距离太阳足足有45亿公里。\n\n以当时的火箭技术，",
+      "id": "long-0035",
+      "source_start": 369,
+      "source_end": 492,
+      "source_cycle": 2,
+      "start_sample": 37639680,
+      "end_sample": 38860800
+    },
+    {
+      "audio_path": "long/0036.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 18.106899400008842,
+      "rtf": 0.7494577566228825,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)想要携带足够的燃料完成整段旅程，几乎不可能。\n\n于是，科学家利用了一种巧妙的方法。\n\n引力弹弓。\n\n当探测器从一颗正在围绕太阳运动的行星附近掠过时，可以利用行星的引力改变飞行方向，并获得额外的速度。\n\n就像一个原本缓慢前进的物体，借助另一个高速运动的庞然大物，",
+      "id": "long-0036",
+      "source_start": 492,
+      "source_end": 622,
+      "source_cycle": 2,
+      "start_sample": 38860800,
+      "end_sample": 40020480
+    },
+    {
+      "audio_path": "long/0037.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 18.031852600048296,
+      "rtf": 0.7614802618263639,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)被甩向更远的地方。\n\n旅行者2号正是依靠这种方式，完成了一场跨越四颗巨行星的宇宙远征。\n\n1979年7月，经过将近两年的飞行，旅行者2号终于抵达了第一站。\n\n木星。\n\n这是太阳系中最大的行星，质量超过地球的300倍。\n\n当旅行者2号逐渐靠近时，",
+      "id": "long-0037",
+      "source_start": 622,
+      "source_end": 744,
+      "source_cycle": 2,
+      "start_sample": 40020480,
+      "end_sample": 41157120
+    },
+    {
+      "audio_path": "long/0038.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1036800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.6,
+      "generation_seconds": 15.864777900045738,
+      "rtf": 0.7344804583354507,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一颗被巨大云带包围的星球，出现在镜头之中。\n\n在木星表面，一场已经持续数百年的超级风暴，正在猛烈旋转。\n\n它就是著名的木星大红斑。\n\n这场风暴的规模，足以容纳一颗地球。\n\n但真正震撼科学家的，并不是木星本身。\n\n而是它周围的卫星。\n\n在木卫一上，",
+      "id": "long-0038",
+      "source_start": 744,
+      "source_end": 867,
+      "source_cycle": 2,
+      "start_sample": 41157120,
+      "end_sample": 42193920
+    },
+    {
+      "audio_path": "long/0039.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.505843100021593,
+      "rtf": 0.7442960501709861,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者探测任务发现了地球之外正在活动的火山。\n\n巨大的火山喷发，将物质抛向数百公里的高空。\n\n这项发现改变了人类对其他天体的认识。\n\n原来，在远离地球的冰冷宇宙中，依然存在如此剧烈的地质活动。\n\n而在另一颗卫星木卫二上，科学家发现了覆盖表面的冰层，",
+      "id": "long-0039",
+      "source_start": 867,
+      "source_end": 991,
+      "source_cycle": 2,
+      "start_sample": 42193920,
+      "end_sample": 43322880
+    },
+    {
+      "audio_path": "long/0040.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 18.199447800056078,
+      "rtf": 0.7532884023202019,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)以及大量奇特的裂缝。\n\n这些观测为后来关于地下海洋的研究提供了重要线索。\n\n今天，木卫二已经成为人类寻找地外生命的重要目标之一。\n\n完成木星探测后，旅行者2号利用木星的引力改变轨道，继续飞往更加遥远的土星。\n\n1981年8月，旅行者2号抵达土星。",
+      "id": "long-0040",
+      "source_start": 991,
+      "source_end": 1114,
+      "source_cycle": 2,
+      "start_sample": 43322880,
+      "end_sample": 44482560
+    },
+    {
+      "audio_path": "long/0041.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 16.654313200036995,
+      "rtf": 0.7434961250016516,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n在它传回的影像中，土星就像一颗悬浮在黑暗宇宙中的巨大宝石。\n\n环绕它的行星环，远比人类此前想象的更加复杂。\n\n这些壮观的光环，并不是完整的固体圆盘。\n\n而是由无数冰粒、岩石碎片和尘埃组成。\n\n它们共同围绕土星旋转，形成了太阳系中最壮丽的景象之一。",
+      "id": "long-0041",
+      "source_start": 1114,
+      "source_end": 1239,
+      "source_cycle": 2,
+      "start_sample": 44482560,
+      "end_sample": 45557760
+    },
+    {
+      "audio_path": "long/0042.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 16.629973099916242,
+      "rtf": 0.742409513389118,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n旅行者2号拍摄了土星环的精细结构，也进一步观察了土星周围的众多卫星。\n\n到这里，旅行者2号已经完成了最初的主要任务。\n\n按照最早的任务目标，它本可以在探测木星和土星之后结束行星探索。\n\n但工程师发现，这艘探测器仍然能够正常工作。\n\n于是，",
+      "id": "long-0042",
+      "source_start": 1239,
+      "source_end": 1360,
+      "source_cycle": 2,
+      "start_sample": 45557760,
+      "end_sample": 46632960
+    },
+    {
+      "audio_path": "long/0043.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1090560,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.72,
+      "generation_seconds": 16.969007199979387,
+      "rtf": 0.7468753169005012,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一个更加大胆的决定诞生了。\n\n继续前进。\n\n前往从未有航天器近距离造访过的天王星和海王星。\n\n这意味着，旅行者2号将深入太阳系最遥远、最寒冷的区域。\n\n在那里，太阳会变成一个微小而明亮的光点，探测器与地球之间的通信，也将变得越来越困难。\n\n",
+      "id": "long-0043",
+      "source_start": 1360,
+      "source_end": 1480,
+      "source_cycle": 2,
+      "start_sample": 46632960,
+      "end_sample": 47723520
+    },
+    {
+      "audio_path": "long/0044.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1267200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 26.4,
+      "generation_seconds": 19.985322099993937,
+      "rtf": 0.7570197765149219,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)1986年1月24日，旅行者2号抵达天王星。\n\n这是人类第一次近距离观察这颗淡蓝绿色的巨行星。\n\n天王星最奇特的地方，是它的自转轴。\n\n它几乎是躺着围绕太阳运行的。\n\n这种特殊的姿态，让它拥有太阳系中极其漫长而奇特的季节变化。\n\n由于天王星绕太阳公转一周需要84个地球年，",
+      "id": "long-0044",
+      "source_start": 1480,
+      "source_end": 1616,
+      "source_cycle": 2,
+      "start_sample": 47723520,
+      "end_sample": 48990720
+    },
+    {
+      "audio_path": "long/0045.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.5208967999788,
+      "rtf": 0.7516597727264124,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)它的一个季节就可以持续大约21年。\n\n旅行者2号还发现，天王星的磁场与自转轴存在巨大的偏差。\n\n而它的一颗卫星，米兰达，更是让科学家感到不可思议。\n\n在这颗直径不到500公里的小卫星表面，布满了巨大的断崖、沟壑和复杂地形。\n\n仿佛这颗冰冷的小世界，",
+      "id": "long-0045",
+      "source_start": 1616,
+      "source_end": 1740,
+      "source_cycle": 2,
+      "start_sample": 48990720,
+      "end_sample": 50173440
+    },
+    {
+      "audio_path": "long/0046.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1082880,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.56,
+      "generation_seconds": 16.628875499940477,
+      "rtf": 0.7370955452101275,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)曾经经历过一场难以想象的地质变动。\n\n直到今天，旅行者2号仍然是唯一近距离飞掠过天王星的航天器。\n\n但它的旅程还没有结束。\n\n下一站，是距离太阳更加遥远的海王星。\n\n1989年8月25日，旅行者2号终于抵达海王星。\n\n这时，距离它离开地球，",
+      "id": "long-0046",
+      "source_start": 1740,
+      "source_end": 1860,
+      "source_cycle": 2,
+      "start_sample": 50173440,
+      "end_sample": 51256320
+    },
+    {
+      "audio_path": "long/0047.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 990720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 20.64,
+      "generation_seconds": 15.090239899931476,
+      "rtf": 0.7311162742214862,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)已经过去了整整12年。\n\n在这片遥远的宇宙空间中，阳光已经极其微弱。\n\n太阳光抵达海王星，需要四个多小时。\n\n而在地球上，阳光只需要大约八分钟就能到达。\n\n旅行者2号拍摄到了一颗深蓝色的星球。\n\n在这颗星球的大气层中，存在着极其猛烈的风暴。",
+      "id": "long-0047",
+      "source_start": 1860,
+      "source_end": 1980,
+      "source_cycle": 2,
+      "start_sample": 51256320,
+      "end_sample": 52247040
+    },
+    {
+      "audio_path": "long/0048.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.719983499962837,
+      "rtf": 0.7534006590120254,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n其中一个巨大的暗色风暴，被科学家称为大黑斑。\n\n海王星的大气风速可以达到每小时2000公里左右，远远超过地球上最猛烈的飓风。\n\n更令人惊讶的是，这颗距离太阳如此遥远的星球，竟然拥有如此活跃的天气系统。\n\n科学家发现，海王星内部释放的热量，",
+      "id": "long-0048",
+      "source_start": 1980,
+      "source_end": 2101,
+      "source_cycle": 2,
+      "start_sample": 52247040,
+      "end_sample": 53376000
+    },
+    {
+      "audio_path": "long/0049.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1036800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.6,
+      "generation_seconds": 16.719793600030243,
+      "rtf": 0.7740645185199186,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)也是驱动这些大气活动的重要能量来源。\n\n随后，旅行者2号又近距离飞掠了海王星最大的卫星，海卫一。\n\n在这颗温度接近零下235摄氏度的冰冷世界上，探测器发现了正在喷发的羽流。\n\n即使在如此遥远而寒冷的地方，天体表面依然可能存在活跃的地质过程。",
+      "id": "long-0049",
+      "source_start": 2101,
+      "source_end": 2221,
+      "source_cycle": 2,
+      "start_sample": 53376000,
+      "end_sample": 54412800
+    },
+    {
+      "audio_path": "long/0050.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 18.054949900018983,
+      "rtf": 0.7624556545616125,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n这是旅行者2号最后一次近距离造访行星及其卫星。\n\n完成海王星探测后，它调转方向，向太阳系外围更加广阔的空间飞去。\n\n从此以后，它再也没有机会近距离拜访另一颗行星。\n\n但真正漫长的旅途，才刚刚开始。\n\n因为太阳系的边界，并不在海王星附近。",
+      "id": "long-0050",
+      "source_start": 2221,
+      "source_end": 2341,
+      "source_cycle": 2,
+      "start_sample": 54412800,
+      "end_sample": 55549440
+    },
+    {
+      "audio_path": "long/0051.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 18.08649380004499,
+      "rtf": 0.7637877449343324,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n太阳会不断向外释放高速带电粒子，这些粒子组成了太阳风。\n\n太阳风向外扩张，在太阳周围形成一个巨大的区域，被称为日球层。\n\n而日球层的外围边界，就是太阳风与星际介质相互作用形成的日球层顶。\n\n2018年11月5日，旅行者2号终于穿越了这一边界。",
+      "id": "long-0051",
+      "source_start": 2341,
+      "source_end": 2464,
+      "source_cycle": 2,
+      "start_sample": 55549440,
+      "end_sample": 56686080
+    },
+    {
+      "audio_path": "long/0052.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1105920,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.04,
+      "generation_seconds": 17.826253599952906,
+      "rtf": 0.7737089236090672,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n它进入了星际空间。\n\n此时，距离它从地球出发，已经过去了41年。\n\n它成为继旅行者1号之后，第二艘进入星际空间的人类航天器。\n\n但进入星际空间，并不意味着它已经彻底离开了太阳系。\n\n在更加遥远的区域，还可能存在着由大量冰冻天体组成的奥尔特云。",
+      "id": "long-0052",
+      "source_start": 2464,
+      "source_end": 2587,
+      "source_cycle": 2,
+      "start_sample": 56686080,
+      "end_sample": 57792000
+    },
+    {
+      "audio_path": "long/0053.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1090560,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.72,
+      "generation_seconds": 17.089364900020882,
+      "rtf": 0.7521727508812008,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n想要真正穿越这片广阔的空间，旅行者2号还需要漫长得难以想象的时间。\n\n而它的命运，也正在发生变化。\n\n随着距离越来越远，探测器与地球之间的通信，变得极其缓慢。\n\n即使无线电信号以光速传播，从地球发出一条指令，也需要将近20个小时才能抵达它所在的位置。",
+      "id": "long-0053",
+      "source_start": 2587,
+      "source_end": 2714,
+      "source_cycle": 2,
+      "start_sample": 57792000,
+      "end_sample": 58882560
+    },
+    {
+      "audio_path": "long/0054.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1228800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.6,
+      "generation_seconds": 19.270792899886146,
+      "rtf": 0.7527653476518026,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n如果再等待探测器传回回应，整个过程需要接近两天。\n\n更严峻的问题，是能源。\n\n在如此遥远的地方，太阳能已经无法满足探测器的供电需求。\n\n旅行者2号依靠放射性同位素热电发生器，将放射性物质衰变产生的热量转换为电能。\n\n但随着时间流逝，它的发电能力正在逐渐下降。",
+      "id": "long-0054",
+      "source_start": 2714,
+      "source_end": 2845,
+      "source_cycle": 2,
+      "start_sample": 58882560,
+      "end_sample": 60111360
+    },
+    {
+      "audio_path": "long/0055.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 17.358458500006236,
+      "rtf": 0.718479242549927,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n为了延长探测器的工作寿命，科学家不得不陆续关闭部分科学仪器。\n\n它的相机早在1989年就已经停止工作。\n\n如今，它不再拍摄那些令人震撼的行星照片，而是继续测量宇宙深处的磁场、粒子和等离子体环境。\n\n总有一天，旅行者2号的电力会不足以维持与地球的通信。",
+      "id": "long-0055",
+      "source_start": 2845,
+      "source_end": 2972,
+      "source_cycle": 2,
+      "start_sample": 60111360,
+      "end_sample": 61271040
+    },
+    {
+      "audio_path": "long/0056.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1144320,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.84,
+      "generation_seconds": 18.18255509994924,
+      "rtf": 0.7626910696287433,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n到了那个时候，它将永远沉默。\n\n但是，它不会停止飞行。\n\n在没有明显阻碍的情况下，它会依靠惯性，继续沿着自己的轨道，穿行在银河系之中。\n\n几十年，几百年，几千年。\n\n甚至数百万年之后，这艘来自地球的探测器，仍然可能在宇宙中漂泊。\n\n而在它身上，",
+      "id": "long-0056",
+      "source_start": 2972,
+      "source_end": 3096,
+      "source_cycle": 2,
+      "start_sample": 61271040,
+      "end_sample": 62415360
+    },
+    {
+      "audio_path": "long/0057.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1221120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.44,
+      "generation_seconds": 18.938274099957198,
+      "rtf": 0.7444290133630974,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)还携带着一件极其特殊的物品。\n\n一张金色的唱片。\n\n1977年，科学家卡尔·萨根带领团队，为旅行者探测器制作了一份送给宇宙的礼物。\n\n这张被称为旅行者金唱片的物品，记录着地球上的各种声音。\n\n海浪、风声、雷鸣、鸟鸣，以及人类的音乐。\n\n它还包含55种语言的问候，",
+      "id": "long-0057",
+      "source_start": 3096,
+      "source_end": 3227,
+      "source_cycle": 2,
+      "start_sample": 62415360,
+      "end_sample": 63636480
+    },
+    {
+      "audio_path": "long/0058.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1205760,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.12,
+      "generation_seconds": 19.895820299978368,
+      "rtf": 0.792031062897228,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)以及115幅关于地球和人类文明的图像。\n\n科学家希望，如果在遥远的未来，某个未知文明发现了这艘探测器，能够通过这些信息，了解它来自怎样一个世界。\n\n那个世界有海洋，有森林，有动物。\n\n也有一个刚刚学会离开母星、探索宇宙的年轻文明。\n\n也许，",
+      "id": "long-0058",
+      "source_start": 3227,
+      "source_end": 3347,
+      "source_cycle": 2,
+      "start_sample": 63636480,
+      "end_sample": 64842240
+    },
+    {
+      "audio_path": "long/0059.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1029120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.44,
+      "generation_seconds": 16.371861900086515,
+      "rtf": 0.7636129617577665,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者2号永远不会被任何外星文明发现。\n\n也许，它会在银河系中漂泊数亿年，直到人类文明发生无法想象的变化。\n\n但这并不影响这场远征的意义。\n\n因为在人类历史上，曾经有这样一群科学家，用上个世纪的技术，制造出了一艘能够飞向星际空间的探测器。\n\n",
+      "id": "long-0059",
+      "source_start": 3347,
+      "source_end": 3468,
+      "source_cycle": 2,
+      "start_sample": 64842240,
+      "end_sample": 65871360
+    },
+    {
+      "audio_path": "long/0060.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1113600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.2,
+      "generation_seconds": 17.478015400003642,
+      "rtf": 0.7533627327587777,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)它曾亲眼见过木星的风暴，土星的光环，天王星奇特的卫星，以及海王星猛烈的风。\n\n它走过的距离，远远超过了它最初设计时的目标。\n\n49年前，它从地球出发。\n\n49年后，它仍然在向着未知的宇宙前进。\n\n或许有一天，人类会忘记1977年发生过的许多事情。",
+      "id": "long-0060",
+      "source_start": 3468,
+      "source_end": 3591,
+      "source_cycle": 2,
+      "start_sample": 65871360,
+      "end_sample": 66984960
+    },
+    {
+      "audio_path": "long/0061.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 967680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 20.16,
+      "generation_seconds": 15.002718799980357,
+      "rtf": 0.7441824801577558,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n但在银河系的某个角落，依然会有一艘古老的探测器，带着来自地球的声音，静静地穿行在群星之间。\n\n它不会回头。\n\n也无法回家。\n\n因为对于旅行者2号来说，它的使命从来不是返回地球。\n\n而是替人类，去看看那些我们还无法亲自抵达的远方。\n\n宇宙如此浩瀚。",
+      "id": "long-0061",
+      "source_start": 3591,
+      "source_end": 3716,
+      "source_cycle": 2,
+      "start_sample": 66984960,
+      "end_sample": 67952640
+    },
+    {
+      "audio_path": "long/0062.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 153600,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 3.2,
+      "generation_seconds": 2.3810334999579936,
+      "rtf": 0.744072968736873,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n而人类的探索，才刚刚开始。",
+      "id": "long-0062",
+      "source_start": 3716,
+      "source_end": 3731,
+      "source_cycle": 2,
+      "start_sample": 67952640,
+      "end_sample": 68106240
+    },
+    {
+      "audio_path": "long/0063.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.00976939999964,
+      "rtf": 0.7309159659090764,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)在距离地球数百亿公里之外的宇宙深处，一艘来自上个世纪的探测器，正独自穿行在无尽的黑暗之中。\n\n它没有宇航员，没有驾驶舱，没有返回地球的计划。\n\n它已经飞行了49年，跨越了数百亿公里的漫长距离，见证了人类从未见过的行星世界。\n\n它就是旅行者2号。",
+      "id": "long-0063",
+      "source_start": 0,
+      "source_end": 122,
+      "source_cycle": 3,
+      "start_sample": 68106240,
+      "end_sample": 69288960
+    },
+    {
+      "audio_path": "long/0064.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1167360,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.32,
+      "generation_seconds": 17.679999799933285,
+      "rtf": 0.7269736759840989,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n1977年8月20日，一枚泰坦三号E型运载火箭，从美国卡纳维拉尔角升空。\n\n火箭上搭载的，正是旅行者2号探测器。\n\n那一年，个人电脑才刚刚兴起，互联网还远没有进入普通人的生活，人类甚至还没有发射第一座长期有人驻留的国际空间站。\n\n但科学家已经决定，",
+      "id": "long-0064",
+      "source_start": 122,
+      "source_end": 248,
+      "source_cycle": 3,
+      "start_sample": 69288960,
+      "end_sample": 70456320
+    },
+    {
+      "audio_path": "long/0065.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1236480,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.76,
+      "generation_seconds": 19.10339540010318,
+      "rtf": 0.7415914363394092,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)让一艘无人探测器飞往数十亿公里之外的太阳系边缘。\n\n这项任务的诞生，源于一次极其罕见的天文机会。\n\n20世纪70年代末，木星、土星、天王星和海王星，将处于一种特殊的相对位置。\n\n这种有利于连续飞掠四颗巨行星的排列，大约每175年才会出现一次。",
+      "id": "long-0065",
+      "source_start": 248,
+      "source_end": 369,
+      "source_cycle": 3,
+      "start_sample": 70456320,
+      "end_sample": 71692800
+    },
+    {
+      "audio_path": "long/0066.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1221120,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 25.44,
+      "generation_seconds": 19.513735700049438,
+      "rtf": 0.7670493592786728,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n如果错过这次机会，人类可能要再等待一个多世纪，才能利用类似的轨道条件。\n\n科学家决定抓住它。\n\n但问题是，太阳系实在太大了。\n\n仅仅从地球飞到木星，就需要跨越数亿公里的距离。而更加遥远的海王星，距离太阳足足有45亿公里。\n\n以当时的火箭技术，",
+      "id": "long-0066",
+      "source_start": 369,
+      "source_end": 492,
+      "source_cycle": 3,
+      "start_sample": 71692800,
+      "end_sample": 72913920
+    },
+    {
+      "audio_path": "long/0067.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 17.657412400003523,
+      "rtf": 0.7308531622518014,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)想要携带足够的燃料完成整段旅程，几乎不可能。\n\n于是，科学家利用了一种巧妙的方法。\n\n引力弹弓。\n\n当探测器从一颗正在围绕太阳运动的行星附近掠过时，可以利用行星的引力改变飞行方向，并获得额外的速度。\n\n就像一个原本缓慢前进的物体，借助另一个高速运动的庞然大物，",
+      "id": "long-0067",
+      "source_start": 492,
+      "source_end": 622,
+      "source_cycle": 3,
+      "start_sample": 72913920,
+      "end_sample": 74073600
+    },
+    {
+      "audio_path": "long/0068.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1136640,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.68,
+      "generation_seconds": 17.662834000075236,
+      "rtf": 0.7458967060842583,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)被甩向更远的地方。\n\n旅行者2号正是依靠这种方式，完成了一场跨越四颗巨行星的宇宙远征。\n\n1979年7月，经过将近两年的飞行，旅行者2号终于抵达了第一站。\n\n木星。\n\n这是太阳系中最大的行星，质量超过地球的300倍。\n\n当旅行者2号逐渐靠近时，",
+      "id": "long-0068",
+      "source_start": 622,
+      "source_end": 744,
+      "source_cycle": 3,
+      "start_sample": 74073600,
+      "end_sample": 75210240
+    },
+    {
+      "audio_path": "long/0069.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1036800,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 21.6,
+      "generation_seconds": 16.37578919995576,
+      "rtf": 0.7581383888868407,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一颗被巨大云带包围的星球，出现在镜头之中。\n\n在木星表面，一场已经持续数百年的超级风暴，正在猛烈旋转。\n\n它就是著名的木星大红斑。\n\n这场风暴的规模，足以容纳一颗地球。\n\n但真正震撼科学家的，并不是木星本身。\n\n而是它周围的卫星。\n\n在木卫一上，",
+      "id": "long-0069",
+      "source_start": 744,
+      "source_end": 867,
+      "source_cycle": 3,
+      "start_sample": 75210240,
+      "end_sample": 76247040
+    },
+    {
+      "audio_path": "long/0070.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.244954099995084,
+      "rtf": 0.7332038307821039,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)旅行者探测任务发现了地球之外正在活动的火山。\n\n巨大的火山喷发，将物质抛向数百公里的高空。\n\n这项发现改变了人类对其他天体的认识。\n\n原来，在远离地球的冰冷宇宙中，依然存在如此剧烈的地质活动。\n\n而在另一颗卫星木卫二上，科学家发现了覆盖表面的冰层，",
+      "id": "long-0070",
+      "source_start": 867,
+      "source_end": 991,
+      "source_cycle": 3,
+      "start_sample": 76247040,
+      "end_sample": 77376000
+    },
+    {
+      "audio_path": "long/0071.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1159680,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.16,
+      "generation_seconds": 17.878865299979225,
+      "rtf": 0.7400192591051004,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)以及大量奇特的裂缝。\n\n这些观测为后来关于地下海洋的研究提供了重要线索。\n\n今天，木卫二已经成为人类寻找地外生命的重要目标之一。\n\n完成木星探测后，旅行者2号利用木星的引力改变轨道，继续飞往更加遥远的土星。\n\n1981年8月，旅行者2号抵达土星。",
+      "id": "long-0071",
+      "source_start": 991,
+      "source_end": 1114,
+      "source_cycle": 3,
+      "start_sample": 77376000,
+      "end_sample": 78535680
+    },
+    {
+      "audio_path": "long/0072.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 16.618994200020097,
+      "rtf": 0.7419193839294687,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n在它传回的影像中，土星就像一颗悬浮在黑暗宇宙中的巨大宝石。\n\n环绕它的行星环，远比人类此前想象的更加复杂。\n\n这些壮观的光环，并不是完整的固体圆盘。\n\n而是由无数冰粒、岩石碎片和尘埃组成。\n\n它们共同围绕土星旋转，形成了太阳系中最壮丽的景象之一。",
+      "id": "long-0072",
+      "source_start": 1114,
+      "source_end": 1239,
+      "source_cycle": 3,
+      "start_sample": 78535680,
+      "end_sample": 79610880
+    },
+    {
+      "audio_path": "long/0073.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1075200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.4,
+      "generation_seconds": 16.255699899978936,
+      "rtf": 0.7257008883919168,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n旅行者2号拍摄了土星环的精细结构，也进一步观察了土星周围的众多卫星。\n\n到这里，旅行者2号已经完成了最初的主要任务。\n\n按照最早的任务目标，它本可以在探测木星和土星之后结束行星探索。\n\n但工程师发现，这艘探测器仍然能够正常工作。\n\n于是，",
+      "id": "long-0073",
+      "source_start": 1239,
+      "source_end": 1360,
+      "source_cycle": 3,
+      "start_sample": 79610880,
+      "end_sample": 80686080
+    },
+    {
+      "audio_path": "long/0074.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1090560,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.72,
+      "generation_seconds": 16.524428900098428,
+      "rtf": 0.7273076100395435,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)一个更加大胆的决定诞生了。\n\n继续前进。\n\n前往从未有航天器近距离造访过的天王星和海王星。\n\n这意味着，旅行者2号将深入太阳系最遥远、最寒冷的区域。\n\n在那里，太阳会变成一个微小而明亮的光点，探测器与地球之间的通信，也将变得越来越困难。\n\n",
+      "id": "long-0074",
+      "source_start": 1360,
+      "source_end": 1480,
+      "source_cycle": 3,
+      "start_sample": 80686080,
+      "end_sample": 81776640
+    },
+    {
+      "audio_path": "long/0075.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1267200,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 26.4,
+      "generation_seconds": 19.757123599993065,
+      "rtf": 0.7483758939391313,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)1986年1月24日，旅行者2号抵达天王星。\n\n这是人类第一次近距离观察这颗淡蓝绿色的巨行星。\n\n天王星最奇特的地方，是它的自转轴。\n\n它几乎是躺着围绕太阳运行的。\n\n这种特殊的姿态，让它拥有太阳系中极其漫长而奇特的季节变化。\n\n由于天王星绕太阳公转一周需要84个地球年，",
+      "id": "long-0075",
+      "source_start": 1480,
+      "source_end": 1616,
+      "source_cycle": 3,
+      "start_sample": 81776640,
+      "end_sample": 83043840
+    },
+    {
+      "audio_path": "long/0076.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1182720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 24.64,
+      "generation_seconds": 18.246367300045677,
+      "rtf": 0.7405181534109446,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)它的一个季节就可以持续大约21年。\n\n旅行者2号还发现，天王星的磁场与自转轴存在巨大的偏差。\n\n而它的一颗卫星，米兰达，更是让科学家感到不可思议。\n\n在这颗直径不到500公里的小卫星表面，布满了巨大的断崖、沟壑和复杂地形。\n\n仿佛这颗冰冷的小世界，",
+      "id": "long-0076",
+      "source_start": 1616,
+      "source_end": 1740,
+      "source_cycle": 3,
+      "start_sample": 83043840,
+      "end_sample": 84226560
+    },
+    {
+      "audio_path": "long/0077.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1082880,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 22.56,
+      "generation_seconds": 16.7811623000307,
+      "rtf": 0.7438458466325666,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)曾经经历过一场难以想象的地质变动。\n\n直到今天，旅行者2号仍然是唯一近距离飞掠过天王星的航天器。\n\n但它的旅程还没有结束。\n\n下一站，是距离太阳更加遥远的海王星。\n\n1989年8月25日，旅行者2号终于抵达海王星。\n\n这时，距离它离开地球，",
+      "id": "long-0077",
+      "source_start": 1740,
+      "source_end": 1860,
+      "source_cycle": 3,
+      "start_sample": 84226560,
+      "end_sample": 85309440
+    },
+    {
+      "audio_path": "long/0078.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 990720,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 20.64,
+      "generation_seconds": 15.056011899956502,
+      "rtf": 0.7294579408893654,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)已经过去了整整12年。\n\n在这片遥远的宇宙空间中，阳光已经极其微弱。\n\n太阳光抵达海王星，需要四个多小时。\n\n而在地球上，阳光只需要大约八分钟就能到达。\n\n旅行者2号拍摄到了一颗深蓝色的星球。\n\n在这颗星球的大气层中，存在着极其猛烈的风暴。",
+      "id": "long-0078",
+      "source_start": 1860,
+      "source_end": 1980,
+      "source_cycle": 3,
+      "start_sample": 85309440,
+      "end_sample": 86300160
+    },
+    {
+      "audio_path": "long/0079.wav",
+      "audio": {
+        "sample_rate": 48000,
+        "sample_count": 1128960,
+        "channels": 1,
+        "sample_width": 2
+      },
+      "duration_seconds": 23.52,
+      "generation_seconds": 17.327764700050466,
+      "rtf": 0.736724689627996,
+      "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+      "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)\n\n其中一个巨大的暗色风暴，被科学家称为大黑斑。\n\n海王星的大气风速可以达到每小时2000公里左右，远远超过地球上最猛烈的飓风。\n\n更令人惊讶的是，这颗距离太阳如此遥远的星球，竟然拥有如此活跃的天气系统。\n\n科学家发现，海王星内部释放的热量，",
+      "id": "long-0079",
+      "source_start": 1980,
+      "source_end": 2101,
+      "source_cycle": 3,
+      "start_sample": 86300160,
+      "end_sample": 87429120
+    }
+  ],
+  "checkpoints": [
+    {
+      "target_seconds": 300,
+      "actual_seconds": 311.19999999999993,
+      "generation_seconds": 236.99763619992882,
+      "rtf": 0.7615605276347329,
+      "segment_count": 13
+    },
+    {
+      "target_seconds": 600,
+      "actual_seconds": 616.32,
+      "generation_seconds": 466.0898200997617,
+      "rtf": 0.7562464630382945,
+      "segment_count": 26
+    },
+    {
+      "target_seconds": 1800,
+      "actual_seconds": 1821.440000000001,
+      "generation_seconds": 1366.1564511999022,
+      "rtf": 0.7500419729444294,
+      "segment_count": 79
+    }
+  ],
+  "subjective_listening": "received_and_reviewed",
+  "decision": "PROCEED TTS-VOX-03 by explicit user authorization; measured limitations and original listening verdict preserved; default engine unchanged.",
+  "baseline_command": [
+    "E:/VideoAI/shared/tools/GPT-SoVITS/runtime/python.exe",
+    "-B",
+    "-u",
+    "E:\\VideoAI\\shared\\tools\\GPT-SoVITS\\api_v2.py",
+    "-a",
+    "127.0.0.1",
+    "-p",
+    "56457",
+    "-c",
+    "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\tts-runtime.yaml"
+  ],
+  "baseline_owned_pid": 47652,
+  "baseline_load_seconds": 88.35469850001391,
+  "baseline_process_exit_code": 1,
+  "baseline_elapsed_seconds": 159.25568329996895,
+  "updated_at": "2026-11-25T01:47:30.944208+00:00",
+  "voxcpm_source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+  "packages": {
+    "torch": "2.9.1+cu128",
+    "voxcpm": "2.0.3.post46+g300e4260b",
+    "soundfile": "0.13.1"
+  },
+  "gpu": "NVIDIA GeForce RTX 5090 D v2",
+  "voxcpm_load_seconds": 10.121477599954233,
+  "warmup": {
+    "audio_path": "voxcpm2/warmup.wav",
+    "audio": {
+      "sample_rate": 48000,
+      "sample_count": 130560,
+      "channels": 1,
+      "sample_width": 2
+    },
+    "duration_seconds": 2.72,
+    "generation_seconds": 53.154283400042914,
+    "rtf": 19.54201595589813,
+    "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+    "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)我们正在等待来自远方的消息。"
+  },
+  "fixed_voice_end": {
+    "audio_path": "voxcpm2/fixed-voice-end.wav",
+    "audio": {
+      "sample_rate": 48000,
+      "sample_count": 345600,
+      "channels": 1,
+      "sample_width": 2
+    },
+    "duration_seconds": 7.2,
+    "generation_seconds": 5.359102600021288,
+    "rtf": 0.7443198055585122,
+    "instruction": "保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述",
+    "synthesis_text": "(保持参考音色，吐字清晰，平静沉稳，以自然的纪录片叙述语气讲述)我们终于收到了远方传来的消息。请听我慢慢说，这段漫长的旅程即将迎来新的篇章。"
+  },
+  "long_audio": {
+    "path": "long-narration.wav",
+    "sample_rate": 48000,
+    "sample_count": 87429120,
+    "channels": 1,
+    "sample_width": 2
+  },
+  "postprocess_seconds": 0.0733526999829337,
+  "peak_allocated_bytes": 7030861312,
+  "peak_reserved_bytes": 8594128896,
+  "voxcpm_elapsed_seconds": 1545.7664110000478,
+  "acceptance": {
+    "machine_generation_completed": true,
+    "inference_process_exit_code": 0,
+    "chinese_listening": null,
+    "six_distinguishable_emotions": false,
+    "fixed_voice_listening": null,
+    "listening_record": "docs/TTS-VOX-02-listening.json",
+    "hot_rtf_target": 0.3,
+    "hot_rtf_target_met": false,
+    "task_completed": true,
+    "validation_review_completed": true,
+    "quality_accepted": true,
+    "acceptance_basis": "explicit_user_override",
+    "criteria_passed": false
+  },
+  "listening_review": {
+    "task_id": "TTS-VOX-02",
+    "source": "docs/TTS-VOX-02-listening.json",
+    "source_sha256": "2ff01dc0cacb93ea90de50cceba14adc262aae96b05df7c431c4b0478b16d9d4",
+    "listener": "强志伟",
+    "recorded_at": "2026-11-24T18:45:03.877Z",
+    "reviewed_at": "2026-11-24T18:47:25.882038+00:00",
+    "mapping_source": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-02\\20261125-000517-548747\\blind-key.json",
+    "preference_counts": {
+      "voxcpm": 8,
+      "baseline": 0,
+      "tie": 0,
+      "unanswered": 1
+    },
+    "emotion_case_count": 7,
+    "exact_emotion_match_count": 2,
+    "exact_matched_emotions": [
+      "narrative",
+      "excited"
+    ],
+    "exact_emotion_match_rate": 0.2857142857142857,
+    "distinct_voxcpm_heard_emotions": [
+      "excited",
+      "gentle",
+      "mystery",
+      "narrative"
+    ],
+    "fixed_voice_notes": "目前",
+    "fixed_voice_evidence_sufficient": false,
+    "chinese_integrity_evidence_sufficient": false,
+    "limitations": [
+      "One listener, one frozen voice, one configuration; preference is descriptive, not a population inference.",
+      "Emotion exact-label matching is a declared rubric, not a validated perceptual metric; gentle/mystery are confused and sad/angry/whisper not identified as targets.",
+      "P04 preference is blank, not a tie or an acceptance.",
+      "General comments such as no problem do not establish exhaustive pronunciation, omission, repetition or trailing-syllable acceptance.",
+      "Fixed-voice comment contains only 目前 and provides no usable long-voice judgment."
+    ],
+    "pairs": [
+      {
+        "pair": "P01",
+        "case_id": "long-paragraph",
+        "target_emotion": "narrative",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "excited",
+        "emotion_test": false,
+        "exact_emotion_match": null,
+        "notes": "A有情绪 停顿合适\nb声音不合格"
+      },
+      {
+        "pair": "P02",
+        "case_id": "short",
+        "target_emotion": "narrative",
+        "voxcpm_label": "B",
+        "preference": "B",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "excited",
+        "emotion_test": false,
+        "exact_emotion_match": null,
+        "notes": "A声音不好，b没问题"
+      },
+      {
+        "pair": "P03",
+        "case_id": "emotion-narrative",
+        "target_emotion": "narrative",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "narrative",
+        "emotion_test": true,
+        "exact_emotion_match": true,
+        "notes": "A没问题  b断断续续"
+      },
+      {
+        "pair": "P04",
+        "case_id": "emotion-whisper",
+        "target_emotion": "whisper",
+        "voxcpm_label": "A",
+        "preference": null,
+        "preferred_engine": null,
+        "voxcpm_heard_emotion": "narrative",
+        "emotion_test": true,
+        "exact_emotion_match": false,
+        "notes": "A 声音没问题\nB 听不出来语气"
+      },
+      {
+        "pair": "P05",
+        "case_id": "emotion-mystery",
+        "target_emotion": "mystery",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "gentle",
+        "emotion_test": true,
+        "exact_emotion_match": false,
+        "notes": "a没问题\nb听不出来语气"
+      },
+      {
+        "pair": "P06",
+        "case_id": "emotion-excited",
+        "target_emotion": "excited",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "excited",
+        "emotion_test": true,
+        "exact_emotion_match": true,
+        "notes": "声音A没问题\n声音b听不出来语气"
+      },
+      {
+        "pair": "P07",
+        "case_id": "emotion-gentle",
+        "target_emotion": "gentle",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "mystery",
+        "emotion_test": true,
+        "exact_emotion_match": false,
+        "notes": "A声音没问题\nB听不出来语气"
+      },
+      {
+        "pair": "P08",
+        "case_id": "emotion-angry",
+        "target_emotion": "angry",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "excited",
+        "emotion_test": true,
+        "exact_emotion_match": false,
+        "notes": "A语气也不明显\nb听不出来\n\n"
+      },
+      {
+        "pair": "P09",
+        "case_id": "emotion-sad",
+        "target_emotion": "sad",
+        "voxcpm_label": "A",
+        "preference": "A",
+        "preferred_engine": "voxcpm",
+        "voxcpm_heard_emotion": "narrative",
+        "emotion_test": true,
+        "exact_emotion_match": false,
+        "notes": "A声音没问题\nb听不出来语气"
+      }
+    ],
+    "verdict": "not_passed",
+    "decision": "HOLD TTS-VOX-03: VoxCPM2 preferred on all 8 answered pairs, but only 2/7 intended emotions matched, long-voice/Chinese-integrity acceptance is unverified, and hot RTF 0.750 exceeds 0.3 target."
+  },
+  "user_authorization": {
+    "statement": "我可以授权VoxCPM2通过，你继续吧",
+    "recorded_at": "2026-11-25T01:47:30.944208+00:00",
+    "scope": "Accept TTS-VOX-02 by user override and continue TTS-VOX-03 implementation",
+    "preserves": [
+      "emotion exact match 2/7",
+      "hot RTF 0.750 exceeds target 0.3",
+      "long voice and detailed pronunciation remain unverified"
+    ],
+    "default_engine_change_authorized": false
+  }
+}

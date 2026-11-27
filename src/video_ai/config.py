@@ -254,6 +254,11 @@ class ProjectConfig:
     production_strategy: str = 'legacy'
     image_generation: Any = None
 
+    @property
+    def tts(self):
+        from .tts_config import parse_tts_settings
+        return parse_tts_settings(self.raw)
+
 
 TOOL_FIELDS = ('ffmpeg', 'ffprobe', 'comfy_python', 'comfy_root', 'tts_python', 'tts_root', 'ollama_executable')
 WORKFLOW_FIELDS = ('sdxl', 'wan', 'wan_mapping', 'upscale')
@@ -333,8 +338,15 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     _object(data, path, 'project', ('schema_version', 'runtime_root', 'project_root', 'output_root',
                                   'cache_root', 'voice_config', 'tools', 'services', 'workflows',
                                   'models', 'media'), ('timeouts', 'production_strategy', 'image_generation', 'scene_planning', 'selection_email',
-                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_planner_transport', 'scene_rendering', 'scene_continuity'))
+                                                       'reference_generation', 'reference_capabilities', 'reference_storage', 'scene_planner_model', 'scene_planner_transport', 'scene_rendering', 'scene_continuity', 'tts'))
     _exact(data['schema_version'], 1, path, 'schema_version')
+    from .tts_config import parse_tts_settings
+    try: tts_settings = parse_tts_settings(data)
+    except ConfigError as exc: _error(path, 'tts', str(exc))
+    if tts_settings.engine == 'voxcpm2':
+        # Freeze effective defaults now; a resumed task must not read future defaults.
+        data = dict(data, tts=dict(engine='voxcpm2', model_revision=tts_settings.model_revision,
+                                  **tts_settings.parameters))
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
     if strategy not in ('legacy', STRATEGY): _error(path, 'production_strategy', 'unsupported strategy')

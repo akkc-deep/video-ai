@@ -1,0 +1,89 @@
+{
+  "task_id": "TTS-VOX-06-male-sleep",
+  "status": "generated_pending_listening",
+  "output": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-male-sleep\\20261127-011350-715610",
+  "requirement": "纪录片旁白，用来助眠，需要男声",
+  "recipe": {
+    "schema_version": 1,
+    "purpose": "male_documentary_sleep_narration",
+    "voice_id": "male-sleep-documentary-v1",
+    "design_direction": "一位四十岁左右的成年男性，温润浑厚的中低音，声音自然松弛，像深夜自然纪录片旁白，语速缓慢，吐字清楚，音量平稳，情绪克制，收尾柔和",
+    "base_style": "成年男声，保持温润沉稳的中低音，舒缓的纪录片助眠旁白，语速缓慢均匀，轻声自然，吐字清楚，音量平稳，情绪克制，收尾柔和",
+    "emotion": "gentle",
+    "emotion_intensity": 0.15,
+    "tone": "舒缓",
+    "seed": 42,
+    "reference_text": "夜色渐渐深了，远处的山峦安静地融入天空。微风掠过林梢，带来细微的声响。在这片辽阔的星空下，我们慢慢放下白天的思绪。",
+    "sample_text": "当夜幕落下，白天的喧嚣渐渐远去，森林开始显露出另一种安静的模样。\n月光越过山脊，落在缓缓流动的河面上，像一层柔和的银色薄纱。\n在我们看不见的远方，星光已经穿过漫长的岁月，才来到这片夜空。\n此刻，不必急着寻找答案。让呼吸慢下来，随着这段平静的旅程，一点一点放松。"
+  },
+  "design": {
+    "profile": "E:\\VideoAI\\shared\\assets\\voices\\male-sleep-documentary-v1-20261127-011350-715610\\voice.json",
+    "reference": "E:\\VideoAI\\shared\\assets\\voices\\male-sleep-documentary-v1-20261127-011350-715610\\reference.wav",
+    "audio": {
+      "sample_rate": 48000,
+      "sample_count": 798720,
+      "channels": 1,
+      "sample_width": 2
+    },
+    "generation_seconds": 15.75,
+    "source_reference": null,
+    "status": "generated_pending_listening"
+  },
+  "health": {
+    "service": "video-ai-voxcpm2",
+    "status": "ready",
+    "session_id": "5f25629086a14d79ad3eaed5febe4a10",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "error": null,
+    "cancellation": "cooperative_after_current_inference"
+  },
+  "voice": {
+    "voice_id": "male-sleep-documentary-v1",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "reference_sha256": "65573cdeb3b1c7da1e40eb33913dc6452537e96d3061d7d9ba094d4553268daf",
+    "base_style": "成年男声，保持温润沉稳的中低音，舒缓的纪录片助眠旁白，语速缓慢均匀，轻声自然，吐字清楚，音量平稳，情绪克制，收尾柔和",
+    "parameters": {
+      "voice_id": "male-sleep-documentary-v1",
+      "emotion": "narrative",
+      "emotion_intensity": 0.3,
+      "instruction": "",
+      "seed": 42,
+      "cfg_value": 2.0,
+      "inference_timesteps": 10
+    },
+    "identity": "2ecbcc6a62423089fbff906e521c11298f1979c47182c5249c61952df58a8e4b"
+  },
+  "voice_profile": "E:\\VideoAI\\shared\\assets\\voices\\male-sleep-documentary-v1-20261127-011350-715610\\voice.json",
+  "preference_path": "E:\\VideoAI\\shared\\config\\tts\\male-sleep-documentary.json",
+  "audio_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-male-sleep\\20261127-011350-715610\\audio\\narration.wav",
+  "duration_seconds": 35.074333333333335,
+  "total_samples": 1683568,
+  "units": 5,
+  "result_path": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-06-male-sleep\\20261127-011350-715610\\audio\\tts-result.json",
+  "subjective_quality": "User listening required; gender/timbre/style not automatically certified",
+  "owned_vox_exit_code": 0,
+  "verification": {
+    "new_tests": "18 passed",
+    "related_regression": "271 passed, 3 skipped in 6.79s",
+    "log": "E:/VideoAI/scratch/logs/vox06-male-final.txt",
+    "red_green": "11 failed and 1 legacy test passed before implementation; 6 review regressions failed before fixes",
+    "independent_review": {
+      "p1": 0,
+      "p2_found": 3,
+      "p2_fixed": 3,
+      "findings": [
+        "Runtime-relative saved profile paths",
+        "Preference publication after successful owned-service shutdown; preserve primary error",
+        "Check actual source revision before permanent voice-design provenance"
+      ]
+    },
+    "actual_design_source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+    "audio_checks": "Existing per-unit WAV and sample-count assembly only; no ASR, pitch classifier, video generation or repeated long-form synthesis"
+  },
+  "documentation": "docs/voxcpm2-sleep-voice.md",
+  "listening_feedback": {
+    "status": "needs_revision",
+    "user_feedback": "声音不够稳，不够自然",
+    "next_experiment": "Whole-paragraph synthesis, shorter instructions, and plain male reference with official reference+prompt continuation"
+  }
+}
