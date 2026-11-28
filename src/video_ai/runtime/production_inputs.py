@@ -41,8 +41,8 @@ class FrozenInputs:
 
 
 def validate_supported(config):
-    if config.tts.engine != 'gpt-sovits':
-        raise ProductionRefused('VoxCPM2 automatic production wiring belongs to TTS-VOX-07; use the explicit adapter')
+    if config.tts.engine != 'gpt-sovits' and config.tts.narration is None:
+        raise ProductionRefused('TTS-VOX-07 production requires an explicit frozen narration recipe')
     if 'scene_research_material' in config.raw:
         raise ProductionRefused('research material is not eligible for automatic production')
     for field, expected in dict(fps=16, final_width=1920, final_height=1080, transition='cut',
@@ -157,6 +157,9 @@ def _freeze_inputs(config, run_dir, *, script=None, text=None, output_path=None,
     canonical = load_config(config.config_file, raw=read_json(Path(config_copy.path)), voice=voice)
     if not _same_json(canonical, config): raise ProductionRefused('effective configuration differs from source raw/resolved configuration')
     identities.update(config=thaw(config_copy), voice=thaw(voice_copy))
+    if config.tts.engine == 'voxcpm2':
+        from .production_vox_inputs import freeze_vox_assets
+        freeze_vox_assets(config, run, identities)
     if 'scene_continuity' in config.raw:
         policy_path = run_path(run, directory/'scene-continuity/policy.json')
         _save_bytes(policy_path, json_bytes(parse_scene_continuity(config.raw['scene_continuity'])))
@@ -267,6 +270,8 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
     native = modern and options['config_snapshot']['raw'].get('scene_rendering',{}).get('mode') == 'temporal_extension_v1'
     roles = ('upscale', 'upscale_mapping') if native else (('wan', 'wan_mapping', 'upscale', 'upscale_mapping') if modern else ('sdxl', 'wan', 'wan_mapping', 'upscale', 'sdxl_mapping', 'upscale_mapping'))
     required = {'script', 'config', 'voice', 'tts_yaml_source', 'tts_yaml', 'reference', 'font'} | {'workflow/'+role for role in roles}
+    if options['config_snapshot']['raw'].get('tts',{}).get('engine') == 'voxcpm2':
+        required.update(('vox_recipe','vox_profile','vox_reference'))
     if 'scene_continuity' in options['config_snapshot']['raw']:
         required.add('scene_continuity_policy')
         if records.get('scene_continuity_policy', {}).get('path') != str(run/'production/scene-continuity/policy.json'):
@@ -296,12 +301,19 @@ def load_frozen_inputs(run_dir, *, config=None, output_path=None, cpu_planner=No
         from .manifest import _identity
         _identity(snap['source_identity'])
         if snap['source_identity']['path'] != snap['source_path']: raise ProductionRefused('snapshot source path differs')
-        if not _same_json(read_json(Path(records[label]['path'])), snap['raw']): raise ProductionRefused('snapshot raw differs from frozen copy')
+        copied_raw=read_json(Path(records[label]['path']))
+        if label == 'config' and snap['raw'].get('tts',{}).get('engine') == 'voxcpm2':
+            copied_voice=load_voice_config(absolute_path(options['voice_snapshot']['source_path']),raw=options['voice_snapshot']['raw'])
+            copied_raw=load_config(absolute_path(snap['source_path']),raw=copied_raw,voice=copied_voice).raw
+        if not _same_json(copied_raw, snap['raw']): raise ProductionRefused('snapshot raw differs from frozen copy')
     voice = load_voice_config(absolute_path(options['voice_snapshot']['source_path']), raw=options['voice_snapshot']['raw'])
     frozen = load_config(absolute_path(options['config_snapshot']['source_path']), raw=options['config_snapshot']['raw'], voice=voice)
     if not _same_json(_resolved(frozen), (options['config_snapshot']['resolved'], options['voice_snapshot']['resolved'])):
         raise ProductionRefused('frozen raw/resolved configuration differs')
     validate_supported(frozen)
+    if frozen.tts.engine == 'voxcpm2':
+        from .production_vox_inputs import validate_vox_assets
+        validate_vox_assets(frozen, run, records)
     if 'scene_continuity' in frozen.raw:
         policy_value = parse_scene_continuity(read_json(Path(records['scene_continuity_policy']['path'])))
         if not _same_json(policy_value, frozen.raw['scene_continuity']):
@@ -380,6 +392,18 @@ def check_stage_space(config, *, frames=0, audio_bytes=0, encoded_bytes=0, disk_
 def production_preflight(config, run_dir, *, runner=subprocess.run, port_probe=port_listening, disk_usage=shutil.disk_usage):
     run = validate_run_dir(run_dir); checks = []
     validate_supported(config)
+    if config.tts.engine == 'voxcpm2':
+        try:
+            root=RuntimePaths.from_config(config).runtime_root
+            required_vox=(root/'shared/envs/voxcpm2/Scripts/python.exe',root/'shared/models/VoxCPM2/config.json',
+                root/'shared/models/VoxCPM2/model.safetensors',root/'shared/models/funasr/timestamp/model.pt')
+            for path in required_vox:
+                if not path.is_file() or path.stat().st_size == 0: raise ProductionRefused(f'missing Vox/alignment asset: {path}')
+            from ..media.speech_alignment import alignment_words
+            alignment_words((run/'production/script.txt').read_text(encoding='utf-8-sig'))
+            checks.append(PreflightCheck('production.voxcpm2',True,'approved frozen recipe; local Vox and timestamp assets available'))
+        except (OSError,ValueError) as exc:
+            return PreflightReport((PreflightCheck('production.voxcpm2',False,str(exc)),))
     from .wan_production import current_mode,require_environment
     if current_mode()!='native' and config.raw.get('scene_rendering',{}).get('mode')!='temporal_extension_v1':
         try:require_environment(config)
@@ -413,7 +437,7 @@ def production_preflight(config, run_dir, *, runner=subprocess.run, port_probe=p
             font.measure('湖水白鸟')
         checks.append(PreflightCheck('production.font', True, f'private font usable: {config.media.font_file}'))
     except (OSError, ValueError) as exc: checks.append(PreflightCheck('production.font', False, str(exc)))
-    if core.log_dir is not None:
+    if core.log_dir is not None and config.tts.engine == 'gpt-sovits':
         source = run_path(run, run/'production/inputs/tts-api-source.yaml')
         if not source.exists(): source = config.project_root/'config/tts-api.yaml'
         stdout_path = run_path(run, core.log_dir/'tts-yaml.stdout.json')

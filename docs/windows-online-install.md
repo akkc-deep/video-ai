@@ -1,56 +1,37 @@
-# 全部联网下载，一键安装
+# Windows 联网安装
 
-新电脑准备 Windows 10/11 x64、本地 D: 盘和已安装兼容驱动的 NVIDIA 显卡。建议 D: 盘至少有 150GB 可用空间，实际生成还需额外空间。脚本会检查 `nvidia-smi`，具体 CUDA 兼容性在工具安装后检查。
+新电脑需要 Windows 10/11 x64、兼容 CUDA 12.8 / BF16 的 NVIDIA 显卡与驱动、Git for Windows（安装后重新打开 PowerShell），以及足够容纳工具、模型和生成数据的磁盘空间。默认运行根 `E:/VideoAI`，可用 `VIDEO_AI_RUNTIME_ROOT` 指向其他本地目录，包括带空格路径。
 
-从本项目下载源码后，双击根目录 `install_online.cmd`。也可以只下载单个 `scripts/install_online.ps1`，在 PowerShell 中执行：
+使用包含 TTS-VOX-10 的当前完整源码。声音固定为用户批准的 `provided-reference-narration-v1`：从原运行根复制 `shared/assets/voices/provided-reference-narration-v1` 目录，必须带 `voice.json`、`reference.wav` 和 `approved-production-20261128.wav`。工具和模型联网下载，私人声音资产不能从公共模型仓库重新设计或替代。
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_online.ps1
+# 在当前源码根运行；仅安装，不启动视频。
+.\install_online.cmd -VoiceAssets 'F:/approved-voice/provided-reference-narration-v1' -NoLaunch
+
+# 可更换运行根和 HF 下载站点。
+$env:VIDEO_AI_RUNTIME_ROOT = 'F:/Video AI'
+.\install_online.cmd -VoiceAssets 'F:/approved-voice/provided-reference-narration-v1' -HfEndpoint https://huggingface.co -NoLaunch
 ```
 
-脚本自带全部下载地址，不依赖旧电脑的文件。安装成功后会要求输入文案或 UTF-8 文案文件路径，并调用项目的 `make-video`。以后双击 `D:\VideoSi\projects\video-ai\generate_video.cmd` 即可进入生成。模型和工具下载较大，首次安装可能持续数小时；下载中断后重新执行同一命令，继续已有 `.part` 文件，已完成下载按记录复用。若指定来源不支持 Range 续传，curl 会报错并保留文件，此时检查来源或删除对应 `.part` 后重新下载。
+也可执行 `scripts/install_local.ps1 -VoiceAssets ...`，使用当前源码直接安装。单独下载的安装脚本必须通过 `-SourceRef` 指定实际包含本次代码的固定 GitHub 提交；尚未上传的代码不会自动出现在远端。推荐直接携带当前源码。`install_windows.ps1` 只安装调度器开发环境，不承担模型部署。
 
-部分系统组件安装会弹出 Windows 管理员授权。如果系统要求重启，脚本会停止；重启后再次执行即可。脚本不修改显卡驱动，也不重启电脑。GitHub/Hugging Face 需要可达；curl 使用当前系统提供给进程的代理环境变量。
+安装保留现有下载器：HTTPS、`.part` 续传、完成回执和固定版本。未知已有工具目录拒绝覆盖；Vox 安装器记录自有源码/环境的 installing 状态，创建中断后可重跑。已通过完整依赖版本检查的 Vox 环境直接复用。缺少 Git、批准参考不匹配会在大型下载前停止。
 
-## 在线安装内容
-
-| 内容 | 下载来源与版本 |
+| 内容 | 来源与固定版本 |
 | --- | --- |
-| 项目源码 | GitHub `akkc-deep/video-ai`，默认固定公开提交 `242f8a05f2ac69bb3ec3aa6d79c9a3257f1760b3` |
-| Python | python.org，3.12.10 x64，安装到 D 盘并创建独立调度虚拟环境 |
-| 运行库、中文字体 | 微软 VC++ 官方安装程序；缺少微软雅黑时从 Windows Update 安装简体中文字体组件 |
-| 解压工具 | 官方 `ip7z/7zip` 26.05 便携程序 |
-| ComfyUI | 官方 `Comfy-Org/ComfyUI` v0.44.0 NVIDIA Windows 便携包 |
-| 配音环境 | `lj1995/GPT-SoVITS-windows-package` 的 `GPT-SoVITS-v2pro-20250604-nvidia50.7z`，固定仓库修订 |
-| 配音模型 | `lj1995/GPT-SoVITS` v2 GPT/SoVITS、中文 RoBERTa 和 HuBERT，固定仓库修订 |
-| 本地图片 | `stabilityai/stable-diffusion-xl-base-1.0` 的 SDXL 基础模型，固定仓库修订 |
-| 本地视频 | `Comfy-Org/Wan_2.2_ComfyUI_Repackaged` 的 Wan 2.2 I2V 14B 高/低噪声 FP8、UMT5 和 Wan VAE，固定仓库修订 |
-| 超分、合成 | 官方 RealESRGAN_x4plus、Gyan FFmpeg 9.0.2 |
-| 文案和分镜模型 | 官方 Ollama v0.40.14，随后 `ollama pull qwen3:8b` |
-| 参考音频 | 公开 `QwenAudio/CosyVoice` 示例 `asset/zero_shot_prompt.wav`，固定公开提交；参考转写为“希望你以后能够做的比我还好呦。” |
+| Python | python.org 3.12.10 x64，运行根 shared/tools/python312 |
+| VC++、字体 | 微软运行库、Windows Update 简体中文字体组件 |
+| 解压、ComfyUI | 7zip 26.05、ComfyUI v0.44.0 NVIDIA Windows 便携包 |
+| VoxCPM2 | 官方源码 `300e4260b509066151d623dc9c0aa922cf82232b`，保留 tags/history 复现包版本 |
+| Vox 模型 | openbmb/VoxCPM2 revision `7936080b41163874f38610f46f438e2c0757f9fd` |
+| Vox 环境 | 独立 venv、torch/torchaudio 2.9.1+cu128、仓库完整依赖锁；不启用编译或候选加速 |
+| CPU 对齐、旧任务兼容 | GPT-SoVITS 工具环境；FunASR 1.0.27；timestamp 模型 v2.0.4，固定文件身份见 config/voxcpm2-alignment.json |
+| 视觉及合成 | 既有固定 Wan 2.2 I2V/UMT5/VAE、SDXL、RealESRGAN_x4plus、FFmpeg 9.0.2 |
+| 规划 | Ollama v0.40.14，qwen3:8b |
+| 音色 | 导入已批准的私人资产，绝不选公共示例音色 |
 
-所有软件、权重和参考音频都在新电脑在线获取。源码 ZIP 解压、下载文件安装和写入新配置属于本机安装操作，不是从旧电脑拷贝。字体作为 Windows 组件使用系统安装路径。模型默认通过 `https://hf-mirror.com` 下载，可改为官方 `https://huggingface.co`。公开样例声音不是旧电脑的私人音色，使用时请遵守样例及各模型的使用条款。
+配置先写入 `shared/config/production.pending-vox10.json`。Vox/CPU 对齐依赖、本地模型与批准资产验证通过后，才备份旧正式配置并原子发布 `production.json`。旧 voice.json 和已有 tts-api.yaml 保留；兼容元数据另存 voice.vox10.json。失败不发布候选，不静默改用旧声音。安装完成记录仍标记 `inference_verified=false`；不把环境可启动当成整片验收。
 
-## 可选参数
+默认配置使用即梦候选图与既有视频链路；即梦/TOS/SMTP 凭证及参考能力需另行配置。安装器不补写视觉资格或审核结论。日常生成使用 `generate_video.cmd`，无需再选声音。
 
-```powershell
-# 使用 Hugging Face 官方站点，并只安装，不进入生成。
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_online.ps1 -HfEndpoint https://huggingface.co -NoLaunch
-
-# 安装后立即使用指定文案文件。
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_online.ps1 -Script D:\my-script.txt
-
-# 自己的公开/授权 HTTPS 参考音频，需要提供准确转写。
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_online.ps1 -ReferenceAudioUrl https://example.com/reference.wav -ReferenceText '对应音频中的准确原文'
-
-# 选择 GitHub 上已有的其他提交或分支。
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_online.ps1 -SourceRef main
-```
-
-默认配置使用即梦生成候选图、Wan 生成视频片段；即梦 API 凭证、参考图/TOS 设置和选图邮件的 SMTP 授权码需要另行配置。安装器仍保留本地模型依赖。配音固定 GPT-SoVITS v2/CPU/非半精度。安装完成不代表云端配置已就绪，也不会跳过选图、观察和发布环节。依赖历史本机资格资料的实验/原生时间扩展路线不属于这个全公开的新装配置。
-
-源码只能下载 GitHub 上已有的版本。本机尚未提交或尚未上传的代码、私人参考音频和运行记录不会自动出现在网上。这里生成的联网安装脚本也只有上传到仓库后，才会出现在该仓库的下载 ZIP 中；上传前可直接下载本次提供的单个脚本运行。
-
-安装不会覆盖未知已有工具目录或已有生产配置。请用于新的目标电脑；中断的同版本安装可以重复执行。若需要重装其他版本，应先处理相应旧安装，脚本不会替你删除。
-
-开发验证仅检查脚本、下载状态处理、配置生成和小文件；没有在第二台电脑完整下载几十 GB 模型并进行真实视频推理。脚本安装时仅检查 CUDA、包启动及配置，不反复哈希大型模型，也不运行耗时的生成样片。
+已部署机器只补齐或迁移 Vox 依赖、默认切换与回退的命令见 [Vox 安装迁移说明](voxcpm2-installation.md)。离线搬运见 [迁移说明](windows-migration.md)。目前没有第二台干净机器从零下载全部视觉模型的验证结论。

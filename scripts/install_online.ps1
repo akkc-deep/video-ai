@@ -1,13 +1,14 @@
 param(
     [string] $HfEndpoint = 'https://hf-mirror.com',
-    [string] $SourceRef = '242f8a05f2ac69bb3ec3aa6d79c9a3257f1760b3',
+    [string] $SourceRef = '',
+    [string] $VoiceAssets = '',
     [string] $ReferenceAudioUrl = '',
     [string] $ReferenceText = '',
     [string] $Script = '',
     [switch] $NoLaunch
 )
 
-# Standalone: no files, models or environment from the old PC are needed.
+# Tools/models are downloaded; the private approved voice assets must be supplied.
 $ErrorActionPreference = 'Stop'
 $OnlineRuntimeRoot = if ($env:VIDEO_AI_RUNTIME_ROOT) { [IO.Path]::GetFullPath($env:VIDEO_AI_RUNTIME_ROOT) } else { 'E:\VideoAI' }
 $OnlineSourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -19,6 +20,13 @@ $OnlinePython = Join-Path $OnlineRuntimeRoot 'shared\tools\python312\python.exe'
 function Write-OnlineText([string] $Path, [string] $Value) {
     [IO.Directory]::CreateDirectory((Split-Path -Parent $Path)) | Out-Null
     [IO.File]::WriteAllText($Path, $Value, $OnlineUtf8)
+}
+
+function Get-OnlineSha256([string] $Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+    finally { $stream.Dispose(); $hasher.Dispose() }
 }
 
 function Invoke-OnlineNative([string] $Executable, [string[]] $Arguments, [int[]] $SuccessCodes = @(0)) {
@@ -171,9 +179,13 @@ function Install-OnlineModels {
 }
 
 function New-OnlineConfiguration([string] $Reference, [string] $Transcript, [string] $Font) {
+    $recipe = Get-Content -LiteralPath (Join-Path $OnlineSourceRoot 'config/approved-narration.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ((Get-OnlineSha256 $Reference) -ne $recipe.reference_sha256 -or $Transcript -ne $recipe.prompt_text) {
+        throw 'New installations require the approved narration reference and exact transcript.'
+    }
     $project = Join-Path $OnlineRuntimeRoot 'shared'
     $configRoot = Join-Path $project 'config'
-    $configPath = Join-Path $configRoot 'production.json'
+    $configPath = Join-Path $configRoot 'production.pending-vox10.json'
     $owner = Join-Path $configRoot '.online-config.json'
     foreach ($name in @('production.json','voice.json','tts-api.yaml')) {
         if ((Test-Path -LiteralPath (Join-Path $configRoot $name)) -and -not (Test-Path -LiteralPath $owner)) {
@@ -186,21 +198,23 @@ function New-OnlineConfiguration([string] $Reference, [string] $Transcript, [str
     $config.project_root = $project
     $config.output_root = Join-Path $OnlineRuntimeRoot 'output'
     $config.cache_root = Join-Path $OnlineRuntimeRoot 'scratch'
-    $config.voice_config = Join-Path $configRoot 'voice.json'
+    $config.voice_config = Join-Path $configRoot 'voice.vox10.json'
     $config.services.ollama = 'http://127.0.0.1:11435'
+    $config.services.tts = 'http://127.0.0.1:9881'
+    $config | Add-Member -NotePropertyName tts -NotePropertyValue @{ engine='voxcpm2'; model_revision=$recipe.model_revision; narration=$recipe } -Force
     $config.media.font_file = $Font
     foreach ($property in $config.tools.PSObject.Properties) { $property.Value = $property.Value.Replace('E:/VideoAI', $OnlineRuntimeRoot.Replace('\','/')) }
     foreach ($property in $config.models.PSObject.Properties) { $property.Value = $property.Value.Replace('E:/VideoAI', $OnlineRuntimeRoot.Replace('\','/')) }
     foreach ($property in $config.workflows.PSObject.Properties) { $property.Value = Join-Path $OnlineSourceRoot ('workflows/' + [IO.Path]::GetFileName($property.Value)) }
     foreach ($field in @('gpt_weights','sovits_weights','bert_root','hubert_root')) { $voice.$field = $voice.$field.Replace('E:/VideoAI', $OnlineRuntimeRoot.Replace('\','/')) }
     $voice.reference_audio = $Reference
-    $voice.reference_sha256 = (Get-FileHash -LiteralPath $Reference -Algorithm SHA256).Hash.ToLowerInvariant()
+    $voice.reference_sha256 = Get-OnlineSha256 $Reference
     $voice.reference_text = $Transcript
     $voice.device = 'cpu'; $voice.is_half = $false
     $yaml = "custom:`n  device: cpu`n  is_half: false`n  version: v2`n  t2s_weights_path: '$($voice.gpt_weights)'`n  vits_weights_path: '$($voice.sovits_weights)'`n  bert_base_path: '$($voice.bert_root)'`n  cnhuhbert_base_path: '$($voice.hubert_root)'`n"
     Write-OnlineText $owner (@{ schema_version=1; source_ref=$SourceRef; state='configuring' } | ConvertTo-Json)
-    Write-OnlineText (Join-Path $configRoot 'tts-api.yaml') $yaml
-    Write-OnlineText (Join-Path $configRoot 'voice.json') ($voice | ConvertTo-Json -Depth 20)
+    if (-not (Test-Path -LiteralPath (Join-Path $configRoot 'tts-api.yaml'))) { Write-OnlineText (Join-Path $configRoot 'tts-api.yaml') $yaml }
+    Write-OnlineText (Join-Path $configRoot 'voice.vox10.json') ($voice | ConvertTo-Json -Depth 20)
     Write-OnlineText $configPath ($config | ConvertTo-Json -Depth 20)
     Write-OnlineText $owner (@{ schema_version=1; source_ref=$SourceRef; state='configured' } | ConvertTo-Json)
     $launcher = @'
@@ -260,6 +274,7 @@ function Install-OnlinePlanner {
 
 function Install-VideoAiOnline {
     if (-not [Environment]::Is64BitOperatingSystem) { throw 'Windows x64 is required.' }
+    if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) { throw 'Install Git for Windows and reopen PowerShell before online installation. Offline migration does not require Git.' }
     $leaseRoot = Join-Path $OnlineRuntimeRoot 'shared/config/storage'
     [IO.Directory]::CreateDirectory($leaseRoot) | Out-Null
     $storageLease = [IO.File]::Open((Join-Path $leaseRoot 'lifecycle.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::ReadWrite)
@@ -278,22 +293,40 @@ function Install-VideoAiOnline {
     $env:PIP_CACHE_DIR=Join-Path $OnlineDownloads 'pip'
     $env:HF_HOME=Join-Path $OnlineRuntimeRoot 'shared/models/huggingface'
     $env:TORCH_HOME=Join-Path $OnlineRuntimeRoot 'shared/models/torch'
-    if ($ReferenceAudioUrl -and -not $ReferenceText) { throw 'A custom ReferenceAudioUrl requires its exact ReferenceText.' }
-    if (-not $ReferenceAudioUrl) {
-        $ReferenceAudioUrl='https://raw.githubusercontent.com/QwenAudio/CosyVoice/074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc/asset/zero_shot_prompt.wav'
-        $ReferenceText=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('5biM5pyb5L2g5Lul5ZCO6IO95aSf5YGa55qE5q+U5oiR6L+Y5aW95ZGm44CC'))
+    if ($ReferenceAudioUrl -or $ReferenceText) { throw 'Use -VoiceAssets with the approved voice directory; arbitrary reference replacement is disabled.' }
+    if (-not $VoiceAssets) { $VoiceAssets = Join-Path $OnlineRuntimeRoot 'shared/assets/voices/provided-reference-narration-v1' }
+    foreach ($name in @('voice.json','reference.wav','approved-production-20261128.wav')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $VoiceAssets $name) -PathType Leaf)) { throw "Missing approved voice asset: $name. Pass -VoiceAssets with the exported approved voice directory." }
+    }
+    $approvalFile = Join-Path $OnlineSourceRoot 'config/approved-narration.json'
+    if (Test-Path -LiteralPath $approvalFile) {
+        $approved = Get-Content -LiteralPath $approvalFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ((Get-OnlineSha256 (Join-Path $VoiceAssets 'reference.wav')) -ne $approved.reference_sha256) { throw 'Imported reference differs from the approved voice; stopping before downloads.' }
     }
     Install-OnlinePrerequisites
-    Install-OnlineArchive ('https://codeload.github.com/akkc-deep/video-ai/zip/' + [uri]::EscapeDataString($SourceRef)) ('video-ai-' + $SourceRef + '.zip') $OnlineSourceRoot 'pyproject.toml'
+    if (-not (Test-Path -LiteralPath (Join-Path $OnlineSourceRoot 'pyproject.toml'))) {
+        if (-not $SourceRef) { throw 'Use a current source checkout or specify a frozen -SourceRef containing TTS-VOX-10.' }
+        Install-OnlineArchive ('https://codeload.github.com/akkc-deep/video-ai/zip/' + [uri]::EscapeDataString($SourceRef)) ('video-ai-' + $SourceRef + '.zip') $OnlineSourceRoot 'pyproject.toml'
+    }
     Install-OnlineArchive 'https://github.com/Comfy-Org/ComfyUI/releases/download/v0.44.0/ComfyUI_windows_portable_nvidia.7z' 'comfyui-v0.44.0-nvidia.7z' (Join-Path $OnlineRuntimeRoot 'shared/tools/ComfyUI_windows_portable') 'ComfyUI/main.py'
     $ttsUrl = Get-OnlineHfUrl 'lj1995/GPT-SoVITS-windows-package' 'c8b61d4f627d1f02e74c1ba158a4844051d2289f' 'GPT-SoVITS-v2pro-20250604-nvidia50.7z'
     Install-OnlineArchive $ttsUrl 'GPT-SoVITS-v2pro-20250604-nvidia50.7z' (Join-Path $OnlineRuntimeRoot 'shared/tools/GPT-SoVITS') 'api_v2.py'
     Install-OnlineArchive 'https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip' 'ffmpeg-9.0.2.zip' (Join-Path $OnlineRuntimeRoot 'shared/tools/ffmpeg') 'bin/ffmpeg.exe'
     Install-OnlineArchive 'https://github.com/ollama/ollama/releases/download/v0.40.14/ollama-windows-amd64.zip' 'ollama-v0.40.14.zip' (Join-Path $OnlineRuntimeRoot 'shared/tools/ollama') 'ollama.exe'
     Install-OnlineModels
-    $reference = Get-OnlineDownload $ReferenceAudioUrl (Join-Path $OnlineRuntimeRoot 'shared/assets/online-reference.wav')
+    $reference = Join-Path ([IO.Path]::GetFullPath($VoiceAssets)) 'reference.wav'
+    $recipe = Get-Content -LiteralPath (Join-Path $OnlineSourceRoot 'config/approved-narration.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $font = Get-OnlineChineseFont
-    New-OnlineConfiguration $reference $ReferenceText $font
+    # The legacy voice schema remains available for old tasks and CPU alignment.
+    # Point its reference at the installed durable asset, never the import folder.
+    $durableVoice = Join-Path $OnlineRuntimeRoot 'shared/assets/voices/provided-reference-narration-v1'
+    [IO.Directory]::CreateDirectory($durableVoice) | Out-Null
+    if ([IO.Path]::GetFullPath($reference) -ne (Join-Path $durableVoice 'reference.wav')) {
+        $existing = Join-Path $durableVoice 'reference.wav'
+        if ((Test-Path -LiteralPath $existing) -and (Get-OnlineSha256 $existing) -ne $recipe.reference_sha256) { throw 'Approved reference destination conflicts.' }
+        if (-not (Test-Path -LiteralPath $existing)) { [IO.File]::Copy($reference,$existing) }
+    }
+    New-OnlineConfiguration (Join-Path $durableVoice 'reference.wav') $recipe.prompt_text $font
     $envRoot=Join-Path $OnlineRuntimeRoot 'shared/envs/video-ai'
     $python=Join-Path $envRoot 'Scripts/python.exe'
     if (-not (Test-Path -LiteralPath $python)) { Invoke-OnlineNative $OnlinePython @('-B','-m','venv',$envRoot) }
@@ -302,8 +335,9 @@ function Install-VideoAiOnline {
     Invoke-OnlineNative (Join-Path $OnlineRuntimeRoot 'shared/tools/GPT-SoVITS/runtime/python.exe') @('-B','-c','import torch, yaml, transformers; print(''TTS runtime: ready'')')
     Install-OnlinePlanner
     $env:PYTHONPATH=Join-Path $OnlineSourceRoot 'src'
-    $config=Join-Path $OnlineRuntimeRoot 'shared/config/production.json'
+    $config=Join-Path $OnlineRuntimeRoot 'shared/config/production.pending-vox10.json'
     Invoke-OnlineNative $python @('-B','-c','import sys; from video_ai.config import load_config; load_config(__import__(''pathlib'').Path(sys.argv[1])); print(''Configuration: ready'')',$config)
+    Invoke-OnlineNative 'powershell.exe' @('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $OnlineSourceRoot 'scripts/install_voxcpm2.ps1'),'-VoiceAssets',([IO.Path]::GetFullPath($VoiceAssets)),'-Config',$config,'-PublishTo',(Join-Path $OnlineRuntimeRoot 'shared/config/production.json'),'-HfEndpoint',$HfEndpoint)
     Write-OnlineText (Join-Path $OnlineRuntimeRoot 'online-install.json') (@{schema_version=1; source_ref=$SourceRef; state='ready'; inference_verified=$false} | ConvertTo-Json)
     Write-Host "Online installation complete. Start: $OnlineSourceRoot\generate_video.cmd" -ForegroundColor Green
     } finally { try { $storageLease.Unlock(0, 1) } finally { $storageLease.Dispose() } }

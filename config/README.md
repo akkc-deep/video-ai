@@ -44,7 +44,9 @@ Implementation verification uses no model downloads, real video generation, or d
 
 ### 凭证和 QQ 邮件
 
-在启动命令的同一进程环境设置配置所声明的变量；使用系统环境设置后须重新启动终端或应用使其生效。实际值不要写进 JSON、命令参数、聊天或日志。
+AK/SK 和 QQ SMTP 授权码可一次性保存在源码目录的 `config/secrets.local.json`，新视频和续作都会自动读取。该文件已被 Git 忽略；不要把实际值写入生产配置、任务快照、聊天或日志。环境变量优先，可在启动命令的同一进程环境临时覆盖；使用系统环境设置后须重新启动终端或应用使其生效。
+
+在现有本地凭据文件中保留 AK/SK，增加 `"VIDEO_AI_SMTP_AUTH_CODE": "你的QQ邮箱SMTP授权码"`；完整字段模板见 `config/secrets.local.example.json`。授权码不是邮箱登录密码。修改保存后，使用原来的制作命令即可，无需逐视频设置。
 
 | 配置字段 | 样例环境变量名 | 内容 |
 | --- | --- | --- |
@@ -85,7 +87,7 @@ Implementation verification uses no model downloads, real video generation, or d
 
 ## make-video 历史默认制作配置
 
-普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `E:/VideoAI/shared/config/production.json`，也可用 `--config PATH` 指定现有配置。历史策略配置复用已安装 Ollama/qwen3:8b、GPT-SoVITS v2/CPU/非半精度声音、SDXL、Wan、RealESRGAN_x4plus 和 FFmpeg；Wan 前仍需实际图片审核。默认配置路径属于运行环境，源码中的 `production.example.json` 仅为配置样例。
+普通制作入口 `make-video --text TEXT` 或 `make-video --script PATH` 默认读取 `E:/VideoAI/shared/config/production.json`，也可用 `--config PATH` 指定现有配置。当前运行默认已启用 `tts.engine=voxcpm2` 与 `tts.narration` 内联已确认配方：固定参考声线、0.95倍语速、500ms段间静音、`onset_guard` 统一引导语的声学裁剪；仅对交付原文正文测量时间，任务内冻结参考与完整处理参数。详见[已确认旁白](../docs/approved-narration.md)及[生产语音](../docs/voxcpm2-production.md)。旧冻结850ms配方和历史 GPT-SoVITS 运行仍按自己的快照恢复，不自动迁移旧任务。默认配置路径属于运行环境，源码中的 `production.example.json` 保留历史配置样例。
 
 首版支持单版 fast（768×432）或 quality（1280×720）源镜头，最终固定 1920×1080/native16、硬切、烧录字幕、无背景音乐。`media.fps` 非 16、最终尺寸非 1920×1080、transition 非 cut、burn_subtitles 为 false 或 music 非 null 会在预检指出确切字段并拒绝，不自动改配置。旧流程支持范围见后文。
 
@@ -117,6 +119,8 @@ production.example.json 使用批准的新 D:/VideoSi 目标，引用同目录�
 
 默认 fast=768×432、16fps、1080p、硬切、烧录字幕，无背景音乐；快速档速度与画质仍待实测。quality=1280×720；24fps 明确标记为从原生16fps转换。doctor 检查本地文件及能力枚举，不能证明完整制作空间、推理、声音、NVENC 编码或字幕渲染已通过。
 # 时间轴设置（任务6）
+
+新机器的 VoxCPM2 安装、当前默认启用和备份回退见 [TTS-VOX-10 使用说明](../docs/voxcpm2-installation.md)。`production.example.json` 保留为旧配置兼容样例；新安装在验证成功后发布内联 `approved-narration.json` 配方，不通过更改历史缺省值来隐式迁移旧任务。
 
 可选 `media.timeline` 保存 `sentence_pause_seconds`（默认0.8）、`paragraph_pause_seconds`（2）、`opening_seconds`（2）、`closing_seconds`（3）。对象或字段省略均使用默认；值必须为有限非负数字，允许0，拒绝null/bool/未知键。参数按Decimal half-up转为48kHz整数样本，并随时间轴保存有效值；旧配置及旧manifest无需迁移。
 

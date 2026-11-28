@@ -86,7 +86,7 @@ class VoxServiceProcess:
             self.stop(grace_seconds=2)
             raise
 
-    def stop(self, grace_seconds=120):
+    def stop(self, grace_seconds=120, *, finish_pending=False):
         if self.process is None:
             if self._log is not None:
                 self._log.close()
@@ -95,7 +95,7 @@ class VoxServiceProcess:
         try:
             if self.process.poll() is None:
                 try:
-                    request_json(self.url, '/shutdown', {}, timeout=2, token=self._token)
+                    request_json(self.url, '/shutdown', {'finish_pending':True} if finish_pending else {}, timeout=2, token=self._token)
                     self.process.wait(timeout=grace_seconds)
                 except (OSError, ValueError, subprocess.TimeoutExpired):
                     stop_process(self.process)

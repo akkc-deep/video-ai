@@ -1,5 +1,5 @@
 """Durable automatic timeline, envelope report and complete numeric shot slots."""
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 
 from ..config import read_json
@@ -28,7 +28,10 @@ def produce_timeline(frozen,units,audio,*,state,manifest,paths,logger):
     complete=state.snapshot()['stages']['timeline']['status']=='completed'
     if not complete: state.start_stage('timeline');check_stage_space(frozen.config)
     script=SegmentedScript(frozen.script.text,frozen.script.has_bom,tuple(TextSpan(**s) for s in units['spans']))
-    timeline=build_production_timeline(script,audio,settings=frozen.config.media.timeline,fps=16)
+    settings=frozen.config.media.timeline
+    if frozen.config.tts.engine == 'voxcpm2':
+        settings=replace(settings,sentence_pause_seconds=0,paragraph_pause_seconds=0)
+    timeline=build_production_timeline(script,audio,settings=settings,fps=16)
     if report:
         persisted=ProductionTimeline.from_dict(report['payload'])
         if persisted.as_dict()!=timeline.as_dict(): raise ProductionRefused('timeline differs from original speech/units')

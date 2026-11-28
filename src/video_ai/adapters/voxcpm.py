@@ -17,6 +17,8 @@ class VoxTtsClient:
         self.http, self.settings, self.scope = http, settings, request_scope
         self.binding = dict(voice_id=settings.parameters['voice_id'],
                             model_revision=settings.model_revision, reference_sha256=reference_sha256)
+        if settings.narration:
+            self.binding.update(source_revision=settings.narration['source_revision'])
         self._ready = False
 
     def request_id(self, unit_id):

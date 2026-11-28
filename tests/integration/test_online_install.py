@@ -48,19 +48,28 @@ $OnlineRuntimeRoot = Join-Path $env:VAI_FIXTURE 'runtime'
 $OnlineSourceRoot = Join-Path $env:VAI_FIXTURE 'source'
 [IO.Directory]::CreateDirectory((Join-Path $OnlineSourceRoot 'config')) | Out-Null
 Copy-Item -LiteralPath (Join-Path $env:VAI_SOURCE 'config/production.example.json') -Destination (Join-Path $OnlineSourceRoot 'config/production.example.json')
+Copy-Item -LiteralPath (Join-Path $env:VAI_SOURCE 'config/jimeng.example.json') -Destination (Join-Path $OnlineSourceRoot 'config/jimeng.example.json')
 Copy-Item -LiteralPath (Join-Path $env:VAI_SOURCE 'config/voice.example.json') -Destination (Join-Path $OnlineSourceRoot 'config/voice.example.json')
-New-OnlineConfiguration (Join-Path $env:VAI_FIXTURE 'voice.wav') 'public sample transcript' 'C:/Windows/Fonts/msyh.ttc'
+$recipe = Get-Content -LiteralPath (Join-Path $env:VAI_SOURCE 'config/approved-narration.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$recipe.reference_sha256 = Get-OnlineSha256 (Join-Path $env:VAI_FIXTURE 'voice.wav')
+Write-OnlineText (Join-Path $OnlineSourceRoot 'config/approved-narration.json') ($recipe | ConvertTo-Json -Depth 20)
+New-OnlineConfiguration (Join-Path $env:VAI_FIXTURE 'voice.wav') $recipe.prompt_text 'C:/Windows/Fonts/msyh.ttc'
 """.replace('$env:VAI_SOURCE', "'" + str(SOURCE).replace("'", "''") + "'"))
     assert result.returncode == 0, result.stdout + result.stderr
-    config_root = tmp_path / 'runtime/projects/video-ai/config'
-    config = json.loads((config_root / 'production.json').read_text(encoding='utf-8-sig'))
-    voice = json.loads((config_root / 'voice.json').read_text(encoding='utf-8-sig'))
+    config_root = tmp_path / 'runtime/shared/config'
+    config = json.loads((config_root / 'production.pending-vox10.json').read_text(encoding='utf-8-sig'))
+    assert not (config_root/'production.json').exists()
+    voice = json.loads((config_root / 'voice.vox10.json').read_text(encoding='utf-8-sig'))
     assert config['services']['ollama'] == 'http://127.0.0.1:11435'
-    assert config['workflows']['sdxl'].replace('\\', '/').endswith('/source/workflows/sdxl_api.json')
-    assert voice['reference_text'] == 'public sample transcript'
+    assert config['workflows']['wan'].replace('\\', '/').endswith('/source/workflows/wan22_i2v_14b_api.json')
+    assert config['tts']['engine'] == 'voxcpm2'
+    assert config['tts']['narration']['voice_id'] == 'provided-reference-narration-v1'
+    assert config['tts']['narration']['paragraph_pause_ms'] == 500
+    assert config['services']['tts'] == 'http://127.0.0.1:9881'
+    assert voice['reference_text'] == config['tts']['narration']['prompt_text']
     assert voice['reference_sha256'] and voice['device'] == 'cpu' and voice['is_half'] is False
     assert 'custom:' in (config_root / 'tts-api.yaml').read_text(encoding='utf-8-sig')
-    launcher = (tmp_path / 'runtime/projects/video-ai/generate_online.ps1').read_text(encoding='utf-8-sig')
+    launcher = (tmp_path / 'runtime/shared/generate_online.ps1').read_text(encoding='utf-8-sig')
     assert 'start_windows.ps1' in launcher
     assert 'migrate_windows.ps1' not in launcher
 

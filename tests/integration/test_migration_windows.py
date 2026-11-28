@@ -32,6 +32,24 @@ def test_migration_script_is_available():
     assert MIGRATION.is_file()
 
 
+def test_package_config_path_is_relative_to_restored_runtime(tmp_path):
+    result=run_ps(tmp_path,r"""
+$manifest = [pscustomobject]@{ config='D:\old runtime\shared\config\production.json'; config_relative='shared\config\production.json' }
+$newRoot=Join-Path $env:VAI_FIXTURE 'new runtime'
+$actual=Get-MigrationConfigPath $manifest $newRoot
+if ($actual -ne (Join-Path $newRoot 'shared\config\production.json')) { throw $actual }
+""")
+    assert result.returncode==0,result.stdout+result.stderr
+
+
+def test_history_export_includes_current_work_layout(tmp_path):
+    root=tmp_path/'runtime';(root/'work').mkdir(parents=True);(root/'output').mkdir()
+    result=run_ps(tmp_path,"Get-MigrationHistoryDirectories (Join-Path $env:VAI_FIXTURE 'runtime')")
+    assert result.returncode==0,result.stdout+result.stderr
+    assert str(root/'work') in result.stdout
+    assert str(root/'output') in result.stdout
+
+
 @pytest.mark.skipif(not MIGRATION.exists(), reason='migration script not implemented yet')
 def test_copy_handles_spaces_and_reports_missing_source(tmp_path):
     source = tmp_path / 'source space'

@@ -3,7 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import re
 
-from .subtitles import quantize, srt_text
+from .subtitles import quantize, srt_text, subtitle_text
 
 
 def _integer(value, name, minimum=0):
@@ -44,6 +44,9 @@ def _events(events, total_samples):
         lines, ranges = layout['lines'], layout['line_ranges']
         if type(lines) is not list or type(ranges) is not list or not 1 <= len(lines) <= 2 or len(lines) != len(ranges):
             raise ValueError('one or two subtitle lines required')
+        # Existing committed layouts retain their original characters. New
+        # layouts use punctuation-free display offsets, separate from source spans.
+        display = text if ''.join(lines) == text else subtitle_text(text)
         widths, available = layout['line_widths'], layout['available_width']
         if type(available) is not int or available<=0 or type(widths) is not list or len(widths)!=len(lines):
             raise ValueError('finite subtitle layout widths required')
@@ -54,10 +57,10 @@ def _events(events, total_samples):
             if type(span) is not dict or set(span) != {'start','end'}:
                 raise ValueError('invalid line range')
             x, y = (_integer(span[k], 'line '+k) for k in ('start','end'))
-            if x != cursor or not x < y <= len(text) or line != text[x:y]:
+            if x != cursor or not x < y <= len(display) or line != display[x:y]:
                 raise ValueError('layout fails to preserve original characters')
             cursor = y
-        if cursor != len(text) or ''.join(lines) != text:
+        if cursor != len(display) or ''.join(lines) != display:
             raise ValueError('incomplete original subtitle span')
         last_sample, last_ms, last_text = end, end_ms, b
 

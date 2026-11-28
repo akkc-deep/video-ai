@@ -29,6 +29,20 @@ function Write-MigrationText([string] $Path, [string] $Value) {
     [IO.File]::WriteAllText($Path, $Value, $MigrationUtf8)
 }
 
+function Get-MigrationConfigPath($Manifest, [string] $RuntimeRoot) {
+    $relative = $Manifest.config_relative
+    if (-not $relative) {
+        $normalized = $Manifest.config.Replace('/','\')
+        $index = $normalized.IndexOf('\shared\config\', [StringComparison]::OrdinalIgnoreCase)
+        if ($index -lt 0) { throw 'Package does not identify a shared configuration path.' }
+        $relative = $normalized.Substring($index + 1)
+    }
+    $target = [IO.Path]::GetFullPath((Join-Path $RuntimeRoot $relative))
+    $boundary = [IO.Path]::GetFullPath((Join-Path $RuntimeRoot 'shared\config')) + '\'
+    if (-not $target.StartsWith($boundary,[StringComparison]::OrdinalIgnoreCase)) { throw 'Package config path escapes shared/config.' }
+    return $target
+}
+
 function Assert-MigrationTarget([string] $Path, [bool] $MayExist) {
     if ((Test-Path -LiteralPath $Path) -and -not $MayExist) {
         if (@(Get-ChildItem -LiteralPath $Path -Force | Select-Object -First 1).Count) {
@@ -202,6 +216,13 @@ function Get-MigrationEvidenceDirectories([string] $RuntimeRoot) {
     if (Test-Path -LiteralPath $wrapper -PathType Container) { $wrapper }
 }
 
+function Get-MigrationHistoryDirectories([string] $RuntimeRoot) {
+    foreach ($name in @('work','output')) {
+        $path = Join-Path $RuntimeRoot $name
+        if (Test-Path -LiteralPath $path -PathType Container) { $path }
+    }
+}
+
 function Export-VideoAiMigration {
     if (-not $PackagePath) { $PackagePath = (Join-Path (Split-Path -Parent $MigrationRuntimeRoot) 'VideoAiMigration-') + (Get-Date -Format 'yyyyMMdd-HHmmss') }
     $PackagePath = [IO.Path]::GetFullPath($PackagePath)
@@ -258,8 +279,16 @@ function Export-VideoAiMigration {
     }
     # A Windows venv alone is not portable: include its real base installation.
     Copy-MigrationTree $baseRoot (Join-Path $payload 'runtime\shared\tools\video-ai-python312')
-    if ($IncludeHistory -and (Test-Path -LiteralPath (Join-Path $MigrationRuntimeRoot 'output'))) {
-        Copy-MigrationTree (Join-Path $MigrationRuntimeRoot 'output') (Join-Path $payload 'runtime\output')
+    $voxPython = Join-Path $MigrationRuntimeRoot 'shared\envs\voxcpm2\Scripts\python.exe'
+    if (Test-Path -LiteralPath $voxPython) {
+        $voxBase = & $voxPython -B -c 'import sys; print(sys.base_prefix)'
+        if ($LASTEXITCODE -ne 0 -or -not $voxBase) { throw 'Cannot locate the VoxCPM2 base interpreter.' }
+        Copy-MigrationTree ([string]$voxBase).Trim() (Join-Path $payload 'runtime\shared\tools\python312')
+    }
+    if ($IncludeHistory) {
+        foreach ($history in (Get-MigrationHistoryDirectories $MigrationRuntimeRoot)) {
+            Copy-MigrationTree $history (Join-Path $payload ('runtime\' + [IO.Path]::GetFileName($history)))
+        }
     }
     $secretTarget = Join-Path $payload 'runtime\shared\config\migration-secrets.local.json'
     if (-not $WithoutSecrets) { Export-MigrationSecrets $configRoot $secretTarget }
@@ -276,6 +305,7 @@ exit /b %migration_exit%
         schema_version = 1
         exported_at = (Get-Date).ToUniversalTime().ToString('o')
         config = $Config
+        config_relative = $Config.Substring($MigrationRuntimeRoot.Length + 1)
         include_history = [bool]$IncludeHistory
         includes_secrets = -not [bool]$WithoutSecrets
     }
@@ -315,7 +345,7 @@ function Restore-VideoAiMigration {
     Copy-MigrationTree (Join-Path $payload 'runtime') $MigrationRuntimeRoot
     Copy-MigrationTree (Join-Path $payload 'source') $MigrationInstallRoot
     Update-MigrationVenv (Join-Path $MigrationRuntimeRoot 'shared\envs\video-ai') (Join-Path $MigrationRuntimeRoot 'shared\tools\video-ai-python312')
-    if (-not $Config) { $Config = $manifest.config }
+    if (-not $Config) { $Config = Get-MigrationConfigPath $manifest $MigrationRuntimeRoot }
     Write-MigrationText (Join-Path $MigrationRuntimeRoot 'shared\config\migration-default.local.json') (@{ config = $Config } | ConvertTo-Json)
     Install-MigrationRuntime (Join-Path $PackagePath 'prerequisites')
     $python = Join-Path $MigrationRuntimeRoot 'shared\envs\video-ai\Scripts\python.exe'
@@ -323,6 +353,13 @@ function Restore-VideoAiMigration {
     $env:PYTHONUTF8 = '1'
     $env:PYTHONDONTWRITEBYTECODE = '1'
     Test-MigrationOrchestrator $python
+    $restoredConfig = Get-Content -LiteralPath $Config -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($restoredConfig.tts -and $restoredConfig.tts.engine -eq 'voxcpm2') {
+        & $python -B -m video_ai.voxcpm.deployment relocate --runtime-root $MigrationRuntimeRoot --source-root $MigrationInstallRoot --config $Config
+        if ($LASTEXITCODE -ne 0) { throw 'VoxCPM2 shared path/venv relocation failed.' }
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $MigrationInstallRoot 'scripts/install_voxcpm2.ps1') -Offline -VerifyOnly -Config $Config
+        if ($LASTEXITCODE -ne 0) { throw 'Restored VoxCPM2 installation failed verification; no legacy voice fallback was attempted.' }
+    }
     # Only lightweight startup/import checks; do not load models or run inference.
     & (Join-Path $MigrationRuntimeRoot 'shared\tools\ComfyUI_windows_portable\python_embeded\python.exe') -B -c 'import torch; ready = torch.cuda.is_available(); print(''torch='' + torch.__version__ + '', CUDA='' + str(ready)); raise SystemExit(0 if ready else 2)'
     if ($LASTEXITCODE -ne 0) { throw 'ComfyUI CUDA startup failed. Install a compatible NVIDIA driver and the Microsoft Visual C++ x64 runtime.' }
@@ -355,7 +392,7 @@ function Start-MigratedVideo {
     Import-MigrationSecrets (Join-Path $configRoot 'migration-secrets.local.json')
     if ($Video) {
         if ($Script -or $Text -or $Title) { throw 'Use -Video to continue, or -Script/-Text and -Title for a new video.' }
-        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $MigrationSourceRoot 'scripts\start_windows.ps1') make-video --video $Video --wan-mode $WanMode
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $MigrationSourceRoot 'scripts\start_windows.ps1') mail-video --video $Video --wan-mode $WanMode
         $script:MigrationExitCode = $LASTEXITCODE
         return
     }
@@ -374,7 +411,7 @@ function Start-MigratedVideo {
     # Put original text in a UTF-8 file before crossing another process boundary.
     # Quotes, Chinese text and line breaks then reach make-video unchanged.
     if ($Text) { $Script = Save-MigrationNarration $Text (Join-Path $MigrationRuntimeRoot 'scratch\tmp\narration') }
-    $cliArgs = @('make-video', '--config', $Config, '--wan-mode', $WanMode)
+    $cliArgs = @('mail-video', '--config', $Config, '--wan-mode', $WanMode)
     if ($Title) { $cliArgs += @('--title', $Title) }
     if ($Script) { $cliArgs += @('--script', [IO.Path]::GetFullPath($Script)) }
     # A child process preserves the existing entry point's exit codes and logs.

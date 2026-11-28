@@ -10,7 +10,7 @@ from .services import ServiceSpec
 
 def build_service_specs(config, run_dir, *, model_stage=None, production=False, frozen=None,
                         store=None, tts_yaml_path=None,planner_transport=None) -> dict[str,ServiceSpec]:
-    if config.tts.engine != 'gpt-sovits':
+    if config.tts.engine != 'gpt-sovits' and (not production or tts_yaml_path is not None):
         raise ValueError('VoxCPM2 requires its owned VoxServiceProcess, not GPT service specs')
     run = validate_run_dir(run_dir)
     policy = PathPolicy()

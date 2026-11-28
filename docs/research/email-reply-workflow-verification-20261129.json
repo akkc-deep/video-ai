@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-29",
+  "feature": "QQ email reply driven video production",
+  "focused_verification": {
+    "result": "203 passed",
+    "duration_seconds": 5.65,
+    "test_modules": [
+      "tests/unit/test_mail_replies.py",
+      "tests/unit/test_mail_workflow.py",
+      "tests/unit/test_mail_review_requests.py",
+      "tests/unit/test_selection_email_reply.py",
+      "tests/unit/test_selection_email.py",
+      "tests/unit/test_project_credentials.py",
+      "tests/unit/test_subtitles.py",
+      "tests/unit/test_srt_validation.py",
+      "tests/unit/test_production_composition_records.py"
+    ],
+    "powershell_launcher_syntax": "passed",
+    "mail_video_cli_help": "passed",
+    "scoped_git_diff_check": "passed"
+  },
+  "external_check": {
+    "imap_tls_readonly_connection": "passed",
+    "mailbox_mutations": false,
+    "credential_values_displayed": false,
+    "new_workflow_emails_sent": false
+  },
+  "operational_state": {
+    "video": "0003",
+    "title": "太阳",
+    "first_image_batch": "accepted",
+    "selected_scenes": ["scene_0001", "scene_0004", "scene_0007"],
+    "selected_candidate": "request_02_image_01",
+    "next_batch_started": false,
+    "startup_policy": "User explicitly requested the resume command and will execute it manually."
+  },
+  "independent_review": {
+    "remaining_p1_p2_findings": 0,
+    "fixed": [
+      "Independent wait lock without global storage lease",
+      "Durable reply viewing timestamp",
+      "Reply-local continuity staging paths",
+      "Completion before accepted reply dedup marker",
+      "Per-file interrupted request initialization recovery",
+      "Revision-pinned production actions and current revision guard",
+      "Repeated unverified judgments retain the same pending thread",
+      "Atomic MIME and submission byte staging",
+      "Stale source invalidation permits refresh on restart"
+    ]
+  },
+  "adjacent_regression_limitations": {
+    "note": "Additional runs by implementation agents encountered existing isolated-runtime path fixture failures. These do not constitute a full integration pass; no broad fixture migration or new GPU video generation was performed.",
+    "image_selection_flow": {
+      "module": "tests/integration/test_image_selection_flow.py",
+      "setup_errors": 27,
+      "reason": "Production ffmpeg path is outside the isolated test runtime allowed tool-env subtree."
+    },
+    "continuity_records": {
+      "module": "tests/unit/test_scene_continuity_records.py",
+      "failures": [
+        "test_accepted_video_does_not_admit_missing_current_diagnostic",
+        "test_artifact_rejects_same_stat_byte_drift_and_hardlink",
+        "test_json_single_file_limit_is_fail_closed_before_parsing"
+      ],
+      "epoch_setup_errors": 11,
+      "reasons": [
+        "Production tool path refused by isolated runtime policy",
+        "Fixture continuity path rejected: explicit local continuity path required"
+      ]
+    }
+  }
+}

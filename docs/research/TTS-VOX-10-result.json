@@ -1,0 +1,49 @@
+{
+  "task_id": "TTS-VOX-10",
+  "status": "completed",
+  "design": "docs/task-designs/TTS-VOX-10-design.md",
+  "documentation": "docs/voxcpm2-installation.md",
+  "installation": {
+    "task_id": "TTS-VOX-10",
+    "status": "ready",
+    "runtime_root": "E:\\VideoAI",
+    "voice_id": "provided-reference-narration-v1",
+    "recipe_sha256": "cab300692010a50746da721735f03a02f43895d287ff6f52ebd01842ffc462e6",
+    "model_revision": "7936080b41163874f38610f46f438e2c0757f9fd",
+    "source_revision": "300e4260b509066151d623dc9c0aa922cf82232b",
+    "model_hashes_verified": true,
+    "inference_verified": false
+  },
+  "speech": {
+    "run": "E:\\VideoAI\\work\\20261128-224839-56b9ef239986",
+    "samples": 430060,
+    "seconds": 8.959583333333333,
+    "requests": 2,
+    "completed_resume_no_new_requests": true
+  },
+  "migration_report": "docs/research/TTS-VOX-10-migration-result.json",
+  "rollback_report": "docs/research/TTS-VOX-10-rollback-result.json",
+  "targeted_tests": {
+    "passed": 32,
+    "failed": 0
+  },
+  "related_regression": {
+    "passed": 136,
+    "skipped": 3,
+    "failed": 5,
+    "log": "E:\\VideoAI\\scratch\\tts-vox-10-final-regression.txt",
+    "known_font_fixture_failures": [
+      "tests/unit/test_production_speech.py::test_real_http_original_text_once_and_complete_resume",
+      "tests/unit/test_production_speech.py::test_coordinator_finishes_timing_slots_and_resumes_without_posts",
+      "tests/unit/test_production_speech.py::test_unknown_tts_intent_resume_does_not_post",
+      "tests/unit/test_production_speech.py::test_confirmed_bad_wav_fails_once[silence]",
+      "tests/unit/test_production_speech.py::test_confirmed_bad_wav_fails_once[truncated]"
+    ]
+  },
+  "independent_review": "Completed; dependency-first activation, staged publication, no global Git at inference, source/environment interruption, SCM history and relocation order findings addressed",
+  "limitations": [
+    "No second clean-machine full-stack download or full visual video acceptance",
+    "No new subjective listening conclusion",
+    "Historical frozen runs are not rewritten; preserve original absolute roots for migrated history"
+  ]
+}

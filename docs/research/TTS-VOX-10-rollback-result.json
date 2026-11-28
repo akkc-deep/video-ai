@@ -1,0 +1,8 @@
+{
+  "task_id": "TTS-VOX-10",
+  "status": "passed",
+  "config": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-10\\20261128-225121\\relocated runtime\\shared\\config\\rollback-probe.json",
+  "backup": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-10\\20261128-225121\\relocated runtime\\shared\\config\\rollback-probe.before-vox10-20261128-225331-7a252e2f.json",
+  "exact_bytes_restored": true,
+  "idempotent_activation": true
+}

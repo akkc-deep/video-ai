@@ -83,6 +83,9 @@ def _validate_intent(path, frozen, span, client):
 @production_execution
 @http_recovery_scope()
 def produce_speech(frozen, units, *, state, manifest, paths, logger, limits=SpeechLimits()):
+    if frozen.config.tts.engine == 'voxcpm2':
+        from .production_vox_speech import produce_vox_speech
+        return produce_vox_speech(frozen,units,state=state,manifest=manifest,paths=paths,logger=logger)
     report=read_report(state,'speech')
     complete=state.snapshot()['stages']['speech']['status']=='completed'
     if complete:

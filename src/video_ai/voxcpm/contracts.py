@@ -26,7 +26,7 @@ def valid_id(value):
 
 
 def freeze_request(body, binding):
-    if not isinstance(body, dict) or set(body) - (set(DEFAULTS) | {'request_id', 'text'}):
+    if not isinstance(body, dict) or set(body) - (set(DEFAULTS) | {'request_id', 'text', 'conditioning_mode','prompt_text'}):
         raise ApiError(400, 'unknown request fields')
     value = dict(DEFAULTS, **body)
     valid_id(value.get('request_id'))
@@ -52,6 +52,12 @@ def freeze_request(body, binding):
     if value['instruction']:
         direction += '，' + value['instruction']
     value['synthesis_text'] = f'({direction}){text}'
+    if 'conditioning_mode' in value or 'prompt_text' in value:
+        if (value.get('conditioning_mode') != 'reference-prompt' or not isinstance(value.get('prompt_text'),str)
+                or not value['prompt_text'].strip() or len(value['prompt_text']) > 1000
+                or value['instruction'] or value['emotion'] != 'neutral' or value['emotion_intensity'] != 0):
+            raise ApiError(400, 'reference-prompt requires fixed prompt and no emotion instructions')
+        value['synthesis_text'] = text
     value['binding'] = dict(binding)
     return value
 

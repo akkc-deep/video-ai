@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-29",
+  "problem": "mail-video did not pass the existing reference.local.json supplement to the producer, so video 0003 stopped after its accepted baseline image batch",
+  "changes": [
+    "Use existing local reference supplement only for missing task reference fields",
+    "Forward reference settings on initial production and ordinary resumes, not evidence consumption actions",
+    "Add explicit mail-video --reference-settings option",
+    "Read SMTP settings from the actual frozen config_snapshot.raw representation"
+  ],
+  "verification": {
+    "test_module": "tests/unit/test_mail_workflow.py",
+    "result": "25 passed",
+    "cli_help_and_scoped_diff_check": "passed",
+    "actual_video_0003_local_reference_configuration": "valid",
+    "frozen_image_model": "jimeng_t2i_v40",
+    "image_model_changed": false,
+    "frozen_inputs_changed": false,
+    "production_generation_started": false
+  },
+  "startup": "The user will execute generate_video.cmd -Video 0003 manually."
+}

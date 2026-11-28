@@ -1,4 +1,5 @@
-"""Original-character layout and absolute sample-quantized SRT/ASS files."""
+"""Punctuation-free subtitle layout and absolute sample-quantized SRT/ASS files."""
+import string
 import unicodedata
 
 from ..planning.timeline import validate_timeline
@@ -10,8 +11,15 @@ def quantize(sample,rate):
     return (2*sample*rate+48000)//96000
 
 
+def subtitle_text(text):
+    """Remove punctuation for display while keeping narration/source text intact."""
+    return ''.join(c for c in text if not unicodedata.category(c).startswith('P') and c not in string.punctuation)
+
+
 def layout_text(text,*,measure,width):
     if type(text) is not str or not text or any(ord(c)<32 for c in text):raise ValueError('subtitle must be nonempty printable original text')
+    text=subtitle_text(text)
+    if not text.strip():raise ValueError('subtitle must contain text after removing punctuation')
     groups=[]
     for i,c in enumerate(text):
         if groups and (unicodedata.combining(c) or c in ('\ufe0f','\ufe0e','\u200d') or text[i-1]=='\u200d'):
@@ -35,7 +43,7 @@ def plan_subtitles(timeline,settings,*,measure):
 
 
 def plan_subtitle_events(events,settings,*,measure):
-    """Lay out validated literal events without choosing a timeline contract."""
+    """Lay out display text; retain original event text, spans and timing."""
     result=[];last_ms=last_cs=0
     width=1920-2*(settings.margin+settings.outline)
     for event in events:

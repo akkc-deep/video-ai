@@ -346,7 +346,8 @@ def load_config(path: Path, *, raw: dict | None = None, voice: VoiceConfig | Non
     if tts_settings.engine == 'voxcpm2':
         # Freeze effective defaults now; a resumed task must not read future defaults.
         data = dict(data, tts=dict(engine='voxcpm2', model_revision=tts_settings.model_revision,
-                                  **tts_settings.parameters))
+                                  **{k:v for k,v in tts_settings.parameters.items() if k not in ('conditioning_mode','prompt_text')},
+                                  **({'narration':dict(tts_settings.narration)} if tts_settings.narration else {})))
     from .jimeng_config import STRATEGY, parse_image_generation
     strategy = data.get('production_strategy', 'legacy')
     if strategy not in ('legacy', STRATEGY): _error(path, 'production_strategy', 'unsupported strategy')

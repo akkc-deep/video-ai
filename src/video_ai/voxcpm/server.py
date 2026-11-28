@@ -75,9 +75,11 @@ def make_server(service, host, port, stop_token):
                 task, created = service.submit(self._body())
                 return (202 if created else 200), task
             if self.command == 'POST' and path == '/shutdown':
-                self._body()
+                body=self._body()
                 if not stop_token or not secrets.compare_digest(self.headers.get('X-Vox-Stop-Token', ''), stop_token):
                     raise ApiError(403, 'shutdown requires the owning launcher token')
+                if type(body.get('finish_pending',False)) is not bool: raise ApiError(400,'finish_pending must be boolean')
+                service.finish_pending_on_shutdown=body.get('finish_pending',False)
                 threading.Thread(target=self.server.shutdown, daemon=True).start()
                 return 202, dict(status='shutdown_requested')
             parts = path.strip('/').split('/')
@@ -141,7 +143,7 @@ def main():
             server.serve_forever(poll_interval=.1)
         finally:
             server.server_close()
-            service.close()
+            service.close(finish_pending=getattr(service,'finish_pending_on_shutdown',False))
 
 
 if __name__ == '__main__':

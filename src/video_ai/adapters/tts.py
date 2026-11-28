@@ -14,7 +14,7 @@ def create_tts_client(config, http, *, request_scope=None):
     if settings.engine == 'gpt-sovits':
         return TtsClient(http, config.voice)
     from .voxcpm import VoxTtsClient
-    return VoxTtsClient(http, settings, reference_sha256=config.voice.reference_sha256,
+    return VoxTtsClient(http, settings, reference_sha256=(settings.narration['reference_sha256'] if settings.narration else config.voice.reference_sha256),
                         request_scope=request_scope)
 
 

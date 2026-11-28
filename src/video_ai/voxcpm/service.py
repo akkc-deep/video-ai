@@ -10,6 +10,7 @@ class JobService:
         self.session_id = session_id
         self.state, self.error = 'loading', None
         self._stop = threading.Event()
+        self._drain = threading.Event()
         self._wake = threading.Event()
         self._gate = threading.Lock()
         self._thread = threading.Thread(target=self._run, name='voxcpm-inference')
@@ -34,11 +35,14 @@ class JobService:
     def cancel(self, request_id):
         return self.store.cancel(request_id)
 
-    def close(self):
+    def close(self, *, finish_pending=False):
         with self._gate:
             self.state = 'stopping'
-            self._stop.set()
-            self.store.stop_pending()
+            if finish_pending:
+                self._drain.set()
+            else:
+                self._stop.set()
+                self.store.stop_pending()
             self._wake.set()
         if self._thread.ident is not None:
             self._thread.join()
@@ -65,11 +69,14 @@ class JobService:
                 self.store.stop_pending('model_load_failed: ' + str(error))
             return
         with self._gate:
-            if not self._stop.is_set():
+            if not self._stop.is_set() and not self._drain.is_set():
                 self.state = 'ready'
         while not self._stop.is_set():
             task = self.store.claim(self.binding)
             if task is None:
+                if self._drain.is_set():
+                    self._stop.set()
+                    break
                 self._wake.wait(.2)
                 self._wake.clear()
                 continue

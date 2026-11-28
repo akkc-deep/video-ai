@@ -129,7 +129,7 @@ scene 请求固定 32768 token 上下文、8192 输出预算及 2048 模板余�
 
 ## 邮件通知与选择续作
 
-`selection_email` 仅适用于新策略。默认发件、收件都是 `318575094@qq.com`，通过 `smtp.qq.com:465` 和校验证书的 SSL 连接。密码只从 `VIDEO_AI_SMTP_AUTH_CODE` 环境变量读取；填写 QQ 邮箱 SMTP 授权码，不把授权码写入配置、选择文件或日志。默认每封完整 MIME 上限为 15 MiB，超限自动拆页；原图过大时邮件附有原图 SHA256 来源说明的缩小副本，原图保留。
+`selection_email` 仅适用于新策略。默认发件、收件都是 `318575094@qq.com`，通过 `smtp.qq.com:465` 和校验证书的 SSL 连接。QQ 邮箱 SMTP 授权码从 `VIDEO_AI_SMTP_AUTH_CODE` 环境变量优先读取，未设置时自动读取源码目录的 `config/secrets.local.json` 中同名字段；本地保存一次即可供后续视频和续作复用。该本地文件已被 Git 忽略，不把授权码写入生产配置、任务快照、选择文件或日志。默认每封完整 MIME 上限为 15 MiB，超限自动拆页；原图过大时邮件附有原图 SHA256 来源说明的缩小副本，原图保留。
 
 准备同运行的 units/timeline、已提交 scene 计划和本批候选后，调用：
 

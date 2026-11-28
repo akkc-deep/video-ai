@@ -4,7 +4,7 @@ from fractions import Fraction
 import math
 
 from ..config import read_json
-from ..media.subtitles import quantize
+from ..media.subtitles import quantize, subtitle_text
 from .production_state import (ArtifactStamp, ProductionRefused, object_fields, integer,
     string, run_path, timestamp, json_bytes, _header)
 
@@ -53,6 +53,8 @@ def subtitle_events(events, samples):
         lines,ranges,widths=layout['lines'],layout['line_ranges'],layout['line_widths']
         if not all(isinstance(x,list) for x in (lines,ranges,widths)) or not 1<=len(lines)<=2 or len(lines)!=len(ranges) or len(lines)!=len(widths):
             raise ProductionRefused('one or two original subtitle lines required')
+        # Accept historical literal layouts and new punctuation-free layouts.
+        display=event['text'] if ''.join(lines)==event['text'] else subtitle_text(event['text'])
         available=layout['available_width']
         _number(available,'subtitle available width')
         if available <= 0: raise ProductionRefused('positive subtitle width required')
@@ -60,10 +62,10 @@ def subtitle_events(events, samples):
         for line,r,width in zip(lines,ranges,widths):
             string(line,'subtitle line');object_fields(r,('start','end'),'subtitle line range')
             integer(r['start'],'line start');integer(r['end'],'line end',1);_number(width,'line width')
-            if r['start'] != cursor or r['end'] <= cursor or line != event['text'][cursor:r['end']] or not 0<=width<=available:
+            if r['start'] != cursor or r['end'] <= cursor or line != display[cursor:r['end']] or not 0<=width<=available:
                 raise ProductionRefused('subtitle original layout differs')
             cursor=r['end']
-        if cursor != len(event['text']) or ''.join(lines)!=event['text']: raise ProductionRefused('subtitle text coverage differs')
+        if cursor != len(display) or ''.join(lines)!=display: raise ProductionRefused('subtitle text coverage differs')
         previous=b
 
 

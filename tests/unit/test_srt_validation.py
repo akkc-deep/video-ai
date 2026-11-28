@@ -13,9 +13,9 @@ def validate(path, events, total_samples):
 def fixture(tmp_path):
     timeline, *_ = inputs()
     events = plan_subtitles(timeline,CompositionSettings(),measure=lambda s:len(s)*300)
-    path=tmp_path/'actual.srt';path.write_bytes(('1\n00:00:00,000 --> 00:00:01,000\n夜色渐深，\n\n'
-        '2\n00:00:01,000 --> 00:00:02,000\n周围渐静。\n\n'
-        '3\n00:00:02,000 --> 00:00:03,000\n水面有灯光\n倒影。\n\n').encode('utf-8'))
+    path=tmp_path/'actual.srt';path.write_bytes(('1\n00:00:00,000 --> 00:00:01,000\n夜色渐深\n\n'
+        '2\n00:00:01,000 --> 00:00:02,000\n周围渐静\n\n'
+        '3\n00:00:02,000 --> 00:00:03,000\n水面有灯光\n倒影\n\n').encode('utf-8'))
     return path,events,timeline.total_samples
 
 

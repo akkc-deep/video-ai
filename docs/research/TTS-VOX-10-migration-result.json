@@ -1,0 +1,9 @@
+{
+  "task_id": "TTS-VOX-10",
+  "status": "passed",
+  "relocated_root": "E:\\VideoAI\\scratch\\benchmarks\\TTS-VOX-10\\20261128-225121\\relocated runtime",
+  "method": "local isolated file-hardlink mirror; mutable configurations copied",
+  "downloads": false,
+  "full_clean_machine_install": false,
+  "inference": false
+}

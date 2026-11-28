@@ -1,0 +1,13 @@
+{
+  "model_id": "iic/speech_timestamp_prediction-v1-16k-offline",
+  "revision": "v2.0.4",
+  "funasr_version": "1.0.27",
+  "files": {
+    "am.mvn": "29b3c740a2c0cfc6b308126d31d7f265fa2be74f3bb095cd2f143ea970896ae5",
+    "config.yaml": "bf673207f2a2e2263403d64adec49666166c047dc74bc03153b0e7882f8d09b4",
+    "configuration.json": "fbb37220a629e1eb5468c8486fcd5f5650bc0817b28551530e5485db41662c73",
+    "model.pt": "f34ede558af831fb504206b25f1c2f27ca2f77753c26c4dd38d03323153b6f73",
+    "seg_dict": "59a2ef803a3f1648ad03a2e1480db1c1ee0c0d7dc4ef4dbd16cea33944329022",
+    "tokens.json": "2b20c2b12572d682afff84ce1c8d560f67b8b32a4c1f21567411d141ed352127"
+  }
+}

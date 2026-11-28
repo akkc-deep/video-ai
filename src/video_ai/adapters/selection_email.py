@@ -7,7 +7,6 @@ from email.utils import format_datetime
 import hashlib
 import html
 import json
-import os
 from pathlib import Path
 import queue
 import re
@@ -16,6 +15,7 @@ import ssl
 import threading
 import time
 
+from ..credentials import read_credentials
 from ..selection_config import SelectionEmailSettings, parse_selection_email
 
 
@@ -191,8 +191,101 @@ def _encode(batch, media, entries, *, part, total, attempt, date, sender, recipi
                 mime_bytes=message.as_bytes(), attachment_bindings=bindings)
 
 
-def build_messages(batch, media, *, created_at, sender, recipient, max_mime_bytes, attempt=1, baseline_roles=None) -> list[dict]:
-    """Greedily pack measured complete MIME, preserving one attachment per candidate."""
+def _encode_reply(batch, entries, baselines, *, attempt, date, sender, recipient, cache, baseline_roles):
+    """One image attachment per candidate or shared baseline; never embed it twice."""
+    identity = message_identity(batch, 1, attempt)
+    message_id = f'<{identity}@video-ai.local>'
+    message = EmailMessage(policy=policy.SMTP)
+    message['From'], message['To'], message['Date'] = sender, recipient, date
+    message['Message-ID'] = message_id
+    message['X-Video-AI-Reply-Mode'] = 'image-selection-v1'
+    message['X-Video-AI-Request-ID'] = message_id
+    message['Subject'] = f'候选图选择 {batch["run_id"]} {batch["batch_id"]} 回复选图'
+    text = [f'Run: {batch["run_id"]}', f'Batch: {batch["batch_id"]}',
+            f'Message-ID: {message_id}',
+            '请查看本邮件全部候选预览附件，每个场景选择一张，然后直接回复本邮件。',
+            '候选编号使用下方列出的完整编号，可带 .png/.jpg/.jpeg/.webp 后缀。',
+            '请复制末尾模板，替换每一行的“填写候选编号”；确认=提交 可保留，直接回复全部场景的明确选择也会提交。',
+            '每个场景恰选一张；未填写的模板、暂存选择或引用原邮件不会提交。',
+            '选图仅记录选择；整组主体一致性和风格一致性需实际看图后另行确认，不自动记为通过。']
+    for scene in batch['scenes']:
+        text += ['', f'Scene: {scene["scene_id"]}', f'摘要: {scene["summary"]}',
+                 '完整原文:', scene['original_text'], '基准用途:'] + _purposes(batch, scene, baseline_roles)
+        for entry in entries:
+            if entry['scene']['scene_id'] != scene['scene_id']:
+                continue
+            candidate, row = entry['candidate'], entry['attachment']
+            text += [f'可选候选: {candidate["candidate_id"]}',
+                     f'原图 SHA256: {candidate["sha256"]}',
+                     f'预览来源原图 SHA256: {row["source_sha256"]}; 预览 SHA256: {row["sha256"]}']
+    text += ['', '回复模板（填写全部场景后提交）:']
+    text += [scene['scene_id'] + '=填写候选编号' for scene in batch['scenes']]
+    text += ['确认=提交']
+    plain = '\n'.join(text) + '\n'
+    message.set_content(plain)
+    message.add_alternative('<html><body><pre>' + html.escape(plain) + '</pre></body></html>', subtype='html')
+    bindings = []
+    for entry in entries:
+        candidate, row = entry['candidate'], entry['attachment']
+        scene_id = entry['scene']['scene_id']
+        data = _read_media(row, cache)
+        subtype = _subtype(data)
+        message.add_attachment(data, maintype='image', subtype=subtype,
+                               filename=f'{scene_id}={candidate["candidate_id"]}.{subtype}')
+        bindings.append(dict(scene_id=scene_id, candidate_id=candidate['candidate_id'],
+                             original_sha256=candidate['sha256'], attachment_sha256=row['sha256']))
+    for entry in baselines:
+        row = entry['attachment']
+        data = _read_media(row, cache)
+        subtype = _subtype(data)
+        message.add_attachment(data, maintype='image', subtype=subtype,
+            filename=f'baseline-{row["scene_id"]}={row["candidate_id"]}.{subtype}')
+    for index, item in enumerate(message.walk()):
+        if item.is_multipart():
+            token = hashlib.sha256(identity.encode('ascii')).hexdigest()[:32]
+            item.set_boundary(f'video-ai.{token}.boundary_{index:04d}')
+    return dict(part=1, total=1, message_id=message_id,
+                mime_bytes=message.as_bytes(), attachment_bindings=bindings)
+
+
+def _build_reply_message(batch, media, entries, *, max_mime_bytes, **kwargs):
+    candidate_keys = {(e['scene']['scene_id'], e['candidate']['candidate_id']) for e in entries}
+    baselines = []
+    for baseline in batch.get('baseline_bindings', ()):
+        key = (baseline['scene_id'], baseline['candidate_id'])
+        if key in candidate_keys:
+            continue
+        candidate_keys.add(key)
+        previews = [r for r in media['images'] if r['kind'] == 'preview'
+                    and (r['scene_id'], r['candidate_id']) == key]
+        baselines.append(dict(alternatives=previews))
+    for entry in entries + baselines:
+        previews = sorted((r for r in entry['alternatives'] if r['kind'] == 'preview'),
+                          key=lambda r: (-r['width'], -r['height'], r['bytes']))
+        if not previews:
+            raise EmailPreconditionError('candidate preview unavailable')
+        # Keep only successively smaller payloads, ending at the smallest available.
+        alternatives = [previews[0]]
+        for preview in previews[1:]:
+            if preview['bytes'] < alternatives[-1]['bytes']:
+                alternatives.append(preview)
+        entry['alternatives'] = alternatives
+        entry['attachment'] = alternatives[0]
+    while True:
+        message = _encode_reply(batch, entries, baselines, **kwargs)
+        if len(message['mime_bytes']) <= max_mime_bytes:
+            return [message]
+        shrinkable = [entry for entry in entries + baselines if len(entry['alternatives']) > 1]
+        if not shrinkable:
+            raise EmailPreconditionError('minimum batch preview MIME exceeds size limit')
+        entry = max(shrinkable, key=lambda e: e['alternatives'][0]['bytes'] - e['alternatives'][1]['bytes'])
+        entry['alternatives'].pop(0)
+        entry['attachment'] = entry['alternatives'][0]
+
+
+def build_messages(batch, media, *, created_at, sender, recipient, max_mime_bytes, attempt=1, baseline_roles=None,
+                   reply_mode=False) -> list[dict]:
+    """Pack legacy pages, or a single complete preview batch when reply mode is enabled."""
     parse_selection_email(dict(sender=sender, recipient=recipient, max_mime_bytes=max_mime_bytes))
     _identifier(batch['run_id'])
     _identifier(batch['batch_id'])
@@ -258,6 +351,11 @@ def build_messages(batch, media, *, created_at, sender, recipient, max_mime_byte
                 raise EmailPreconditionError('contact sheet source identity mismatch')
             seen_sources.add(key)
         _read_media(sheet, cache)
+
+    if reply_mode:
+        return _build_reply_message(batch, media, entries, max_mime_bytes=max_mime_bytes,
+            attempt=attempt, date=date, sender=sender, recipient=recipient, cache=cache,
+            baseline_roles=baseline_roles)
 
     encoded = {}
     def encode(group, part, total):
@@ -347,9 +445,12 @@ class SmtpSender:
                 if (not session['active'] or session['poisoned']
                         or session['owner'] != threading.get_ident()):
                     raise EmailPreconditionError('SMTP session is unavailable')
-        password = os.environ.get(settings.smtp_password_env)
+        try:
+            password, = read_credentials(settings.smtp_password_env)
+        except ValueError:
+            raise EmailPreconditionError('SMTP local credential configuration unavailable') from None
         if not password or '\r' in password or '\n' in password:
-            raise EmailPreconditionError('SMTP credential unavailable')
+            raise EmailPreconditionError('SMTP credential unavailable; configure config/secrets.local.json or the SMTP environment variable')
         deadline = time.monotonic() + settings.timeout_seconds
         responses = queue.Queue()
         permit, cancelled = threading.Event(), threading.Event()

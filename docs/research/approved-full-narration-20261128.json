@@ -1,0 +1,40 @@
+{
+  "status": "approved",
+  "at": "2026-11-28T21:50:51.951190+08:00",
+  "user_instruction": "后面的视频都按这一版来",
+  "voice_id": "provided-reference-narration-v1",
+  "recipe_sha256": "cab300692010a50746da721735f03a02f43895d287ff6f52ebd01842ffc462e6",
+  "source_run": "E:\\VideoAI\\work\\20261128-203102-e4cae32ca40c",
+  "approved_video": "E:\\VideoAI\\output\\旅行者2号\\完整重配音-20261128\\旅行者2号-完整重配音.mp4",
+  "persistent_sample": "E:\\VideoAI\\shared\\assets\\voices\\provided-reference-narration-v1\\approved-production-20261128.wav",
+  "source_check": {
+    "status": "passed",
+    "fresh_gpu_requests": 137,
+    "reused_historical_audio": 0,
+    "original_characters": 4003,
+    "voice_id": "provided-reference-narration-v1",
+    "paragraphs": 137,
+    "subtitles": 298,
+    "paragraph_pause_ms": 500,
+    "all_new_body_onsets_first_50ms_are_silent": true,
+    "all_136_interparagraph_gaps_are_silent": true,
+    "final_full_decode": "passed",
+    "seconds": 722.75,
+    "full_subjective_listening": "not performed"
+  },
+  "production_processing_equivalence": {
+    "status": "passed",
+    "matched_real_paragraphs": 137,
+    "pcm_byte_equivalence": true,
+    "source_run": "E:\\VideoAI\\work\\20261128-203102-e4cae32ca40c",
+    "new_tts_requests": 0,
+    "ambiguous_later_separator_refused": true,
+    "short_earlier_gap_preserved_as_ambiguity_evidence": true
+  },
+  "backup": "E:\\VideoAI\\scratch\\approved-full-narration-activation-backup-20261128-215051",
+  "targeted_tests": {
+    "passed": 19,
+    "new_tts_requests": 0,
+    "review": "no remaining Critical/Important issues after RED/GREEN ambiguity fixes"
+  }
+}

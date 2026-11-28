@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
 import time
 
 from ..runtime.storage_files import safe_path
@@ -43,8 +42,8 @@ class VoxBackend:
         from voxcpm import VoxCPM
         if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
             raise RuntimeError('VoxCPM2 requires real CUDA with BF16')
-        actual = subprocess.check_output(['git', '-C', str(root/'shared/tools/VoxCPM'),
-                                         'rev-parse', 'HEAD'], text=True, timeout=15).strip()
+        from .source_identity import source_revision
+        actual = source_revision(root/'shared/tools/VoxCPM')
         if actual != spec['source_revision']:
             raise RuntimeError('VoxCPM source differs from frozen deployment')
         self.reference, self.spec = reference, spec
@@ -60,6 +59,8 @@ class VoxBackend:
             parameters[key] = request[key]
         started = time.perf_counter()
         with torch.inference_mode():
+            if request.get('conditioning_mode') == 'reference-prompt':
+                parameters.update(prompt_wav_path=str(self.reference), prompt_text=request['prompt_text'])
             samples = self.model.generate(text=request['synthesis_text'],
                 reference_wav_path=str(self.reference), **parameters)
         torch.cuda.synchronize()

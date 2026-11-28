@@ -8,16 +8,24 @@ def module():
     from video_ai.media import subtitles
     return subtitles
 
+@pytest.fixture
+def production_font():
+    from video_ai.config import read_json
+    from video_ai.runtime.production_inputs import DEFAULT_CONFIG
+    font=Path(read_json(DEFAULT_CONFIG)['media']['font_file'])
+    return font if font.is_absolute() else DEFAULT_CONFIG.parent/font
+
 def test_absolute_quantization_uses_half_up():
     s=module()
     assert [s.quantize(x,1000) for x in (0,23,24,25,47999,48000)]==[0,0,1,1,1000,1000]
     assert [s.quantize(x,100) for x in (239,240,241,48000)]==[0,1,1,100]
 
-def test_layout_preserves_every_character_and_limits_two_lines():
+def test_layout_removes_punctuation_and_limits_two_lines():
     s=module();layout=s.layout_text('树梢，水面倒影。',measure=lambda text:len(text)*10,width=50)
-    assert layout['lines']==['树梢，水面','倒影。']
-    assert ''.join(layout['lines'])=='树梢，水面倒影。'
-    assert layout['line_ranges']==[dict(start=0,end=5),dict(start=5,end=8)]
+    assert layout['lines']==['树梢水面倒','影']
+    assert ''.join(layout['lines'])=='树梢水面倒影'
+    assert layout['line_ranges']==[dict(start=0,end=5),dict(start=5,end=6)]
+    assert s.layout_text('“旅行者2号”：Hello, world!（继续）……—',measure=len,width=100)['lines']==['旅行者2号Hello world继续']
     with pytest.raises(ValueError):s.layout_text('长'*11,measure=lambda text:len(text)*10,width=50)
 
 def test_layout_does_not_split_combining_character():
@@ -29,7 +37,9 @@ def test_original_text_and_shared_subtitle_boundaries_are_preserved():
     assert p[0]['end_ms']==p[1]['start_ms']==1000
     assert p[0]['end_cs']==p[1]['start_cs']==100
     raw=s.srt_text(p)
-    assert raw.startswith('1\n00:00:00,000 --> 00:00:01,000\n夜色渐深，\n')
+    assert raw.startswith('1\n00:00:00,000 --> 00:00:01,000\n夜色渐深\n')
+    assert p[0]['text']==t.subtitles[0].text=='夜色渐深，'
+    assert s.ass_text(p,CompositionSettings()).splitlines()[-3].endswith('夜色渐深')
     assert '\r' not in raw and '\ufeff' not in raw
     assert 'Microsoft YaHei' in s.ass_text(p,CompositionSettings())
 
@@ -45,17 +55,16 @@ def test_quantization_collapse_and_overlap_fail():
     for events in [(replace(t.subtitles[0],end_sample=1),), (t.subtitles[0],replace(t.subtitles[1],start_sample=47999))]:
         with pytest.raises(ValueError):s.plan_subtitles(replace(t,subtitles=events),CompositionSettings(),measure=lambda text:len(text))
 
-def test_real_private_font_metrics_and_missing_glyph_refusal():
+def test_real_private_font_metrics_and_missing_glyph_refusal(production_font):
     from video_ai.media.font_metrics import PrivateFont
-    font=Path('E:/VideoAI/shared/assets/fonts/msyh.ttc')
-    with PrivateFont(font,'Microsoft YaHei',54) as m:
+    with PrivateFont(production_font,'Microsoft YaHei',54) as m:
         assert m.face=='Microsoft YaHei'
         assert 90<m.measure('中文')<130
         assert m.measure('中文 空格')>m.measure('中文')
         with pytest.raises(ValueError):m.measure('\U0010ffff')
     assert m.closed
 
-def test_font_file_must_contain_selected_face():
+def test_font_file_must_contain_selected_face(production_font):
     from video_ai.media.font_metrics import PrivateFont
     with pytest.raises(ValueError):
-        with PrivateFont(Path('E:/VideoAI/shared/assets/fonts/msyh.ttc'),'Arial',54):pass
+        with PrivateFont(production_font,'Arial',54):pass

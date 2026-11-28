@@ -281,14 +281,17 @@ def test_real_still_original_is_attached_with_its_mime_type(email_batch, runtime
 
 class LocalTransport:
     """Injected local transport; there is no socket or external delivery."""
-    def __init__(self, events, *, failure=None, delay=0):
+    def __init__(self, events, *, failure=None, delay=0, expected_password=None):
         self.events, self.failure, self.delay = events, failure, delay
+        self.expected_password = expected_password
         self.sock = None
     def ehlo(self):
         self.events.append('ehlo')
         return 250, b'ok'
     def login(self, sender, password):
         self.events.append('login')
+        if self.expected_password is not None and password != self.expected_password:
+            raise smtplib.SMTPAuthenticationError(535, b'credential mismatch')
         if self.failure == 'login':
             raise RuntimeError('AUTH secret-password')
         return 235, b'ok'
@@ -346,7 +349,43 @@ def test_smtp_safe_failure_classification(monkeypatch, failure, expected):
         assert 'intent' not in events and 'data' not in events
 
 
-def test_missing_password_does_not_connect(monkeypatch):
+@pytest.mark.parametrize('name,override', [
+    ('VIDEO_AI_SMTP_AUTH_CODE', None),
+    ('CUSTOM_SMTP_AUTH_CODE', None),
+    ('VIDEO_AI_SMTP_AUTH_CODE', 'environment-password'),
+])
+def test_smtp_authenticates_with_local_credentials_and_environment_priority(tmp_path, monkeypatch, name, override):
+    from video_ai import credentials
+    path = tmp_path/'secrets.local.json'
+    path.write_text(json.dumps({name: 'local-password'}), encoding='utf-8')
+    monkeypatch.setattr(credentials, 'PROJECT_CREDENTIALS_FILE', path)
+    monkeypatch.delenv(name, raising=False)
+    if override is not None:
+        monkeypatch.setenv(name, override)
+    settings = replace(parse_selection_email(None), smtp_password_env=name)
+    def factory(*args, **kwargs):
+        return LocalTransport([], expected_password=override or 'local-password')
+    sender = SmtpSender(settings, smtp_factory=factory)
+    assert sender.send(b'mime', before_data=lambda: None) == {'smtp_code': 250}
+    assert path.read_text(encoding='utf-8') == json.dumps({name: 'local-password'})
+
+
+def test_invalid_local_smtp_credentials_do_not_connect_or_expose_secrets(tmp_path, monkeypatch):
+    from video_ai import credentials
+    path = tmp_path/'secrets.local.json'
+    path.write_text('{private-invalid-secret', encoding='utf-8')
+    monkeypatch.setattr(credentials, 'PROJECT_CREDENTIALS_FILE', path)
+    monkeypatch.delenv('VIDEO_AI_SMTP_AUTH_CODE', raising=False)
+    sender, events, _ = smtp()
+    with pytest.raises(EmailPreconditionError) as captured:
+        sender.send(b'mime', before_data=lambda: None)
+    assert 'private-invalid-secret' not in str(captured.value)
+    assert events == []
+
+
+def test_missing_password_does_not_connect(tmp_path, monkeypatch):
+    from video_ai import credentials
+    monkeypatch.setattr(credentials, 'PROJECT_CREDENTIALS_FILE', tmp_path/'missing.json')
     monkeypatch.delenv('VIDEO_AI_SMTP_AUTH_CODE', raising=False)
     sender, events, _ = smtp()
     with pytest.raises(EmailPreconditionError):

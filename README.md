@@ -1,5 +1,9 @@
 # video-ai
 
+## 邮件回复自动续作（2026-11-29）
+
+`generate_video.cmd` 现在按参考依赖批次用一封邮件发送全部候选预览和回复模板。直接回复场景选择即可自动继续；需要整组图片、片段或成片确认时，也通过邮件等待回复。QQ 的 IMAP/SMTP 共用已保存的本地授权码。请保持电脑和制作窗口运行；Ctrl+C 暂停后用相同视频编号恢复。详见[邮件续作说明](docs/email-reply-workflow.md)。
+
 ## 默认 fast 视频生成（2026-11-21）
 
 日常 `make-video` 和 `generate_video.cmd` 默认使用已验证的 WanVideoWrapper fast：4 步、CFG 1、配套双 LoRA，768×432 原生 16 fps，再沿用现有 1080P 后处理。启动不需要增加参数。旧任务普通续作时，后续未准备请求的片段也默认使用 fast；已完成片段复用，已有请求保持原图和原 ID 恢复，不会重复提交。
@@ -49,7 +53,7 @@ Implementation verification uses no model downloads, real video generation, or d
 
 ## 一键迁移到其他电脑
 
-在新电脑运行 [install_online.cmd](install_online.cmd)，或单独下载并执行 [install_online.ps1](scripts/install_online.ps1)。脚本联网下载项目源码、Python、工具、模型和公开参考音频，创建配置，完成后打开视频生成入口。目标电脑需要 Windows x64、D: 盘和兼容的 NVIDIA 显卡/驱动；以后双击 `D:\VideoSi\projects\video-ai\generate_video.cmd`。安装步骤、下载来源及断点续传说明见 [Windows 联网安装说明](docs/windows-online-install.md)。另有 [旧电脑拷贝方式](docs/windows-migration.md)，仅用于需要离线搬运的场景。
+使用当前源码运行 [install_online.cmd](install_online.cmd) 并通过 `-VoiceAssets` 导入已批准声音目录。工具和模型联网部署，新视频默认使用固定 VoxCPM2 旁白。目标机需要 Windows x64、Git for Windows 和兼容 CUDA/BF16 的 NVIDIA 驱动；默认运行根为 `E:/VideoAI`，可用 `VIDEO_AI_RUNTIME_ROOT` 更换。详见 [联网安装](docs/windows-online-install.md)、[离线迁移](docs/windows-migration.md) 及 [Vox 安装检查、切换与回退](docs/voxcpm2-installation.md)。
 
 ## 即梦段落视频：邮件选图、连续观察与发布
 
@@ -57,7 +61,7 @@ Implementation verification uses no model downloads, real video generation, or d
 
 先依据 [jimeng.example.json](config/jimeng.example.json) 准备自己的运行配置，保留已确认的声音、工具、权重及工作流绝对路径，并设置 `production_strategy=paragraph_jimeng_v1`。样例中的 `jimeng_t2i_v40` 仅演示参数，不代表已选择或验证该账号模型。关联画面还需要经核验的参考能力档案和已有 TOS 桶；样例留空的参考设置会返回配置等待。
 
-即梦 AK/SK 可直接填写到项目的 `config/secrets.local.json`，字段为 `VIDEO_AI_VOLC_ACCESS_KEY` 和 `VIDEO_AI_VOLC_SECRET_KEY`。参考模板为 `config/secrets.local.example.json`；本地密钥文件已被 Git 忽略。程序在使用凭据时读取，环境变量优先，不把密钥写入运行配置快照。QQ SMTP 授权码仍通过 `VIDEO_AI_SMTP_AUTH_CODE` 环境变量提供；QQ 发件及收件均为 `318575094@qq.com`，SSL 465。将完整 UTF-8 文案保存为独立文件后启动：
+即梦 AK/SK 可直接填写到项目的 `config/secrets.local.json`，字段为 `VIDEO_AI_VOLC_ACCESS_KEY` 和 `VIDEO_AI_VOLC_SECRET_KEY`。参考模板为 `config/secrets.local.example.json`；本地密钥文件已被 Git 忽略。程序在使用凭据时读取，环境变量优先，不把密钥写入运行配置快照。QQ SMTP 授权码也可在该本地文件的 `VIDEO_AI_SMTP_AUTH_CODE` 字段保存一次，后续新视频和续作自动读取，环境变量优先；QQ 发件及收件均为 `318575094@qq.com`，SSL 465。将完整 UTF-8 文案保存为独立文件后启动：
 
 ```powershell
 .\scripts\start_windows.ps1 make-video --config D:/VideoSi/projects/video-ai/config/jimeng-acceptance.json --script D:/VideoSi/projects/video-ai/inputs/jimeng-acceptance.txt --json
@@ -113,7 +117,7 @@ $sceneRun = 'D:/VideoSi/projects/video-ai/runs/<返回的实际运行编号>'
 
 实际查看全部所列图像后，由审查者提供 `production/visual-review.json`：字段严格为 `schema_version: 1`、`review_method`（`human_image` 或 `agent_image`）、非空 `reviewer`、`viewed_images: true`、`verdict: "passed"`、实际观察依据 `reason` 和原样复制的 `binding`。失败或未核实不得填写 passed。程序保存独立 accepted 回执，生成报告及检查点绑定两份审核文件，图片、分镜或回执改变将拒绝续作。审核准入后才制作 Wan 动态镜头、逐帧 AI 超分、原文旁白与中文字幕合成；静态审核不等于视频语义或整片质量通过。
 
-旁白和字幕始终使用你提供的完整原文。新运行使用 `model_visual_v2`：原文事实由冻结 schema 恢复作为证据，模型只生成最多 160 字符的英文场景和动作描述。SDXL/Wan 请求不包含中文事实锚点、实体 ID 或 style/color_palette 字段标签；显式旅行者场景使用同一套白色碟形天线、金色机体、细杆和 RTG 外观说明。模型获得有顺序的邻近原文、明确指代来源、前镜头英文场景及全片实体来源；抽象旁白承接有依据的场景，不能字面化为无关物体。SDXL 新起始图采用 1280×720，Wan fast 仍为 768×432/native16。采样器、步数和模型不变。提示词和尺寸仍不能保证探测器科学外观或跨镜头几何一致，必须查看实际画面。
+旁白始终使用你提供的完整原文；后续新制作的烧录字幕和独立 SRT 在排版前统一去除中英文标点，保留文字、数字、原文记录和时间轴。新运行使用 `model_visual_v2`：原文事实由冻结 schema 恢复作为证据，模型只生成最多 160 字符的英文场景和动作描述。SDXL/Wan 请求不包含中文事实锚点、实体 ID 或 style/color_palette 字段标签；显式旅行者场景使用同一套白色碟形天线、金色机体、细杆和 RTG 外观说明。模型获得有顺序的邻近原文、明确指代来源、前镜头英文场景及全片实体来源；抽象旁白承接有依据的场景，不能字面化为无关物体。SDXL 新起始图采用 1280×720，Wan fast 仍为 768×432/native16。采样器、步数和模型不变。提示词和尺寸仍不能保证探测器科学外观或跨镜头几何一致，必须查看实际画面。
 
 独立的真实模型样片入口为 `scripts/preview_visuals.py`，先 dot-source `scripts/bootstrap.ps1` 并调用 `Initialize-VideoAiEnvironment`，使用 `$VideoAiPython -B` 执行。`--phase plan --source-run PATH --shot-ids shot_0001,shot_0054,shot_0067` 只读旧运行并建立新预览目录；随后分别执行 `--phase images --run-dir NEW_RUN` 和 `--phase videos --run-dir NEW_RUN`。限制 3～5 个镜头，无批量、交付或自动恢复，所有媒体与请求独占保存。视频前要求 `samples/image-observation.json` 绑定逐图实际观察；样片允许保留 failed/unverified 观察用于问题展示，这种 `preview_only` 记录不能通过正式制作审核。历史证据不覆盖。
 
